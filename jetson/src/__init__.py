@@ -1,3 +1,3 @@
 """
-Face Recognition package
+Source package initialization
 """ 

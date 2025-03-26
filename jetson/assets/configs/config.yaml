@@ -1,0 +1,19 @@
+# Model paths
+weights:
+  dir: "assets/weights"
+  detection: "retinaface.onnx"
+  recognition: "adaface.onnx"
+
+# Database paths
+data:
+  gallery: "data/gallery"
+  database: "assets/database"
+
+# Model parameters
+detection:
+  input_size: [640, 640]
+  threshold: 0.5
+
+recognition:
+  threshold: 0.4
+  embedding_dim: 512 

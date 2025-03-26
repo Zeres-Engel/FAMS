@@ -3,39 +3,45 @@ import numpy as np
 import faiss
 import os
 import glob
-from .face_analysis import FaceAnalysis
+import sys
+from pathlib import Path
+
+# Add project root to Python path
+project_root = str(Path(__file__).parent.parent)
+if project_root not in sys.path:
+    sys.path.append(project_root)
+
+from src.zenface import ZenFace
 import pickle
 import time
+from utils.config_utils import config
 
-class FaceRecognitionSystem:
+class ZenSys:
     def __init__(self):
-        # Khởi tạo FaceAnalysis với đường dẫn weights
-        self.face_analyzer = FaceAnalysis(allowed_modules=['detection', 'recognition'])
-        self.face_analyzer.prepare(ctx_id=0, det_size=(640, 640))
+        # Khởi tạo ZenFace với đường dẫn weights từ config
+        self.face_analyzer = ZenFace(allowed_modules=['detection', 'recognition'])
+        self.face_analyzer.prepare(ctx_id=0)
         
         # Khởi tạo FAISS index
-        self.dimension = 512  # Dimension của face embedding
+        self.dimension = config.embedding_dim
         self.index = faiss.IndexFlatIP(self.dimension)
         
         # Dictionary để lưu tên người theo index
         self.name_dict = {}
         
-        # Paths
-        self.base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        self.gallery_path = os.path.join(self.base_path, "data", "gallery")
-        self.db_path = os.path.join(self.base_path, "assets", "database")
-        
-        # Tạo thư mục database nếu chưa tồn tại
-        os.makedirs(self.db_path, exist_ok=True)
-        
     def process_gallery(self):
         """Convert all gallery images to face embeddings and store in FAISS"""
+        # Kiểm tra nếu đã có database thì không cần convert lại
+        if self.load_database():
+            print("Database already exists, skipping gallery processing")
+            return
+            
         all_embeddings = []
         current_index = 0
         
-        print(f"Processing gallery from: {self.gallery_path}")
+        print(f"Processing gallery from: {config.gallery_path}")
         # Duyệt qua từng thư mục trong gallery
-        for person_dir in glob.glob(os.path.join(self.gallery_path, "*")):
+        for person_dir in glob.glob(os.path.join(config.gallery_path, "*")):
             person_name = os.path.basename(person_dir)
             print(f"Processing person: {person_name}")
             
@@ -70,26 +76,26 @@ class FaceRecognitionSystem:
             self.index.add(all_embeddings)
             
             # Lưu index và dictionary tên vào assets/database
-            index_path = os.path.join(self.db_path, "face_index.faiss")
-            dict_path = os.path.join(self.db_path, "name_dict.pkl")
+            index_path = os.path.join(config.db_path, "face_index.faiss")
+            dict_path = os.path.join(config.db_path, "name_dict.pkl")
             
             faiss.write_index(self.index, index_path)
             with open(dict_path, "wb") as f:
                 pickle.dump(self.name_dict, f)
-            print(f"Successfully saved database with {len(self.name_dict)} faces to {self.db_path}")
+            print(f"Successfully saved database with {len(self.name_dict)} faces to {config.db_path}")
         else:
             print("No faces were processed from the gallery")
                 
     def load_database(self):
         """Load FAISS index và dictionary tên từ assets/database"""
-        index_path = os.path.join(self.db_path, "face_index.faiss")
-        dict_path = os.path.join(self.db_path, "name_dict.pkl")
+        index_path = os.path.join(config.db_path, "face_index.faiss")
+        dict_path = os.path.join(config.db_path, "name_dict.pkl")
         
         if os.path.exists(index_path) and os.path.exists(dict_path):
             self.index = faiss.read_index(index_path)
             with open(dict_path, "rb") as f:
                 self.name_dict = pickle.load(f)
-            print(f"Loaded database with {len(self.name_dict)} faces from {self.db_path}")
+            print(f"Loaded database with {len(self.name_dict)} faces from {config.db_path}")
             return True
         return False
     
@@ -97,7 +103,7 @@ class FaceRecognitionSystem:
         """Nhận diện khuôn mặt từ embedding"""
         # Search trong FAISS index
         D, I = self.index.search(face_embedding.reshape(1, -1).astype('float32'), k=1)
-        if D[0][0] > 0.6:  # Ngưỡng similarity
+        if D[0][0] > config.rec_threshold:  # Ngưỡng similarity từ config
             return self.name_dict[I[0][0]], D[0][0]
         return "Unknown", 0.0
         

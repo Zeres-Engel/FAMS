@@ -3,11 +3,18 @@ import os.path as osp
 import os
 import onnxruntime
 from src.model_zoo import model_zoo
-
 from numpy.linalg import norm as l2norm
+import sys
+from pathlib import Path
+
+# Add project root to Python path
+project_root = str(Path(__file__).parent.parent)
+if project_root not in sys.path:
+    sys.path.append(project_root)
+
+from utils.config_utils import config
 
 class Face(dict):
-
     def __init__(self, d=None, **kwargs):
         if d is None:
             d = {}
@@ -42,53 +49,39 @@ class Face(dict):
             return None
         return self.embedding / self.embedding_norm
 
-    @property 
-    def sex(self):
-        if self.gender is None:
-            return None
-        return 'M' if self.gender==1 else 'F'
-
-class ZeFace:
+class ZenFace:
     def __init__(self, allowed_modules=None, **kwargs):
         onnxruntime.set_default_logger_severity(3)
         self.models = {}
         
-        # Cập nhật đường dẫn tới thư mục weights trong assets
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        base_dir = os.path.dirname(current_dir)
-        self.weights_dir = os.path.join(base_dir, 'assets', 'weights')
-        
-        # Load models từ weights
+        # Load models từ config
         if 'detection' in allowed_modules:
-            det_path = os.path.join(self.weights_dir, 'retinaface.onnx')
-            if os.path.exists(det_path):
-                det_model = model_zoo.get_model(det_path)
-                if det_model is not None:
-                    self.models['detection'] = det_model
-                    print(f"Loaded detection model from: {det_path}")
+            det_model = model_zoo.get_model(config.detection_model)
+            if det_model is not None:
+                self.models['detection'] = det_model
+                print(f"Loaded detection model from: {config.detection_model}")
             else:
-                raise FileNotFoundError(f"Detection model not found at {det_path}")
+                raise FileNotFoundError(f"Detection model not found at {config.detection_model}")
         
         if 'recognition' in allowed_modules:
-            rec_path = os.path.join(self.weights_dir, 'adaface.onnx')
-            if os.path.exists(rec_path):
-                rec_model = model_zoo.get_model(rec_path)
-                if rec_model is not None:
-                    self.models['recognition'] = rec_model
-                    print(f"Loaded recognition model from: {rec_path}")
+            rec_model = model_zoo.get_model(config.recognition_model)
+            if rec_model is not None:
+                self.models['recognition'] = rec_model
+                print(f"Loaded recognition model from: {config.recognition_model}")
             else:
-                raise FileNotFoundError(f"Recognition model not found at {rec_path}")
+                raise FileNotFoundError(f"Recognition model not found at {config.recognition_model}")
                 
         assert 'detection' in self.models
         self.det_model = self.models['detection']
 
-    def prepare(self, ctx_id, det_thresh=0.5, det_size=(640, 640)):
-        self.det_thresh = det_thresh
-        print('set det-size:', det_size)
-        self.det_size = det_size
+    def prepare(self, ctx_id, det_thresh=None, det_size=None):
+        self.det_thresh = det_thresh or config.det_threshold
+        self.det_size = det_size or config.det_size
+        print('set det-size:', self.det_size)
+        
         for taskname, model in self.models.items():
             if taskname=='detection':
-                model.prepare(ctx_id, input_size=det_size, det_thresh=det_thresh)
+                model.prepare(ctx_id, input_size=self.det_size, det_thresh=self.det_thresh)
             else:
                 model.prepare(ctx_id)
 
@@ -111,4 +104,4 @@ class ZeFace:
                     continue
                 model.get(img, face)
             ret.append(face)
-        return ret
+        return ret 

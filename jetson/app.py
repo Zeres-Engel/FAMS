@@ -1,16 +1,29 @@
 import os
-os.environ['KMP_DUPLICATE_LIB_OK']='TRUE'
+# Fix OpenMP runtime issues
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
+os.environ['OMP_NUM_THREADS'] = '4'
 
-from src.zensys import FaceRecognitionSystem
+import sys
+from pathlib import Path
+
+# Add project root to Python path
+project_root = str(Path(__file__).parent)
+if project_root not in sys.path:
+    sys.path.append(project_root)
+
+from src.zensys import ZenSys
+from utils.config_utils import config
 
 def main():
-    face_system = FaceRecognitionSystem()
+    # Initialize face recognition system
+    face_system = ZenSys()
     
-    # Kiểm tra xem đã có database chưa
-    if not face_system.load_database():
-        print("Processing gallery images...")
+    # Process gallery if database doesn't exist
+    if not os.path.exists(os.path.join(config.db_path, "face_index.faiss")):
         face_system.process_gallery()
-        print("Done processing gallery!")
+    
+    # Load database
+    face_system.load_database()
     
     print("Starting webcam...")
     face_system.run_webcam()
