@@ -2,8 +2,17 @@ import os
 import os.path as osp
 import glob
 import onnxruntime
-from .arcface_onnx import *
-from .retinaface import *
+import sys
+
+# Add model directory to Python path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+base_dir = os.path.dirname(current_dir)
+model_dir = os.path.join(base_dir, 'model')
+sys.path.append(model_dir)
+sys.path.append(base_dir)  # Add base directory to path
+
+from model.AdaFace.adaface_onnx import AdaFace
+from model.RetinaFace.retinaface import RetinaFace
 
 class PickableInferenceSession(onnxruntime.InferenceSession): 
     # This is a wrapper to make the current InferenceSession class pickable.
@@ -33,7 +42,7 @@ class ModelRouter:
         if len(outputs)>=5:
             return RetinaFace(model_file=self.onnx_file, session=session)
         else:
-            return None
+            return AdaFace(model_file=self.onnx_file, session=session)
 
 def find_onnx_file(dir_path):
     if not os.path.exists(dir_path):
@@ -50,18 +59,21 @@ def get_default_providers():
 def get_default_provider_options():
     return None
 
-def get_model(name, **kwargs):
-    root = kwargs.get('root', '~/.insightface')
-    root = os.path.expanduser(root)
-    model_root = osp.join(root, 'models')
-    if not name.endswith('.onnx'):
-        model_dir = os.path.join(model_root, name)
-        model_file = find_onnx_file(model_dir)
-    else:
-        model_file = name
-    router = ModelRouter(model_file)
-    providers = kwargs.get('providers', get_default_providers())
-    provider_options = kwargs.get('provider_options', get_default_provider_options())
-    model = router.get_model(providers=providers, provider_options=provider_options)
-    return model
+class ModelZoo:
+    @staticmethod
+    def get_model(name, **kwargs):
+        if not name.endswith('.onnx'):
+            raise ValueError("Model file must be .onnx format")
+            
+        if not os.path.exists(name):
+            raise ValueError(f"Model file not found: {name}")
+            
+        router = ModelRouter(name)
+        providers = kwargs.get('providers', get_default_providers())
+        provider_options = kwargs.get('provider_options', get_default_provider_options())
+        model = router.get_model(providers=providers, provider_options=provider_options)
+        return model
+
+# Create a singleton instance
+model_zoo = ModelZoo()
 

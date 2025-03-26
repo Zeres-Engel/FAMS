@@ -1,9 +1,8 @@
 import glob
 import os.path as osp
-
+import os
 import onnxruntime
-
-from ..model_zoo import model_zoo
+from src.model_zoo import model_zoo
 
 from numpy.linalg import norm as l2norm
 
@@ -49,26 +48,37 @@ class Face(dict):
             return None
         return 'M' if self.gender==1 else 'F'
 
-class FaceAnalysis:
+class ZeFace:
     def __init__(self, allowed_modules=None, **kwargs):
         onnxruntime.set_default_logger_severity(3)
         self.models = {}
-        self.model_dir = './gui/models/Detection'
-        onnx_files = glob.glob(osp.join(self.model_dir, '*.onnx'))
-        onnx_files = sorted(onnx_files)
-        for onnx_file in onnx_files:
-            model = model_zoo.get_model(onnx_file, **kwargs)
-            if model is None:
-                print('model not recognized:', onnx_file)
-            elif allowed_modules is not None and model.taskname not in allowed_modules:
-                print('model ignore:', onnx_file, model.taskname)
-                del model
-            elif model.taskname not in self.models and (allowed_modules is None or model.taskname in allowed_modules):
-                print('find model:', onnx_file, model.taskname, model.input_shape, model.input_mean, model.input_std)
-                self.models[model.taskname] = model
+        
+        # Cập nhật đường dẫn tới thư mục weights trong assets
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        base_dir = os.path.dirname(current_dir)
+        self.weights_dir = os.path.join(base_dir, 'assets', 'weights')
+        
+        # Load models từ weights
+        if 'detection' in allowed_modules:
+            det_path = os.path.join(self.weights_dir, 'retinaface.onnx')
+            if os.path.exists(det_path):
+                det_model = model_zoo.get_model(det_path)
+                if det_model is not None:
+                    self.models['detection'] = det_model
+                    print(f"Loaded detection model from: {det_path}")
             else:
-                print('duplicated model task type, ignore:', onnx_file, model.taskname)
-                del model
+                raise FileNotFoundError(f"Detection model not found at {det_path}")
+        
+        if 'recognition' in allowed_modules:
+            rec_path = os.path.join(self.weights_dir, 'adaface.onnx')
+            if os.path.exists(rec_path):
+                rec_model = model_zoo.get_model(rec_path)
+                if rec_model is not None:
+                    self.models['recognition'] = rec_model
+                    print(f"Loaded recognition model from: {rec_path}")
+            else:
+                raise FileNotFoundError(f"Recognition model not found at {rec_path}")
+                
         assert 'detection' in self.models
         self.det_model = self.models['detection']
 

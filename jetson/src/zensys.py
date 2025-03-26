@@ -3,14 +3,14 @@ import numpy as np
 import faiss
 import os
 import glob
-from face_analysis import FaceAnalysis
+from .face_analysis import FaceAnalysis
 import pickle
 import time
 
 class FaceRecognitionSystem:
     def __init__(self):
-        # Khởi tạo FaceAnalysis
-        self.face_analyzer = FaceAnalysis()
+        # Khởi tạo FaceAnalysis với đường dẫn weights
+        self.face_analyzer = FaceAnalysis(allowed_modules=['detection', 'recognition'])
         self.face_analyzer.prepare(ctx_id=0, det_size=(640, 640))
         
         # Khởi tạo FAISS index
@@ -20,22 +20,31 @@ class FaceRecognitionSystem:
         # Dictionary để lưu tên người theo index
         self.name_dict = {}
         
-        # Path to gallery
-        self.gallery_path = "data/gallery"
+        # Paths
+        self.base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.gallery_path = os.path.join(self.base_path, "data", "gallery")
+        self.db_path = os.path.join(self.base_path, "assets", "database")
+        
+        # Tạo thư mục database nếu chưa tồn tại
+        os.makedirs(self.db_path, exist_ok=True)
         
     def process_gallery(self):
         """Convert all gallery images to face embeddings and store in FAISS"""
         all_embeddings = []
         current_index = 0
         
+        print(f"Processing gallery from: {self.gallery_path}")
         # Duyệt qua từng thư mục trong gallery
         for person_dir in glob.glob(os.path.join(self.gallery_path, "*")):
             person_name = os.path.basename(person_dir)
+            print(f"Processing person: {person_name}")
             
-            # Duyệt qua từng ảnh của người đó
-            for img_path in glob.glob(os.path.join(person_dir, "*.jpg")):
+            # Duyệt qua từng ảnh của người đó (hỗ trợ cả .jpg và .png)
+            for img_path in glob.glob(os.path.join(person_dir, "*.[jp][pn][g]")):
+                print(f"Processing image: {os.path.basename(img_path)}")
                 img = cv2.imread(img_path)
                 if img is None:
+                    print(f"Failed to read image: {img_path}")
                     continue
                     
                 # Phát hiện và lấy embedding của khuôn mặt
@@ -48,6 +57,11 @@ class FaceRecognitionSystem:
                         all_embeddings.append(embedding)
                         self.name_dict[current_index] = person_name
                         current_index += 1
+                        print(f"Successfully processed face for: {person_name}")
+                    else:
+                        print(f"No embedding generated for face in: {img_path}")
+                else:
+                    print(f"No face detected in: {img_path}")
         
         if all_embeddings:
             # Gộp tất cả embeddings
@@ -55,17 +69,27 @@ class FaceRecognitionSystem:
             # Add vào FAISS index
             self.index.add(all_embeddings)
             
-            # Lưu index và dictionary tên
-            faiss.write_index(self.index, "face_index.faiss")
-            with open("name_dict.pkl", "wb") as f:
+            # Lưu index và dictionary tên vào assets/database
+            index_path = os.path.join(self.db_path, "face_index.faiss")
+            dict_path = os.path.join(self.db_path, "name_dict.pkl")
+            
+            faiss.write_index(self.index, index_path)
+            with open(dict_path, "wb") as f:
                 pickle.dump(self.name_dict, f)
+            print(f"Successfully saved database with {len(self.name_dict)} faces to {self.db_path}")
+        else:
+            print("No faces were processed from the gallery")
                 
     def load_database(self):
-        """Load FAISS index và dictionary tên"""
-        if os.path.exists("face_index.faiss") and os.path.exists("name_dict.pkl"):
-            self.index = faiss.read_index("face_index.faiss")
-            with open("name_dict.pkl", "rb") as f:
+        """Load FAISS index và dictionary tên từ assets/database"""
+        index_path = os.path.join(self.db_path, "face_index.faiss")
+        dict_path = os.path.join(self.db_path, "name_dict.pkl")
+        
+        if os.path.exists(index_path) and os.path.exists(dict_path):
+            self.index = faiss.read_index(index_path)
+            with open(dict_path, "rb") as f:
                 self.name_dict = pickle.load(f)
+            print(f"Loaded database with {len(self.name_dict)} faces from {self.db_path}")
             return True
         return False
     
@@ -107,18 +131,3 @@ class FaceRecognitionSystem:
                 
         cap.release()
         cv2.destroyAllWindows()
-
-def main():
-    face_system = FaceRecognitionSystem()
-    
-    # Kiểm tra xem đã có database chưa
-    if not face_system.load_database():
-        print("Processing gallery images...")
-        face_system.process_gallery()
-        print("Done processing gallery!")
-    
-    print("Starting webcam...")
-    face_system.run_webcam()
-
-if __name__ == "__main__":
-    main() 

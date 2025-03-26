@@ -2,9 +2,9 @@ import numpy as np
 import cv2
 import onnx
 import onnxruntime
-from ..utils import face_align
+from model.utils import face_align
 
-class AdaFaceONNX:
+class AdaFace:
     def __init__(self, model_file=None, session=None):
         assert model_file is not None
         self.model_file = model_file
