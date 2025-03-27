@@ -41,3 +41,4 @@ class DepthPredictor:
             'raw_depth': depth_map_raw,
             'colored_depth': depth_map_colored
         }
+

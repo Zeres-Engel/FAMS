@@ -15,6 +15,7 @@ from src.zenface import ZenFace
 import pickle
 import time
 from utils.config_utils import config
+from model.MiDaS.DepthModel import DepthPredictor
 
 class ZenSys:
     def __init__(self):
@@ -28,6 +29,10 @@ class ZenSys:
         
         # Dictionary để lưu tên người theo index
         self.name_dict = {}
+        
+        self.depth_predictor = DepthPredictor(model_type="DPT_Large")
+        self.database = None
+        self.names = []
         
     def process_gallery(self):
         """Convert all gallery images to face embeddings and store in FAISS"""
@@ -116,22 +121,30 @@ class ZenSys:
             if not ret:
                 break
                 
-            # Phát hiện khuôn mặt
+            # Get depth map
+            depth_result = self.depth_predictor.predict_depth(frame)
+            depth_map = depth_result['colored_depth']
+            
+            # Process face recognition
             faces = self.face_analyzer.get(frame)
-            
-            # Vẽ kết quả
             for face in faces:
-                bbox = face.bbox.astype(int)
-                if face.embedding is not None:
-                    name, conf = self.recognize_face(face.normed_embedding)
-                    # Vẽ bbox
-                    cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 2)
-                    # Hiển thị tên và độ tin cậy
-                    text = f"{name} ({conf:.2f})"
-                    cv2.putText(frame, text, (bbox[0], bbox[1]-10), 
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                bbox = face.bbox
+                embedding = face.normed_embedding
+                name, score = self.recognize_face(embedding)  # Nhận cả name và score
+                
+                # Draw bounding box and name
+                x1, y1, x2, y2 = [int(b) for b in bbox]
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                # Hiển thị tên và độ tin cậy
+                display_text = f"{name} ({score:.2f})"
+                cv2.putText(frame, display_text, (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
             
-            cv2.imshow("Face Recognition", frame)
+            # Create combined display
+            combined_frame = np.hstack((frame, depth_map))
+            
+            # Show the combined frame
+            cv2.imshow('Face Recognition and Depth Estimation', combined_frame)
+            
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
                 
