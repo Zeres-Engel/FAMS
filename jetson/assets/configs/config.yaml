@@ -16,4 +16,10 @@ detection:
 
 recognition:
   threshold: 0.4
-  embedding_dim: 512 
+  embedding_dim: 512
+
+# Face Anti-spoofing parameters
+anti_spoofing:
+  var_thresh: 0.0005
+  grad_thresh: 0.7
+  normalize_method: "min_max"  # Phương pháp chuẩn hóa: "min_max", "global", "local" 

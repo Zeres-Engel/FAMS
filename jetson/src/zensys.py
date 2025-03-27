@@ -16,6 +16,9 @@ import pickle
 import time
 from utils.config_utils import config
 from model.MiDaS.DepthModel import DepthPredictor
+from model.RFID.rfid import RFID
+from model.FaceAnti.face_anti import FaceAntiSpoofing
+from model.utils import face_align
 
 class ZenSys:
     def __init__(self):
@@ -33,6 +36,18 @@ class ZenSys:
         self.depth_predictor = DepthPredictor(model_type="DPT_Large")
         self.database = None
         self.names = []
+        
+        # Thêm RFID
+        self.rfid_system = RFID()
+        self.current_rfid = None
+        self.current_face_crop = None
+        self.verification_result = None
+        self._last_frame = None
+        
+        # Thêm Face Anti-spoofing
+        self.face_anti = FaceAntiSpoofing()
+        self.depth_face_crop = None
+        self.anti_spoofing_result = None
         
     def process_gallery(self):
         """Convert all gallery images to face embeddings and store in FAISS"""
@@ -150,3 +165,79 @@ class ZenSys:
                 
         cap.release()
         cv2.destroyAllWindows()
+
+    def on_rfid_scanned(self, rfid_id):
+        """Callback khi RFID được quét"""
+        self.current_rfid = rfid_id
+        # Reset xác thực
+        self.current_face_crop = None
+        self.verification_result = None
+        
+    def start_rfid_listening(self):
+        """Bắt đầu lắng nghe RFID"""
+        self.rfid_system.set_callback(self.on_rfid_scanned)
+        self.rfid_system.start_listening()
+        
+    def stop_rfid_listening(self):
+        """Dừng lắng nghe RFID"""
+        self.rfid_system.stop_listening()
+        
+    def process_depth_anti_spoofing(self, depth_map, face):
+        """
+        Xử lý depth map cho face anti-spoofing
+        """
+        if depth_map is None or face is None:
+            return None
+            
+        # Sử dụng face_anti để xử lý depth map
+        result = self.face_anti.process_depth_map(depth_map, face.bbox)
+        
+        if result is not None:
+            # Lưu depth face crop và kết quả anti-spoofing
+            self.depth_face_crop = result["depth_visualization"]
+            self.anti_spoofing_result = result["detection_result"]
+            self.depth_variance = result["depth_variance"]
+            self.mean_gradient = result["mean_gradient"]
+            
+        return result
+        
+    def process_verification(self, face):
+        """
+        Xử lý xác thực khi có RFID và khuôn mặt.
+        
+        Quy trình tối ưu:
+        1. Lấy embedding đã được tạo từ face recognition
+        2. So sánh với database để nhận diện danh tính
+        3. Lưu khuôn mặt đã crop và align
+        4. Xác thực danh tính với ID từ RFID
+        5. Thực hiện kiểm tra anti-spoofing nếu có depth map
+        """
+        if self.current_rfid and face:
+            # Lấy embedding đã được tạo từ ZenFace.get()
+            embedding = face.normed_embedding
+            
+            # So sánh với database để nhận diện danh tính
+            face_name, score = self.recognize_face(embedding)
+            
+            # Lưu khuôn mặt đã crop và align
+            img = face.img  # Ảnh gốc được đính kèm trong gui.py
+            if img is not None and face.kps is not None:
+                try:
+                    # Face alignment sử dụng 5 điểm landmarks
+                    self.current_face_crop = face_align.norm_crop(img, landmark=face.kps, image_size=112)
+                except Exception as e:
+                    print(f"Error in face alignment: {e}")
+                    # Fallback: Crop đơn giản nếu có lỗi
+                    x1, y1, x2, y2 = [int(b) for b in face.bbox]
+                    crop_img = img[max(0, y1):min(img.shape[0], y2), max(0, x1):min(img.shape[1], x2)]
+                    if crop_img.size > 0:
+                        self.current_face_crop = cv2.resize(crop_img, (112, 112))
+                    else:
+                        self.current_face_crop = None
+            
+            # Xác thực danh tính
+            self.verification_result = self.rfid_system.verify_identity(
+                self.current_rfid, face_name)
+            
+            return self.verification_result
+        return None

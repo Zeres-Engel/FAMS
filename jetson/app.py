@@ -11,22 +11,14 @@ project_root = str(Path(__file__).parent)
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-from src.zensys import ZenSys
-from utils.config_utils import config
+from PySide6.QtWidgets import QApplication
+from src.gui import MainWindow
 
 def main():
-    # Initialize face recognition system
-    face_system = ZenSys()
-    
-    # Process gallery if database doesn't exist
-    if not os.path.exists(os.path.join(config.db_path, "face_index.faiss")):
-        face_system.process_gallery()
-    
-    # Load database
-    face_system.load_database()
-    
-    print("Starting webcam...")
-    face_system.run_webcam()
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     main() 

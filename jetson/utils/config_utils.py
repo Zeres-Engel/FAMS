@@ -1,6 +1,7 @@
 import os
 import yaml
 from typing import Dict, Any
+from types import SimpleNamespace
 
 class ZenConfig:
     _instance = None
@@ -63,6 +64,14 @@ class ZenConfig:
     @property
     def embedding_dim(self):
         return self.config_data['recognition']['embedding_dim']
+        
+    @property
+    def anti_spoofing(self):
+        return SimpleNamespace(**{
+            'var_thresh': self.config_data.get('anti_spoofing', {}).get('var_thresh', 0.0005),
+            'grad_thresh': self.config_data.get('anti_spoofing', {}).get('grad_thresh', 0.7),
+            'normalize_method': self.config_data.get('anti_spoofing', {}).get('normalize_method', 'min_max')
+        })
 
 # Create singleton instance
 config = ZenConfig() 

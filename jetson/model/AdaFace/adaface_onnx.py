@@ -49,10 +49,24 @@ class AdaFace:
             self.session.set_providers(["CPUExecutionProvider"])
 
     def get(self, img, face):
+        """
+        Thực hiện face alignment và tạo embedding cho khuôn mặt.
+        
+        Quy trình:
+        1. Sử dụng 5 điểm landmarks (keypoints) để thực hiện face alignment
+        2. Chuẩn hóa ảnh khuôn mặt thành kích thước cố định (norm_crop)
+        3. Đưa ảnh đã chuẩn hóa vào mô hình để tạo vector embedding
+        
+        Kết quả:
+        - Lưu vector embedding vào đối tượng face
+        - Trả về vector embedding
+        """
+        # Bước 1 & 2: Face alignment sử dụng 5 điểm landmarks
         aimg = face_align.norm_crop(
             img, landmark=face.kps, image_size=self.input_size[0]
         )
-
+        
+        # Bước 3: Tạo vector embedding
         face.embedding = self.get_feat(aimg).flatten()
         return face.embedding
     
