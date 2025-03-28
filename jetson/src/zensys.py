@@ -196,8 +196,20 @@ class ZenSys:
             # Lưu depth face crop và kết quả anti-spoofing
             self.depth_face_crop = result["depth_visualization"]
             self.anti_spoofing_result = result["detection_result"]
-            self.depth_variance = result["depth_variance"]
-            self.mean_gradient = result["mean_gradient"]
+            
+            # Lưu các giá trị thống kê
+            if "depth_variance" in result:
+                self.depth_variance = result["depth_variance"]
+            if "mean_gradient" in result:
+                self.mean_gradient = result["mean_gradient"]
+            if "min_depth" in result:
+                self.min_depth = result["min_depth"]
+            if "max_depth" in result:
+                self.max_depth = result["max_depth"]
+            if "depth_range" in result:
+                self.depth_range = result["depth_range"]
+            if "criteria_status" in result:
+                self.criteria_status = result["criteria_status"]
             
         return result
         

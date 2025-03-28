@@ -162,8 +162,8 @@ class MainWindow(QMainWindow):
                               cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
                     
                     # Hiển thị giá trị variance và mean_gradient với màu khác
-                    variance_text = f"Variance: {anti_spoof_result['depth_variance']:.6f}"
-                    mean_grad_text = f"Mean Gradient: {anti_spoof_result['mean_gradient']:.6f}"
+                    variance_text = f"Variance: {anti_spoof_result['depth_variance']:.2f}"
+                    mean_grad_text = f"Mean Gradient: {anti_spoof_result['mean_gradient']:.2f}"
                     
                     # Sử dụng màu cam cho variance
                     cv2.putText(display_frame, variance_text, (x1, y2+50), 
@@ -173,15 +173,57 @@ class MainWindow(QMainWindow):
                     cv2.putText(display_frame, mean_grad_text, (x1, y2+75), 
                               cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2)
                     
-                    # Hiển thị giá trị ngưỡng và phương pháp chuẩn hóa
-                    thresh_text = f"Thresh: Var < {self.face_system.face_anti.var_thresh:.6f}, Grad < {self.face_system.face_anti.grad_thresh:.6f}"
-                    cv2.putText(display_frame, thresh_text, (x1, y2+100), 
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
+                    # Hiển thị min/max depth
+                    min_depth_text = f"Min Depth: {anti_spoof_result['min_depth']:.2f}"
+                    max_depth_text = f"Max Depth: {anti_spoof_result['max_depth']:.2f}"
+                    depth_range_text = f"Depth Range: {anti_spoof_result['depth_range']:.2f}"
+                    
+                    # Sử dụng màu xanh lá cho min depth
+                    cv2.putText(display_frame, min_depth_text, (x1, y2+100), 
+                              cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                    
+                    # Sử dụng màu đỏ cho max depth
+                    cv2.putText(display_frame, max_depth_text, (x1, y2+125), 
+                              cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                    
+                    # Sử dụng màu vàng cho depth range
+                    cv2.putText(display_frame, depth_range_text, (x1, y2+150), 
+                              cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+                    
+                    # Hiển thị giá trị ngưỡng
+                    thresh_var = f"Var Thresh: {self.face_system.face_anti.var_thresh:.2f}"
+                    thresh_grad = f"Grad Thresh: {self.face_system.face_anti.grad_thresh:.2f}"
+                    thresh_range = f"Range Thresh: {self.face_system.face_anti.depth_range_thresh:.2f}"
+                    thresh_min = f"Min Thresh: {self.face_system.face_anti.min_depth_thresh:.2f}"
+                    thresh_max = f"Max Thresh: {self.face_system.face_anti.max_depth_thresh:.2f}"
+                    
+                    # Hiển thị thông tin về ngưỡng ở bên phải ảnh
+                    right_x = x2 + 10
+                    cv2.putText(display_frame, thresh_var, (right_x, y1+25), 
+                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                    cv2.putText(display_frame, thresh_grad, (right_x, y1+50), 
+                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                    cv2.putText(display_frame, thresh_range, (right_x, y1+75), 
+                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                    cv2.putText(display_frame, thresh_min, (right_x, y1+100), 
+                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                    cv2.putText(display_frame, thresh_max, (right_x, y1+125), 
+                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
                     
                     # Hiển thị phương pháp chuẩn hóa
                     norm_method = self.face_system.face_anti.normalize_method
-                    cv2.putText(display_frame, f"Normalize: {norm_method}", (x1, y2+125), 
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
+                    cv2.putText(display_frame, f"Normalize: {norm_method}", (right_x, y1+150), 
+                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                    
+                    # Hiển thị lý do phát hiện spoofing nếu kết quả là spoofing
+                    if result_text == "SPOOF" and "criteria_status" in anti_spoof_result:
+                        criteria = anti_spoof_result["criteria_status"]
+                        failed_criteria = [key.replace("_pass", "") for key, value in criteria.items() if not value]
+                        
+                        if failed_criteria:
+                            fail_text = f"Failed: {', '.join(failed_criteria)}"
+                            cv2.putText(display_frame, fail_text, (x1, y2+175), 
+                                      cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
                     
                     # Hiển thị depth face crop
                     if self.face_system.depth_face_crop is not None:
@@ -279,8 +321,21 @@ class MainWindow(QMainWindow):
         self.face_system.verification_result = None
         self.face_system.depth_face_crop = None
         self.face_system.anti_spoofing_result = None
-        self.face_system.depth_variance = None
-        self.face_system.mean_gradient = None
+        
+        # Reset các giá trị thống kê
+        if hasattr(self.face_system, 'depth_variance'):
+            self.face_system.depth_variance = None
+        if hasattr(self.face_system, 'mean_gradient'):
+            self.face_system.mean_gradient = None
+        if hasattr(self.face_system, 'min_depth'):
+            self.face_system.min_depth = None
+        if hasattr(self.face_system, 'max_depth'):
+            self.face_system.max_depth = None
+        if hasattr(self.face_system, 'depth_range'):
+            self.face_system.depth_range = None
+        if hasattr(self.face_system, 'criteria_status'):
+            self.face_system.criteria_status = None
+        
         self.rfid_label.setText("Waiting for RFID scan...")
         self.verification_label.setText("No verification yet")
         self.verification_label.setStyleSheet("font-size: 16px; font-weight: bold;")

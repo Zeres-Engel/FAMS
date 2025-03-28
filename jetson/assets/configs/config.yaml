@@ -20,6 +20,9 @@ recognition:
 
 # Face Anti-spoofing parameters
 anti_spoofing:
-  var_thresh: 0.0005
+  var_thresh: 5000.0
   grad_thresh: 0.7
-  normalize_method: "min_max"  # Phương pháp chuẩn hóa: "min_max", "global", "local" 
+  depth_range_thresh: 30.0
+  min_depth_thresh: 50.0
+  max_depth_thresh: 200.0
+  normalize_method: "min_max"

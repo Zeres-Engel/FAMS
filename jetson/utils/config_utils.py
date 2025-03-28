@@ -70,6 +70,9 @@ class ZenConfig:
         return SimpleNamespace(**{
             'var_thresh': self.config_data.get('anti_spoofing', {}).get('var_thresh', 0.0005),
             'grad_thresh': self.config_data.get('anti_spoofing', {}).get('grad_thresh', 0.7),
+            'depth_range_thresh': self.config_data.get('anti_spoofing', {}).get('depth_range_thresh', 30.0),
+            'min_depth_thresh': self.config_data.get('anti_spoofing', {}).get('min_depth_thresh', 50.0),
+            'max_depth_thresh': self.config_data.get('anti_spoofing', {}).get('max_depth_thresh', 200.0),
             'normalize_method': self.config_data.get('anti_spoofing', {}).get('normalize_method', 'min_max')
         })
 
