@@ -21,4 +21,4 @@ def suppress_warnings():
     
     # Set logging level for specific modules
     logging.getLogger("torch.hub").setLevel(logging.ERROR)
-    logging.getLogger("timm").setLevel(logging.ERROR) 
+    logging.getLogger("timm").setLevel(logging.ERROR)
