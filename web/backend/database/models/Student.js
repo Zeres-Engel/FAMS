@@ -2,56 +2,54 @@ const mongoose = require('mongoose');
 
 const StudentSchema = new mongoose.Schema({
   studentId: {
-    type: String,
-    required: [true, 'Student ID is required'],
+    type: Number,
+    required: true,
     unique: true
   },
-  firstName: {
+  userId: {
     type: String,
-    required: [true, 'First name is required']
+    required: true,
+    unique: true
   },
-  lastName: {
+  fullName: {
     type: String,
-    required: [true, 'Last name is required']
-  },
-  email: {
-    type: String,
-    required: [true, 'Email is required'],
-    unique: true,
-    match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please fill a valid email address']
+    required: true
   },
   dateOfBirth: {
     type: Date
   },
-  gender: {
-    type: String,
-    enum: ['male', 'female', 'other']
+  classId: {
+    type: Number,
+    ref: 'Class'
   },
-  contactNumber: {
-    type: String
+  batchId: {
+    type: Number,
+    ref: 'Batch'
+  },
+  gender: {
+    type: Boolean
   },
   address: {
     type: String
   },
-  classGroup: {
+  phone: {
     type: String
   },
-  major: {
-    type: String
-  },
-  enrollmentDate: {
-    type: Date,
-    default: Date.now
-  },
-  status: {
-    type: String,
-    enum: ['active', 'inactive', 'graduated', 'suspended'],
-    default: 'active'
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+  parentIds: [{
+    type: Number,
+    ref: 'Parent'
+  }]
+}, {
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
-module.exports = mongoose.model('Student', StudentSchema); 
+// Virtual for getting user info
+StudentSchema.virtual('user', {
+  ref: 'User',
+  localField: 'userId',
+  foreignField: 'userId',
+  justOne: true
+});
+
+module.exports = mongoose.model('Student', StudentSchema, 'students'); 

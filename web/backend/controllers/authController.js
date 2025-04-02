@@ -1,22 +1,50 @@
 const User = require('../database/models/User');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 // Generate JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'secret_key', {
+const generateToken = (userId) => {
+  return jwt.sign({ userId }, process.env.JWT_SECRET || 'secret_key', {
     expiresIn: '30d',
   });
 };
+
+// Create or update admin user function
+const ensureAdminExists = async () => {
+  try {
+    // Delete existing admin user if exists
+    await User.deleteOne({ userId: 'admin' });
+    console.log('Recreating admin account...');
+    
+    // Create admin user manually
+    const admin = new User({
+      userId: 'admin',
+      name: 'Administrator',
+      email: 'admin@fams.edu.vn',
+      password: '1234',  // This will be hashed by the pre-save middleware
+      role: 'Admin'
+    });
+    
+    await admin.save();
+    
+    console.log('Admin account created successfully!');
+  } catch (error) {
+    console.error('Error creating admin account:', error);
+  }
+};
+
+// Run this when module loads
+ensureAdminExists();
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
 exports.register = async (req, res) => {
   try {
-    const { username, email, password, role } = req.body;
-
+    const { userId, name, email, password, role } = req.body;
+    
     // Check if user already exists
-    const userExists = await User.findOne({ $or: [{ email }, { username }] });
+    const userExists = await User.findOne({ $or: [{ email }, { userId }] });
 
     if (userExists) {
       return res.status(400).json({ success: false, message: 'User already exists' });
@@ -24,21 +52,22 @@ exports.register = async (req, res) => {
 
     // Create user
     const user = await User.create({
-      username,
+      userId,
+      name,
       email,
       password,
-      role: role || 'student'
+      role: role || 'Student'
     });
 
     if (user) {
       res.status(201).json({
         success: true,
         data: {
-          _id: user._id,
-          username: user.username,
+          userId: user.userId,
+          name: user.name,
           email: user.email,
           role: user.role,
-          token: generateToken(user._id)
+          token: generateToken(user.userId)
         }
       });
     } else {
@@ -54,34 +83,53 @@ exports.register = async (req, res) => {
 // @access  Public
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { userId, password } = req.body;
+    
+    console.log('Login attempt:', { userId, passwordProvided: !!password });
 
-    // Check for user email
-    const user = await User.findOne({ email }).select('+password');
+    // Check for user by userId
+    const user = await User.findOne({ userId }).select('+password');
+    
+    console.log('User found:', !!user);
 
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Tài khoản không tồn tại. Vui lòng kiểm tra lại.' 
+      });
     }
 
     // Check if password matches
     const isMatch = await user.matchPassword(password);
+    
+    console.log('Password match:', isMatch);
 
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Mật khẩu không chính xác. Vui lòng thử lại.' 
+      });
     }
 
-    res.json({
+    const response = {
       success: true,
       data: {
-        _id: user._id,
-        username: user.username,
+        userId: user.userId,
+        name: user.name,
         email: user.email,
         role: user.role,
-        token: generateToken(user._id)
+        token: generateToken(user.userId)
       }
-    });
+    };
+
+    console.log('Sending response:', response);
+    res.json(response);
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Login error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Lỗi đăng nhập: ' + error.message 
+    });
   }
 };
 
@@ -90,15 +138,33 @@ exports.login = async (req, res) => {
 // @access  Private
 exports.getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findOne({ userId: req.user.userId });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Get additional data based on user role
+    let profileData = null;
+    if (user.role === 'Student') {
+      const Student = require('../database/models/Student');
+      profileData = await Student.findOne({ userId: user.userId });
+    } else if (user.role === 'Teacher') {
+      const Teacher = require('../database/models/Teacher');
+      profileData = await Teacher.findOne({ userId: user.userId });
+    } else if (user.role === 'Parent') {
+      const Parent = require('../database/models/Parent');
+      profileData = await Parent.findOne({ userId: user.userId });
+    }
 
     res.status(200).json({
       success: true,
       data: {
-        _id: user._id,
-        username: user.username,
+        userId: user.userId,
+        name: user.name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        profile: profileData
       }
     });
   } catch (error) {

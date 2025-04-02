@@ -25,8 +25,15 @@ CREATE TABLE Parent (
   Career VARCHAR(100),
   Phone VARCHAR(20),
   Gender BIT,
-  StudentIDs JSON,  -- Danh sách StudentID liên kết với Parent
+  StudentIDs JSON,
   FOREIGN KEY (UserID) REFERENCES UserAccount(UserID)
+);
+
+CREATE TABLE Batch (
+  BatchID INT AUTO_INCREMENT PRIMARY KEY,
+  BatchName VARCHAR(50) NOT NULL,
+  StartYear INT,
+  EndYear INT
 );
 
 CREATE TABLE Class (
@@ -45,7 +52,7 @@ CREATE TABLE Student (
   Gender BIT,
   Address VARCHAR(200),
   Phone VARCHAR(20),
-  ParentIDs JSON,  -- Danh sách ParentID liên kết với Student (có thể chứa 1 hoặc 2)
+  ParentIDs JSON,
   FOREIGN KEY (UserID) REFERENCES UserAccount(UserID),
   FOREIGN KEY (ClassID) REFERENCES Class(ClassID)
 );
@@ -68,7 +75,7 @@ CREATE TABLE Curriculum (
   CurriculumID INT AUTO_INCREMENT PRIMARY KEY,
   CurriculumName VARCHAR(100) NOT NULL,
   Description TEXT,
-  SubjectIDs JSON  -- Danh sách SubjectID thuộc Curriculum
+  SubjectIDs JSON
 );
 
 CREATE TABLE Semester (
@@ -77,7 +84,9 @@ CREATE TABLE Semester (
   StartDate DATETIME NOT NULL,
   EndDate DATETIME NOT NULL,
   CurriculumID INT NOT NULL,
-  FOREIGN KEY (CurriculumID) REFERENCES Curriculum(CurriculumID)
+  BatchID INT NOT NULL,
+  FOREIGN KEY (CurriculumID) REFERENCES Curriculum(CurriculumID),
+  FOREIGN KEY (BatchID) REFERENCES Batch(BatchID)
 );
 
 CREATE TABLE Announcement (
@@ -90,7 +99,7 @@ CREATE TABLE Announcement (
 
 CREATE TABLE RFID (
   RFID_ID VARCHAR(50) PRIMARY KEY,
-  UserID INT NOT NULL,  -- Dùng cho cả Teacher và Student
+  UserID INT NOT NULL,
   IssueDate DATETIME,
   ExpiryDate DATETIME,
   FOREIGN KEY (UserID) REFERENCES UserAccount(UserID)
@@ -117,8 +126,8 @@ CREATE TABLE ClassSession (
 CREATE TABLE AttendanceLog (
   AttendanceID INT AUTO_INCREMENT PRIMARY KEY,
   SessionID INT NOT NULL,
-  UserID INT NOT NULL,  -- Dùng cho cả Student và Teacher
-  CheckInTime DATETIME,
+  UserID INT NOT NULL,
+  CheckIn DATETIME,
   Status ENUM('Present','Late','Absent') DEFAULT 'Absent',
   FOREIGN KEY (SessionID) REFERENCES ClassSession(SessionID),
   FOREIGN KEY (UserID) REFERENCES UserAccount(UserID)

@@ -28,7 +28,20 @@ exports.protect = async (req, res, next) => {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
 
-    req.user = await User.findById(decoded.id);
+    // Find user by userId from token
+    const user = await User.findOne({ userId: decoded.userId });
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    req.user = {
+      userId: user.userId,
+      role: user.role
+    };
 
     next();
   } catch (error) {

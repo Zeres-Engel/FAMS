@@ -9,6 +9,9 @@ RUN npm install -g nodemon
 
 COPY . .
 
+# Tạo script để khởi động
+RUN echo "#!/bin/sh\nnode scripts/initDatabase.js\necho 'DB initialized, starting server...'\nexec npm run dev" > /app/start.sh && chmod +x /app/start.sh
+
 EXPOSE 3000
 
-CMD ["npm", "run", "dev"] 
+CMD ["/app/start.sh"] 

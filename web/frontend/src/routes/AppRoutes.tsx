@@ -1,11 +1,18 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LoginPage from "../pages/LoginPage/LoginPage";
 import HomePage from "../pages/HomePage/HomePage";
+import AuthRoute from "./AuthRoutes";
 
-const router = createBrowserRouter([
-    { path: "/", element: <HomePage /> },
-]);
-
-export default function AppRoutes() {
-  return <RouterProvider router={router} />;
+function AppRoutes(): React.JSX.Element {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={<AuthRoute element={<HomePage />} />} />
+      </Routes>
+    </Router>
+  );
 }
+
+export default AppRoutes;

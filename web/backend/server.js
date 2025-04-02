@@ -47,8 +47,16 @@ if (!fs.existsSync('backend/uploads')) {
 }
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*', // Cho phép mọi nguồn để dễ debug
+  credentials: true
+}));
 app.use(express.json());
+
+// Test route để kiểm tra kết nối
+app.get('/api/test', (req, res) => {
+  res.json({ success: true, message: 'API kết nối thành công!' });
+});
 
 // Routes
 app.use('/api/auth', authRoutes);

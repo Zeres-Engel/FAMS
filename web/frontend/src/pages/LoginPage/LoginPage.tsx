@@ -4,7 +4,8 @@ import useLoginPageHook from "./useLoginPage";
 import { Container } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
-import { Button, TextField } from "@mui/material";
+import { Button, TextField, CircularProgress } from "@mui/material";
+
 function LoginPage(): React.JSX.Element {
   const { state, handler } = useLoginPageHook();
   const validateField = {
@@ -63,11 +64,13 @@ function LoginPage(): React.JSX.Element {
                     label="Tên đăng nhập"
                     variant="outlined"
                     name="userName"
-                    onBlur={e => {
-                      if (!e?.target?.value)
-                        state?.setIsError(err => [...err, 1]);
-                      else state?.setIsError(err => [...err.slice(1)]);
+                    value={state.watchUserName}
+                    onBlur={() => {
+                      if (!state.watchUserName)
+                        state?.setIsError((err) => [...err, 1]);
+                      else state?.setIsError((err) => [...err.slice(1)]);
                     }}
+                    disabled={state.isLoading}
                   />
                   {state?.isError?.includes(1) && !state?.watchUserName && (
                     <Typography className="isBlank">
@@ -87,17 +90,26 @@ function LoginPage(): React.JSX.Element {
                     variant="outlined"
                     type="password"
                     name="password"
-                    onBlur={e => {
-                      if (!e?.target?.value)
-                        state?.setIsError(err => [...err, 2]);
-                      else state?.setIsError(err => [...err.slice(2)]);
+                    value={state.watchPassword}
+                    onBlur={() => {
+                      if (!state.watchPassword)
+                        state?.setIsError((err) => [...err, 2]);
+                      else state?.setIsError((err) => [...err.slice(2)]);
                     }}
+                    disabled={state.isLoading}
                   />
                   {state?.isError?.includes(2) && !state?.watchPassword && (
                     <Typography className="isBlank">
                       {"Mật khẩu không để trống"}
                     </Typography>
                   )}
+                  
+                  {state.loginError && (
+                    <Typography className="login-error" color="error" align="center" sx={{ mt: 1 }}>
+                      {state.loginError}
+                    </Typography>
+                  )}
+                  
                   <div className="forgot-Pass">
                     <Typography variant="body1">
                       <a href="youtube.com">Quên mật khẩu</a>
@@ -108,8 +120,13 @@ function LoginPage(): React.JSX.Element {
                       type="submit"
                       className="submit-Button"
                       variant="contained"
+                      disabled={state.isLoading}
                     >
-                      <Typography variant="body2">Đăng nhập</Typography>
+                      {state.isLoading ? (
+                        <CircularProgress size={24} color="inherit" />
+                      ) : (
+                        <Typography variant="body2">Đăng nhập</Typography>
+                      )}
                     </Button>
                   </div>
                 </form>
