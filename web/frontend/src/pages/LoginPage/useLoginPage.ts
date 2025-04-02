@@ -1,112 +1,70 @@
-import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { useWatch, useForm } from 'react-hook-form';
+import { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import { LoginForm } from "../../model/loginModels/loginModels.model";
-import api from '../../api/axiosConfig';
+import { authAPI } from '../../api/apiService';
 
 function useLoginPageHook() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [loginError, setLoginError] = React.useState(null);
-  
-  const [isError, setIsError] = React.useState<number[]>([]);
-  const [watchUserName, setWatchUserName] = React.useState("");
-  const [watchPassword, setWatchPassword] = React.useState("");
-  
-  // Kiểm tra kết nối API khi component mount
-  React.useEffect(() => {
-    async function testConnection() {
-      try {
-        console.log("Đang kiểm tra kết nối API...");
-        const response = await api.get('/test');
-        console.log("Kết quả kiểm tra API:", response.data);
-      } catch (error) {
-        console.error("Lỗi kết nối API:", error);
-      }
-    }
-    
-    testConnection();
-  }, []);
-  
-  const register = (name: string) => ({
-    name,
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-      if(name === "userName") {
-        setWatchUserName(e.target.value);
-      } else if (name === "password") {
-        setWatchPassword(e.target.value);
-      }
-    }
+  const {
+    register,
+    handleSubmit,
+    control,
+    setFocus,
+    formState: { errors },
+  } = useForm<LoginForm>({
+    defaultValues: {
+      userName: "",
+      password: "",
+    },
   });
   
-  const setFocus = (field: string) => {
-    const element = document.getElementById(field);
-    if (element) {
-      element.focus();
-    }
-  };
+  const [isError, setIsError] = useState<number[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [loginError, setLoginError] = useState<string>('');
+  const watchUserName = useWatch({ control, name: "userName" });
+  const watchPassword = useWatch({ control, name: "password" });
   
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if(!watchUserName || !watchPassword){
-      setIsError([1,2]);
+  const handleLogin = handleSubmit(async (data) => {
+    if (!watchUserName || !watchPassword) {
+      setIsError([1, 2]);
       watchUserName ? setFocus('password') : setFocus('userName');
       return;
     }
     
     setIsLoading(true);
-    setLoginError(null);
+    setLoginError('');
     
     try {
-      console.log("Đang gửi yêu cầu đăng nhập:", {
-        userId: watchUserName,
-        password: watchPassword ? "***" : undefined
-      });
+      const response = await authAPI.login(data.userName, data.password);
       
-      // Call the login API
-      const response = await api.post('/auth/login', {
-        userId: watchUserName,
-        password: watchPassword
-      });
-      
-      console.log("Kết quả đăng nhập:", response.data);
-      
-      // If login is successful
       if (response.data.success) {
-        // Store the token in a cookie
-        document.cookie = `jwtToken=${response.data.data?.token}; path=/; max-age=2592000`; // 30 days
+        // Save token to cookie
+        document.cookie = `jwtToken=${response.data.data.token}; path=/; max-age=${60 * 60 * 24 * 30}`;
         
-        // Redirect to homepage
+        // Redirect to home page
         navigate('/');
+      } else {
+        setLoginError(response.data.message || 'Đăng nhập thất bại');
       }
-    } catch (error) {
-      console.error("Chi tiết lỗi đăng nhập:", error);
-      
-      // Handle login errors
-      setLoginError(
-        error.response?.data?.message || 
-        'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin đăng nhập.'
-      );
+    } catch (error: any) {
+      setLoginError(error.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại');
     } finally {
       setIsLoading(false);
     }
-  };
+  });
   
   const state = { 
-    errors: {}, 
+    errors, 
     watchUserName, 
-    watchPassword,
-    isError,
-    setIsError,
+    watchPassword, 
+    isError, 
+    setIsError, 
     isLoading,
-    loginError
+    loginError 
   };
   
-  const handler = { 
-    register, 
-    handleLogin 
-  };
-  
+  const handler = { register, handleLogin };
   return { state, handler };
 }
 

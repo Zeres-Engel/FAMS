@@ -6,7 +6,8 @@ const {
   createStudent, 
   updateStudent, 
   deleteStudent,
-  importStudentsFromCSV
+  importStudentsFromCSV,
+  getStudentSchedule
 } = require('../controllers/studentController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -57,5 +58,8 @@ router
   .get(protect, getStudent)
   .put(protect, authorize('Admin'), updateStudent)
   .delete(protect, authorize('Admin'), deleteStudent);
+
+// Add new route for student schedule
+router.get('/:id/schedule', protect, getStudentSchedule);
 
 module.exports = router; 

@@ -41,7 +41,7 @@ function LoginPage(): React.JSX.Element {
             alignItems={"center"}
             className="login-Section"
           >
-            <Grid size={12}>
+            <Grid size={10}>
               <div className="login-Form">
                 <div className="login-Form-Header">
                   <Typography variant="h4" align="center" fontWeight={700} className="title-1">
@@ -64,11 +64,10 @@ function LoginPage(): React.JSX.Element {
                     label="Tên đăng nhập"
                     variant="outlined"
                     name="userName"
-                    value={state.watchUserName}
-                    onBlur={() => {
-                      if (!state.watchUserName)
-                        state?.setIsError((err) => [...err, 1]);
-                      else state?.setIsError((err) => [...err.slice(1)]);
+                    onBlur={e => {
+                      if (!e?.target?.value)
+                        state?.setIsError(err => [...err, 1]);
+                      else state?.setIsError(err => [...err.slice(1)]);
                     }}
                     disabled={state.isLoading}
                   />
@@ -90,11 +89,10 @@ function LoginPage(): React.JSX.Element {
                     variant="outlined"
                     type="password"
                     name="password"
-                    value={state.watchPassword}
-                    onBlur={() => {
-                      if (!state.watchPassword)
-                        state?.setIsError((err) => [...err, 2]);
-                      else state?.setIsError((err) => [...err.slice(2)]);
+                    onBlur={e => {
+                      if (!e?.target?.value)
+                        state?.setIsError(err => [...err, 2]);
+                      else state?.setIsError(err => [...err.slice(2)]);
                     }}
                     disabled={state.isLoading}
                   />

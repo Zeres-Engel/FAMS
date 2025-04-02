@@ -168,4 +168,54 @@ exports.importStudentsFromCSV = async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
+};
+
+// @desc    Get student schedule
+// @route   GET /api/students/:id/schedule
+// @access  Private
+exports.getStudentSchedule = async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    const Student = require('../database/models/Student');
+    const Schedule = require('../database/models/Schedule');
+    
+    // First find the student to get their class
+    const student = await Student.findOne({ userId: studentId });
+    
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy học sinh'
+      });
+    }
+    
+    // Get current semester - this would typically come from your settings or semester service
+    // For now, we'll use a simple query to get the latest semester
+    const Semester = require('../database/models/Semester');
+    const currentSemester = await Semester.findOne().sort('-semesterId').limit(1);
+    
+    if (!currentSemester) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy học kỳ hiện tại'
+      });
+    }
+    
+    // Find schedules for the student's class in the current semester
+    const schedules = await Schedule.find({ 
+      classId: student.classId,
+      semesterId: currentSemester.semesterId
+    }).populate('subject').populate('teacher').populate('classroom').populate('class').populate('semester');
+    
+    res.status(200).json({
+      success: true,
+      data: schedules
+    });
+  } catch (error) {
+    console.error('Error getting student schedule:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 }; 

@@ -1,16 +1,17 @@
-FROM node:20-alpine
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy package.json and package-lock.json files
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
 # Install dependencies
 RUN npm install
-# Install TypeScript globally
+
+# Install global packages
 RUN npm install -g typescript
 
-# Copy the rest of the application
+# Copy the rest of the code
 COPY . .
 
 # Set environment variables
@@ -18,6 +19,8 @@ ENV REACT_APP_API_URL=http://localhost:3000/api
 ENV NODE_ENV=development
 ENV WDS_SOCKET_PORT=0
 
+# Expose port
 EXPOSE 3000
 
-CMD ["npm", "start"] 
+# Start the app with our dev script that installs missing dependencies
+CMD ["npm", "run", "dev"] 

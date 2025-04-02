@@ -29,4 +29,24 @@ api.interceptors.request.use(
   }
 );
 
+// Auth service
+export const authAPI = {
+  login: async (userId: string, password: string) => {
+    return api.post('/auth/login', { userId, password });
+  },
+  getProfile: async () => {
+    return api.get('/auth/me');
+  }
+};
+
+// Schedule service
+export const scheduleAPI = {
+  getStudentSchedule: async (studentId: string) => {
+    return api.get(`/students/${studentId}/schedule`);
+  },
+  getTeacherSchedule: async (teacherId: string) => {
+    return api.get(`/users/teachers/${teacherId}/schedule`);
+  }
+};
+
 export default api; 
