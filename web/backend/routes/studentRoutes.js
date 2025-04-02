@@ -41,7 +41,7 @@ const router = express.Router();
 router.post(
   '/import', 
   protect, 
-  authorize('admin'), 
+  authorize('Admin'), 
   upload.single('file'), 
   importStudentsFromCSV
 );
@@ -50,12 +50,12 @@ router.post(
 router
   .route('/')
   .get(protect, getStudents)
-  .post(protect, authorize('admin'), createStudent);
+  .post(protect, authorize('Admin'), createStudent);
 
 router
   .route('/:id')
   .get(protect, getStudent)
-  .put(protect, authorize('admin'), updateStudent)
-  .delete(protect, authorize('admin'), deleteStudent);
+  .put(protect, authorize('Admin'), updateStudent)
+  .delete(protect, authorize('Admin'), deleteStudent);
 
 module.exports = router; 

@@ -8,106 +8,23 @@ const dotenv = require('dotenv');
 // Load environment variables
 dotenv.config();
 
-// Models
-const User = mongoose.model('User', new mongoose.Schema({
-  userId: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true, minlength: 4 },
-  role: { type: String, enum: ['Admin', 'Teacher', 'Parent', 'Student'], default: 'Student' },
-  createdAt: { type: Date, default: Date.now }
-}), 'users');
+// Import database connection
+const { connectToFAMS } = require('../database/database');
 
-const Student = mongoose.model('Student', new mongoose.Schema({
-  studentId: { type: Number, required: true },
-  userId: { type: String, required: true },
-  fullName: { type: String, required: true },
-  dateOfBirth: { type: Date },
-  classId: { type: Number, required: true },
-  batchId: { type: Number, required: true },
-  gender: { type: Boolean },
-  address: { type: String },
-  phone: { type: String },
-  parentIds: [{ type: Number }]
-}), 'students');
-
-const Teacher = mongoose.model('Teacher', new mongoose.Schema({
-  teacherId: { type: Number, required: true },
-  userId: { type: String, required: true },
-  fullName: { type: String, required: true },
-  email: { type: String },
-  dateOfBirth: { type: Date },
-  phone: { type: String },
-  gender: { type: Boolean }
-}), 'teachers');
-
-const Parent = mongoose.model('Parent', new mongoose.Schema({
-  parentId: { type: Number, required: true },
-  userId: { type: String, required: true },
-  fullName: { type: String, required: true },
-  career: { type: String },
-  phone: { type: String },
-  gender: { type: Boolean },
-  studentIds: [{ type: Number }]
-}), 'parents');
-
-const Class = mongoose.model('Class', new mongoose.Schema({
-  classId: { type: Number, required: true },
-  className: { type: String, required: true },
-  homeroomTeacherId: { type: Number },
-  batchId: { type: Number, required: true }
-}), 'classes');
-
-const Batch = mongoose.model('Batch', new mongoose.Schema({
-  batchId: { type: Number, required: true },
-  batchName: { type: String, required: true },
-  startYear: { type: Number, required: true },
-  endYear: { type: Number, required: true },
-  grade: { type: Number, required: true }
-}), 'batches');
-
-const Subject = mongoose.model('Subject', new mongoose.Schema({
-  subjectId: { type: Number, required: true },
-  name: { type: String, required: true },
-  type: { type: String },
-  description: { type: String }
-}), 'subjects');
-
-const Classroom = mongoose.model('Classroom', new mongoose.Schema({
-  classroomId: { type: Number, required: true },
-  roomNumber: { type: String, required: true },
-  building: { type: String },
-  capacity: { type: Number }
-}), 'classrooms');
-
-const Schedule = mongoose.model('Schedule', new mongoose.Schema({
-  scheduleId: { type: Number, required: true },
-  semesterId: { type: Number, required: true },
-  classId: { type: Number, required: true },
-  subjectId: { type: Number },
-  teacherId: { type: Number },
-  classroomId: { type: Number },
-  dayOfWeek: { type: String, required: true },
-  period: { type: Number, required: true },
-  startTime: { type: String, required: true },
-  endTime: { type: String, required: true },
-  isFreeTime: { type: Boolean, default: false }
-}), 'schedules');
-
-const Semester = mongoose.model('Semester', new mongoose.Schema({
-  semesterId: { type: Number, required: true },
-  name: { type: String, required: true },
-  startDate: { type: Date, required: true },
-  endDate: { type: Date, required: true }
-}), 'semesters');
-
-const Curriculum = mongoose.model('Curriculum', new mongoose.Schema({
-  curriculumId: { type: Number, required: true },
-  curriculumName: { type: String, required: true },
-  description: { type: String },
-  batchId: { type: Number, required: true },
-  subjectIds: [{ type: Number }]
-}), 'curriculums');
+// Import models
+const {
+  User,
+  Student,
+  Teacher,
+  Parent,
+  Class,
+  Batch,
+  Subject,
+  Classroom,
+  Schedule,
+  Semester,
+  Curriculum
+} = require('../database/models');
 
 // Utility Functions
 // Hàm để xóa dấu tiếng Việt
@@ -249,14 +166,12 @@ const initDatabase = async () => {
   
   try {
     // Connect to MongoDB
-    const mongoUri = process.env.MONGO_URI || 'mongodb+srv://db_server:1234@fams.8istq.mongodb.net/?retryWrites=true&w=majority&appName=FAMS';
-    
     console.log('Connecting to MongoDB...');
-    await mongoose.connect(mongoUri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
-    console.log(`MongoDB Connected: ${mongoose.connection.host}`);
+    const result = await connectToFAMS();
+    
+    if (!result.success) {
+      throw new Error(`Could not connect to database: ${result.message}`);
+    }
     
     // Drop existing collections
     console.log('Cleaning up database...');

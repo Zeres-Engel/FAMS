@@ -12,24 +12,46 @@ const generateToken = (userId) => {
 // Create or update admin user function
 const ensureAdminExists = async () => {
   try {
-    // Delete existing admin user if exists
-    await User.deleteOne({ userId: 'admin' });
-    console.log('Recreating admin account...');
+    // Kiểm tra xem tài khoản admin đã tồn tại chưa
+    const adminExists = await User.findOne({ userId: 'admin' }).select('+password');
     
-    // Create admin user manually
-    const admin = new User({
-      userId: 'admin',
-      name: 'Administrator',
-      email: 'admin@fams.edu.vn',
-      password: '1234',  // This will be hashed by the pre-save middleware
-      role: 'Admin'
-    });
-    
-    await admin.save();
-    
-    console.log('Admin account created successfully!');
+    // Nếu admin chưa tồn tại, tạo mới
+    if (!adminExists) {
+      console.log('Admin account not found, creating new admin account...');
+      
+      // Tạo tài khoản admin
+      const admin = new User({
+        userId: 'admin',
+        name: 'Administrator',
+        email: 'admin@fams.edu.vn',
+        password: '1234',  // Mật khẩu sẽ được hash bởi middleware pre-save
+        role: 'Admin'
+      });
+      
+      await admin.save();
+      console.log('Admin account created successfully!');
+    } else {
+      console.log('Admin account already exists');
+      
+      // Chỉ kiểm tra mật khẩu nếu có thể truy xuất mật khẩu
+      if (adminExists.password) {
+        // Kiểm tra thử mật khẩu '1234' với tài khoản admin
+        const isPasswordValid = await adminExists.matchPassword('1234');
+        console.log('Is default password valid:', isPasswordValid);
+        
+        // Nếu mật khẩu không phải là 1234, reset lại
+        if (!isPasswordValid) {
+          console.log('Resetting admin password to default');
+          adminExists.password = '1234'; // Mật khẩu sẽ được hash bởi middleware pre-save
+          await adminExists.save();
+          console.log('Admin password reset successfully');
+        }
+      } else {
+        console.log('Admin password not accessible, skipping password check');
+      }
+    }
   } catch (error) {
-    console.error('Error creating admin account:', error);
+    console.error('Error managing admin account:', error);
   }
 };
 

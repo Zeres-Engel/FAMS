@@ -2,15 +2,22 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
-const connectDB = require('./database/config');
-const { protect, authorize } = require('./middleware/authMiddleware');
+const { DatabaseUtils } = require('./database');
+const dotenv = require('dotenv');
+
+// Load environment variables
+dotenv.config();
 
 // Route files
 const authRoutes = require('./routes/authRoutes');
 const studentRoutes = require('./routes/studentRoutes');
-
-// Connect to database
-connectDB();
+const userRoutes = require('./routes/userRoutes');
+// Remove imports that don't exist yet
+// const teacherRoutes = require('./routes/teacherRoutes');
+// const parentRoutes = require('./routes/parentRoutes');
+// const classRoutes = require('./routes/classRoutes');
+// const batchRoutes = require('./routes/batchRoutes');
+// const scheduleRoutes = require('./routes/scheduleRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -58,9 +65,38 @@ app.get('/api/test', (req, res) => {
   res.json({ success: true, message: 'API kết nối thành công!' });
 });
 
+// Test route để kiểm tra kết nối MongoDB
+app.get('/api/test/db', async (req, res) => {
+  try {
+    // Kiểm tra trạng thái kết nối
+    const connectionStatus = DatabaseUtils.checkConnectionStatus();
+    
+    // Lấy thông tin database
+    const dbInfo = await DatabaseUtils.getDatabaseInfo();
+    
+    res.json({
+      success: true,
+      connection: connectionStatus,
+      database: dbInfo
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
+app.use('/api/users', userRoutes);
+// Remove routes that don't exist yet
+// app.use('/api/teachers', teacherRoutes);
+// app.use('/api/parents', parentRoutes);
+// app.use('/api/classes', classRoutes);
+// app.use('/api/batches', batchRoutes);
+// app.use('/api/schedules', scheduleRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -76,6 +112,23 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-}); 
+// Start the server
+const startServer = async () => {
+  try {
+    // Kết nối đến cơ sở dữ liệu FAMS
+    console.log('Attempting to connect to MongoDB...');
+    await DatabaseUtils.connectToFAMS();
+    console.log(`MongoDB Connection Status: ${DatabaseUtils.checkConnectionStatus()}`);
+
+    // Start server
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Server initialization error:', error);
+    process.exit(1);
+  }
+};
+
+// Khởi động server
+startServer(); 
