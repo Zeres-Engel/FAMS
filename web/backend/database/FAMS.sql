@@ -11,21 +11,12 @@ CREATE TABLE Teacher (
   UserID INT NOT NULL UNIQUE,
   FullName VARCHAR(100) NOT NULL,
   Email VARCHAR(100),
-  DateOfBirth DATETIME,
+  DateOfBirth DATE,
   Address VARCHAR(100),
   Phone VARCHAR(20),
   Gender BIT,
-  FOREIGN KEY (UserID) REFERENCES UserAccount(UserID)
-);
-
-CREATE TABLE Parent (
-  ParentID INT AUTO_INCREMENT PRIMARY KEY,
-  UserID INT NOT NULL UNIQUE,
-  FullName VARCHAR(100),
-  Career VARCHAR(100),
-  Phone VARCHAR(20),
-  Gender BIT,
-  StudentIDs JSON,
+  Major VARCHAR(255),
+  WeeklyCapacity INT NOT NULL DEFAULT 10,
   FOREIGN KEY (UserID) REFERENCES UserAccount(UserID)
 );
 
@@ -40,20 +31,47 @@ CREATE TABLE Class (
   ClassID INT AUTO_INCREMENT PRIMARY KEY,
   ClassName VARCHAR(50) NOT NULL,
   HomeroomTeacherID INT,
-  FOREIGN KEY (HomeroomTeacherID) REFERENCES Teacher(TeacherID)
+  BatchID INT,
+  FOREIGN KEY (HomeroomTeacherID) REFERENCES Teacher(TeacherID),
+  FOREIGN KEY (BatchID) REFERENCES Batch(BatchID)
 );
 
 CREATE TABLE Student (
   StudentID INT AUTO_INCREMENT PRIMARY KEY,
   UserID INT NOT NULL UNIQUE,
   FullName VARCHAR(100) NOT NULL,
-  DateOfBirth DATETIME,
+  DateOfBirth DATE,
   ClassID INT,
   Gender BIT,
   Address VARCHAR(200),
   Phone VARCHAR(20),
-  ParentIDs JSON,
   FOREIGN KEY (UserID) REFERENCES UserAccount(UserID),
+  FOREIGN KEY (ClassID) REFERENCES Class(ClassID)
+);
+
+CREATE TABLE Parent (
+  ParentID INT AUTO_INCREMENT PRIMARY KEY,
+  UserID INT NOT NULL UNIQUE,
+  FullName VARCHAR(100),
+  Career VARCHAR(100),
+  Phone VARCHAR(20),
+  Gender BIT,
+  FOREIGN KEY (UserID) REFERENCES UserAccount(UserID)
+);
+
+CREATE TABLE ParentStudent (
+  ParentID INT NOT NULL,
+  StudentID INT NOT NULL,
+  PRIMARY KEY (ParentID, StudentID),
+  FOREIGN KEY (ParentID) REFERENCES Parent(ParentID),
+  FOREIGN KEY (StudentID) REFERENCES Student(StudentID)
+);
+
+CREATE TABLE TeacherClassAssignment (
+  TeacherID INT NOT NULL,
+  ClassID INT NOT NULL,
+  PRIMARY KEY (TeacherID, ClassID),
+  FOREIGN KEY (TeacherID) REFERENCES Teacher(TeacherID),
   FOREIGN KEY (ClassID) REFERENCES Class(ClassID)
 );
 
@@ -74,19 +92,36 @@ CREATE TABLE Subject (
 CREATE TABLE Curriculum (
   CurriculumID INT AUTO_INCREMENT PRIMARY KEY,
   CurriculumName VARCHAR(100) NOT NULL,
-  Description TEXT,
-  SubjectIDs JSON
+  Description TEXT
+);
+
+CREATE TABLE CurriculumSubject (
+  CurriculumID INT NOT NULL,
+  SubjectID INT NOT NULL,
+  Sessions INT NOT NULL DEFAULT 2,
+  PRIMARY KEY (CurriculumID, SubjectID),
+  FOREIGN KEY (CurriculumID) REFERENCES Curriculum(CurriculumID),
+  FOREIGN KEY (SubjectID) REFERENCES Subject(SubjectID)
 );
 
 CREATE TABLE Semester (
   SemesterID INT AUTO_INCREMENT PRIMARY KEY,
   SemesterName VARCHAR(50) NOT NULL,
-  StartDate DATETIME NOT NULL,
-  EndDate DATETIME NOT NULL,
+  StartDate DATE NOT NULL,
+  EndDate DATE NOT NULL,
   CurriculumID INT NOT NULL,
   BatchID INT NOT NULL,
   FOREIGN KEY (CurriculumID) REFERENCES Curriculum(CurriculumID),
   FOREIGN KEY (BatchID) REFERENCES Batch(BatchID)
+);
+
+CREATE TABLE Slot (
+  SlotID INT AUTO_INCREMENT PRIMARY KEY,
+  SlotNumber INT NOT NULL,
+  DayOfWeek ENUM('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday') NOT NULL,
+  StartTime TIME NOT NULL,
+  EndTime TIME NOT NULL,
+  UNIQUE (DayOfWeek, SlotNumber)
 );
 
 CREATE TABLE Announcement (
@@ -112,15 +147,15 @@ CREATE TABLE ClassSession (
   SubjectID INT NOT NULL,
   TeacherID INT NOT NULL,
   ClassroomID INT NOT NULL,
-  SessionDate DATETIME NOT NULL,
-  StartTime TIME NOT NULL,
-  EndTime TIME NOT NULL,
+  SessionDate DATE NOT NULL,
+  SlotID INT NOT NULL,
   Topic VARCHAR(255),
   FOREIGN KEY (SemesterID) REFERENCES Semester(SemesterID),
   FOREIGN KEY (ClassID) REFERENCES Class(ClassID),
   FOREIGN KEY (SubjectID) REFERENCES Subject(SubjectID),
   FOREIGN KEY (TeacherID) REFERENCES Teacher(TeacherID),
-  FOREIGN KEY (ClassroomID) REFERENCES Classroom(ClassroomID)
+  FOREIGN KEY (ClassroomID) REFERENCES Classroom(ClassroomID),
+  FOREIGN KEY (SlotID) REFERENCES Slot(SlotID)
 );
 
 CREATE TABLE AttendanceLog (
@@ -140,14 +175,13 @@ CREATE TABLE Schedule (
   SubjectID INT NOT NULL,
   TeacherID INT NOT NULL,
   ClassroomID INT NOT NULL,
-  DayOfWeek ENUM('Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday') NOT NULL,
-  StartTime TIME NOT NULL,
-  EndTime TIME NOT NULL,
+  SlotID INT NOT NULL,
   FOREIGN KEY (SemesterID) REFERENCES Semester(SemesterID),
   FOREIGN KEY (ClassID) REFERENCES Class(ClassID),
   FOREIGN KEY (SubjectID) REFERENCES Subject(SubjectID),
   FOREIGN KEY (TeacherID) REFERENCES Teacher(TeacherID),
-  FOREIGN KEY (ClassroomID) REFERENCES Classroom(ClassroomID)
+  FOREIGN KEY (ClassroomID) REFERENCES Classroom(ClassroomID),
+  FOREIGN KEY (SlotID) REFERENCES Slot(SlotID)
 );
 
 CREATE TABLE Notification (

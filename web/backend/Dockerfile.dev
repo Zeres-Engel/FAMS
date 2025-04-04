@@ -2,16 +2,25 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Copy package files
 COPY package*.json ./
 
+# Install dependencies
 RUN npm install
+
+# Install nodemon globally
 RUN npm install -g nodemon
 
+# Copy application code
 COPY . .
 
-# Tạo script để khởi động
-RUN echo "#!/bin/sh\nnode scripts/initDatabase.js\necho 'DB initialized, starting server...'\nexec npm run dev" > /app/start.sh && chmod +x /app/start.sh
+# Make the entrypoint script executable
+RUN chmod +x docker-entrypoint.sh
 
 EXPOSE 3000
 
-CMD ["/app/start.sh"] 
+# Set the entrypoint script
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+
+# Run the default command
+CMD ["npm", "run", "dev"] 

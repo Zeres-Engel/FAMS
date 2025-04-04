@@ -4,7 +4,7 @@ import useLoginPageHook from "./useLoginPage";
 import { Container } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
-import { Button, TextField, CircularProgress } from "@mui/material";
+import { Button, TextField, CircularProgress, Alert } from "@mui/material";
 
 function LoginPage(): React.JSX.Element {
   const { state, handler } = useLoginPageHook();
@@ -41,13 +41,18 @@ function LoginPage(): React.JSX.Element {
             alignItems={"center"}
             className="login-Section"
           >
-            <Grid size={12}>
+            <Grid size={10}>
               <div className="login-Form">
                 <div className="login-Form-Header">
                   <Typography variant="h4" align="center" fontWeight={700} className="title-1">
                     Đăng nhập
                   </Typography>
                 </div>
+                {state.loginError && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    {state.loginError}
+                  </Alert>
+                )}
                 <form
                   onSubmit={handler.handleLogin}
                   className="login-Main-Form"
@@ -64,11 +69,10 @@ function LoginPage(): React.JSX.Element {
                     label="Tên đăng nhập"
                     variant="outlined"
                     name="userName"
-                    value={state.watchUserName}
-                    onBlur={() => {
-                      if (!state.watchUserName)
-                        state?.setIsError((err) => [...err, 1]);
-                      else state?.setIsError((err) => [...err.slice(1)]);
+                    onBlur={e => {
+                      if (!e?.target?.value)
+                        state?.setIsError(err => [...err, 1]);
+                      else state?.setIsError(err => [...err.slice(1)]);
                     }}
                     disabled={state.isLoading}
                   />
@@ -90,11 +94,10 @@ function LoginPage(): React.JSX.Element {
                     variant="outlined"
                     type="password"
                     name="password"
-                    value={state.watchPassword}
-                    onBlur={() => {
-                      if (!state.watchPassword)
-                        state?.setIsError((err) => [...err, 2]);
-                      else state?.setIsError((err) => [...err.slice(2)]);
+                    onBlur={e => {
+                      if (!e?.target?.value)
+                        state?.setIsError(err => [...err, 2]);
+                      else state?.setIsError(err => [...err.slice(2)]);
                     }}
                     disabled={state.isLoading}
                   />
@@ -103,13 +106,6 @@ function LoginPage(): React.JSX.Element {
                       {"Mật khẩu không để trống"}
                     </Typography>
                   )}
-                  
-                  {state.loginError && (
-                    <Typography className="login-error" color="error" align="center" sx={{ mt: 1 }}>
-                      {state.loginError}
-                    </Typography>
-                  )}
-                  
                   <div className="forgot-Pass">
                     <Typography variant="body1">
                       <a href="youtube.com">Quên mật khẩu</a>

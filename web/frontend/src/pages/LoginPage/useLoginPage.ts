@@ -1,111 +1,85 @@
-import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { useWatch, useForm } from 'react-hook-form';
+import { useState } from "react";
 import { LoginForm } from "../../model/loginModels/loginModels.model";
-import api from '../../api/axiosConfig';
+import authService from '../../services/authService';
+import { useNavigate } from 'react-router-dom';
+import tokenRefresher from '../../services/tokenRefresher';
 
 function useLoginPageHook() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [loginError, setLoginError] = React.useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   
-  const [isError, setIsError] = React.useState<number[]>([]);
-  const [watchUserName, setWatchUserName] = React.useState("");
-  const [watchPassword, setWatchPassword] = React.useState("");
-  
-  // Kiểm tra kết nối API khi component mount
-  React.useEffect(() => {
-    async function testConnection() {
-      try {
-        console.log("Đang kiểm tra kết nối API...");
-        const response = await api.get('/test');
-        console.log("Kết quả kiểm tra API:", response.data);
-      } catch (error) {
-        console.error("Lỗi kết nối API:", error);
-      }
-    }
-    
-    testConnection();
-  }, []);
-  
-  const register = (name: string) => ({
-    name,
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-      if(name === "userName") {
-        setWatchUserName(e.target.value);
-      } else if (name === "password") {
-        setWatchPassword(e.target.value);
-      }
-    }
+  const {
+    register,
+    handleSubmit,
+    control,
+    setFocus,
+    formState: { errors },
+  } = useForm<LoginForm>({
+    defaultValues: {
+      userName: "",
+      password: "",
+    },
   });
   
-  const setFocus = (field: string) => {
-    const element = document.getElementById(field);
-    if (element) {
-      element.focus();
-    }
-  };
+  const [isError, setIsError] = useState<number[]>([]);
+  const watchUserName = useWatch({ control, name: "userName" });
+  const watchPassword = useWatch({ control, name: "password" });
   
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = handleSubmit(async (data: LoginForm) => {
+    // Reset previous errors
+    setLoginError(null);
     
-    if(!watchUserName || !watchPassword){
+    // Validate form
+    if(!watchUserName || !watchPassword) {
       setIsError([1,2]);
       watchUserName ? setFocus('password') : setFocus('userName');
       return;
     }
     
-    setIsLoading(true);
-    setLoginError(null);
-    
     try {
-      console.log("Đang gửi yêu cầu đăng nhập:", {
-        userId: watchUserName,
-        password: watchPassword ? "***" : undefined
-      });
+      setIsLoading(true);
+      console.log('Login attempt with:', { userName: data.userName });
       
-      // Call the login API
-      const response = await api.post('/auth/login', {
-        userId: watchUserName,
-        password: watchPassword
-      });
+      // Call auth service login method
+      const user = await authService.login(data);
       
-      console.log("Kết quả đăng nhập:", response.data);
+      console.log('Login successful:', user);
       
-      // If login is successful
-      if (response.data.success) {
-        // Store the token in a cookie
-        document.cookie = `jwtToken=${response.data.data?.token}; path=/; max-age=2592000`; // 30 days
-        
-        // Redirect to homepage
-        navigate('/');
+      // Start token refresh mechanism
+      tokenRefresher.startTokenRefresh();
+      
+      // Redirect to homepage or dashboard based on role
+      navigate('/');
+    } catch (error: any) {
+      console.error('Login error:', error);
+      
+      // Improved error message handling
+      let errorMessage = 'Đăng nhập không thành công. Vui lòng thử lại.';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response && error.response.data) {
+        errorMessage = error.response.data.message || errorMessage;
       }
-    } catch (error) {
-      console.error("Chi tiết lỗi đăng nhập:", error);
       
-      // Handle login errors
-      setLoginError(
-        error.response?.data?.message || 
-        'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin đăng nhập.'
-      );
+      setLoginError(errorMessage);
     } finally {
       setIsLoading(false);
     }
-  };
+  });
   
   const state = { 
-    errors: {}, 
+    errors, 
     watchUserName, 
-    watchPassword,
-    isError,
-    setIsError,
-    isLoading,
-    loginError
+    watchPassword, 
+    isError, 
+    setIsError, 
+    isLoading, 
+    loginError 
   };
-  
-  const handler = { 
-    register, 
-    handleLogin 
-  };
+  const handler = { register, handleLogin };
   
   return { state, handler };
 }
