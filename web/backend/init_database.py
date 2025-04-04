@@ -1,4 +1,3 @@
-# init_database.py
 import os, csv, random, bcrypt, datetime, unicodedata
 from dotenv import load_dotenv
 from pymongo import MongoClient
@@ -29,14 +28,6 @@ def parse_date(date_str: str):
     return None
 
 def generate_username(full_name: str, id_num: int, batch: int = None) -> str:
-    """
-    Sinh username theo cấu trúc:
-      - Lấy phần cuối (tên gọi) của full_name (sau khi xóa dấu, chuyển về chữ thường)
-      - Lấy chữ cái đầu của các phần còn lại (họ và tên đệm)
-      - Nếu có batch: username = <given_name><initials><batch><id>
-      - Nếu không có batch: username = <given_name><initials><id>
-    VD: "Nguyễn Phước Thành", id=12, batch=3 -> "thanh" + "np" + "3" + "12" = "thanhnp312"
-    """
     parts = remove_accents(full_name).lower().strip().split()
     if not parts:
         return str(id_num)
@@ -126,8 +117,6 @@ def init_database():
     client = connect_to_mongodb()
     db = client["fams"]
     drop_all_collections(db)
-    
-    # Tạo admin
     admin_user = {
         "userId": "admin",
         "name": "Administrator",
@@ -136,16 +125,12 @@ def init_database():
         "role": "Admin"
     }
     db.users.insert_one(admin_user)
-    
     db.batches.insert_many([
         {"batchId": 3, "BatchName": "Khóa 2023-2026 (Lớp 10)", "StartYear": 2023, "EndYear": 2026},
         {"batchId": 2, "BatchName": "Khóa 2022-2025 (Lớp 11)", "StartYear": 2022, "EndYear": 2025},
         {"batchId": 1, "BatchName": "Khóa 2021-2024 (Lớp 12)", "StartYear": 2021, "EndYear": 2024}
     ])
-    
     db.create_collection("classes")
-    
-    # Import phòng học
     room_csv = find_file_path(["backend/database/room.csv", "database/room.csv"])
     if room_csv:
         rooms = []
@@ -170,10 +155,7 @@ def init_database():
             {"classroomId": 3, "RoomNumber": "B101", "Building": "B", "Capacity": 40},
             {"classroomId": 4, "RoomNumber": "B102", "Building": "B", "Capacity": 40}
         ])
-    
     import_slot_format(db)
-    
-    # Import subjects
     subjects_data = []
     subj_path = find_file_path(["backend/database/subject.csv", "database/subject.csv"])
     if subj_path:
@@ -189,8 +171,6 @@ def init_database():
     if subjects_data:
         db.subjects.insert_many(subjects_data)
         print(f"[INIT] Imported {len(subjects_data)} subjects.")
-    
-    # Import teachers
     teachers = []
     teacher_users = []
     teacher_id_counter = 1
@@ -205,7 +185,6 @@ def init_database():
                 gender = row.get("Gender", "False").lower() in ["true", "1", "yes"]
                 major = row.get("Major", "")
                 weekly_capacity = row.get("WeeklyCapacity", "10")
-                # Với teacher, không có batch nên không truyền batch
                 username = generate_username(full_name, teacher_id_counter)
                 teacher_users.append({
                     "userId": username,
@@ -232,8 +211,6 @@ def init_database():
     if teachers:
         db.teachers.insert_many(teachers)
     print(f"[INIT] Imported {len(teachers)} teachers.")
-    
-    # Import students
     def import_students(csv_path, batch_id, student_id_start):
         students = []
         sid = student_id_start
@@ -248,7 +225,6 @@ def init_database():
                 gender = row.get("Gender", "False").lower() in ["true", "1", "yes"]
                 phone = row.get("Phone", "")
                 address = row.get("Address", "")
-                # Với student, truyền thêm batch id để tạo username theo cấu trúc yêu cầu
                 uname = generate_username(fn, sid, batch_id)
                 db.users.insert_one({
                     "userId": uname,
@@ -271,7 +247,6 @@ def init_database():
                 })
                 sid += 1
         return students, sid
-    
     student_id_counter = 1
     students_10 = []
     students_11 = []
@@ -289,7 +264,6 @@ def init_database():
     if all_students:
         db.students.insert_many(all_students)
         print(f"[INIT] Imported {len(all_students)} students.")
-    
     def distribute_students(students, grade, batch_id):
         students_sorted = sorted(students, key=lambda s: s["fullName"])
         chunk_size = 20
@@ -308,13 +282,10 @@ def init_database():
             db.classes.update_one({"_id": r.inserted_id}, {"$set": {"classId": new_class_id}})
             for st in chunk:
                 db.students.update_one({"studentId": st["studentId"]}, {"$set": {"classId": new_class_id}})
-    
     distribute_students(students_10, 10, 3)
     distribute_students(students_11, 11, 2)
     distribute_students(students_12, 12, 1)
     print("[INIT] Distributed students into classes.")
-    
-    # Import parents
     parent_users = []
     parents_data = []
     parent_id = 1
@@ -327,7 +298,6 @@ def init_database():
                 gender = row.get("Gender", "False").lower() in ["true", "1", "yes"]
                 phone = row.get("Phone", "")
                 career = row.get("Career", "")
-                # Với parent, không có batch nên chỉ truyền id
                 uname = generate_username(fn, parent_id)
                 parent_users.append({
                     "userId": uname,
@@ -351,7 +321,6 @@ def init_database():
     if parents_data:
         db.parents.insert_many(parents_data)
     print(f"[INIT] Imported {len(parents_data)} parents.")
-    
     all_stu_db = list(db.students.find())
     all_par_db = list(db.parents.find())
     for s in all_stu_db:
@@ -360,31 +329,41 @@ def init_database():
         for p in chosen:
             db.parents.update_one({"parentId": p["parentId"]}, {"$addToSet": {"studentIds": s["studentId"]}})
             db.students.update_one({"studentId": s["studentId"]}, {"$addToSet": {"parentIds": p["parentId"]}})
-    
     db.create_collection("curriculums")
     db.create_collection("curriculumSubjects")
     for g in [10, 11, 12]:
         import_curriculum_data(db, g)
-    
     semester_docs = []
+    current_date = datetime.datetime(2025, 4, 4)
     batch_semester = [
-        {"BatchID": 3, "CurriculumID": 10},
-        {"BatchID": 2, "CurriculumID": 11},
-        {"BatchID": 1, "CurriculumID": 12}
+        {"BatchID": 3, "CurriculumID": 10, "EndYear": 2026},
+        {"BatchID": 2, "CurriculumID": 11, "EndYear": 2025},
+        {"BatchID": 1, "CurriculumID": 12, "EndYear": 2024}
     ]
     for bs in batch_semester:
-        for idx in [1, 2]:
-            sem_doc = {
-                "SemesterName": f"Học kỳ {idx}",
-                "StartDate": datetime.datetime(2023, 9, 1) if idx == 1 else datetime.datetime(2024, 2, 1),
-                "EndDate": datetime.datetime(2024, 1, 15) if idx == 1 else datetime.datetime(2024, 6, 15),
-                "CurriculumID": bs["CurriculumID"],
-                "BatchID": bs["BatchID"]
-            }
-            db.semesters.insert_one(sem_doc)
-            sem = db.semesters.find_one({"SemesterName": sem_doc["SemesterName"], "BatchID": bs["BatchID"]})
-            semester_docs.append(sem)
-    
+        graduation_date = datetime.datetime(bs["EndYear"] + 1, 6, 15)
+        if current_date <= graduation_date:
+            if current_date.month < 9:
+                academic_year_start = current_date.year - 1
+            else:
+                academic_year_start = current_date.year
+            sem1_start = datetime.datetime(academic_year_start, 9, 1)
+            sem1_end = datetime.datetime(academic_year_start + 1, 1, 15)
+            sem2_start = datetime.datetime(academic_year_start + 1, 2, 1)
+            sem2_end = datetime.datetime(academic_year_start + 1, 6, 15)
+            for idx, (s, e) in enumerate([(sem1_start, sem1_end), (sem2_start, sem2_end)], start=1):
+                sem_doc = {
+                    "SemesterName": f"Học kỳ {idx}",
+                    "StartDate": s,
+                    "EndDate": e,
+                    "CurriculumID": bs["CurriculumID"],
+                    "BatchID": bs["BatchID"]
+                }
+                db.semesters.insert_one(sem_doc)
+                sem = db.semesters.find_one({"SemesterName": sem_doc["SemesterName"], "BatchID": bs["BatchID"]})
+                semester_docs.append(sem)
+        else:
+            print(f"[INFO] Batch {bs['BatchID']} đã ra trường. Bỏ qua tạo thời khóa biểu.")
     total_schedules = 0
     for sem in semester_docs:
         scheds, warnings = generate_strict_schedule(db, sem, total_weeks=18)
