@@ -8,3 +8,5 @@ const authUser = () => {
 export default function AuthRoute({ element }: { element: React.JSX.Element }) {
   return authUser() ? element : <Navigate to="/login" replace />;
 }
+// khoong cos thaamr quyeefn quay ve page nao do
+// set logout

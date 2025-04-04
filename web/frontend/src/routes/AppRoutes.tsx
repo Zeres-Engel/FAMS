@@ -1,76 +1,38 @@
-import React from 'react';
-import LoginPage from '../pages/LoginPage/LoginPage';
-import HomePage from '../pages/HomePage/HomePage';
-import ProfilePage from '../pages/ProfilePage/ProfilePage';
-import SchedulePage from '../pages/SchedulePage/SchedulePage';
-import Navigation from '../components/Navigation/Navigation';
+import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
+import React, { useEffect } from "react";
+import LoginPage from "../pages/LoginPage/LoginPage";
+import HomePage from "../pages/HomePage/HomePage";
+import ProfilePage from "../pages/ProfilePage/ProfilePage";
+import SchedulePage from "../pages/SchedulePage/SchedulePage";
+import ClassPage from "../pages/ClassPage/ClassPage";
+import authService from "../services/authService";
+import tokenRefresher from "../services/tokenRefresher";
 
-// Simple router implementation without react-router-dom
-function AppRoutes() {
-  const [currentPath, setCurrentPath] = React.useState(window.location.pathname);
-  const isAuthenticated = document.cookie.includes('jwtToken');
-  
-  // Listen for path changes
-  React.useEffect(() => {
-    const onLocationChange = () => {
-      setCurrentPath(window.location.pathname);
-    };
+// Component to protect routes
+const ProtectedRoute = ({ element }: { element: React.JSX.Element }) => {
+  return authService.isAuthenticated() ? element : <Navigate to="/login" replace />;
+};
+
+const router = createBrowserRouter([
+  { path: "/", element: <ProtectedRoute element={<HomePage />} /> },
+  { path: "/login", element: <LoginPage/> },
+  { path: "/profile", element: <ProtectedRoute element={<ProfilePage />} /> },
+  { path: "/schedule", element: <ProtectedRoute element={<SchedulePage />} /> },
+  { path: "/class", element: <ProtectedRoute element={<ClassPage />} /> },
+]);
+
+export default function AppRoutes() {
+  useEffect(() => {
+    // Start token refresh mechanism if user is logged in
+    if (authService.isAuthenticated()) {
+      tokenRefresher.startTokenRefresh();
+    }
     
-    window.addEventListener('popstate', onLocationChange);
-    
+    // Cleanup when component unmounts
     return () => {
-      window.removeEventListener('popstate', onLocationChange);
+      tokenRefresher.stopTokenRefresh();
     };
   }, []);
   
-  // Navigation function
-  const navigateTo = (path: string) => {
-    window.history.pushState({}, '', path);
-    setCurrentPath(path);
-  };
-  
-  // Check auth and redirect if needed
-  React.useEffect(() => {
-    if (!isAuthenticated && currentPath !== '/login') {
-      navigateTo('/login');
-    }
-  }, [currentPath, isAuthenticated]);
-  
-  // Render the correct component based on path
-  const renderRoute = () => {
-    // Allow access to login page even when not authenticated
-    if (currentPath === '/login') {
-      return <LoginPage />;
-    }
-    
-    // Protected routes
-    if (!isAuthenticated) {
-      return null; // Will redirect in useEffect
-    }
-    
-    // For protected routes, show navigation and the current page
-    return (
-      <>
-        <Navigation currentPath={currentPath} onNavigate={navigateTo} />
-        {(() => {
-          switch (currentPath) {
-            case '/':
-              return <HomePage />;
-            case '/profile':
-              return <ProfilePage />;
-            case '/schedule':
-              return <SchedulePage />;
-            default:
-              // Redirect to home for unknown routes
-              navigateTo('/');
-              return null;
-          }
-        })()}
-      </>
-    );
-  };
-  
-  return renderRoute();
+  return <RouterProvider router={router} />;
 }
-
-export default AppRoutes;

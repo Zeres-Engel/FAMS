@@ -4,7 +4,7 @@ import useLoginPageHook from "./useLoginPage";
 import { Container } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Typography from "@mui/material/Typography";
-import { Button, TextField, CircularProgress } from "@mui/material";
+import { Button, TextField, CircularProgress, Alert } from "@mui/material";
 
 function LoginPage(): React.JSX.Element {
   const { state, handler } = useLoginPageHook();
@@ -48,6 +48,11 @@ function LoginPage(): React.JSX.Element {
                     Đăng nhập
                   </Typography>
                 </div>
+                {state.loginError && (
+                  <Alert severity="error" sx={{ mb: 2 }}>
+                    {state.loginError}
+                  </Alert>
+                )}
                 <form
                   onSubmit={handler.handleLogin}
                   className="login-Main-Form"
@@ -101,13 +106,6 @@ function LoginPage(): React.JSX.Element {
                       {"Mật khẩu không để trống"}
                     </Typography>
                   )}
-                  
-                  {state.loginError && (
-                    <Typography className="login-error" color="error" align="center" sx={{ mt: 1 }}>
-                      {state.loginError}
-                    </Typography>
-                  )}
-                  
                   <div className="forgot-Pass">
                     <Typography variant="body1">
                       <a href="youtube.com">Quên mật khẩu</a>

@@ -1,11 +1,15 @@
 import { useWatch, useForm } from 'react-hook-form';
 import { useState } from "react";
-import { useNavigate } from 'react-router-dom';
 import { LoginForm } from "../../model/loginModels/loginModels.model";
-import { authAPI } from '../../api/apiService';
+import authService from '../../services/authService';
+import { useNavigate } from 'react-router-dom';
+import tokenRefresher from '../../services/tokenRefresher';
 
 function useLoginPageHook() {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  
   const {
     register,
     handleSubmit,
@@ -20,35 +24,47 @@ function useLoginPageHook() {
   });
   
   const [isError, setIsError] = useState<number[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [loginError, setLoginError] = useState<string>('');
   const watchUserName = useWatch({ control, name: "userName" });
   const watchPassword = useWatch({ control, name: "password" });
   
-  const handleLogin = handleSubmit(async (data) => {
-    if (!watchUserName || !watchPassword) {
-      setIsError([1, 2]);
+  const handleLogin = handleSubmit(async (data: LoginForm) => {
+    // Reset previous errors
+    setLoginError(null);
+    
+    // Validate form
+    if(!watchUserName || !watchPassword) {
+      setIsError([1,2]);
       watchUserName ? setFocus('password') : setFocus('userName');
       return;
     }
     
-    setIsLoading(true);
-    setLoginError('');
-    
     try {
-      const response = await authAPI.login(data.userName, data.password);
+      setIsLoading(true);
+      console.log('Login attempt with:', { userName: data.userName });
       
-      if (response.data.success) {
-        // Save token to cookie
-        document.cookie = `jwtToken=${response.data.data.token}; path=/; max-age=${60 * 60 * 24 * 30}`;
-        
-        // Redirect to home page
-        navigate('/');
-      } else {
-        setLoginError(response.data.message || 'Đăng nhập thất bại');
-      }
+      // Call auth service login method
+      const user = await authService.login(data);
+      
+      console.log('Login successful:', user);
+      
+      // Start token refresh mechanism
+      tokenRefresher.startTokenRefresh();
+      
+      // Redirect to homepage or dashboard based on role
+      navigate('/');
     } catch (error: any) {
-      setLoginError(error.response?.data?.message || 'Đăng nhập thất bại. Vui lòng thử lại');
+      console.error('Login error:', error);
+      
+      // Improved error message handling
+      let errorMessage = 'Đăng nhập không thành công. Vui lòng thử lại.';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response && error.response.data) {
+        errorMessage = error.response.data.message || errorMessage;
+      }
+      
+      setLoginError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -60,11 +76,11 @@ function useLoginPageHook() {
     watchPassword, 
     isError, 
     setIsError, 
-    isLoading,
+    isLoading, 
     loginError 
   };
-  
   const handler = { register, handleLogin };
+  
   return { state, handler };
 }
 

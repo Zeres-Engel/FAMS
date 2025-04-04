@@ -1,7 +1,6 @@
 import "./SchedulePage.scss";
-// Comment out problematic imports temporarily until we can install the packages
-// import "react-big-calendar/lib/css/react-big-calendar.css";
-// import { Calendar, momentLocalizer, View } from "react-big-calendar";
+import "react-big-calendar/lib/css/react-big-calendar.css";
+import { Calendar, momentLocalizer, View } from "react-big-calendar";
 import React, { useState } from "react";
 import {
   Container,
@@ -10,41 +9,28 @@ import {
   Grid,
   Tooltip,
   Button,
-  CircularProgress,
-  Alert,
 } from "@mui/material";
-// import moment from "moment";
+import moment from "moment";
 import LayoutComponent from "../../components/Layout/Layout";
 import useSchedulePageHook from "./useSchedulePageHook";
 
-// Temporarily replace with a simple function to format dates
-const formatDate = (date?: Date): string => {
-  if (!date) return '';
-  return date.toLocaleString();
-};
-
+const localizer = momentLocalizer(moment);
 const SchedulePage: React.FC = () => {
   const { state, handler } = useSchedulePageHook();
-  
+  const [view, setView] = useState<View>("month");
+  const [currentDate, setCurrentDate] = useState(new Date());
   return (
-    <LayoutComponent>
+    <LayoutComponent pageHeader="Schedule">
       <Container
         maxWidth="lg"
         style={{ padding: "16px" }}
         className="schedulePage-Container"
       >
-        <Grid size={12}>
+        {/* <Grid size={12}>
           <Typography variant="h4" gutterBottom sx={{ textAlign: "center" }}>
-            📅 Thời khóa biểu
+            📅 Schedule
           </Typography>
-        </Grid>
-        
-        {state.error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {state.error}
-          </Alert>
-        )}
-        
+        </Grid> */}
         <Grid
           container
           size={12}
@@ -52,65 +38,46 @@ const SchedulePage: React.FC = () => {
           justifyContent="center"
           className={state?.eventShow?.id !== 0 ? "schedule-Display" : ""}
         >
+          {/* <Grid size={{xs:12, sm:10, md:8, lg:6}}> */}
           <Grid size={12}>
-            <Paper elevation={3} sx={{ padding: "16px", overflowX: "auto", minHeight: "500px", display: "flex", justifyContent: "center", alignItems: "center" }}>
-              {state.isLoading ? (
-                <CircularProgress />
-              ) : (
-                <div className="schedule-placeholder">
-                  <Alert severity="info" sx={{ mb: 2 }}>
-                    Chức năng xem thời khóa biểu đang được nâng cấp.
-                  </Alert>
-                  <Typography variant="h6">Danh sách lịch học:</Typography>
-                  {state.events.length > 0 ? (
-                    <ul>
-                      {state.events.map(event => (
-                        <li key={event.id} 
-                            style={{cursor: 'pointer', margin: '10px 0', padding: '10px', border: '1px solid #eee'}}
-                            onClick={() => handler.handleSelectEvent(event)}>
-                          <strong>{event.title}</strong><br/>
-                          Bắt đầu: {formatDate(event.start)}<br/>
-                          Kết thúc: {formatDate(event.end)}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <Typography>Không có lịch học nào.</Typography>
-                  )}
-                </div>
-              )}
+            <Paper elevation={3} sx={{ padding: "16px", overflowX: "auto" }}>
+              <Calendar
+                localizer={localizer}
+                view={state.view}
+                events={state.events}
+                date={state.currentDate}
+                startAccessor="start"
+                endAccessor="end"
+                views={["month", "week", "day"]}
+                style={{ height: 500, minWidth: "100%" }}
+                onSelectEvent={handler.handleSelectEvent}
+                onView={(newView) => {
+                  handler.handleSetNewView(newView)
+                }}
+                onNavigate={(newDate)=>{
+                  handler.handleSetNewViewDate(newDate)
+                }}
+              />
             </Paper>
           </Grid>
         </Grid>
-        
         {state.eventShow?.id !== 0 && (
           <Grid size={8} className="showEvent">
-            <Typography variant="h4">Chi tiết lịch học</Typography>
+            <Typography variant="h4">EVENT</Typography>
             <Typography component="div">
-              <strong>Môn học:</strong> {state.eventShow?.title}
+              Event: {state.eventShow?.title}
             </Typography>
             <Typography component="div">
-              <strong>Bắt đầu:</strong> {formatDate(state.eventShow?.start)}
+              Start: {moment(state.eventShow?.start).format("YYYY-MM-DD HH:mm")}
             </Typography>
             <Typography component="div">
-              <strong>Kết thúc:</strong> {formatDate(state.eventShow?.end)}
+              End: {moment(state.eventShow?.end).format("YYYY-MM-DD HH:mm")}
             </Typography>
-            {state.eventShow.resource && (
-              <>
-                <Typography component="div">
-                  <strong>Phòng học:</strong> {state.eventShow.resource.classroom?.name || 'Chưa xác định'}
-                </Typography>
-                <Typography component="div">
-                  <strong>Giáo viên:</strong> {state.eventShow.resource.teacher?.name || 'Chưa xác định'}
-                </Typography>
-              </>
-            )}
             <Button
               variant="contained"
               onClick={() => handler.handleSelectEvent()}
-              sx={{ mt: 2 }}
             >
-              Đóng
+              Close
             </Button>
           </Grid>
         )}
@@ -120,4 +87,3 @@ const SchedulePage: React.FC = () => {
 };
 
 export default SchedulePage;
-

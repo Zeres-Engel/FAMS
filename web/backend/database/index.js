@@ -1,12 +1,37 @@
-// Export tất cả các module cần thiết từ thư mục database
-const Models = require('./models');
-const DatabaseUtils = require('./database');
-const Config = require('./config');
+// Export database connection functions
+const { connectToFAMS, checkConnectionStatus, getDatabaseInfo } = require('./database');
+
+// Export models
+const models = require('./models');
+
+// Export API router
+const apiRouter = require('./api');
+
+// Export initialization function
+const initializeDatabase = () => {
+  return new Promise((resolve, reject) => {
+    try {
+      // Run the database initialization script
+      const initDb = require('./initDatabase');
+      resolve(initDb);
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
 
 module.exports = {
-  Models,
-  DatabaseUtils,
-  Config,
-  // Dùng destructuring để export từng model riêng lẻ
-  ...Models
+  // Database connection functions
+  connectToFAMS,
+  checkConnectionStatus,
+  getDatabaseInfo,
+  
+  // Models
+  models,
+  
+  // API router
+  apiRouter,
+  
+  // Initialization function
+  initializeDatabase
 }; 
