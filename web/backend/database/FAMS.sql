@@ -147,9 +147,28 @@ CREATE TABLE ClassSession (
   SubjectID INT NOT NULL,
   TeacherID INT NOT NULL,
   ClassroomID INT NOT NULL,
-  SessionDate DATE NOT NULL,
+  WeekNumber INT NOT NULL,
+  DayNumber INT NOT NULL,
   SlotID INT NOT NULL,
   Topic VARCHAR(255),
+  FOREIGN KEY (SemesterID) REFERENCES Semester(SemesterID),
+  FOREIGN KEY (ClassID) REFERENCES Class(ClassID),
+  FOREIGN KEY (SubjectID) REFERENCES Subject(SubjectID),
+  FOREIGN KEY (TeacherID) REFERENCES Teacher(TeacherID),
+  FOREIGN KEY (ClassroomID) REFERENCES Classroom(ClassroomID),
+  FOREIGN KEY (SlotID) REFERENCES Slot(SlotID)
+);
+
+CREATE TABLE Schedule (
+  ScheduleID INT AUTO_INCREMENT PRIMARY KEY,
+  SemesterID INT NOT NULL,
+  WeekNumber INT NOT NULL,
+  DayNumber INT NOT NULL,
+  ClassID INT NOT NULL,
+  SubjectID INT NOT NULL,
+  TeacherID INT NOT NULL,
+  ClassroomID INT NOT NULL,
+  SlotID INT NOT NULL,
   FOREIGN KEY (SemesterID) REFERENCES Semester(SemesterID),
   FOREIGN KEY (ClassID) REFERENCES Class(ClassID),
   FOREIGN KEY (SubjectID) REFERENCES Subject(SubjectID),
@@ -166,22 +185,6 @@ CREATE TABLE AttendanceLog (
   Status ENUM('Present','Late','Absent') DEFAULT 'Absent',
   FOREIGN KEY (SessionID) REFERENCES ClassSession(SessionID),
   FOREIGN KEY (UserID) REFERENCES UserAccount(UserID)
-);
-
-CREATE TABLE Schedule (
-  ScheduleID INT AUTO_INCREMENT PRIMARY KEY,
-  SemesterID INT NOT NULL,
-  ClassID INT NOT NULL,
-  SubjectID INT NOT NULL,
-  TeacherID INT NOT NULL,
-  ClassroomID INT NOT NULL,
-  SlotID INT NOT NULL,
-  FOREIGN KEY (SemesterID) REFERENCES Semester(SemesterID),
-  FOREIGN KEY (ClassID) REFERENCES Class(ClassID),
-  FOREIGN KEY (SubjectID) REFERENCES Subject(SubjectID),
-  FOREIGN KEY (TeacherID) REFERENCES Teacher(TeacherID),
-  FOREIGN KEY (ClassroomID) REFERENCES Classroom(ClassroomID),
-  FOREIGN KEY (SlotID) REFERENCES Slot(SlotID)
 );
 
 CREATE TABLE Notification (
