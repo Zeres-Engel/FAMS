@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { COLLECTIONS } = require('../constants');
 
 const ParentSchema = new mongoose.Schema({
   parentId: {
@@ -49,4 +50,4 @@ ParentSchema.virtual('students', {
   justOne: false
 });
 
-module.exports = mongoose.model('Parent', ParentSchema, 'parents'); 
+module.exports = mongoose.model('Parent', ParentSchema, COLLECTIONS.PARENT); 

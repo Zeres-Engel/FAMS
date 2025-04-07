@@ -9,14 +9,10 @@ const apiRouter = require('./api');
 
 // Export initialization function
 const initializeDatabase = () => {
-  return new Promise((resolve, reject) => {
-    try {
-      // Run the database initialization script
-      const initDb = require('./initDatabase');
-      resolve(initDb);
-    } catch (error) {
-      reject(error);
-    }
+  return new Promise((resolve) => {
+    console.log('Database initialization has been disabled to prevent data loss.');
+    console.log('To manually initialize the database, run: python backend/init_database.py');
+    resolve({ success: false, message: 'Initialization disabled by design' });
   });
 };
 

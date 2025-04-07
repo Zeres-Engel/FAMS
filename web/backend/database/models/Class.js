@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { COLLECTIONS } = require('../constants');
 
 const ClassSchema = new mongoose.Schema({
   classId: {
@@ -54,4 +55,4 @@ ClassSchema.virtual('schedules', {
   justOne: false
 });
 
-module.exports = mongoose.model('Class', ClassSchema, 'Class'); 
+module.exports = mongoose.model('Class', ClassSchema, COLLECTIONS.CLASS); 

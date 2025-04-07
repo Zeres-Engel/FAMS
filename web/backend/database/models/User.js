@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { COLLECTIONS } = require('../constants');
 
 /**
  * User Schema
@@ -72,4 +73,4 @@ UserSchema.methods.matchPassword = async function(enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model('User', UserSchema, 'UserAccount'); 
+module.exports = mongoose.model('User', UserSchema, COLLECTIONS.USER_ACCOUNT); 

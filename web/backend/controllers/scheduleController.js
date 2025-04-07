@@ -4,6 +4,7 @@ const Teacher = require('../database/models/Teacher');
 const Class = require('../database/models/Class');
 const Parent = require('../database/models/Parent');
 const scheduleService = require('../services/scheduleService');
+const mongoose = require('mongoose');
 
 // Helper function to get classId based on user role and userId
 const getClassIdForUser = async (user) => {
@@ -139,11 +140,11 @@ exports.getWeeklySchedule = async (req, res) => {
     );
     
     // Format the response
-    const formattedSchedule = scheduleService.formatScheduleData(schedules, 'weekly');
+    const formattedSchedule = await scheduleService.formatScheduleData(schedules, 'weekly');
     
     // Add metadata
     const semester = await scheduleService.getSemester(semesterId);
-    const startDate = weekNumber ? 
+    const startDate = weekNumber && semester ? 
       scheduleService.getStartDateOfWeek(weekNumber, semester) : 
       new Date();
     
@@ -151,7 +152,7 @@ exports.getWeeklySchedule = async (req, res) => {
       success: true,
       data: formattedSchedule,
       meta: {
-        weekNumber: weekNumber || scheduleService.getWeekNumberInSemester(startDate, semester),
+        weekNumber: weekNumber || (semester ? scheduleService.getWeekNumberInSemester(startDate, semester) : null),
         semesterName: semester ? semester.SemesterName : null,
         semesterId: semester ? semester.semesterId : null,
         startDate,
@@ -174,7 +175,7 @@ exports.getWeeklySchedule = async (req, res) => {
 // @access  Private
 exports.getDailySchedule = async (req, res) => {
   try {
-    console.log('User in request:', req.user);
+    console.log(`Đang xử lý yêu cầu lịch học từ user ${req.user.name} (${req.user.userId})`);
     
     let classId = null;
     let teacherId = null;
@@ -198,6 +199,8 @@ exports.getDailySchedule = async (req, res) => {
         });
       }
     }
+    
+    console.log(`Tìm lịch học cho ngày ${date.toISOString().split('T')[0]}`);
     
     // For teachers, get their teacherId
     if (req.user.role === 'Teacher') {
@@ -257,16 +260,49 @@ exports.getDailySchedule = async (req, res) => {
       teacherId
     );
     
+    console.log(`Tìm thấy ${schedules.length} lịch học cho ngày ${date.toISOString().split('T')[0]}`);
+    
+    // Standardize the dayOfWeek field if missing
+    schedules.forEach(schedule => {
+      if (!schedule.dayOfWeek) {
+        const sessionDate = new Date(schedule.SessionDate || schedule.sessionDate);
+        schedule.dayOfWeek = sessionDate.toLocaleString('en-US', { weekday: 'long' });
+        console.log(`Bổ sung thông tin ngày trong tuần (${schedule.dayOfWeek}) cho lịch học ${schedule.scheduleId}`);
+      }
+    });
+    
     // Format the schedule
-    const formattedSchedule = scheduleService.formatScheduleData(schedules, 'daily');
+    const formattedSchedule = await scheduleService.formatScheduleData(schedules, 'daily');
+    
+    // In chi tiết từng item để debug
+    console.log('Chi tiết lịch học đã format:');
+    formattedSchedule.forEach((item, index) => {
+      console.log(`Item ${index + 1}:`, JSON.stringify(item));
+    });
     
     // Get semester information
     const semester = await scheduleService.getSemester();
-    const weekNumber = scheduleService.getWeekNumberInSemester(date, semester);
+    const weekNumber = semester ? scheduleService.getWeekNumberInSemester(date, semester) : null;
     
-    res.json({
+    // Normalize response to ensure all required fields exist
+    const finalSchedule = formattedSchedule.map(item => ({
+      ...item,
+      id: item.id || item.scheduleId || 0,
+      period: item.period || item.SlotID || 0,
+      subject: item.subject || { id: 0, name: 'Không xác định', type: 'Không xác định' },
+      teacher: item.teacher || { id: 0, name: 'Không xác định' },
+      classroom: item.classroom || { id: 0, room: 'Không xác định', building: 'Không xác định' },
+      startTime: item.startTime || '00:00',
+      endTime: item.endTime || '00:00',
+      sessionDate: item.sessionDate || date.toISOString().split('T')[0]
+    }));
+    
+    console.log(`Trả về ${finalSchedule.length} lịch học cho frontend`);
+    
+    // Cấu trúc phản hồi theo đúng format frontend mong đợi
+    const response = {
       success: true,
-      data: formattedSchedule,
+      data: finalSchedule,
       meta: {
         date: date.toISOString().split('T')[0],
         dayOfWeek: date.toLocaleString('en-US', { weekday: 'long' }),
@@ -276,7 +312,9 @@ exports.getDailySchedule = async (req, res) => {
         classId,
         teacherId
       }
-    });
+    };
+    
+    res.json(response);
   } catch (error) {
     console.error('Error in getDailySchedule:', error);
     res.status(500).json({
@@ -287,31 +325,29 @@ exports.getDailySchedule = async (req, res) => {
   }
 };
 
-// @desc    Get schedule for an entire semester
+// @desc    Get schedule for a semester
 // @route   GET /api/schedules/semester/:semesterId
 // @access  Private
 exports.getSemesterSchedule = async (req, res) => {
   try {
-    console.log('User in request:', req.user);
+    console.log(`Yêu cầu lịch học cho học kỳ: ${req.params.semesterId}`);
     
+    const { semesterId } = req.params;
     let classId = null;
     let teacherId = null;
     
-    // Get semesterId from params
-    const semesterId = req.params.semesterId;
-    
-    // For teachers, get their teacherId
+    // For teachers, get their schedules
     if (req.user.role === 'Teacher') {
       teacherId = await getTeacherIdForUser(req.user);
       console.log('Teacher ID:', teacherId);
     } 
-    // For students, get their classId
+    // For students, get their class schedules
     else if (req.user.role === 'Student') {
       const student = await Student.findOne({ userId: req.user.userId });
       classId = student ? student.classId : null;
       console.log('Student class ID:', classId);
     }
-    // For parents, get their children's classes
+    // For parents, get their children's schedules
     else if (req.user.role === 'Parent') {
       const parent = await Parent.findOne({ userId: req.user.userId });
       if (parent && parent.studentIds && parent.studentIds.length > 0) {
@@ -337,42 +373,36 @@ exports.getSemesterSchedule = async (req, res) => {
       } else if (req.query.classId) {
         classId = parseInt(req.query.classId);
       }
-      console.log('Admin query params:', { teacherId, classId });
     }
     
-    // If no classId or teacherId was found, return empty data for non-admin users
-    if (!classId && !teacherId && req.user.role !== 'Admin') {
-      return res.status(404).json({
-        success: false,
-        message: 'Không tìm thấy lớp học hoặc giáo viên',
-        code: 'NO_SCHEDULE_DATA'
-      });
-    }
-    
-    // Get the semester schedule
-    console.log('Fetching semester schedule with params:', { semesterId, classId, teacherId });
+    // Request schedule from service
     const schedules = await scheduleService.getSemesterSchedule(
       semesterId,
       classId,
       teacherId
     );
     
-    // Format the schedule
-    const formattedSchedule = scheduleService.formatScheduleData(schedules, 'semester');
+    // Format for response if needed
+    const formattedSchedules = await scheduleService.formatScheduleData(schedules, 'semester');
     
-    // Get semester information
+    // Get semester info for response
     const semester = await scheduleService.getSemester(semesterId);
     
     res.json({
       success: true,
-      data: formattedSchedule,
-      meta: {
-        semesterName: semester ? semester.SemesterName : null,
-        semesterId: semester ? semester.semesterId : null,
-        startDate: semester ? semester.StartDate : null,
-        endDate: semester ? semester.EndDate : null,
-        classId,
-        teacherId
+      message: `Tìm thấy ${schedules.length} lịch học cho học kỳ`,
+      data: {
+        semester: semester ? {
+          semesterId: semester.semesterId,
+          semesterName: semester.SemesterName || semester.name || 'Học kỳ',
+          startDate: semester.StartDate || semester.startDate,
+          endDate: semester.EndDate || semester.endDate
+        } : null,
+        schedules: formattedSchedules,
+        metadata: {
+          classId,
+          teacherId
+        }
       }
     });
   } catch (error) {
@@ -385,7 +415,7 @@ exports.getSemesterSchedule = async (req, res) => {
   }
 };
 
-// @desc    Get information about current semester
+// @desc    Get current semester
 // @route   GET /api/schedules/semester/current
 // @access  Private
 exports.getCurrentSemester = async (req, res) => {
@@ -400,18 +430,43 @@ exports.getCurrentSemester = async (req, res) => {
       });
     }
     
-    res.json({
+    console.log(`Tìm lịch học cho học kỳ hiện tại: ${semester.semesterId}`);
+    
+    // Truy vấn trực tiếp các buổi học của học kỳ từ SemesterSchedule
+    let schedules = await mongoose.connection.db.collection('SemesterSchedule')
+      .find({ semesterId: semester.semesterId })
+      .toArray();
+    
+    // Nếu không tìm thấy trong SemesterSchedule, thử tìm trong ClassSchedule
+    if (schedules.length === 0) {
+      console.log('Không tìm thấy lịch học trong SemesterSchedule, thử tìm trong ClassSchedule...');
+      schedules = await mongoose.connection.db.collection('ClassSchedule')
+        .find({ semesterId: semester.semesterId })
+        .toArray();
+      
+      console.log(`Tìm thấy ${schedules.length} lịch học trong ClassSchedule cho học kỳ hiện tại`);
+    } else {
+      console.log(`Tìm thấy ${schedules.length} lịch học trong SemesterSchedule cho học kỳ hiện tại`);
+    }
+    
+    // Format dữ liệu trả về
+    const formattedSchedules = await scheduleService.formatScheduleData(schedules, 'weekly');
+    
+    return res.json({
       success: true,
+      message: `Tìm thấy học kỳ hiện tại: ${semester.SemesterName || 'Học kỳ hiện tại'}`,
       data: {
-        semesterId: semester.semesterId,
-        semesterName: semester.SemesterName,
-        startDate: semester.StartDate,
-        endDate: semester.EndDate,
-        curriculumId: semester.CurriculumID,
-        batchId: semester.BatchID
+        semester: {
+          semesterId: semester.semesterId,
+          semesterName: semester.SemesterName || semester.name,
+          startDate: semester.StartDate || semester.startDate,
+          endDate: semester.EndDate || semester.endDate
+        },
+        schedules: formattedSchedules
       }
     });
   } catch (error) {
+    console.error('Error in getCurrentSemester:', error);
     res.status(500).json({
       success: false,
       message: error.message,

@@ -21,15 +21,6 @@ const scheduleRoutes = require('./routes/scheduleRoutes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// File upload setup
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'backend/uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  }
-});
 
 // Check file type
 const fileFilter = (req, file, cb) => {
@@ -41,16 +32,11 @@ const fileFilter = (req, file, cb) => {
 };
 
 const upload = multer({ 
-  storage,
+  storage: multer.memoryStorage(),
   fileFilter,
   limits: { fileSize: 5000000 } // 5MB limit
 });
 
-// Create uploads folder if it doesn't exist
-const fs = require('fs');
-if (!fs.existsSync('backend/uploads')) {
-  fs.mkdirSync('backend/uploads', { recursive: true });
-}
 
 // Middleware
 app.use(cors({
@@ -124,7 +110,6 @@ const startServer = async () => {
     console.log('Attempting to connect to MongoDB...');
     console.log('MongoDB URI:', process.env.MONGO_URI ? process.env.MONGO_URI.substring(0, 20) + '...' : 'Not defined');
     
-    // Use the original connection method for backward compatibility
     await connectToFAMS();
     console.log(`MongoDB Connection Status: ${checkConnectionStatus()}`);
     
@@ -143,19 +128,16 @@ const startServer = async () => {
   }
 };
 
-// Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
   console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
   console.error(err.name, err.message, err.stack);
   process.exit(1);
 });
 
-// Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
   console.error('UNHANDLED REJECTION! 💥 Shutting down...');
   console.error(err.name, err.message, err.stack);
   process.exit(1);
 });
 
-// Khởi động server
 startServer(); 

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { COLLECTIONS } = require('../constants');
 
 const BatchSchema = new mongoose.Schema({
   batchId: {
@@ -51,4 +52,4 @@ BatchSchema.virtual('curriculum', {
   justOne: true
 });
 
-module.exports = mongoose.model('Batch', BatchSchema, 'batches'); 
+module.exports = mongoose.model('Batch', BatchSchema, COLLECTIONS.BATCH); 

@@ -306,11 +306,14 @@ router.post('/reinitialize', async (req, res) => {
   try {
     res.json({ 
       success: true, 
-      message: 'Database reinitialization requested. Check console for progress.' 
+      message: 'Database reinitialization request received. Please run initialization script manually using: npm run init-db' 
     });
     
-    // Run the initialization script in the background
-    require('./initDatabase');
+    // Không tự động chạy script khởi tạo nữa
+    // require('./initDatabase');
+    
+    console.log('Database reinitialization was requested but script was not executed automatically.');
+    console.log('To initialize database manually, run: npm run init-db');
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

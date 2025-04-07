@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { COLLECTIONS } = require('../constants');
 
 const TeacherSchema = new mongoose.Schema({
   teacherId: {
@@ -64,4 +65,4 @@ TeacherSchema.virtual('schedules', {
   foreignField: 'teacherId'
 });
 
-module.exports = mongoose.model('Teacher', TeacherSchema, 'Teacher'); 
+module.exports = mongoose.model('Teacher', TeacherSchema, COLLECTIONS.TEACHER); 

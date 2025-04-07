@@ -160,19 +160,25 @@ exports.register = async (req, res) => {
  */
 exports.login = async (req, res) => {
   try {
-    const { userId, password } = req.body;
+    const { userId, email, password } = req.body;
 
     // Validate input
-    if (!userId || !password) {
+    if ((!userId && !email) || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Vui lòng cung cấp tên đăng nhập và mật khẩu',
+        message: 'Vui lòng cung cấp tên đăng nhập/email và mật khẩu',
         code: 'MISSING_FIELDS'
       });
     }
 
-    // Check for user
-    const user = await User.findOne({ userId });
+    // Check for user by userId or email
+    let user;
+    if (userId) {
+      user = await User.findOne({ userId });
+    } else if (email) {
+      user = await User.findOne({ email });
+    }
+
     if (!user) {
       return res.status(401).json({
         success: false,

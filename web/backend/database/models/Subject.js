@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { COLLECTIONS } = require('../constants');
 
 const SubjectSchema = new mongoose.Schema({
   subjectId: {
@@ -37,4 +38,4 @@ SubjectSchema.virtual('curriculums', {
   justOne: false
 });
 
-module.exports = mongoose.model('Subject', SubjectSchema, 'subjects'); 
+module.exports = mongoose.model('Subject', SubjectSchema, COLLECTIONS.SUBJECT); 

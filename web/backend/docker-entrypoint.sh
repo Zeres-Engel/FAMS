@@ -2,6 +2,8 @@
 set -e
 
 echo "==== FAMS BACKEND STARTUP SCRIPT ===="
+echo "NOTE: This script no longer initializes the database automatically."
+echo "      To initialize the database manually, run: npm run init-db"
 
 # Wait for MongoDB to be ready
 echo "Waiting for MongoDB to be ready..."

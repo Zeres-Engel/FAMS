@@ -1,4 +1,4 @@
-// Export tất cả các models từ thư mục models
+// Export all models from the models directory
 const User = require('./User');
 const Student = require('./Student');
 const Teacher = require('./Teacher');
@@ -10,6 +10,12 @@ const Classroom = require('./Classroom');
 const Schedule = require('./Schedule');
 const Semester = require('./Semester');
 const Curriculum = require('./Curriculum');
+const CurriculumSubject = require('./CurriculumSubject');
+const ParentStudent = require('./ParentStudent');
+const TeacherClassAssignment = require('./TeacherClassAssignment');
+const RFID = require('./RFID');
+const Slot = require('./Slot');
+const AttendanceLog = require('./AttendanceLog');
 
 module.exports = {
   User,
@@ -22,5 +28,11 @@ module.exports = {
   Classroom,
   Schedule,
   Semester,
-  Curriculum
+  Curriculum,
+  CurriculumSubject,
+  ParentStudent,
+  TeacherClassAssignment,
+  RFID,
+  Slot,
+  AttendanceLog
 }; 

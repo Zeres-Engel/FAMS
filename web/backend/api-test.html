@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAMS API Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        .auth-section {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-break: break-all;
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .profile-info {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .profile-card {
+            flex: 1;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        .schedule-container {
+            margin-top: 20px;
+        }
+        .schedule-day {
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+        .schedule-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            background-color: #e8f4fd;
+            border-radius: 4px;
+        }
+        .user-schedule-info {
+            background-color: #f1f8e9;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 4px solid #8bc34a;
+        }
+        .semester-info {
+            background-color: #e3f2fd;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 4px solid #2196f3;
+        }
+        .current-info {
+            background-color: #fff8e1;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            border-left: 4px solid #ffc107;
+        }
+        .error {
+            color: #e74c3c;
+            padding: 10px;
+            background-color: #fadbd8;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+        .tab-container {
+            margin-top: 20px;
+        }
+        .tab-buttons {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 15px;
+        }
+        .tab-button {
+            padding: 10px 15px;
+            background-color: #f1f1f1;
+            border: none;
+            border-radius: 4px 4px 0 0;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+        .tab-button.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .tab-content {
+            padding: 15px 0;
+        }
+        .schedule-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .filter-item {
+            flex: 1;
+            min-width: 200px;
+        }
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .schedule-table th, .schedule-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .schedule-table th {
+            background-color: #f2f2f2;
+        }
+        .schedule-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .schedule-filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FAMS API Test</h1>
+        
+        <div class="auth-section">
+            <h2>Đăng nhập</h2>
+            <div class="form-group">
+                <label for="login-type">Đăng nhập bằng:</label>
+                <select id="login-type" name="login-type">
+                    <option value="userId">User ID</option>
+                    <option value="email">Email</option>
+                </select>
+            </div>
+            <div class="form-group" id="userId-group">
+                <label for="userId">User ID:</label>
+                <input type="text" id="userId" name="userId" placeholder="Nhập user ID">
+            </div>
+            <div class="form-group hidden" id="email-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" placeholder="Nhập email">
+            </div>
+            <div class="form-group">
+                <label for="password">Mật khẩu:</label>
+                <input type="password" id="password" name="password" placeholder="Nhập mật khẩu">
+            </div>
+            <button id="login-btn">Đăng nhập</button>
+            <div id="login-result" class="result hidden"></div>
+            <div id="login-error" class="error hidden"></div>
+        </div>
+        
+        <div id="user-info" class="hidden">
+            <h2>Thông tin người dùng</h2>
+            <div class="profile-info">
+                <div class="profile-card">
+                    <h3>Thông tin cá nhân</h3>
+                    <div id="profile-data"></div>
+                </div>
+                <div class="profile-card">
+                    <h3>Vai trò</h3>
+                    <div id="role-data"></div>
+                </div>
+            </div>
+            
+            <div class="tab-container">
+                <div class="tab-buttons">
+                    <button class="tab-button active" data-tab="schedule">Lịch học</button>
+                    <button class="tab-button" data-tab="advanced-schedule">Lịch học nâng cao</button>
+                    <button class="tab-button" data-tab="raw">Dữ liệu gốc</button>
+                </div>
+                <div class="tab-content">
+                    <div id="schedule-tab" class="tab-pane active">
+                        <h2>Lịch học</h2>
+                        <div class="schedule-filter-bar">
+                            <div class="filter-item">
+                                <label for="schedule-search">Tìm kiếm:</label>
+                                <input type="text" id="schedule-search" placeholder="Nhập từ khóa...">
+                            </div>
+                            <div class="filter-item">
+                                <label for="schedule-filter-date">Lọc theo ngày:</label>
+                                <input type="date" id="schedule-filter-date">
+                            </div>
+                            <button id="filter-schedule-btn">Lọc</button>
+                            <button id="reset-filter-btn">Đặt lại</button>
+                        </div>
+                        <div id="schedule-container" class="schedule-container"></div>
+                    </div>
+                    <div id="advanced-schedule-tab" class="tab-pane hidden">
+                        <h2>Lịch học nâng cao</h2>
+                        <div class="schedule-filters">
+                            <div class="filter-item">
+                                <label for="schedule-type">Loại lịch:</label>
+                                <select id="schedule-type">
+                                    <option value="me">Lịch của tôi</option>
+                                    <option value="daily">Lịch theo ngày</option>
+                                    <option value="weekly">Lịch theo tuần</option>
+                                    <option value="semester">Lịch theo học kỳ</option>
+                                </select>
+                            </div>
+                            <div class="filter-item" id="date-filter">
+                                <label for="schedule-date">Ngày:</label>
+                                <input type="date" id="schedule-date">
+                            </div>
+                            <div class="filter-item" id="week-filter" class="hidden">
+                                <label for="schedule-week">Tuần:</label>
+                                <input type="number" id="schedule-week" min="1" max="52">
+                            </div>
+                            <div class="filter-item" id="semester-filter" class="hidden">
+                                <label for="schedule-semester">Học kỳ:</label>
+                                <select id="schedule-semester">
+                                    <option value="">Đang tải...</option>
+                                </select>
+                            </div>
+                            <div class="filter-item" id="student-filter" class="hidden">
+                                <label for="student-id">Học sinh:</label>
+                                <select id="student-id">
+                                    <option value="">Đang tải...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button id="fetch-schedule-btn">Lấy lịch học</button>
+                        <div id="advanced-schedule-container">
+                            <div class="result hidden" id="advanced-schedule-result"></div>
+                            <table class="schedule-table hidden" id="schedule-table">
+                                <thead>
+                                    <tr>
+                                        <th>Tiết</th>
+                                        <th>Môn học</th>
+                                        <th>Giáo viên</th>
+                                        <th>Phòng</th>
+                                        <th>Ngày</th>
+                                        <th>Chủ đề</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="schedule-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="raw-tab" class="tab-pane hidden">
+                        <h2>Dữ liệu gốc</h2>
+                        <pre id="raw-data"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Cấu hình API
+        const API_BASE_URL = window.location.origin;
+        let authToken = '';
+        let userData = null;
+        
+        // Các phần tử DOM
+        const loginTypeSelect = document.getElementById('login-type');
+        const userIdGroup = document.getElementById('userId-group');
+        const emailGroup = document.getElementById('email-group');
+        const userIdInput = document.getElementById('userId');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('login-btn');
+        const loginResult = document.getElementById('login-result');
+        const loginError = document.getElementById('login-error');
+        const userInfo = document.getElementById('user-info');
+        const profileData = document.getElementById('profile-data');
+        const roleData = document.getElementById('role-data');
+        const scheduleContainer = document.getElementById('schedule-container');
+        const rawData = document.getElementById('raw-data');
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        
+        // Advanced schedule elements
+        const scheduleTypeSelect = document.getElementById('schedule-type');
+        const dateFilter = document.getElementById('date-filter');
+        const weekFilter = document.getElementById('week-filter');
+        const semesterFilter = document.getElementById('semester-filter');
+        const studentFilter = document.getElementById('student-id');
+        const scheduleDateInput = document.getElementById('schedule-date');
+        const scheduleWeekInput = document.getElementById('schedule-week');
+        const semesterSelect = document.getElementById('schedule-semester');
+        const studentSelect = document.getElementById('student-id');
+        const fetchScheduleBtn = document.getElementById('fetch-schedule-btn');
+        const advancedScheduleResult = document.getElementById('advanced-schedule-result');
+        const scheduleTable = document.getElementById('schedule-table');
+        const scheduleTableBody = document.getElementById('schedule-table-body');
+        
+        // Filter và search cho lịch học
+        const scheduleSearch = document.getElementById('schedule-search');
+        const scheduleFilterDate = document.getElementById('schedule-filter-date');
+        const filterScheduleBtn = document.getElementById('filter-schedule-btn');
+        const resetFilterBtn = document.getElementById('reset-filter-btn');
+        
+        let originalScheduleData = null;
+        
+        // Xử lý thay đổi loại đăng nhập
+        loginTypeSelect.addEventListener('change', function() {
+            if (this.value === 'userId') {
+                userIdGroup.classList.remove('hidden');
+                emailGroup.classList.add('hidden');
+            } else {
+                userIdGroup.classList.add('hidden');
+                emailGroup.classList.remove('hidden');
+            }
+        });
+        
+        // Xử lý thay đổi loại lịch học
+        scheduleTypeSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            
+            // Ẩn tất cả các bộ lọc
+            dateFilter.classList.add('hidden');
+            weekFilter.classList.add('hidden');
+            semesterFilter.classList.add('hidden');
+            studentFilter.classList.add('hidden');
+            
+            // Hiển thị bộ lọc phù hợp
+            if (selectedType === 'daily') {
+                dateFilter.classList.remove('hidden');
+            } else if (selectedType === 'weekly') {
+                weekFilter.classList.remove('hidden');
+                semesterFilter.classList.remove('hidden');
+            } else if (selectedType === 'semester') {
+                semesterFilter.classList.remove('hidden');
+            }
+            
+            // Hiển thị bộ lọc học sinh nếu là phụ huynh
+            if (userData && userData.role === 'Parent') {
+                studentFilter.classList.remove('hidden');
+            }
+        });
+        
+        // Xử lý đăng nhập
+        loginBtn.addEventListener('click', async function() {
+            // Reset các thông báo
+            loginResult.classList.add('hidden');
+            loginError.classList.add('hidden');
+            
+            try {
+                const loginType = loginTypeSelect.value;
+                const password = passwordInput.value;
+                let loginData = {};
+                
+                if (loginType === 'userId') {
+                    const userId = userIdInput.value;
+                    if (!userId) {
+                        throw new Error('Vui lòng nhập User ID');
+                    }
+                    loginData = { userId, password };
+                } else {
+                    const email = emailInput.value;
+                    if (!email) {
+                        throw new Error('Vui lòng nhập Email');
+                    }
+                    loginData = { email, password };
+                }
+                
+                if (!password) {
+                    throw new Error('Vui lòng nhập mật khẩu');
+                }
+                
+                // Gọi API đăng nhập
+                const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(loginData)
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Đăng nhập thất bại');
+                }
+                
+                // Lưu token và thông tin người dùng
+                authToken = result.data.token;
+                userData = result.data;
+                
+                // Hiển thị kết quả đăng nhập
+                loginResult.innerHTML = `<p>Đăng nhập thành công! Xin chào ${result.data.name}</p>`;
+                loginResult.classList.remove('hidden');
+                
+                // Hiển thị thông tin người dùng
+                displayUserInfo(userData);
+                
+                // Lấy lịch học của người dùng
+                await fetchUserSchedule();
+                
+                // Nếu đăng nhập thành công, tải danh sách học kỳ
+                await fetchSemesters();
+                
+                // Hiển thị thông tin học kỳ và tuần hiện tại
+                await loadCurrentScheduleAndSemester();
+                
+                // Nếu là phụ huynh, tải danh sách học sinh
+                if (userData.role === 'Parent') {
+                    loadStudentList(userData);
+                }
+                
+            } catch (error) {
+                loginError.textContent = error.message;
+                loginError.classList.remove('hidden');
+            }
+        });
+        
+        // Hiển thị thông tin người dùng
+        function displayUserInfo(user) {
+            // Hiển thị phần thông tin người dùng
+            userInfo.classList.remove('hidden');
+            
+            // Hiển thị thông tin cá nhân
+            let profileHtml = `
+                <p><strong>Tên:</strong> ${user.name}</p>
+                <p><strong>User ID:</strong> ${user.userId}</p>
+                <p><strong>Email:</strong> ${user.email}</p>
+            `;
+            
+            // Thêm thông tin bổ sung dựa trên vai trò
+            if (user.role === 'Student' && user.studentId) {
+                profileHtml += `<p><strong>Mã học sinh:</strong> ${user.studentId}</p>`;
+                profileHtml += `<p><strong>Lớp:</strong> ${user.classId || 'Chưa phân lớp'}</p>`;
+            } else if (user.role === 'Teacher' && user.teacherId) {
+                profileHtml += `<p><strong>Mã giáo viên:</strong> ${user.teacherId}</p>`;
+            } else if (user.role === 'Parent' && user.parentId) {
+                profileHtml += `<p><strong>Mã phụ huynh:</strong> ${user.parentId}</p>`;
+            }
+            
+            profileData.innerHTML = profileHtml;
+            
+            // Hiển thị vai trò
+            roleData.innerHTML = `
+                <p><strong>Vai trò:</strong> ${translateRole(user.role)}</p>
+                <p><strong>Mô tả:</strong> ${getRoleDescription(user.role)}</p>
+            `;
+            
+            // Hiển thị dữ liệu gốc
+            rawData.textContent = JSON.stringify(user, null, 2);
+        }
+        
+        // Lấy lịch học của người dùng
+        async function fetchUserSchedule() {
+            try {
+                scheduleContainer.innerHTML = '<p>Đang tải lịch học...</p>';
+                
+                const response = await fetch(`${API_BASE_URL}/api/schedules/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Không thể lấy lịch học');
+                }
+                
+                console.log('Schedule API Response:', result);
+                
+                // Cập nhật dữ liệu gốc
+                rawData.textContent = JSON.stringify(result, null, 2);
+                
+                // Lưu dữ liệu gốc để phục vụ tìm kiếm/lọc
+                originalScheduleData = result.data;
+                
+                // Hiển thị lịch học
+                displaySchedule(result.data);
+                
+                // Tự động hiển thị tab lịch học
+                document.querySelector('.tab-button[data-tab="schedule"]').click();
+                
+                return result;
+            } catch (error) {
+                console.error('Error fetching schedule:', error);
+                scheduleContainer.innerHTML = `<div class="error">${error.message}</div>`;
+                return null;
+            }
+        }
+        
+        // Chức năng debug để kiểm tra thông tin học kỳ
+        async function debugCheckSemesters() {
+            try {
+                // Hiển thị thông tin debug trong console
+                console.log('DEBUG: Kiểm tra thông tin học kỳ');
+                
+                // Thử truy vấn trực tiếp collection Semester
+                const response = await fetch(`${API_BASE_URL}/api/database/collections/Semester`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const result = await response.json();
+                console.log('DEBUG: Thông tin học kỳ từ collection Semester:', result);
+                
+                // Thử truy vấn trực tiếp collection semesters
+                const response2 = await fetch(`${API_BASE_URL}/api/database/collections/semesters`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const result2 = await response2.json();
+                console.log('DEBUG: Thông tin học kỳ từ collection semesters:', result2);
+                
+                return { Semester: result, semesters: result2 };
+            } catch (error) {
+                console.error('DEBUG ERROR:', error);
+                return null;
+            }
+        }
+        
+        // Xử lý nút lấy lịch học nâng cao
+        fetchScheduleBtn.addEventListener('click', async function() {
+            try {
+                advancedScheduleResult.classList.add('hidden');
+                scheduleTable.classList.add('hidden');
+                advancedScheduleResult.innerHTML = 'Đang tải lịch học...';
+                advancedScheduleResult.classList.remove('hidden');
+                
+                // Thêm debug thông tin semester trước khi gọi API
+                if (scheduleTypeSelect.value === 'semester' || scheduleTypeSelect.value === 'weekly') {
+                    console.log('DEBUG: Kiểm tra học kỳ trước khi tìm lịch');
+                    await debugCheckSemesters();
+                }
+                
+                const scheduleType = scheduleTypeSelect.value;
+                let endpoint = '';
+                let params = new URLSearchParams();
+                
+                switch(scheduleType) {
+                    case 'me':
+                        endpoint = '/api/schedules/me';
+                        break;
+                    case 'daily':
+                        const date = scheduleDateInput.value;
+                        if (!date) {
+                            throw new Error('Vui lòng chọn ngày');
+                        }
+                        endpoint = `/api/schedules/daily/${date}`;
+                        break;
+                    case 'weekly':
+                        endpoint = '/api/schedules/weekly';
+                        const week = scheduleWeekInput.value;
+                        const semesterId = semesterSelect.value;
+                        if (week) params.append('week', week);
+                        if (semesterId) params.append('semesterId', semesterId);
+                        break;
+                    case 'semester':
+                        // Lưu ý: Nếu không có semesterId, không sử dụng 'current' mà dùng /me endpoint
+                        const semester = semesterSelect.value;
+                        if (!semester) {
+                            // Nếu không chọn semester, dùng /me endpoint thay vì semester/current
+                            endpoint = '/api/schedules/me';
+                        } else {
+                            endpoint = `/api/schedules/semester/${semester}`;
+                        }
+                        break;
+                }
+                
+                // Thêm studentId cho phụ huynh
+                if (userData.role === 'Parent' && studentSelect.value) {
+                    params.append('studentId', studentSelect.value);
+                }
+                
+                // Thêm params vào URL
+                const queryString = params.toString();
+                if (queryString) {
+                    endpoint += `?${queryString}`;
+                }
+                
+                console.log('Gọi API endpoint:', endpoint);
+                
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Không thể lấy lịch học');
+                }
+                
+                // Cập nhật dữ liệu gốc
+                rawData.textContent = JSON.stringify(result, null, 2);
+                
+                // Hiển thị kết quả theo dạng bảng
+                displayScheduleTable(result.data);
+                
+            } catch (error) {
+                console.error('Error fetching advanced schedule:', error);
+                advancedScheduleResult.innerHTML = `<div class="error">${error.message}</div>`;
+                advancedScheduleResult.classList.remove('hidden');
+            }
+        });
+        
+        // Cập nhật fetchSemesters để xử lý trường hợp semesters không tồn tại
+        async function fetchSemesters() {
+            try {
+                console.log("Đang nạp thông tin học kỳ...");
+                
+                // Sử dụng /me endpoint để lấy thông tin lịch học và trích xuất semester từ đó
+                const response = await fetch(`${API_BASE_URL}/api/schedules/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok || !result.success) {
+                    console.warn('Không thể lấy lịch học từ /me endpoint, thử phương pháp khác');
+                    await extractSemestersFromSchedule();
+                    return;
+                }
+                
+                // Kiểm tra xem có semester trong data không
+                if (result.data && result.data.schedules) {
+                    console.log("Trích xuất semesters từ dữ liệu lịch học");
+                    
+                    // Trích xuất danh sách học kỳ từ dữ liệu lịch học
+                    const semesterMap = new Map();
+                    
+                    result.data.schedules.forEach(schedule => {
+                        if (schedule.semesterId) {
+                            // Nếu chưa có thông tin học kỳ này, thêm vào Map
+                            if (!semesterMap.has(schedule.semesterId)) {
+                                semesterMap.set(schedule.semesterId, {
+                                    semesterId: schedule.semesterId,
+                                    semesterName: `Học kỳ ${semesterMap.size + 1}`,
+                                    startDate: null,
+                                    endDate: null,
+                                    sessions: []
+                                });
+                            }
+                            
+                            // Thêm session date vào danh sách
+                            if (schedule.SessionDate || schedule.sessionDate) {
+                                const sessionDate = new Date(schedule.SessionDate || schedule.sessionDate);
+                                semesterMap.get(schedule.semesterId).sessions.push(sessionDate);
+                            }
+                        }
+                    });
+                    
+                    // Tính toán startDate và endDate cho mỗi học kỳ
+                    for (const semester of semesterMap.values()) {
+                        if (semester.sessions.length > 0) {
+                            semester.startDate = new Date(Math.min(...semester.sessions));
+                            semester.endDate = new Date(Math.max(...semester.sessions));
+                            delete semester.sessions;  // Xóa mảng sessions không cần thiết nữa
+                        }
+                    }
+                    
+                    // Chuyển Map thành mảng và sắp xếp
+                    const semesters = Array.from(semesterMap.values())
+                        .filter(s => s.startDate && s.endDate)  // Chỉ giữ lại các học kỳ có ngày
+                        .sort((a, b) => a.startDate - b.startDate);
+                    
+                    // Hiển thị học kỳ
+                    displaySemesters(semesters);
+                    return;
+                }
+                
+                console.warn("Không tìm thấy dữ liệu lịch học, thử phương pháp khác");
+                await extractSemestersFromSchedule();
+                
+            } catch (error) {
+                console.error('Error fetching semesters:', error);
+                await extractSemestersFromSchedule();
+            }
+        }
+        
+        // Hiển thị học kỳ trong dropdown
+        function displaySemesters(semesters) {
+            if (!semesters || semesters.length === 0) {
+                semesterSelect.innerHTML = '<option value="">Không có học kỳ</option>';
+                return;
+            }
+            
+            let semesterOptions = '<option value="">Tất cả học kỳ</option>';
+            const now = new Date();
+            let currentSemesterFound = false;
+            
+            semesters.forEach((semester, index) => {
+                const startDate = new Date(semester.startDate);
+                const endDate = new Date(semester.endDate);
+                const semesterInfo = `${semester.semesterName} (${startDate.toLocaleDateString('vi-VN')} - ${endDate.toLocaleDateString('vi-VN')})`;
+                
+                // Kiểm tra học kỳ hiện tại
+                const isCurrent = startDate <= now && now <= endDate;
+                if (isCurrent) currentSemesterFound = true;
+                
+                semesterOptions += `<option value="${semester.semesterId}" ${isCurrent ? 'selected' : ''}>${semesterInfo}</option>`;
+            });
+            
+            semesterSelect.innerHTML = semesterOptions;
+            
+            // Nếu không tìm thấy học kỳ hiện tại, chọn học kỳ mới nhất
+            if (!currentSemesterFound && semesters.length > 0) {
+                const latestSemester = semesters[semesters.length - 1];
+                const options = Array.from(semesterSelect.options);
+                for (const option of options) {
+                    if (option.value === latestSemester.semesterId) {
+                        option.selected = true;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Lấy danh sách học kỳ
+        async function fetchSemesters() {
+            try {
+                // Đầu tiên thử lấy danh sách học kỳ từ API
+                const response = await fetch(`${API_BASE_URL}/api/schedules/semesters`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                // Nếu API thất bại, sử dụng phương pháp khác (trích xuất từ dữ liệu lịch học)
+                if (!response.ok || !result.success || !result.data || result.data.length === 0) {
+                    console.log('Không thể lấy danh sách học kỳ từ API, sẽ trích xuất từ dữ liệu lịch học');
+                    await extractSemestersFromSchedule();
+                    return;
+                }
+                
+                // Cập nhật danh sách học kỳ
+                const semesters = result.data || [];
+                let semesterOptions = '<option value="">Tất cả học kỳ</option>';
+                
+                semesters.forEach(semester => {
+                    const startDate = new Date(semester.startDate);
+                    const endDate = new Date(semester.endDate);
+                    const semesterInfo = `${semester.semesterName} (${startDate.toLocaleDateString('vi-VN')} - ${endDate.toLocaleDateString('vi-VN')})`;
+                    
+                    semesterOptions += `<option value="${semester.semesterId}">${semesterInfo}</option>`;
+                });
+                
+                semesterSelect.innerHTML = semesterOptions;
+                
+            } catch (error) {
+                console.error('Error fetching semesters:', error);
+                // Nếu gặp lỗi, thử phương pháp trích xuất từ lịch học
+                await extractSemestersFromSchedule();
+            }
+        }
+        
+        // Trích xuất thông tin học kỳ từ dữ liệu lịch học
+        async function extractSemestersFromSchedule() {
+            try {
+                // Nếu chưa có dữ liệu lịch học, lấy về trước
+                if (!originalScheduleData) {
+                    await fetchUserSchedule();
+                    if (!originalScheduleData) return;
+                }
+                
+                // Lấy danh sách học kỳ từ dữ liệu lịch học
+                const semesterMap = new Map();
+                
+                originalScheduleData.schedules.forEach(schedule => {
+                    if (schedule.semesterId) {
+                        // Nếu chưa có thông tin học kỳ này, thêm vào Map
+                        if (!semesterMap.has(schedule.semesterId)) {
+                            // Lấy ngày bắt đầu và kết thúc từ lịch học
+                            const sessions = originalScheduleData.schedules
+                                .filter(s => s.semesterId === schedule.semesterId)
+                                .map(s => new Date(s.SessionDate || s.sessionDate));
+                            
+                            const startDate = sessions.length > 0 ? new Date(Math.min(...sessions)) : new Date();
+                            const endDate = sessions.length > 0 ? new Date(Math.max(...sessions)) : new Date();
+                            
+                            semesterMap.set(schedule.semesterId, {
+                                semesterId: schedule.semesterId,
+                                semesterName: `Học kỳ ${semesterMap.size + 1}`,
+                                startDate,
+                                endDate
+                            });
+                        }
+                    }
+                });
+                
+                // Chuyển Map thành mảng và sắp xếp theo ngày bắt đầu
+                const semesters = Array.from(semesterMap.values()).sort((a, b) => 
+                    new Date(a.startDate) - new Date(b.startDate)
+                );
+                
+                // Cập nhật select box
+                let semesterOptions = '<option value="">Tất cả học kỳ</option>';
+                
+                semesters.forEach((semester, index) => {
+                    const startDate = new Date(semester.startDate);
+                    const endDate = new Date(semester.endDate);
+                    const semesterInfo = `${semester.semesterName} (${startDate.toLocaleDateString('vi-VN')} - ${endDate.toLocaleDateString('vi-VN')})`;
+                    
+                    // Kiểm tra xem đây có phải là học kỳ hiện tại không
+                    const now = new Date();
+                    const isCurrent = startDate <= now && now <= endDate;
+                    
+                    semesterOptions += `<option value="${semester.semesterId}" ${isCurrent ? 'selected' : ''}>${semesterInfo}</option>`;
+                });
+                
+                semesterSelect.innerHTML = semesterOptions;
+                
+            } catch (error) {
+                console.error('Error extracting semesters:', error);
+                semesterSelect.innerHTML = '<option value="">Không thể tải học kỳ</option>';
+            }
+        }
+        
+        // Tính toán tuần hiện tại trong học kỳ
+        function getCurrentWeek(semester) {
+            if (!semester || !semester.startDate) return 1;
+            
+            const start = new Date(semester.startDate);
+            const now = new Date();
+            
+            // Nếu thời gian hiện tại trước khi bắt đầu học kỳ
+            if (now < start) return 1;
+            
+            // Tính số ngày giữa hai ngày
+            const diffTime = Math.abs(now - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            // Tính số tuần (làm tròn lên)
+            return Math.ceil(diffDays / 7);
+        }
+        
+        // Cập nhật hiển thị tuần khi thay đổi học kỳ
+        semesterSelect.addEventListener('change', function() {
+            const selectedSemesterId = this.value;
+            
+            if (!selectedSemesterId) {
+                // Nếu chọn "Tất cả học kỳ", hiển thị tuần mặc định
+                const today = new Date();
+                const weekNum = Math.ceil((today - new Date(today.getFullYear(), 0, 1)) / 604800000);
+                scheduleWeekInput.value = weekNum;
+                return;
+            }
+            
+            // Tìm học kỳ được chọn
+            let selectedSemester = null;
+            
+            // Trích xuất options từ select box
+            const options = Array.from(semesterSelect.options);
+            for (const option of options) {
+                if (option.value === selectedSemesterId) {
+                    // Trích xuất thông tin ngày từ text
+                    const text = option.textContent;
+                    const dateMatch = text.match(/\(([^)]+)\)/);
+                    
+                    if (dateMatch && dateMatch[1]) {
+                        const dates = dateMatch[1].split(' - ');
+                        if (dates.length === 2) {
+                            selectedSemester = {
+                                semesterId: selectedSemesterId,
+                                semesterName: text.split('(')[0].trim(),
+                                startDate: parseVietnameseDate(dates[0]),
+                                endDate: parseVietnameseDate(dates[1])
+                            };
+                        }
+                    }
+                    break;
+                }
+            }
+            
+            if (selectedSemester) {
+                // Tính tuần hiện tại trong học kỳ
+                const currentWeek = getCurrentWeek(selectedSemester);
+                scheduleWeekInput.value = currentWeek;
+            }
+        });
+        
+        // Hàm phân tích ngày theo định dạng tiếng Việt
+        function parseVietnameseDate(dateStr) {
+            // Định dạng ngày/tháng/năm
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+                return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+            }
+            return new Date();
+        }
+        
+        // Hiển thị lịch học và học kỳ hiện tại khi tải trang
+        async function loadCurrentScheduleAndSemester() {
+            // Nếu chưa có dữ liệu lịch học, lấy về
+            if (!originalScheduleData) {
+                await fetchUserSchedule();
+                if (!originalScheduleData) return;
+            }
+            
+            // Trích xuất học kỳ hiện tại từ dữ liệu
+            const now = new Date();
+            const semesters = [];
+            
+            // Tạo Map để lưu thông tin học kỳ
+            const semesterMap = new Map();
+            
+            originalScheduleData.schedules.forEach(schedule => {
+                if (schedule.semesterId && !semesterMap.has(schedule.semesterId)) {
+                    // Lọc tất cả các buổi học của học kỳ này
+                    const sessionsInSemester = originalScheduleData.schedules
+                        .filter(s => s.semesterId === schedule.semesterId)
+                        .map(s => new Date(s.SessionDate || s.sessionDate));
+                    
+                    if (sessionsInSemester.length > 0) {
+                        const startDate = new Date(Math.min(...sessionsInSemester));
+                        const endDate = new Date(Math.max(...sessionsInSemester));
+                        
+                        semesterMap.set(schedule.semesterId, {
+                            semesterId: schedule.semesterId,
+                            startDate,
+                            endDate,
+                            isCurrent: startDate <= now && now <= endDate
+                        });
+                    }
+                }
+            });
+            
+            // Chuyển Map thành mảng
+            const semesterArray = Array.from(semesterMap.values());
+            
+            // Tìm học kỳ hiện tại
+            const currentSemester = semesterArray.find(s => s.isCurrent);
+            
+            if (currentSemester) {
+                // Tính tuần hiện tại
+                const currentWeek = getCurrentWeek(currentSemester);
+                
+                // Hiển thị thông tin
+                const infoHtml = `
+                    <div class="current-info">
+                        <p><strong>Học kỳ hiện tại:</strong> Học kỳ (${currentSemester.startDate.toLocaleDateString('vi-VN')} - ${currentSemester.endDate.toLocaleDateString('vi-VN')})</p>
+                        <p><strong>Tuần hiện tại:</strong> Tuần ${currentWeek}</p>
+                    </div>
+                `;
+                
+                // Hiển thị thông tin ở đầu danh sách lịch học
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'semester-info';
+                infoDiv.innerHTML = infoHtml;
+                
+                // Chèn vào đầu container
+                if (scheduleContainer.firstChild) {
+                    scheduleContainer.insertBefore(infoDiv, scheduleContainer.firstChild);
+                } else {
+                    scheduleContainer.appendChild(infoDiv);
+                }
+            }
+        }
+        
+        // Tải danh sách học sinh (cho phụ huynh)
+        function loadStudentList(user) {
+            if (user.role !== 'Parent' || !user.children || user.children.length === 0) {
+                studentSelect.innerHTML = '<option value="">Không có học sinh</option>';
+                return;
+            }
+            
+            let studentOptions = '<option value="">Chọn học sinh</option>';
+            user.children.forEach(student => {
+                studentOptions += `<option value="${student.studentId}">${student.fullName}</option>`;
+            });
+            
+            studentSelect.innerHTML = studentOptions;
+        }
+        
+        // Hiển thị lịch học
+        function displaySchedule(data) {
+            console.log('Displaying schedule data:', data);
+            
+            // Kiểm tra xem có dữ liệu lịch không
+            if (!data || !data.schedules || data.schedules.length === 0) {
+                scheduleContainer.innerHTML = '<p>Không có lịch học nào</p>';
+                return;
+            }
+            
+            // Nhóm lịch học theo ngày
+            const schedulesByDay = {};
+                
+            data.schedules.forEach(schedule => {
+                // Kiểm tra và xử lý ngày học
+                let date;
+                if (schedule.SessionDate) {
+                    date = new Date(schedule.SessionDate);
+                } else if (schedule.sessionDate) {
+                    date = new Date(schedule.sessionDate);
+                } else if (schedule.date) {
+                    date = new Date(schedule.date);
+                } else {
+                    console.warn('No date found in schedule:', schedule);
+                    return; // Bỏ qua nếu không có ngày
+                }
+                
+                if (isNaN(date.getTime())) {
+                    console.warn('Invalid date in schedule:', schedule);
+                    return; // Bỏ qua nếu ngày không hợp lệ
+                }
+                
+                const day = date.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                
+                if (!schedulesByDay[day]) {
+                    schedulesByDay[day] = [];
+                }
+                
+                schedulesByDay[day].push(schedule);
+            });
+            
+            // Lấy thông tin về role từ data
+            const userRole = data.role || "";
+            
+            // Sắp xếp các ngày theo thứ tự thời gian
+            const sortedDays = Object.keys(schedulesByDay).sort((a, b) => {
+                return new Date(a) - new Date(b);
+            });
+            
+            // Hiển thị lịch học theo ngày
+            let html = '';
+            
+            // Hiển thị thông tin học kỳ nếu có
+            if (data.semester) {
+                html += `<div class="semester-info">
+                    <h3>Học kỳ: ${data.semester.semesterName || 'Không xác định'}</h3>
+                    <p>Từ ngày: ${data.semester.startDate ? new Date(data.semester.startDate).toLocaleDateString('vi-VN') : 'Chưa xác định'}</p>
+                    <p>Đến ngày: ${data.semester.endDate ? new Date(data.semester.endDate).toLocaleDateString('vi-VN') : 'Chưa xác định'}</p>
+                </div>`;
+            }
+            
+            // Hiển thị thông tin người dùng phù hợp với vai trò
+            if (userRole === "Teacher") {
+                html += `<div class="user-schedule-info">
+                    <p><strong>Giáo viên:</strong> ${data.user.fullName || 'Không xác định'}</p>
+                    <p><strong>Bộ môn:</strong> ${data.user.major || 'Không xác định'}</p>
+                </div>`;
+            } else if (userRole === "Student") {
+                html += `<div class="user-schedule-info">
+                    <p><strong>Học sinh:</strong> ${data.user.fullName || 'Không xác định'}</p>
+                    <p><strong>Lớp:</strong> ${data.user.classId || 'Không xác định'}</p>
+                </div>`;
+            }
+            
+            sortedDays.forEach(day => {
+                html += `<div class="schedule-day">
+                    <h3>${day}</h3>`;
+                
+                // Sắp xếp tiết học theo thời gian
+                const sortedSchedules = schedulesByDay[day].sort((a, b) => {
+                    const slotA = a.SlotID || a.slotId || a.periodNumber || 0;
+                    const slotB = b.SlotID || b.slotId || b.periodNumber || 0;
+                    return slotA - slotB;
+                });
+                
+                sortedSchedules.forEach(schedule => {
+                    // Lấy các thông tin quan trọng, với fallback để tương thích với nhiều định dạng
+                    const subjectId = schedule.subjectId || "";
+                    const subjectName = schedule.subjectName || `Môn học ${subjectId}`;
+                    
+                    const classId = schedule.classId || "";
+                    const className = schedule.className || `Lớp ${classId}`;
+                    
+                    const teacherId = schedule.teacherId || "";
+                    const teacherName = schedule.teacherName || (userRole === "Teacher" ? data.user.fullName : `Giáo viên ${teacherId}`);
+                    
+                    const roomId = schedule.classroomId || "";
+                    const roomNumber = schedule.classroomNumber || schedule.roomNumber || `Phòng ${roomId}`;
+                    
+                    const slotId = schedule.SlotID || schedule.slotId || schedule.periodNumber || "N/A";
+                    const startTime = schedule.startTime || "N/A";
+                    const endTime = schedule.endTime || "N/A";
+                    const topic = schedule.topic || "Chưa cập nhật";
+                    
+                    html += `<div class="schedule-item">
+                        <p><strong>Tiết ${slotId}:</strong> ${subjectName} (${startTime} - ${endTime})</p>
+                        <p><strong>Giáo viên:</strong> ${teacherName}</p>
+                        <p><strong>Phòng:</strong> ${roomNumber}</p>
+                        <p><strong>Lớp:</strong> ${className}</p>
+                        <p><strong>Chủ đề:</strong> ${topic}</p>
+                    </div>`;
+                });
+                
+                html += '</div>';
+            });
+            
+            scheduleContainer.innerHTML = html;
+        }
+        
+        // Hiển thị lịch học dạng bảng
+        function displayScheduleTable(data) {
+            advancedScheduleResult.classList.add('hidden');
+            
+            if (!data || ((!data.schedules || data.schedules.length === 0) && (!data.schedule || data.schedule.length === 0))) {
+                advancedScheduleResult.innerHTML = '<p>Không có lịch học nào</p>';
+                advancedScheduleResult.classList.remove('hidden');
+                return;
+            }
+            
+            // Đảm bảo data.schedules tồn tại (có thể API trả về data.schedule)
+            if (!data.schedules && data.schedule) {
+                data.schedules = data.schedule;
+            }
+            
+            // Hiển thị thông tin người dùng
+            let userInfo = '';
+            if (data.user) {
+                if (data.role === 'Teacher') {
+                    userInfo = `<p><strong>Giáo viên:</strong> ${data.user.fullName || 'Không xác định'}</p>
+                               <p><strong>Bộ môn:</strong> ${data.user.major || 'Không xác định'}</p>`;
+                } else if (data.role === 'Student') {
+                    userInfo = `<p><strong>Học sinh:</strong> ${data.user.fullName || 'Không xác định'}</p>
+                               <p><strong>Lớp:</strong> ${data.user.classId || 'Không xác định'}</p>`;
+                }
+            }
+            
+            if (data.semester) {
+                userInfo += `<p><strong>Học kỳ:</strong> ${data.semester.semesterName || 'Không xác định'}</p>`;
+                
+                // Hiển thị thông tin về tuần
+                if (scheduleTypeSelect.value === 'weekly' && scheduleWeekInput.value) {
+                    userInfo += `<p><strong>Tuần:</strong> ${scheduleWeekInput.value}</p>`;
+                }
+            }
+            
+            advancedScheduleResult.innerHTML = userInfo;
+            advancedScheduleResult.classList.remove('hidden');
+            
+            scheduleTableBody.innerHTML = '';
+            
+            // Sắp xếp lịch học theo ngày và tiết
+            const sortedSchedules = [...data.schedules].sort((a, b) => {
+                // So sánh theo ngày
+                const dateA = new Date(a.SessionDate || a.sessionDate || a.date || 0);
+                const dateB = new Date(b.SessionDate || b.sessionDate || b.date || 0);
+                
+                if (dateA - dateB !== 0) return dateA - dateB;
+                
+                // Nếu cùng ngày, so sánh theo tiết học
+                const slotA = a.SlotID || a.slotId || a.periodNumber || 0;
+                const slotB = b.SlotID || b.slotId || b.periodNumber || 0;
+                return slotA - slotB;
+            });
+            
+            sortedSchedules.forEach(schedule => {
+                const row = document.createElement('tr');
+                
+                // Lấy các thông tin quan trọng
+                const slotId = schedule.SlotID || schedule.slotId || schedule.periodNumber || "N/A";
+                
+                const subjectId = schedule.subjectId || "";
+                const subjectName = schedule.subjectName || `Môn học ${subjectId}`;
+                
+                const teacherId = schedule.teacherId || "";
+                const teacherName = schedule.teacherName || (data.role === "Teacher" ? data.user.fullName : `Giáo viên ${teacherId}`);
+                
+                const roomId = schedule.classroomId || "";
+                const roomNumber = schedule.classroomNumber || schedule.roomNumber || `Phòng ${roomId}`;
+                
+                // Format ngày
+                let sessionDate = 'N/A';
+                if (schedule.SessionDate) {
+                    sessionDate = new Date(schedule.SessionDate).toLocaleDateString('vi-VN');
+                } else if (schedule.sessionDate) {
+                    sessionDate = new Date(schedule.sessionDate).toLocaleDateString('vi-VN');
+                } else if (schedule.date) {
+                    sessionDate = new Date(schedule.date).toLocaleDateString('vi-VN');
+                }
+                
+                const topic = schedule.topic || "Chưa cập nhật";
+                
+                row.innerHTML = `
+                    <td>${slotId} <small>(${schedule.startTime || 'N/A'} - ${schedule.endTime || 'N/A'})</small></td>
+                    <td>${subjectName}</td>
+                    <td>${teacherName}</td>
+                    <td>${roomNumber}</td>
+                    <td>${sessionDate} <small>(${schedule.dayOfWeek || 'N/A'})</small></td>
+                    <td>${topic}</td>
+                `;
+                
+                scheduleTableBody.appendChild(row);
+            });
+            
+            scheduleTable.classList.remove('hidden');
+        }
+        
+        // Chuyển đổi vai trò sang tiếng Việt
+        function translateRole(role) {
+            const roles = {
+                'Admin': 'Quản trị viên',
+                'Teacher': 'Giáo viên',
+                'Student': 'Học sinh',
+                'Parent': 'Phụ huynh'
+            };
+            
+            return roles[role] || role;
+        }
+        
+        // Mô tả vai trò
+        function getRoleDescription(role) {
+            const descriptions = {
+                'Admin': 'Quản lý toàn bộ hệ thống',
+                'Teacher': 'Quản lý lớp học và dạy học sinh',
+                'Student': 'Học sinh tham gia lớp học',
+                'Parent': 'Phụ huynh theo dõi con em'
+            };
+            
+            return descriptions[role] || '';
+        }
+        
+        // Xử lý tabs
+        tabButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+                
+                // Kích hoạt tab button
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Hiển thị tab content
+                document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.add('hidden'));
+                document.getElementById(`${tabId}-tab`).classList.remove('hidden');
+            });
+        });
+        
+        // Đặt ngày mặc định cho input date là hôm nay
+        const today = new Date();
+        const formattedDate = today.toISOString().substr(0, 10);
+        scheduleDateInput.value = formattedDate;
+        
+        // Đặt tuần mặc định là tuần hiện tại (ước lượng)
+        const weekNum = Math.ceil((today - new Date(today.getFullYear(), 0, 1)) / 604800000);
+        scheduleWeekInput.value = weekNum;
+
+        // Xử lý nút lọc lịch học
+        filterScheduleBtn.addEventListener('click', function() {
+            if (!originalScheduleData) return;
+            
+            const searchTerm = scheduleSearch.value.toLowerCase();
+            const filterDate = scheduleFilterDate.value ? new Date(scheduleFilterDate.value) : null;
+            
+            // Tạo bản sao dữ liệu gốc để lọc
+            const filteredData = {...originalScheduleData};
+            
+            // Lọc danh sách lịch học
+            if (searchTerm || filterDate) {
+                filteredData.schedules = originalScheduleData.schedules.filter(schedule => {
+                    // Lọc theo từ khóa tìm kiếm
+                    let matchesSearch = true;
+                    if (searchTerm) {
+                        const subjectName = `Môn học ${schedule.subjectId}`;
+                        const teacherName = `Giáo viên ${schedule.teacherId}`;
+                        const className = `Lớp ${schedule.classId}`;
+                        const roomName = `Phòng ${schedule.classroomId}`;
+                        
+                        matchesSearch = 
+                            subjectName.toLowerCase().includes(searchTerm) ||
+                            teacherName.toLowerCase().includes(searchTerm) ||
+                            className.toLowerCase().includes(searchTerm) ||
+                            roomName.toLowerCase().includes(searchTerm) ||
+                            (schedule.dayOfWeek && schedule.dayOfWeek.toLowerCase().includes(searchTerm));
+                    }
+                    
+                    // Lọc theo ngày
+                    let matchesDate = true;
+                    if (filterDate) {
+                        const scheduleDate = new Date(schedule.SessionDate || schedule.sessionDate || schedule.date || null);
+                        
+                        if (scheduleDate && !isNaN(scheduleDate.getTime())) {
+                            // So sánh năm, tháng, ngày (không quan tâm đến giờ)
+                            matchesDate = 
+                                scheduleDate.getFullYear() === filterDate.getFullYear() &&
+                                scheduleDate.getMonth() === filterDate.getMonth() &&
+                                scheduleDate.getDate() === filterDate.getDate();
+                        } else {
+                            matchesDate = false;
+                        }
+                    }
+                    
+                    return matchesSearch && matchesDate;
+                });
+            }
+            
+            // Hiển thị dữ liệu đã lọc
+            displaySchedule(filteredData);
+        });
+
+        // Xử lý nút đặt lại bộ lọc
+        resetFilterBtn.addEventListener('click', function() {
+            scheduleSearch.value = '';
+            scheduleFilterDate.value = '';
+            
+            if (originalScheduleData) {
+                displaySchedule(originalScheduleData);
+            }
+        });
+    </script>
+</body>
+</html> 

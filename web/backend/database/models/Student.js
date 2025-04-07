@@ -52,4 +52,4 @@ StudentSchema.virtual('user', {
   justOne: true
 });
 
-module.exports = mongoose.model('Student', StudentSchema, 'students'); 
+module.exports = mongoose.model('Student', StudentSchema, 'Student'); 
