@@ -1,5 +1,5 @@
 const express = require('express');
-const { register, login, getMe, refreshToken, logout, resetAdminPassword } = require('../controllers/authController');
+const { register, login, getMe, refreshToken, logout, resetAdminPassword, verifyToken } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -21,5 +21,8 @@ router.get('/me', protect, getMe);
 
 // Route for resetting admin password (development only)
 router.get('/reset-admin-password', resetAdminPassword);
+
+// Route for verifying token
+router.post('/verify', verifyToken);
 
 module.exports = router; 

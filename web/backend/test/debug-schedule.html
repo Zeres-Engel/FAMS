@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schedule Debug Tool</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, button {
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      padding: 10px 15px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+    .error {
+      color: red;
+    }
+    .debug-links {
+      margin: 20px 0;
+    }
+    .debug-links a {
+      display: inline-block;
+      margin-right: 10px;
+      padding: 8px 15px;
+      background-color: #f0f0f0;
+      text-decoration: none;
+      color: #333;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+    .debug-links a:hover {
+      background-color: #e0e0e0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Schedule Debug Tool</h1>
+    
+    <div class="card">
+      <h2>Login</h2>
+      <div id="loginStatus"></div>
+      <div class="form-group">
+        <label for="userId">User ID:</label>
+        <input type="text" id="userId" value="student">
+      </div>
+      <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" value="1234">
+      </div>
+      <button id="loginBtn">Login</button>
+      <button id="logoutBtn">Logout</button>
+      <div id="loginResult"></div>
+    </div>
+    
+    <div class="debug-links">
+      <h3>Quick Links:</h3>
+      <a href="#" id="listCollections">List All Collections</a>
+      <a href="#" id="listUsers">List Users</a>
+    </div>
+    
+    <div class="card">
+      <h2>1. Check Token</h2>
+      <button id="checkTokenBtn">Check Token</button>
+      <div id="tokenResult"></div>
+    </div>
+    
+    <div class="card">
+      <h2>2. Find Schedules by Class ID</h2>
+      <div class="form-group">
+        <label for="classId">Class ID:</label>
+        <input type="number" id="classId" value="1">
+      </div>
+      <button id="findSchedulesBtn">Find Schedules</button>
+      <div id="scheduleResult"></div>
+    </div>
+    
+    <div class="card">
+      <h2>3. Find Student Schedule by User ID</h2>
+      <div class="form-group">
+        <label for="studentUserId">Student User ID:</label>
+        <input type="text" id="studentUserId" value="nhuvn32">
+      </div>
+      <button id="findStudentScheduleBtn">Find Student Schedule</button>
+      <div id="studentScheduleResult"></div>
+    </div>
+    
+    <div class="card">
+      <h2>4. My Schedule (Authenticated)</h2>
+      <p>Shows schedule based on your role after login</p>
+      <button id="getMyScheduleBtn">Get My Schedule</button>
+      <div id="myScheduleResult"></div>
+    </div>
+    
+    <div class="card">
+      <h2>5. Debug Results</h2>
+      <div id="debugResult"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000';
+    
+    // Check login status on page load
+    function checkLoginStatus() {
+      const loginStatusDiv = document.getElementById('loginStatus');
+      const token = localStorage.getItem('authToken');
+      
+      if (token) {
+        try {
+          // Try to decode JWT token (not secure, just for display purposes)
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          
+          const payload = JSON.parse(jsonPayload);
+          
+          loginStatusDiv.innerHTML = `
+            <div style="background-color: #e8f5e9; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+              <p><strong>Logged in as:</strong> ${payload.name || payload.userId || 'Unknown'}</p>
+              <p><strong>Role:</strong> ${payload.role || 'Unknown'}</p>
+            </div>
+          `;
+        } catch (e) {
+          loginStatusDiv.innerHTML = `
+            <div style="background-color: #e8f5e9; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+              <p>Logged in (token found)</p>
+            </div>
+          `;
+        }
+      } else {
+        loginStatusDiv.innerHTML = `
+          <div style="background-color: #ffebee; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+            <p>Not logged in</p>
+          </div>
+        `;
+      }
+    }
+    
+    // Run on page load
+    checkLoginStatus();
+    
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('authToken');
+      document.getElementById('loginResult').innerHTML = '<p style="color: green;">Logged out successfully!</p>';
+      checkLoginStatus();
+    });
+    
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      const resultDiv = document.getElementById('loginResult');
+      const userId = document.getElementById('userId').value;
+      const password = document.getElementById('password').value;
+      
+      resultDiv.innerHTML = '<p>Logging in...</p>';
+      
+      try {
+        const response = await fetch(`${API_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ userId, password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.data && data.data.token) {
+          localStorage.setItem('authToken', data.data.token);
+          resultDiv.innerHTML = `
+            <h3 style="color: green;">Login Successful!</h3>
+            <p>User: ${data.data.name || 'Unknown'}</p>
+            <p>Role: ${data.data.role || 'Unknown'}</p>
+            <p>Token has been stored in localStorage</p>
+          `;
+          
+          // Update login status
+          checkLoginStatus();
+          
+          // Automatically get schedule after login
+          document.getElementById('getMyScheduleBtn').click();
+          
+          // If student, also update student user ID field
+          if (data.data.role === 'Student') {
+            document.getElementById('studentUserId').value = data.data.userId || userId;
+          }
+        } else {
+          resultDiv.innerHTML = `
+            <h3 class="error">Login Failed!</h3>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <h3 class="error">Error:</h3>
+          <pre>${error.message}</pre>
+        `;
+      }
+    });
+    
+    document.getElementById('getMyScheduleBtn').addEventListener('click', async () => {
+      const resultDiv = document.getElementById('myScheduleResult');
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        resultDiv.innerHTML = `
+          <h3 class="error">Authentication Required</h3>
+          <p>Please log in first to view your schedule.</p>
+        `;
+        return;
+      }
+      
+      resultDiv.innerHTML = '<p>Fetching your schedule...</p>';
+      
+      try {
+        const response = await fetch(`${API_URL}/api/schedules/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Format the output to be more user-friendly
+          const role = data.data.role;
+          const user = data.data.user;
+          const schedules = data.data.schedules;
+          
+          let userInfo = '';
+          
+          if (role === 'Student') {
+            userInfo = `
+              <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <h3>Student Information</h3>
+                <p><strong>Name:</strong> ${user.fullName || 'Unknown'}</p>
+                <p><strong>Student ID:</strong> ${user.studentId || 'Unknown'}</p>
+                <p><strong>Class ID:</strong> ${user.classId || 'Not assigned'}</p>
+              </div>
+            `;
+          } else if (role === 'Teacher') {
+            userInfo = `
+              <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <h3>Teacher Information</h3>
+                <p><strong>Name:</strong> ${user.fullName || 'Unknown'}</p>
+                <p><strong>Teacher ID:</strong> ${user.teacherId || 'Unknown'}</p>
+                <p><strong>Major:</strong> ${user.major || 'Not specified'}</p>
+                <p><strong>Weekly Capacity:</strong> ${user.weeklyCapacity || 'Not specified'}</p>
+              </div>
+            `;
+          } else if (role === 'Parent') {
+            userInfo = `
+              <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <h3>Parent Information</h3>
+                <p><strong>Name:</strong> ${user.parentName || 'Unknown'}</p>
+                <p><strong>Parent ID:</strong> ${user.parentId || 'Unknown'}</p>
+                <p><strong>Viewing schedule for:</strong> ${user.student?.fullName || 'Unknown'}</p>
+                <p><strong>Student's Class ID:</strong> ${user.student?.classId || 'Not assigned'}</p>
+              </div>
+            `;
+          } else if (role === 'Admin') {
+            userInfo = `
+              <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <h3>Admin Information</h3>
+                <p><strong>User ID:</strong> ${user.userId || 'Unknown'}</p>
+                <p>Use query parameters classId or teacherId to view specific schedules</p>
+              </div>
+            `;
+          }
+          
+          // Format schedules in a more readable way
+          let schedulesHtml = '';
+          
+          if (schedules && schedules.length > 0) {
+            // Group schedules by day
+            const schedulesByDay = {};
+            
+            schedules.forEach(schedule => {
+              const day = schedule.dayOfWeek || 'Unknown';
+              if (!schedulesByDay[day]) {
+                schedulesByDay[day] = [];
+              }
+              schedulesByDay[day].push(schedule);
+            });
+            
+            // Sort by day of week
+            const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            
+            let daysHtml = '';
+            
+            daysOrder.forEach(day => {
+              if (schedulesByDay[day]) {
+                // Sort schedules by slot time
+                schedulesByDay[day].sort((a, b) => {
+                  return a.SlotID - b.SlotID;
+                });
+                
+                let slotsHtml = '';
+                
+                schedulesByDay[day].forEach(schedule => {
+                  slotsHtml += `
+                    <div style="border-bottom: 1px solid #eee; padding: 8px 0;">
+                      <p><strong>Time:</strong> ${schedule.startTime} - ${schedule.endTime} (Slot ${schedule.SlotID})</p>
+                      <p><strong>Subject ID:</strong> ${schedule.subjectId}</p>
+                      <p><strong>Teacher ID:</strong> ${schedule.teacherId}</p>
+                      <p><strong>Classroom:</strong> ${schedule.classroomId}</p>
+                    </div>
+                  `;
+                });
+                
+                daysHtml += `
+                  <div style="margin-bottom: 15px;">
+                    <h4>${day}</h4>
+                    ${slotsHtml}
+                  </div>
+                `;
+              }
+            });
+            
+            schedulesHtml = `
+              <div style="margin-top: 20px;">
+                <h3>Schedule</h3>
+                ${daysHtml}
+              </div>
+            `;
+          } else {
+            schedulesHtml = `
+              <div style="margin-top: 20px;">
+                <h3>Schedule</h3>
+                <p>No schedule entries found</p>
+              </div>
+            `;
+          }
+          
+          resultDiv.innerHTML = `
+            ${userInfo}
+            ${schedulesHtml}
+            <div style="margin-top: 20px;">
+              <h4>Raw Response:</h4>
+              <pre style="font-size: 0.8em;">${JSON.stringify(data, null, 2)}</pre>
+            </div>
+          `;
+        } else {
+          resultDiv.innerHTML = `
+            <h3 class="error">Error:</h3>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <h3 class="error">Error:</h3>
+          <pre>${error.message}</pre>
+        `;
+      }
+    });
+    
+    document.getElementById('checkTokenBtn').addEventListener('click', async () => {
+      const resultDiv = document.getElementById('tokenResult');
+      resultDiv.innerHTML = '<p>Checking token...</p>';
+      
+      try {
+        const response = await fetch(`${API_URL}/api/schedules/debug/token-test`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          }
+        });
+        
+        const data = await response.json();
+        resultDiv.innerHTML = `
+          <h3>Token Check Result:</h3>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <h3 class="error">Error:</h3>
+          <pre>${error.message}</pre>
+        `;
+      }
+    });
+    
+    document.getElementById('findSchedulesBtn').addEventListener('click', async () => {
+      const resultDiv = document.getElementById('scheduleResult');
+      const classId = document.getElementById('classId').value;
+      
+      resultDiv.innerHTML = '<p>Fetching schedules...</p>';
+      
+      try {
+        const response = await fetch(`${API_URL}/api/schedules/debug/schedules/${classId}`);
+        
+        const data = await response.json();
+        resultDiv.innerHTML = `
+          <h3>Schedule Search Result:</h3>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <h3 class="error">Error:</h3>
+          <pre>${error.message}</pre>
+        `;
+      }
+    });
+    
+    document.getElementById('findStudentScheduleBtn').addEventListener('click', async () => {
+      const resultDiv = document.getElementById('studentScheduleResult');
+      const userId = document.getElementById('studentUserId').value;
+      
+      resultDiv.innerHTML = '<p>Fetching student schedule...</p>';
+      
+      const token = localStorage.getItem('authToken');
+      
+      try {
+        let response;
+        
+        if (token) {
+          // If we have a token, use the authenticated endpoint
+          response = await fetch(`${API_URL}/api/schedules/student`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+        } else {
+          // Without token, use the debug endpoint
+          response = await fetch(`${API_URL}/api/schedules/debug/student/${userId}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data.success && data.code === 'NO_TOKEN') {
+          resultDiv.innerHTML = `
+            <h3 class="error">Authentication Required</h3>
+            <p>Please log in using the form at the top of the page to access your schedule.</p>
+          `;
+        } else {
+          resultDiv.innerHTML = `
+            <h3>Student Schedule Result:</h3>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <h3 class="error">Error:</h3>
+          <pre>${error.message}</pre>
+        `;
+      }
+    });
+    
+    document.getElementById('listCollections').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const resultDiv = document.getElementById('debugResult');
+      
+      resultDiv.innerHTML = '<p>Fetching collections...</p>';
+      
+      try {
+        const response = await fetch(`${API_URL}/api/schedules/debug/collections`);
+        
+        const data = await response.json();
+        resultDiv.innerHTML = `
+          <h3>Database Collections:</h3>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <h3 class="error">Error:</h3>
+          <pre>${error.message}</pre>
+        `;
+      }
+    });
+    
+    document.getElementById('listUsers').addEventListener('click', async (e) => {
+      e.preventDefault();
+      const resultDiv = document.getElementById('debugResult');
+      
+      resultDiv.innerHTML = '<p>Fetching users...</p>';
+      
+      try {
+        const response = await fetch(`${API_URL}/api/schedules/debug/users`);
+        
+        const data = await response.json();
+        resultDiv.innerHTML = `
+          <h3>Users:</h3>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <h3 class="error">Error:</h3>
+          <pre>${error.message}</pre>
+        `;
+      }
+    });
+  </script>
+</body>
+</html> 

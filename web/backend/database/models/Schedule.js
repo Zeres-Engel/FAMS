@@ -7,7 +7,7 @@ const ScheduleSchema = new mongoose.Schema({
     unique: true
   },
   semesterId: {
-    type: Number,
+    type: mongoose.Schema.Types.Mixed,
     ref: 'Semester',
     required: true
   },
@@ -28,14 +28,26 @@ const ScheduleSchema = new mongoose.Schema({
     type: Number,
     ref: 'Classroom'
   },
+  WeekNumber: {
+    type: Number,
+    required: true
+  },
+  DayNumber: {
+    type: Number,
+    required: true
+  },
+  SessionDate: {
+    type: String,
+    required: true
+  },
+  SlotID: {
+    type: Number,
+    required: true
+  },
   dayOfWeek: {
     type: String,
     required: true,
     enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-  },
-  period: {
-    type: Number,
-    required: true
   },
   startTime: {
     type: String,
@@ -44,6 +56,9 @@ const ScheduleSchema = new mongoose.Schema({
   endTime: {
     type: String,
     required: true
+  },
+  Topic: {
+    type: String
   },
   isFreeTime: {
     type: Boolean,
@@ -94,4 +109,4 @@ ScheduleSchema.virtual('semester', {
   justOne: true
 });
 
-module.exports = mongoose.model('Schedule', ScheduleSchema, 'schedules'); 
+module.exports = mongoose.model('ClassSchedule', ScheduleSchema, 'ClassSchedule'); 

@@ -140,26 +140,7 @@ CREATE TABLE RFID (
   FOREIGN KEY (UserID) REFERENCES UserAccount(UserID)
 );
 
-CREATE TABLE ClassSession (
-  SessionID INT AUTO_INCREMENT PRIMARY KEY,
-  SemesterID INT NOT NULL,
-  ClassID INT NOT NULL,
-  SubjectID INT NOT NULL,
-  TeacherID INT NOT NULL,
-  ClassroomID INT NOT NULL,
-  WeekNumber INT NOT NULL,
-  DayNumber INT NOT NULL,
-  SlotID INT NOT NULL,
-  Topic VARCHAR(255),
-  FOREIGN KEY (SemesterID) REFERENCES Semester(SemesterID),
-  FOREIGN KEY (ClassID) REFERENCES Class(ClassID),
-  FOREIGN KEY (SubjectID) REFERENCES Subject(SubjectID),
-  FOREIGN KEY (TeacherID) REFERENCES Teacher(TeacherID),
-  FOREIGN KEY (ClassroomID) REFERENCES Classroom(ClassroomID),
-  FOREIGN KEY (SlotID) REFERENCES Slot(SlotID)
-);
-
-CREATE TABLE Schedule (
+CREATE TABLE ClassSchedule (
   ScheduleID INT AUTO_INCREMENT PRIMARY KEY,
   SemesterID INT NOT NULL,
   WeekNumber INT NOT NULL,
@@ -169,6 +150,8 @@ CREATE TABLE Schedule (
   TeacherID INT NOT NULL,
   ClassroomID INT NOT NULL,
   SlotID INT NOT NULL,
+  Topic VARCHAR(255),
+  SessionDate DATE,
   FOREIGN KEY (SemesterID) REFERENCES Semester(SemesterID),
   FOREIGN KEY (ClassID) REFERENCES Class(ClassID),
   FOREIGN KEY (SubjectID) REFERENCES Subject(SubjectID),
@@ -179,11 +162,11 @@ CREATE TABLE Schedule (
 
 CREATE TABLE AttendanceLog (
   AttendanceID INT AUTO_INCREMENT PRIMARY KEY,
-  SessionID INT NOT NULL,
+  ScheduleID INT NOT NULL,
   UserID INT NOT NULL,
   CheckIn DATETIME,
   Status ENUM('Present','Late','Absent') DEFAULT 'Absent',
-  FOREIGN KEY (SessionID) REFERENCES ClassSession(SessionID),
+  FOREIGN KEY (ScheduleID) REFERENCES ClassSchedule(ScheduleID),
   FOREIGN KEY (UserID) REFERENCES UserAccount(UserID)
 );
 

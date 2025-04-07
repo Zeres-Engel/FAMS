@@ -14,25 +14,16 @@ const ClassSchema = new mongoose.Schema({
     type: Number,
     ref: 'Teacher'
   },
-  batchId: {
+  BatchID: {
     type: Number,
-    ref: 'Batch',
-    required: true
+    ref: 'Batch'
   }
 }, {
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
 
-// Virtual for getting batch info
-ClassSchema.virtual('batch', {
-  ref: 'Batch',
-  localField: 'batchId',
-  foreignField: 'batchId',
-  justOne: true
-});
-
-// Virtual for getting homeroom teacher
+// Virtual for getting homeroom teacher info
 ClassSchema.virtual('homeroomTeacher', {
   ref: 'Teacher',
   localField: 'homeroomTeacherId',
@@ -40,12 +31,19 @@ ClassSchema.virtual('homeroomTeacher', {
   justOne: true
 });
 
+// Virtual for getting batch info
+ClassSchema.virtual('batch', {
+  ref: 'Batch',
+  localField: 'BatchID',
+  foreignField: 'batchId',
+  justOne: true
+});
+
 // Virtual for getting students in this class
 ClassSchema.virtual('students', {
   ref: 'Student',
   localField: 'classId',
-  foreignField: 'classId',
-  justOne: false
+  foreignField: 'classId'
 });
 
 // Virtual for getting schedules for this class
@@ -56,4 +54,4 @@ ClassSchema.virtual('schedules', {
   justOne: false
 });
 
-module.exports = mongoose.model('Class', ClassSchema, 'classes'); 
+module.exports = mongoose.model('Class', ClassSchema, 'Class'); 

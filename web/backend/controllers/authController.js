@@ -1,6 +1,9 @@
 const User = require('../database/models/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const Student = require('../database/models/Student');
+const Teacher = require('../database/models/Teacher');
+const Parent = require('../database/models/Parent');
 
 /**
  * Generate JWT tokens (access and refresh)
@@ -151,91 +154,103 @@ exports.register = async (req, res) => {
 };
 
 /**
- * @desc    Login user & get token
+ * @desc    Login user
  * @route   POST /api/auth/login
  * @access  Public
  */
 exports.login = async (req, res) => {
   try {
     const { userId, password } = req.body;
-    
-    // Validate required fields
+
+    // Validate input
     if (!userId || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide both userId and password',
-        code: 'MISSING_CREDENTIALS'
-      });
-    }
-    
-    console.log('Login attempt:', { userId, passwordProvided: !!password });
-
-    // Check for user by userId with explicit password selection
-    const user = await User.findOne({ userId }).select('+password');
-    
-    console.log('User found:', !!user);
-    if (user) {
-      console.log('User details:', {
-        id: user._id,
-        userId: user.userId,
-        passwordAvailable: !!user.password,
-        passwordLength: user.password?.length
+        message: 'Vui lòng cung cấp tên đăng nhập và mật khẩu',
+        code: 'MISSING_FIELDS'
       });
     }
 
+    // Check for user
+    const user = await User.findOne({ userId });
     if (!user) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Tài khoản không tồn tại. Vui lòng kiểm tra lại.',
-        code: 'USER_NOT_FOUND'
+      return res.status(401).json({
+        success: false,
+        message: 'Thông tin đăng nhập không đúng',
+        code: 'INVALID_CREDENTIALS'
       });
-    }
-
-    // Double check if password exists
-    if (!user.password) {
-      // If no password exists, reset it
-      console.log('Password missing for user, resetting password...');
-      user.password = '1234';
-      await user.save();
-      console.log('Password reset for user:', user.userId);
     }
 
     // Check if password matches
     const isMatch = await user.matchPassword(password);
-    
-    console.log('Password match:', isMatch);
-
     if (!isMatch) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Mật khẩu không chính xác. Vui lòng thử lại.',
-        code: 'INVALID_PASSWORD'
+      return res.status(401).json({
+        success: false,
+        message: 'Thông tin đăng nhập không đúng',
+        code: 'INVALID_CREDENTIALS'
       });
     }
 
-    // Generate tokens
-    const { accessToken, refreshToken } = generateTokens(user.userId);
+    // Get additional user info based on role
+    let additionalInfo = {};
+    if (user.role === 'Student') {
+      const student = await Student.findOne({ userId: user.userId });
+      if (student) {
+        additionalInfo = {
+          studentId: student.studentId,
+          fullName: student.fullName,
+          classId: student.classId
+        };
+      }
+    } else if (user.role === 'Teacher') {
+      const teacher = await Teacher.findOne({ userId: user.userId });
+      if (teacher) {
+        additionalInfo = {
+          teacherId: teacher.teacherId,
+          fullName: teacher.fullName
+        };
+      }
+    } else if (user.role === 'Parent') {
+      const parent = await Parent.findOne({ userId: user.userId });
+      if (parent) {
+        additionalInfo = {
+          parentId: parent.parentId,
+          fullName: parent.fullName
+        };
+      }
+    }
 
-    const response = {
+    // Make sure we use a consistent JWT_SECRET
+    const jwtSecret = process.env.JWT_SECRET || 'secret_key';
+    
+    // Create token with a consistent structure
+    const token = jwt.sign(
+      { id: user.userId, role: user.role },
+      jwtSecret,
+      { expiresIn: '30d' }
+    );
+
+    // Log token creation for debugging
+    console.log(`Generated token for user ${user.userId} with role ${user.role}`);
+
+    res.json({
       success: true,
+      message: 'Đăng nhập thành công',
       data: {
         userId: user.userId,
         name: user.name,
         email: user.email,
         role: user.role,
-        accessToken,
-        refreshToken
-      },
-      code: 'LOGIN_SUCCESS'
-    };
-
-    console.log('Sending response:', response);
-    res.json(response);
+        ...additionalInfo,
+        token
+      }
+    });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Lỗi đăng nhập: ' + error.message,
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi đăng nhập',
+      error: error.message,
       code: 'SERVER_ERROR'
     });
   }
@@ -322,70 +337,65 @@ exports.logout = async (req, res) => {
 };
 
 /**
- * @desc    Get current logged in user profile
+ * @desc    Get current logged in user
  * @route   GET /api/auth/me
  * @access  Private
  */
 exports.getMe = async (req, res) => {
   try {
     const user = await User.findOne({ userId: req.user.userId });
-
+    
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found',
+        message: 'Không tìm thấy người dùng',
         code: 'USER_NOT_FOUND'
       });
     }
 
-    // Get additional data based on user role
-    let profileData = null;
+    // Get additional user info based on role
+    let additionalInfo = {};
     if (user.role === 'Student') {
-      const Student = require('../database/models/Student');
-      profileData = await Student.findOne({ userId: user.userId })
-        .select('studentId fullName dateOfBirth gender address phone') // Explicitly select fields
-        .populate('classId')
-        .populate({
-          path: 'classId',
-          populate: {
-            path: 'homeroomTeacherId',
-            model: 'Teacher'
-          }
-        });
+      const student = await Student.findOne({ userId: user.userId });
+      if (student) {
+        additionalInfo = {
+          studentId: student.studentId,
+          fullName: student.fullName,
+          classId: student.classId
+        };
+      }
     } else if (user.role === 'Teacher') {
-      const Teacher = require('../database/models/Teacher');
-      profileData = await Teacher.findOne({ userId: user.userId })
-        .select('teacherId fullName dateOfBirth gender address phone major') // Explicitly select fields
-        .populate('classes');
+      const teacher = await Teacher.findOne({ userId: user.userId });
+      if (teacher) {
+        additionalInfo = {
+          teacherId: teacher.teacherId,
+          fullName: teacher.fullName
+        };
+      }
     } else if (user.role === 'Parent') {
-      const Parent = require('../database/models/Parent');
-      profileData = await Parent.findOne({ userId: user.userId })
-        .select('parentId fullName gender phone career') // Explicitly select fields
-        .populate({
-          path: 'studentIds',
-          populate: {
-            path: 'classId',
-            model: 'Class'
-          }
-        });
+      const parent = await Parent.findOne({ userId: user.userId });
+      if (parent) {
+        additionalInfo = {
+          parentId: parent.parentId,
+          fullName: parent.fullName
+        };
+      }
     }
 
-    res.status(200).json({
+    res.json({
       success: true,
       data: {
         userId: user.userId,
         name: user.name,
         email: user.email,
         role: user.role,
-        profile: profileData
-      },
-      code: 'PROFILE_FETCHED'
+        ...additionalInfo
+      }
     });
   } catch (error) {
-    console.error('Error fetching user profile:', error);
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: 'Lỗi lấy thông tin người dùng',
       code: 'SERVER_ERROR'
     });
   }
@@ -434,6 +444,45 @@ exports.resetAdminPassword = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error resetting admin password: ' + error.message,
+      code: 'SERVER_ERROR'
+    });
+  }
+};
+
+/**
+ * @desc    Verify token
+ * @route   POST /api/auth/verify
+ * @access  Public
+ */
+exports.verifyToken = async (req, res) => {
+  try {
+    const { token } = req.body;
+    
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Không có token',
+        code: 'NO_TOKEN'
+      });
+    }
+    
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      res.json({
+        success: true,
+        data: decoded,
+        valid: true
+      });
+    } catch (err) {
+      res.json({
+        success: true,
+        valid: false
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi xác thực token',
       code: 'SERVER_ERROR'
     });
   }

@@ -21,11 +21,21 @@ const TeacherSchema = new mongoose.Schema({
   dateOfBirth: {
     type: Date
   },
+  address: {
+    type: String
+  },
   phone: {
     type: String
   },
   gender: {
     type: Boolean
+  },
+  major: {
+    type: String
+  },
+  WeeklyCapacity: {
+    type: Number,
+    default: 10
   }
 }, {
   toJSON: { virtuals: true },
@@ -40,12 +50,18 @@ TeacherSchema.virtual('user', {
   justOne: true
 });
 
-// Virtual for getting classes where teacher is homeroom teacher
+// Virtual for getting assigned classes
 TeacherSchema.virtual('classes', {
   ref: 'Class',
   localField: 'teacherId',
-  foreignField: 'homeroomTeacherId',
-  justOne: false
+  foreignField: 'homeroomTeacherId'
 });
 
-module.exports = mongoose.model('Teacher', TeacherSchema, 'teachers'); 
+// Virtual for getting teaching schedules
+TeacherSchema.virtual('schedules', {
+  ref: 'ClassSchedule',
+  localField: 'teacherId',
+  foreignField: 'teacherId'
+});
+
+module.exports = mongoose.model('Teacher', TeacherSchema, 'Teacher'); 

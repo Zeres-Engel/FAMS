@@ -1,4 +1,5 @@
 import os, csv, random, bcrypt, datetime, unicodedata
+from datetime import timedelta
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from schedule_algorithm import generate_strict_schedule
@@ -55,6 +56,7 @@ def drop_all_collections(db):
         db[col_name].drop()
 
 def import_slot_format(db):
+    # Nếu có file CSV thì import, nếu không thì gen mặc định 10 slot cho mỗi ngày trong tuần (Monday -> Sunday)
     slot_csv = find_file_path(["backend/database/scheduleformat.csv", "database/scheduleformat.csv"])
     if slot_csv:
         slots = []
@@ -68,8 +70,34 @@ def import_slot_format(db):
                     "EndTime": row["EndTime"]
                 })
         if slots:
-            db.slots.insert_many(slots)
+            db.Slot.insert_many(slots)
             print(f"[INIT] Imported {len(slots)} slots from scheduleformat.csv.")
+    else:
+        days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday']
+        default_periods = {
+            1: {"start": "07:00", "end": "07:45"},
+            2: {"start": "07:50", "end": "08:35"},
+            3: {"start": "08:50", "end": "09:35"},
+            4: {"start": "09:40", "end": "10:25"},
+            5: {"start": "10:30", "end": "11:15"},
+            6: {"start": "13:00", "end": "13:45"},
+            7: {"start": "13:50", "end": "14:35"},
+            8: {"start": "14:40", "end": "15:25"},
+            9: {"start": "15:30", "end": "16:15"},
+            10: {"start": "16:20", "end": "17:05"}
+        }
+        slots = []
+        for day in days:
+            for slot_number, times in default_periods.items():
+                slots.append({
+                    "SlotNumber": slot_number,
+                    "DayOfWeek": day,
+                    "StartTime": times["start"],
+                    "EndTime": times["end"]
+                })
+        if slots:
+            db.Slot.insert_many(slots)
+            print(f"[INIT] Generated default {len(slots)} slots.")
 
 def import_curriculum_data(db, grade):
     paths = [f'backend/database/curriculum_{grade}.csv', f'database/curriculum_{grade}.csv']
@@ -77,36 +105,36 @@ def import_curriculum_data(db, grade):
     if not file_path:
         print(f"[Warning] Curriculum file for grade {grade} not found.")
         return None
-    curriculum_doc = db.curriculums.find_one({"curriculumId": grade})
+    curriculum_doc = db.Curriculum.find_one({"curriculumId": grade})
     if not curriculum_doc:
         curriculum_doc = {
             "curriculumId": grade,
             "curriculumName": f"Chương trình lớp {grade}",
             "description": f"Curriculum for grade {grade}"
         }
-        db.curriculums.insert_one(curriculum_doc)
-        curriculum_doc = db.curriculums.find_one({"curriculumId": grade})
+        db.Curriculum.insert_one(curriculum_doc)
+        curriculum_doc = db.Curriculum.find_one({"curriculumId": grade})
     with open(file_path, 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
             subject_name = row["SubjectName"]
             sessions = int(row.get("Sessions", 2))
-            subj = db.subjects.find_one({"name": subject_name})
+            subj = db.Subject.find_one({"name": subject_name})
             if not subj:
                 print(f"[!] Subject '{subject_name}' not found in DB. Skipping.")
                 continue
             subject_id = subj["subjectId"]
-            existing = db.curriculumSubjects.find_one({
+            existing = db.CurriculumSubject.find_one({
                 "curriculumId": grade,
                 "subjectId": subject_id
             })
             if existing:
-                db.curriculumSubjects.update_one(
+                db.CurriculumSubject.update_one(
                     {"_id": existing["_id"]},
                     {"$set": {"sessions": sessions}}
                 )
             else:
-                db.curriculumSubjects.insert_one({
+                db.CurriculumSubject.insert_one({
                     "curriculumId": grade,
                     "subjectId": subject_id,
                     "sessions": sessions
@@ -117,6 +145,8 @@ def init_database():
     client = connect_to_mongodb()
     db = client["fams"]
     drop_all_collections(db)
+
+    # Insert Admin vào UserAccount
     admin_user = {
         "userId": "admin",
         "name": "Administrator",
@@ -124,13 +154,15 @@ def init_database():
         "password": hash_password("1234"),
         "role": "Admin"
     }
-    db.users.insert_one(admin_user)
-    db.batches.insert_many([
+    db.UserAccount.insert_one(admin_user)
+
+    db.Batch.insert_many([
         {"batchId": 3, "BatchName": "Khóa 2023-2026 (Lớp 10)", "StartYear": 2023, "EndYear": 2026},
         {"batchId": 2, "BatchName": "Khóa 2022-2025 (Lớp 11)", "StartYear": 2022, "EndYear": 2025},
         {"batchId": 1, "BatchName": "Khóa 2021-2024 (Lớp 12)", "StartYear": 2021, "EndYear": 2024}
     ])
-    db.create_collection("classes")
+
+    db.create_collection("Class")
     room_csv = find_file_path(["backend/database/room.csv", "database/room.csv"])
     if room_csv:
         rooms = []
@@ -146,16 +178,18 @@ def init_database():
                 })
                 counter += 1
         if rooms:
-            db.classrooms.insert_many(rooms)
+            db.Classroom.insert_many(rooms)
             print(f"[INIT] Imported {len(rooms)} rooms from room.csv.")
     else:
-        db.classrooms.insert_many([
+        db.Classroom.insert_many([
             {"classroomId": 1, "RoomNumber": "A101", "Building": "A", "Capacity": 40},
             {"classroomId": 2, "RoomNumber": "A102", "Building": "A", "Capacity": 40},
             {"classroomId": 3, "RoomNumber": "B101", "Building": "B", "Capacity": 40},
             {"classroomId": 4, "RoomNumber": "B102", "Building": "B", "Capacity": 40}
         ])
+
     import_slot_format(db)
+
     subjects_data = []
     subj_path = find_file_path(["backend/database/subject.csv", "database/subject.csv"])
     if subj_path:
@@ -169,8 +203,9 @@ def init_database():
                     "description": row.get("Description", "")
                 })
     if subjects_data:
-        db.subjects.insert_many(subjects_data)
+        db.Subject.insert_many(subjects_data)
         print(f"[INIT] Imported {len(subjects_data)} subjects.")
+
     teachers = []
     teacher_users = []
     teacher_id_counter = 1
@@ -207,10 +242,11 @@ def init_database():
                 })
                 teacher_id_counter += 1
     if teacher_users:
-        db.users.insert_many(teacher_users)
+        db.UserAccount.insert_many(teacher_users)
     if teachers:
-        db.teachers.insert_many(teachers)
+        db.Teacher.insert_many(teachers)
     print(f"[INIT] Imported {len(teachers)} teachers.")
+
     def import_students(csv_path, batch_id, student_id_start):
         students = []
         sid = student_id_start
@@ -226,7 +262,7 @@ def init_database():
                 phone = row.get("Phone", "")
                 address = row.get("Address", "")
                 uname = generate_username(fn, sid, batch_id)
-                db.users.insert_one({
+                db.UserAccount.insert_one({
                     "userId": uname,
                     "name": fn,
                     "email": f"{uname}@fams.edu.vn",
@@ -247,6 +283,7 @@ def init_database():
                 })
                 sid += 1
         return students, sid
+
     student_id_counter = 1
     students_10 = []
     students_11 = []
@@ -262,8 +299,9 @@ def init_database():
         students_12, student_id_counter = import_students(s12_path, 1, student_id_counter)
     all_students = students_10 + students_11 + students_12
     if all_students:
-        db.students.insert_many(all_students)
+        db.Student.insert_many(all_students)
         print(f"[INIT] Imported {len(all_students)} students.")
+
     def distribute_students(students, grade, batch_id):
         students_sorted = sorted(students, key=lambda s: s["fullName"])
         chunk_size = 20
@@ -277,15 +315,16 @@ def init_database():
                 "homeroomTeacherId": None,
                 "BatchID": batch_id
             }
-            r = db.classes.insert_one(c_doc)
-            new_class_id = db.classes.count_documents({})
-            db.classes.update_one({"_id": r.inserted_id}, {"$set": {"classId": new_class_id}})
+            r = db.Class.insert_one(c_doc)
+            new_class_id = db.Class.count_documents({})
+            db.Class.update_one({"_id": r.inserted_id}, {"$set": {"classId": new_class_id}})
             for st in chunk:
-                db.students.update_one({"studentId": st["studentId"]}, {"$set": {"classId": new_class_id}})
+                db.Student.update_one({"studentId": st["studentId"]}, {"$set": {"classId": new_class_id}})
     distribute_students(students_10, 10, 3)
     distribute_students(students_11, 11, 2)
     distribute_students(students_12, 12, 1)
     print("[INIT] Distributed students into classes.")
+
     parent_users = []
     parents_data = []
     parent_id = 1
@@ -317,61 +356,131 @@ def init_database():
                 })
                 parent_id += 1
     if parent_users:
-        db.users.insert_many(parent_users)
+        db.UserAccount.insert_many(parent_users)
     if parents_data:
-        db.parents.insert_many(parents_data)
+        db.Parent.insert_many(parents_data)
     print(f"[INIT] Imported {len(parents_data)} parents.")
-    all_stu_db = list(db.students.find())
-    all_par_db = list(db.parents.find())
+
+    # Cập nhật mối quan hệ ParentStudent (insert vào collection ParentStudent)
+    db.create_collection("ParentStudent")
+    all_stu_db = list(db.Student.find())
+    all_par_db = list(db.Parent.find())
     for s in all_stu_db:
         how_many = random.randint(1, 2)
         chosen = random.sample(all_par_db, how_many)
         for p in chosen:
-            db.parents.update_one({"parentId": p["parentId"]}, {"$addToSet": {"studentIds": s["studentId"]}})
-            db.students.update_one({"studentId": s["studentId"]}, {"$addToSet": {"parentIds": p["parentId"]}})
-    db.create_collection("curriculums")
-    db.create_collection("curriculumSubjects")
+            # Cập nhật mảng quan hệ
+            db.Parent.update_one({"parentId": p["parentId"]}, {"$addToSet": {"studentIds": s["studentId"]}})
+            db.Student.update_one({"studentId": s["studentId"]}, {"$addToSet": {"parentIds": p["parentId"]}})
+            # Insert vào bảng quan hệ ParentStudent
+            db.ParentStudent.insert_one({
+                "ParentID": p["parentId"],
+                "StudentID": s["studentId"]
+            })
+
+    # Tạo dữ liệu cho TeacherClassAssignment: với mỗi lớp, chọn ngẫu nhiên 1-2 giáo viên
+    db.create_collection("TeacherClassAssignment")
+    classes = list(db.Class.find())
+    for c in classes:
+        num_assign = random.randint(1, 2)
+        assigned_teachers = random.sample(teachers, num_assign)
+        # Cập nhật homeroomTeacherId cho lớp nếu chưa có
+        if c.get("homeroomTeacherId") is None and assigned_teachers:
+            db.Class.update_one({"classId": c["classId"]}, {"$set": {"homeroomTeacherId": assigned_teachers[0]["teacherId"]}})
+        for t in assigned_teachers:
+            db.TeacherClassAssignment.insert_one({
+                "TeacherID": t["teacherId"],
+                "ClassID": c["classId"]
+            })
+
+    # Gen RFID cho mỗi người dùng (trừ Admin)
+    db.create_collection("RFID")
+    all_users = list(db.UserAccount.find())
+    for u in all_users:
+        if u.get("role") != "Admin":
+            rfid_code = f"RFID{u['userId']}"
+            db.RFID.insert_one({
+                "RFID_ID": rfid_code,
+                "UserID": u["userId"],
+                "IssueDate": datetime.datetime.now(),
+                "ExpiryDate": datetime.datetime.now() + timedelta(days=365)
+            })
+
+    # Tạo các collection Curriculum và CurriculumSubject
+    db.create_collection("Curriculum")
+    db.create_collection("CurriculumSubject")
     for g in [10, 11, 12]:
         import_curriculum_data(db, g)
+
+    # Tạo Semester cho mỗi Batch
     semester_docs = []
-    current_date = datetime.datetime(2025, 4, 4)
+    current_date = datetime.date.today()
     batch_semester = [
         {"BatchID": 3, "CurriculumID": 10, "EndYear": 2026},
         {"BatchID": 2, "CurriculumID": 11, "EndYear": 2025},
         {"BatchID": 1, "CurriculumID": 12, "EndYear": 2024}
     ]
     for bs in batch_semester:
-        graduation_date = datetime.datetime(bs["EndYear"] + 1, 6, 15)
+        graduation_date = datetime.date(bs["EndYear"] + 1, 6, 15)
         if current_date <= graduation_date:
             if current_date.month < 9:
                 academic_year_start = current_date.year - 1
             else:
                 academic_year_start = current_date.year
-            sem1_start = datetime.datetime(academic_year_start, 9, 1)
-            sem1_end = datetime.datetime(academic_year_start + 1, 1, 15)
-            sem2_start = datetime.datetime(academic_year_start + 1, 2, 1)
-            sem2_end = datetime.datetime(academic_year_start + 1, 6, 15)
+            sem1_start = datetime.date(academic_year_start, 9, 1)
+            sem1_end = datetime.date(academic_year_start + 1, 1, 15)
+            sem2_start = datetime.date(academic_year_start + 1, 2, 1)
+            sem2_end = datetime.date(academic_year_start + 1, 6, 15)
             for idx, (s, e) in enumerate([(sem1_start, sem1_end), (sem2_start, sem2_end)], start=1):
                 sem_doc = {
                     "SemesterName": f"Học kỳ {idx}",
-                    "StartDate": s,
-                    "EndDate": e,
+                    "StartDate": s.strftime("%Y-%m-%d"),
+                    "EndDate": e.strftime("%Y-%m-%d"),
                     "CurriculumID": bs["CurriculumID"],
                     "BatchID": bs["BatchID"]
                 }
-                db.semesters.insert_one(sem_doc)
-                sem = db.semesters.find_one({"SemesterName": sem_doc["SemesterName"], "BatchID": bs["BatchID"]})
+                db.Semester.insert_one(sem_doc)
+                sem = db.Semester.find_one({"SemesterName": sem_doc["SemesterName"], "BatchID": bs["BatchID"]})
                 semester_docs.append(sem)
         else:
             print(f"[INFO] Batch {bs['BatchID']} đã ra trường. Bỏ qua tạo thời khóa biểu.")
+
+    # Sinh lịch học theo kỳ (ClassSchedule) với parameter skip_days được truyền vào
     total_schedules = 0
     for sem in semester_docs:
-        scheds, warnings = generate_strict_schedule(db, sem, total_weeks=18)
+        scheds, warnings = generate_strict_schedule(db, sem, skip_days=["Saturday", "Sunday"])
         total_schedules += len(scheds)
         if warnings:
             for w in warnings:
                 print("[WARNING]", w)
     print(f"[INIT] Completed database initialization! Total Schedules: {total_schedules}")
+
+
+    # Sinh AttendanceLog cho mỗi phiên học (SemesterSchedule) cho các học sinh trong lớp đó
+    db.create_collection("AttendanceLog")
+    schedule_docs = list(db.SemesterSchedule.find())
+    for sched in schedule_docs:
+        class_id = sched["classId"]
+        # Lấy danh sách học sinh của lớp
+        class_students = list(db.Student.find({"classId": class_id}))
+        for stu in class_students:
+            # Random status: Present, Late hoặc Absent
+            status = random.choices(['Present','Late','Absent'], weights=[70,10,20])[0]
+            check_in = None
+            # Nếu Present hoặc Late, tính thời gian check-in dựa theo SessionDate và startTime
+            if status in ['Present','Late']:
+                session_date = datetime.datetime.strptime(sched["SessionDate"], "%Y-%m-%d")
+                start_time = datetime.datetime.strptime(sched["startTime"], "%H:%M").time()
+                check_in = datetime.datetime.combine(session_date, start_time)
+                if status == 'Late':
+                    # Trễ từ 1 đến 15 phút
+                    check_in += timedelta(minutes=random.randint(1,15))
+            db.AttendanceLog.insert_one({
+                "ScheduleID": sched["scheduleId"],
+                "UserID": stu["userId"],
+                "CheckIn": check_in,
+                "Status": status
+            })
 
 if __name__ == "__main__":
     init_database()

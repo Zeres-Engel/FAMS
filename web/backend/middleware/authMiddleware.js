@@ -8,68 +8,51 @@ const User = require('../database/models/User');
 exports.protect = async (req, res, next) => {
   let token;
 
-  // Check if token exists in Authorization header
+  // Check if auth header exists and starts with Bearer
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
   ) {
-    // Extract token from Bearer header
+    // Get token from header
     token = req.headers.authorization.split(' ')[1];
   }
 
-  // If no token found, return unauthorized
+  // Check if no token
   if (!token) {
     return res.status(401).json({
       success: false,
-      message: 'Not authorized to access this route',
-      code: 'TOKEN_MISSING'
+      message: 'Không có quyền truy cập',
+      code: 'NO_TOKEN'
     });
   }
 
   try {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
-
-    // Find user by userId from token
-    const user = await User.findOne({ userId: decoded.userId });
     
-    if (!user) {
+    // Check and log the decoded token
+    console.log('Decoded token:', decoded);
+
+    // Add user to req - Use the property name in the decoded token (id) 
+    // to fetch user by userId
+    req.user = await User.findOne({ userId: decoded.id });
+    
+    if (!req.user) {
+      console.log('User not found for userId:', decoded.id);
       return res.status(401).json({
-        success: false,
-        message: 'User not found',
+        success: false, 
+        message: 'Token hợp lệ nhưng người dùng không tồn tại',
         code: 'USER_NOT_FOUND'
       });
     }
 
-    // Add user info to request for use in protected routes
-    req.user = {
-      userId: user.userId,
-      role: user.role
-    };
-
     next();
   } catch (error) {
-    console.error('Auth middleware error:', error.name, error.message);
-    
-    // Handle different token error types
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Token has expired, please log in again',
-        code: 'TOKEN_EXPIRED'
-      });
-    } else if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid token format',
-        code: 'INVALID_TOKEN_FORMAT'
-      });
-    }
-    
+    console.error('Token verification error:', error);
     return res.status(401).json({
       success: false,
-      message: 'Authentication failed',
-      code: 'AUTH_FAILED'
+      message: 'Token không hợp lệ',
+      code: 'INVALID_TOKEN'
     });
   }
 };
@@ -80,22 +63,13 @@ exports.protect = async (req, res, next) => {
  */
 exports.authorize = (...roles) => {
   return (req, res, next) => {
-    if (!req.user) {
-      return res.status(500).json({
-        success: false,
-        message: 'Auth middleware error: User not found in request',
-        code: 'AUTH_MIDDLEWARE_ERROR'
-      });
-    }
-    
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: `User role ${req.user.role} is not authorized to access this route`,
-        code: 'FORBIDDEN_ROLE'
+        message: 'Không có quyền thực hiện hành động này',
+        code: 'ROLE_UNAUTHORIZED'
       });
     }
-    
     next();
   };
 }; 
