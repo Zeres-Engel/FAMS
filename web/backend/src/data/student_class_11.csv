@@ -1,61 +1,61 @@
-FullName,DateOfBirth,Gender,Address,Phone
-Võ Ngọc Hiếu,26/01/2009,True,Quảng Nam,0904186931
-Lê Hữu Yến,13/04/2004,False,Hải Dương,0967273692
-Đỗ Thành Lan,09/03/2009,False,Khánh Hòa,0974911874
-Hồ Đức Thảo,10/12/2004,False,Nghệ An,0944235881
-Nguyễn Xuân Hiếu,11/05/2006,True,Vĩnh Phúc,0995325244
-Bùi Thành Hiếu,09/08/2009,True,Cao Bằng,0920982259
-Nguyễn Ngọc Hiếu,21/11/2005,True,Cà Mau,0996785819
-Hoàng Xuân Lan,31/08/2005,False,Bắc Ninh,0980466546
-Đặng Đức Tuấn,21/01/2008,True,Quảng Nam,0970898410
-Đỗ Văn Long,30/04/2009,True,Ninh Thuận,0997348448
-Phạm Ngọc Nam,14/01/2008,True,Đồng Tháp,0989660477
-Huỳnh Đức Như,29/10/2004,False,Hà Giang,0943190206
-Vũ Hoàng Dũng,07/12/2005,True,Bến Tre,0971444254
-Hồ Thanh Yến,07/02/2011,False,Bắc Giang,0993743556
-Hồ Ngọc Lan,01/03/2011,False,Bến Tre,0991665194
-Đặng Anh Linh,10/03/2008,False,Đồng Nai,0965858900
-Trần Đức Mai,05/08/2007,False,Phú Thọ,0926618580
-Ngô Văn Phát,09/01/2011,True,Hà Tĩnh,0951773337
-Võ Thanh Trường,04/10/2005,True,Cà Mau,0920535829
-Phạm Hữu Khánh,03/05/2004,True,Nghệ An,0956078797
-Bùi Quốc Thảo,23/06/2010,False,Lạng Sơn,0949952338
-Đặng Minh Khánh,23/12/2008,True,Nam Định,0927700334
-Dương Thành Trường,22/01/2007,True,An Giang,0910417513
-Đặng Văn Trường,18/06/2004,True,Thái Bình,0960571764
-Nguyễn Anh Trường,18/04/2004,True,Hải Phòng,0952171027
-Dương Quốc Tuấn,15/01/2008,True,Lai Châu,0976404775
-Lê Hoàng Trang,01/05/2004,False,Bình Thuận,0974903669
-Hoàng Quốc Ánh,21/06/2006,False,Quảng Bình,0991348293
-Lê Xuân Hưng,27/02/2010,True,Hòa Bình,0981745390
-Dương Đức Bình,22/09/2008,True,Phú Thọ,0944120868
-Đỗ Thanh Long,03/03/2007,True,Vĩnh Phúc,0970908297
-Trần Minh Khánh,14/10/2009,True,Lai Châu,0986309868
-Hồ Phước Hiếu,23/02/2005,True,Khánh Hòa,0986660380
-Vũ Minh Hưng,30/10/2009,True,Đắk Nông,0978039723
-Đặng Văn Trang,08/06/2004,False,Vĩnh Long,0958380743
-Huỳnh Hồng Linh,30/09/2005,False,Tây Ninh,0926211658
-Bùi Văn Yến,10/08/2005,False,Tuyên Quang,0993301051
-Hoàng Ngọc Long,04/01/2007,True,Hà Nội,0929479252
-Ngô Đức Tuấn,02/08/2007,True,Quảng Nam,0985915372
-Phạm Thị Trường,16/02/2011,True,Thái Bình,0994467682
-Lê Anh Thảo,13/07/2006,False,Bình Định,0994210778
-Huỳnh Phước Phát,21/08/2007,True,Hải Dương,0975197928
-Phạm Xuân Yến,11/07/2009,False,Sóc Trăng,0998089621
-Dương Hồng Hương,26/06/2006,False,Cà Mau,0931860467
-Đặng Xuân Tuấn,30/04/2004,True,Hà Tĩnh,0916562722
-Hoàng Ngọc Ánh,14/01/2006,False,Hải Dương,0976957993
-Nguyễn Phước Hưng,04/08/2008,True,Khánh Hòa,0928963793
-Đỗ Minh Như,16/09/2009,False,TP. Hồ Chí Minh,0951910519
-Trần Ngọc Khánh,09/06/2008,True,Vĩnh Long,0941063121
-Nguyễn Minh Mai,26/11/2007,False,Phú Yên,0998302873
-Phạm Thị Khánh,13/07/2010,True,Trà Vinh,0919945219
-Đặng Thành Ánh,14/10/2005,False,Tiền Giang,0907011821
-Dương Anh Tuấn,29/04/2008,True,Lâm Đồng,0991860092
-Ngô Quốc Hưng,02/01/2011,True,Bình Phước,0994979312
-Dương Quốc Như,16/02/2009,False,Tiền Giang,0976989055
-Lê Đức Lan,26/12/2009,False,Hưng Yên,0973126570
-Vũ Minh Ánh,27/07/2006,False,Tây Ninh,0945813930
-Dương Hồng Nam,28/02/2008,True,Bắc Kạn,0932052715
-Lê Ngọc Trang,04/01/2007,False,Hà Tĩnh,0987856446
-Hồ Hoàng Hương,26/05/2009,False,An Giang,0948402326
+FullName,DateOfBirth,Gender,Address,Phone,ParentNames,Careers,Phones,ParentGenders
+Võ Ngọc Hiếu,26/01/2009,True,Quảng Nam,904186931,['Huỳnh Thanh Long'],['Giáo viên'],[982404503],[False]
+Lê Hữu Yến,13/04/2004,False,Hải Dương,967273692,"['Đỗ Đức Hiếu', 'Võ Thanh Dũng']","['Bác sĩ', 'Quân Nhân']","[910614341, 936817555]","[False, True]"
+Đỗ Thành Lan,09/03/2009,False,Khánh Hòa,974911874,['Huỳnh Xuân Long'],['Phát thanh viên'],[916225066],[True]
+Hồ Đức Thảo,10/12/2004,False,Nghệ An,944235881,"['Trần Gia Linh', 'Võ Thanh Dũng']","['Nghệ sĩ', 'Quân Nhân']","[900940225, 936817555]","[False, True]"
+Nguyễn Xuân Hiếu,11/05/2006,True,Vĩnh Phúc,995325244,"['Bùi Thanh Lan', 'Nguyễn Đức Trang']","['Kinh Doanh', 'Luật sư']","[923965354, 909497885]","[False, False]"
+Bùi Thành Hiếu,09/08/2009,True,Cao Bằng,920982259,"['Lý Hồng Lan', 'Bùi Thị Long']","['Nghệ sĩ', 'Giáo viên']","[973866100, 947329459]","[True, False]"
+Nguyễn Ngọc Hiếu,21/11/2005,True,Cà Mau,996785819,"['Huỳnh Xuân Linh', 'Lê Hồng Long']","['Nhà báo', 'Giáo viên']","[987317746, 993259412]","[False, False]"
+Hoàng Xuân Lan,31/08/2005,False,Bắc Ninh,980466546,['Trần Hồng Hương'],['Kỹ Sư'],[990253207],[True]
+Đặng Đức Tuấn,21/01/2008,True,Quảng Nam,970898410,['Dương Thị Hạnh'],['Phát thanh viên'],[983175427],[False]
+Đỗ Văn Long,30/04/2009,True,Ninh Thuận,997348448,['Đặng Gia Hạnh'],['Giáo viên'],[934361170],[True]
+Phạm Ngọc Nam,14/01/2008,True,Đồng Tháp,989660477,['Lý Thị Hương'],['Phát thanh viên'],[956273151],[True]
+Huỳnh Đức Như,29/10/2004,False,Hà Giang,943190206,['Lê Ngọc Tuấn'],['Nhà Văn'],[997154848],[True]
+Vũ Hoàng Dũng,07/12/2005,True,Bến Tre,971444254,"['Bùi Thị Long', 'Trần Gia Linh']","['Giáo viên', 'Nghệ sĩ']","[947329459, 900940225]","[False, False]"
+Hồ Thanh Yến,07/02/2011,False,Bắc Giang,993743556,"['Ngô Đức Bình', 'Hoàng Đức Tuấn']","['Bác sĩ', 'Nghệ sĩ']","[966271533, 963757730]","[False, False]"
+Hồ Ngọc Lan,01/03/2011,False,Bến Tre,991665194,"['Phạm Hồng Hạnh', 'Huỳnh Đức Long']","['Phát thanh viên', 'Luật sư']","[959916026, 929766306]","[False, True]"
+Đặng Anh Linh,10/03/2008,False,Đồng Nai,965858900,['Phạm Hồng Hạnh'],['Phát thanh viên'],[959916026],[False]
+Trần Đức Mai,05/08/2007,False,Phú Thọ,926618580,"['Võ Quốc Bình', 'Lê Hồng Long']","['Bác sĩ', 'Giáo viên']","[961253145, 993259412]","[False, False]"
+Ngô Văn Phát,09/01/2011,True,Hà Tĩnh,951773337,"['Bùi Quốc Yến', 'Đặng Minh Hương']","['Bác sĩ', 'Kinh Doanh']","[911876453, 904927588]","[False, True]"
+Võ Thanh Trường,04/10/2005,True,Cà Mau,920535829,['Bùi Anh Hương'],['Luật sư'],[963530348],[True]
+Phạm Hữu Khánh,03/05/2004,True,Nghệ An,956078797,"['Phạm Đức Hùng', 'Nguyễn Đức Long']","['Bác sĩ', 'Phát thanh viên']","[956836615, 926354924]","[False, True]"
+Bùi Quốc Thảo,23/06/2010,False,Lạng Sơn,949952338,"['Lý Thị Lan', 'Bùi Thanh Lan']","['Giáo viên', 'Kinh Doanh']","[993921795, 923965354]","[False, False]"
+Đặng Minh Khánh,23/12/2008,True,Nam Định,927700334,"['Lê Hồng Bình', 'Trần Thanh Trang']","['Nông dân', 'Quân Nhân']","[994269307, 908856076]","[True, True]"
+Dương Thành Trường,22/01/2007,True,An Giang,910417513,['Nguyễn Thanh Yến'],['Phát thanh viên'],[924796914],[False]
+Đặng Văn Trường,18/06/2004,True,Thái Bình,960571764,['Hoàng Thanh Bình'],['Phát thanh viên'],[990300878],[False]
+Nguyễn Anh Trường,18/04/2004,True,Hải Phòng,952171027,['Lý Văn Nam'],['Nhà Văn'],[904414269],[True]
+Dương Quốc Tuấn,15/01/2008,True,Lai Châu,976404775,['Võ Ngọc Bình'],['Nhà nước'],[912520642],[True]
+Lê Hoàng Trang,01/05/2004,False,Bình Thuận,974903669,"['Lê Hồng Nam', 'Lý Hồng Lan']","['Luật sư', 'Nghệ sĩ']","[969332986, 973866100]","[False, True]"
+Hoàng Quốc Ánh,21/06/2006,False,Quảng Bình,991348293,"['Võ Ngọc Dũng', 'Huỳnh Thanh Long']","['Nhà nước', 'Giáo viên']","[977589208, 982404503]","[False, False]"
+Lê Xuân Hưng,27/02/2010,True,Hòa Bình,981745390,"['Phạm Minh Hùng', 'Bùi Thị Bình']","['Luật sư', 'Kinh Doanh']","[968300830, 976800836]","[True, True]"
+Dương Đức Bình,22/09/2008,True,Phú Thọ,944120868,"['Trần Ngọc Bình', 'Bùi Quốc Nam']","['Phát thanh viên', 'Nông dân']","[920514914, 936248707]","[True, False]"
+Đỗ Thanh Long,03/03/2007,True,Vĩnh Phúc,970908297,['Nguyễn Ngọc Hiếu'],['Nhà nước'],[913888188],[False]
+Trần Minh Khánh,14/10/2009,True,Lai Châu,986309868,['Lê Gia Dũng'],['Giáo viên'],[985565307],[False]
+Hồ Phước Hiếu,23/02/2005,True,Khánh Hòa,986660380,"['Đặng Gia Hạnh', 'Đặng Anh Nam']","['Giáo viên', 'Kỹ Sư']","[934361170, 967380663]","[True, True]"
+Vũ Minh Hưng,30/10/2009,True,Đắk Nông,978039723,"['Phạm Anh Dũng', 'Nguyễn Thanh Yến']","['Phát thanh viên', 'Phát thanh viên']","[919796269, 924796914]","[True, False]"
+Đặng Văn Trang,08/06/2004,False,Vĩnh Long,958380743,"['Lê Văn Yến', 'Đặng Quốc Yến']","['Luật sư', 'Nhà Văn']","[989668965, 950067792]","[False, False]"
+Huỳnh Hồng Linh,30/09/2005,False,Tây Ninh,926211658,['Phạm Minh Hùng'],['Luật sư'],[968300830],[True]
+Bùi Văn Yến,10/08/2005,False,Tuyên Quang,993301051,['Dương Hồng Trang'],['Nhà báo'],[914295010],[False]
+Hoàng Ngọc Long,04/01/2007,True,Hà Nội,929479252,['Dương Xuân Bình'],['Nhà Văn'],[925469758],[False]
+Ngô Đức Tuấn,02/08/2007,True,Quảng Nam,985915372,['Lê Hồng Nam'],['Luật sư'],[969332986],[False]
+Phạm Thị Trường,16/02/2011,True,Thái Bình,994467682,"['Bùi Anh Hạnh', 'Đặng Thanh Trang']","['Phát thanh viên', 'Nhà báo']","[992203053, 958722114]","[True, True]"
+Lê Anh Thảo,13/07/2006,False,Bình Định,994210778,['Đặng Đức Phát'],['Kỹ Sư'],[974561216],[True]
+Huỳnh Phước Phát,21/08/2007,True,Hải Dương,975197928,['Lý Hồng Yến'],['Nhà báo'],[929222984],[True]
+Phạm Xuân Yến,11/07/2009,False,Sóc Trăng,998089621,['Đặng Gia Hạnh'],['Giáo viên'],[934361170],[True]
+Dương Hồng Hương,26/06/2006,False,Cà Mau,931860467,['Hoàng Quốc Hạnh'],['Kỹ Sư'],[938383200],[True]
+Đặng Xuân Tuấn,30/04/2004,True,Hà Tĩnh,916562722,['Huỳnh Hồng Long'],['Nhà nước'],[988030366],[True]
+Hoàng Ngọc Ánh,14/01/2006,False,Hải Dương,976957993,['Lý Xuân Hiếu'],['Nông dân'],[965879156],[False]
+Nguyễn Phước Hưng,04/08/2008,True,Khánh Hòa,928963793,"['Hoàng Đức Dũng', 'Nguyễn Đức Long']","['Luật sư', 'Phát thanh viên']","[966891482, 926354924]","[False, True]"
+Đỗ Minh Như,16/09/2009,False,TP. Hồ Chí Minh,951910519,['Lê Gia Bình'],['Nhà Văn'],[969350143],[False]
+Trần Ngọc Khánh,09/06/2008,True,Vĩnh Long,941063121,"['Trần Thanh Trang', 'Đỗ Đức Hiếu']","['Quân Nhân', 'Bác sĩ']","[908856076, 910614341]","[True, False]"
+Nguyễn Minh Mai,26/11/2007,False,Phú Yên,998302873,"['Hoàng Minh Hương', 'Đặng Hồng Tuấn']","['Phát thanh viên', 'Kỹ Sư']","[992586234, 957267617]","[False, True]"
+Phạm Thị Khánh,13/07/2010,True,Trà Vinh,919945219,"['Đặng Quốc Yến', 'Đỗ Thị Lan']","['Nhà Văn', 'Nhà Văn']","[950067792, 926414361]","[False, False]"
+Đặng Thành Ánh,14/10/2005,False,Tiền Giang,907011821,['Đỗ Gia Trang'],['Nghệ sĩ'],[950687437],[True]
+Dương Anh Tuấn,29/04/2008,True,Lâm Đồng,991860092,"['Huỳnh Thị Nam', 'Nguyễn Ngọc Hiếu']","['Nông dân', 'Nhà nước']","[916152784, 913888188]","[False, False]"
+Ngô Quốc Hưng,02/01/2011,True,Bình Phước,994979312,['Dương Gia Hiếu'],['Nhà nước'],[910162362],[False]
+Dương Quốc Như,16/02/2009,False,Tiền Giang,976989055,"['Lý Thị Lan', 'Bùi Thị Long']","['Giáo viên', 'Giáo viên']","[993921795, 947329459]","[False, False]"
+Lê Đức Lan,26/12/2009,False,Hưng Yên,973126570,"['Bùi Văn Hùng', 'Huỳnh Hồng Hương']","['Kỹ Sư', 'Kỹ Sư']","[986858884, 997986519]","[False, False]"
+Vũ Minh Ánh,27/07/2006,False,Tây Ninh,945813930,"['Phạm Hồng Hạnh', 'Vũ Quốc Nam']","['Phát thanh viên', 'Kỹ Sư']","[959916026, 922218905]","[False, True]"
+Dương Hồng Nam,28/02/2008,True,Bắc Kạn,932052715,"['Hồ Anh Dũng', 'Ngô Văn Hạnh']","['Kỹ Sư', 'Quân Nhân']","[931901764, 964385905]","[True, False]"
+Lê Ngọc Trang,04/01/2007,False,Hà Tĩnh,987856446,"['Dương Thanh Yến', 'Phạm Minh Hùng']","['Kinh Doanh', 'Luật sư']","[954111214, 968300830]","[False, True]"
+Hồ Hoàng Hương,26/05/2009,False,An Giang,948402326,['Dương Gia Hiếu'],['Nhà nước'],[910162362],[False]
