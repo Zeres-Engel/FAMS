@@ -184,6 +184,43 @@
             padding: 10px;
             border-radius: 4px;
         }
+        .small-button {
+            padding: 5px 10px;
+            font-size: 12px;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+        .debug-panel {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        .debug-panel pre {
+            max-height: 400px;
+            overflow-y: auto;
+            background-color: #282c34;
+            color: #f8f8f2;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .debug-panel .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .action-button {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .action-button:hover {
+            background-color: #27ae60;
+        }
     </style>
 </head>
 <body>
@@ -234,6 +271,7 @@
                     <button class="tab-button active" data-tab="schedule">Lịch học</button>
                     <button class="tab-button" data-tab="advanced-schedule">Lịch học nâng cao</button>
                     <button class="tab-button" data-tab="raw">Dữ liệu gốc</button>
+                    <button class="tab-button" data-tab="debug">Debug Info</button>
                 </div>
                 <div class="tab-content">
                     <div id="schedule-tab" class="tab-pane active">
@@ -258,7 +296,6 @@
                             <div class="filter-item">
                                 <label for="schedule-type">Loại lịch:</label>
                                 <select id="schedule-type">
-                                    <option value="me">Lịch của tôi</option>
                                     <option value="daily">Lịch theo ngày</option>
                                     <option value="weekly">Lịch theo tuần</option>
                                     <option value="semester">Lịch theo học kỳ</option>
@@ -267,10 +304,22 @@
                             <div class="filter-item" id="date-filter">
                                 <label for="schedule-date">Ngày:</label>
                                 <input type="date" id="schedule-date">
+                                <button id="debug-daily-schedule" class="small-button">Debug API</button>
+                            </div>
+                            <div class="filter-item" id="year-filter" class="hidden">
+                                <label for="schedule-year">Năm học:</label>
+                                <select id="schedule-year">
+                                    <option value="2023">2023 - 2024</option>
+                                    <option value="2024" selected>2024 - 2025</option>
+                                    <option value="2025">2025 - 2026</option>
+                                </select>
                             </div>
                             <div class="filter-item" id="week-filter" class="hidden">
-                                <label for="schedule-week">Tuần:</label>
-                                <input type="number" id="schedule-week" min="1" max="52">
+                                <label for="schedule-week-dropdown">Tuần:</label>
+                                <select id="schedule-week-dropdown">
+                                    <option value="">Đang tải...</option>
+                                </select>
+                                <button id="debug-weekly-api" class="small-button">Debug Tuần</button>
                             </div>
                             <div class="filter-item" id="semester-filter" class="hidden">
                                 <label for="schedule-semester">Học kỳ:</label>
@@ -283,6 +332,11 @@
                                 <select id="student-id">
                                     <option value="">Đang tải...</option>
                                 </select>
+                            </div>
+                            <div class="filter-item hidden" id="week-range-filter">
+                                <label for="schedule-week-range">Khoảng tuần:</label>
+                                <input type="text" id="schedule-week-range" placeholder="YYYY-MM-DD to YYYY-MM-DD">
+                                <button id="get-current-week-btn" class="small-button">Tuần hiện tại</button>
                             </div>
                         </div>
                         <button id="fetch-schedule-btn">Lấy lịch học</button>
@@ -307,6 +361,32 @@
                     <div id="raw-tab" class="tab-pane hidden">
                         <h2>Dữ liệu gốc</h2>
                         <pre id="raw-data"></pre>
+                    </div>
+                    <div id="debug-tab" class="tab-pane hidden">
+                        <h2>Debug Information</h2>
+                        <div class="debug-panel">
+                            <h3>Last API Response</h3>
+                            <pre id="debug-response"></pre>
+                            
+                            <h3>API Call Information</h3>
+                            <div id="debug-call-info"></div>
+                            
+                            <button id="test-daily-api" class="action-button">Test Daily Schedule API</button>
+                            <button id="test-weekly-api" class="action-button">Test Weekly Schedule API</button>
+                            <button id="check-sessionweek-field" class="action-button">Check SessionWeek Field</button>
+                            
+                            <h3>Weekly Schedule Debugging</h3>
+                            <div class="form-group">
+                                <label for="debug-week-range">Weekly Range to Test:</label>
+                                <input type="text" id="debug-week-range" placeholder="YYYY-MM-DD to YYYY-MM-DD" style="width: 300px;">
+                                <button id="get-current-week-debug" class="small-button">Current Week</button>
+                            </div>
+                            <div class="form-group">
+                                <button id="test-week-range-api" class="action-button">Test Week Range API</button>
+                                <button id="fix-session-week" class="action-button">Fix SessionWeek Field</button>
+                            </div>
+                            <div id="debug-weekly-result" style="margin-top: 15px;"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -341,10 +421,11 @@
         const scheduleTypeSelect = document.getElementById('schedule-type');
         const dateFilter = document.getElementById('date-filter');
         const weekFilter = document.getElementById('week-filter');
+        const yearFilter = document.getElementById('year-filter');
         const semesterFilter = document.getElementById('semester-filter');
         const studentFilter = document.getElementById('student-id');
         const scheduleDateInput = document.getElementById('schedule-date');
-        const scheduleWeekInput = document.getElementById('schedule-week');
+        const scheduleWeekInput = document.getElementById('schedule-week-dropdown');
         const semesterSelect = document.getElementById('schedule-semester');
         const studentSelect = document.getElementById('student-id');
         const fetchScheduleBtn = document.getElementById('fetch-schedule-btn');
@@ -378,17 +459,20 @@
             // Ẩn tất cả các bộ lọc
             dateFilter.classList.add('hidden');
             weekFilter.classList.add('hidden');
+            yearFilter.classList.add('hidden');
             semesterFilter.classList.add('hidden');
             studentFilter.classList.add('hidden');
+            weekRangeFilter.classList.add('hidden');
             
             // Hiển thị bộ lọc phù hợp
             if (selectedType === 'daily') {
                 dateFilter.classList.remove('hidden');
             } else if (selectedType === 'weekly') {
                 weekFilter.classList.remove('hidden');
-                semesterFilter.classList.remove('hidden');
+                yearFilter.classList.remove('hidden');
             } else if (selectedType === 'semester') {
                 semesterFilter.classList.remove('hidden');
+                yearFilter.classList.remove('hidden');
             }
             
             // Hiển thị bộ lọc học sinh nếu là phụ huynh
@@ -586,20 +670,11 @@
                 advancedScheduleResult.innerHTML = 'Đang tải lịch học...';
                 advancedScheduleResult.classList.remove('hidden');
                 
-                // Thêm debug thông tin semester trước khi gọi API
-                if (scheduleTypeSelect.value === 'semester' || scheduleTypeSelect.value === 'weekly') {
-                    console.log('DEBUG: Kiểm tra học kỳ trước khi tìm lịch');
-                    await debugCheckSemesters();
-                }
-                
                 const scheduleType = scheduleTypeSelect.value;
                 let endpoint = '';
                 let params = new URLSearchParams();
                 
                 switch(scheduleType) {
-                    case 'me':
-                        endpoint = '/api/schedules/me';
-                        break;
                     case 'daily':
                         const date = scheduleDateInput.value;
                         if (!date) {
@@ -608,26 +683,54 @@
                         endpoint = `/api/schedules/daily/${date}`;
                         break;
                     case 'weekly':
-                        endpoint = '/api/schedules/weekly';
-                        const week = scheduleWeekInput.value;
-                        const semesterId = semesterSelect.value;
-                        if (week) params.append('week', week);
-                        if (semesterId) params.append('semesterId', semesterId);
+                        // Lấy thông tin tuần từ dropdown
+                        const weekDropdown = document.getElementById('schedule-week-dropdown');
+                        const selectedOption = weekDropdown.options[weekDropdown.selectedIndex];
+                        
+                        if (!selectedOption || !selectedOption.value) {
+                            throw new Error('Vui lòng chọn tuần');
+                        }
+                        
+                        // Tạo chuỗi SessionWeek theo đúng format "YYYY-MM-DD to YYYY-MM-DD"
+                        if (selectedOption.dataset.start && selectedOption.dataset.end) {
+                            // Sử dụng trực tiếp endpoint week-range với SessionWeek string
+                            const sessionWeek = `${selectedOption.dataset.start} to ${selectedOption.dataset.end}`;
+                            console.log('SessionWeek tìm kiếm:', sessionWeek);
+                            
+                            // Log session week for debugging
+                            advancedScheduleResult.innerHTML += `<p class="current-info">Tìm kiếm lịch học cho tuần: ${sessionWeek}</p>`;
+                            
+                            // Sử dụng endpoint week-range thay vì weekly
+                            endpoint = `/api/schedules/week-range/${encodeURIComponent(sessionWeek)}`;
+                        } else {
+                            // Fallback to standard weekly if needed
+                            endpoint = '/api/schedules/weekly';
+                            params.append('week', selectedOption.value);
+                            
+                            // Thêm semester nếu có
+                            const semesterId = semesterSelect.value;
+                            if (semesterId) params.append('semesterId', semesterId);
+                        }
                         break;
                     case 'semester':
-                        // Lưu ý: Nếu không có semesterId, không sử dụng 'current' mà dùng /me endpoint
                         const semester = semesterSelect.value;
                         if (!semester) {
-                            // Nếu không chọn semester, dùng /me endpoint thay vì semester/current
-                            endpoint = '/api/schedules/me';
-                        } else {
-                            endpoint = `/api/schedules/semester/${semester}`;
+                            throw new Error('Vui lòng chọn học kỳ');
                         }
+                        endpoint = `/api/schedules/semester/${semester}`;
+                        break;
+                    case 'week-range':
+                        const weekRange = scheduleWeekRangeInput.value;
+                        if (!weekRange) {
+                            throw new Error('Vui lòng nhập khoảng tuần');
+                        }
+                        advancedScheduleResult.innerHTML += `<p class="current-info">Tìm kiếm lịch học cho tuần: ${weekRange}</p>`;
+                        endpoint = `/api/schedules/week-range/${encodeURIComponent(weekRange)}`;
                         break;
                 }
                 
                 // Thêm studentId cho phụ huynh
-                if (userData.role === 'Parent' && studentSelect.value) {
+                if (userData && userData.role === 'Parent' && studentSelect.value) {
                     params.append('studentId', studentSelect.value);
                 }
                 
@@ -638,29 +741,58 @@
                 }
                 
                 console.log('Gọi API endpoint:', endpoint);
+                advancedScheduleResult.innerHTML += `<p class="current-info">Gọi API: ${endpoint}</p>`;
                 
-                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`
-                    }
+                // Thêm timestamp vào request cho debugging
+                const debugTimestamp = new Date().toISOString();
+                const headers = {
+                    'Authorization': `Bearer ${authToken}`,
+                    'X-Debug-Timestamp': debugTimestamp
+                };
+                
+                // Log to console for debugging
+                console.log(`API Call [${debugTimestamp}]:`, {
+                    endpoint,
+                    headers: {...headers}
                 });
                 
+                const startTime = performance.now();
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    headers
+                });
+                const endTime = performance.now();
+                
+                // Log response status and timing
+                const timeTaken = (endTime - startTime).toFixed(2);
+                console.log(`API Response [${debugTimestamp}]:`, {
+                    status: response.status,
+                    statusText: response.statusText,
+                    timeTaken: `${timeTaken}ms`
+                });
+                
+                advancedScheduleResult.innerHTML += `<p class="current-info">API trả về mã: ${response.status} ${response.statusText} (${timeTaken}ms)</p>`;
+                
                 const result = await response.json();
+                
+                // Cập nhật dữ liệu gốc để debugging
+                rawData.textContent = JSON.stringify(result, null, 2);
+                
+                console.log(`API Data [${debugTimestamp}]:`, result);
                 
                 if (!response.ok || !result.success) {
                     throw new Error(result.message || 'Không thể lấy lịch học');
                 }
-                
-                // Cập nhật dữ liệu gốc
-                rawData.textContent = JSON.stringify(result, null, 2);
                 
                 // Hiển thị kết quả theo dạng bảng
                 displayScheduleTable(result.data);
                 
             } catch (error) {
                 console.error('Error fetching advanced schedule:', error);
-                advancedScheduleResult.innerHTML = `<div class="error">${error.message}</div>`;
+                advancedScheduleResult.innerHTML += `<div class="error">${error.message}</div>`;
                 advancedScheduleResult.classList.remove('hidden');
+                
+                // Show debugging info in the raw tab
+                document.querySelector('.tab-button[data-tab="raw"]').click();
             }
         });
         
@@ -747,27 +879,59 @@
                 return;
             }
             
-            let semesterOptions = '<option value="">Tất cả học kỳ</option>';
+            // Chuyển đổi định dạng học kỳ
+            const formattedSemesters = semesters.map(semester => {
+                const startDate = new Date(semester.startDate);
+                const endDate = new Date(semester.endDate);
+                
+                // Xác định năm học dựa trên startDate
+                const schoolYear = startDate.getMonth() < 8 
+                    ? `${startDate.getFullYear()-1}-${startDate.getFullYear()}`
+                    : `${startDate.getFullYear()}-${startDate.getFullYear()+1}`;
+                
+                // Thêm thông tin học kỳ, năm học
+                return {
+                    ...semester,
+                    schoolYear,
+                    formattedName: `Học kỳ ${semester.semesterName || semester.semesterId} (${startDate.toLocaleDateString('vi-VN')} - ${endDate.toLocaleDateString('vi-VN')})`,
+                    startYear: startDate.getFullYear(),
+                    semester: parseInt(semester.semesterName?.replace(/\D/g, '') || '1')
+                };
+            });
+            
+            // Sắp xếp học kỳ theo năm học và số thứ tự học kỳ
+            formattedSemesters.sort((a, b) => {
+                // Ưu tiên sắp xếp theo năm bắt đầu
+                if (a.startYear !== b.startYear) {
+                    return a.startYear - b.startYear;
+                }
+                // Nếu cùng năm thì sắp xếp theo học kỳ (số)
+                return a.semester - b.semester;
+            });
+            
+            let semesterOptions = '<option value="">Chọn học kỳ</option>';
             const now = new Date();
             let currentSemesterFound = false;
             
-            semesters.forEach((semester, index) => {
+            formattedSemesters.forEach(semester => {
                 const startDate = new Date(semester.startDate);
                 const endDate = new Date(semester.endDate);
-                const semesterInfo = `${semester.semesterName} (${startDate.toLocaleDateString('vi-VN')} - ${endDate.toLocaleDateString('vi-VN')})`;
+                
+                // Định dạng lại tên hiển thị của học kỳ
+                const semesterDisplay = `Học kỳ ${semester.semester} năm học ${semester.schoolYear}`;
                 
                 // Kiểm tra học kỳ hiện tại
                 const isCurrent = startDate <= now && now <= endDate;
                 if (isCurrent) currentSemesterFound = true;
                 
-                semesterOptions += `<option value="${semester.semesterId}" ${isCurrent ? 'selected' : ''}>${semesterInfo}</option>`;
+                semesterOptions += `<option value="${semester.semesterId}" ${isCurrent ? 'selected' : ''}>${semesterDisplay}</option>`;
             });
             
             semesterSelect.innerHTML = semesterOptions;
             
             // Nếu không tìm thấy học kỳ hiện tại, chọn học kỳ mới nhất
-            if (!currentSemesterFound && semesters.length > 0) {
-                const latestSemester = semesters[semesters.length - 1];
+            if (!currentSemesterFound && formattedSemesters.length > 0) {
+                const latestSemester = formattedSemesters[formattedSemesters.length - 1];
                 const options = Array.from(semesterSelect.options);
                 for (const option of options) {
                     if (option.value === latestSemester.semesterId) {
@@ -1041,15 +1205,29 @@
             console.log('Displaying schedule data:', data);
             
             // Kiểm tra xem có dữ liệu lịch không
-            if (!data || !data.schedules || data.schedules.length === 0) {
+            // Check for different possible data structures
+            let scheduleData = [];
+            
+            if (Array.isArray(data)) {
+                // Direct array of schedules
+                scheduleData = data;
+            } else if (data && data.schedules && Array.isArray(data.schedules)) {
+                // Object with schedules array
+                scheduleData = data.schedules;
+            } else if (data && data.schedule && Array.isArray(data.schedule)) {
+                // Object with schedule array (different naming)
+                scheduleData = data.schedule;
+            }
+            
+            if (scheduleData.length === 0) {
                 scheduleContainer.innerHTML = '<p>Không có lịch học nào</p>';
                 return;
             }
             
             // Nhóm lịch học theo ngày
             const schedulesByDay = {};
-                
-            data.schedules.forEach(schedule => {
+            
+            scheduleData.forEach(schedule => {
                 // Kiểm tra và xử lý ngày học
                 let date;
                 if (schedule.SessionDate) {
@@ -1100,13 +1278,20 @@
             // Hiển thị thông tin người dùng phù hợp với vai trò
             if (userRole === "Teacher") {
                 html += `<div class="user-schedule-info">
-                    <p><strong>Giáo viên:</strong> ${data.user.fullName || 'Không xác định'}</p>
-                    <p><strong>Bộ môn:</strong> ${data.user.major || 'Không xác định'}</p>
+                    <p><strong>Giáo viên:</strong> ${data.user && data.user.fullName ? data.user.fullName : 'Không xác định'}</p>
+                    <p><strong>Bộ môn:</strong> ${data.user && data.user.major ? data.user.major : 'Không xác định'}</p>
                 </div>`;
             } else if (userRole === "Student") {
                 html += `<div class="user-schedule-info">
-                    <p><strong>Học sinh:</strong> ${data.user.fullName || 'Không xác định'}</p>
-                    <p><strong>Lớp:</strong> ${data.user.classId || 'Không xác định'}</p>
+                    <p><strong>Học sinh:</strong> ${data.user && data.user.fullName ? data.user.fullName : 'Không xác định'}</p>
+                    <p><strong>Lớp:</strong> ${data.user && data.user.classId ? data.user.classId : 'Không xác định'}</p>
+                </div>`;
+            }
+            
+            // Add message if exists
+            if (data.message) {
+                html += `<div class="user-schedule-info">
+                    <p><strong>Thông báo:</strong> ${data.message}</p>
                 </div>`;
             }
             
@@ -1159,90 +1344,155 @@
         function displayScheduleTable(data) {
             advancedScheduleResult.classList.add('hidden');
             
-            if (!data || ((!data.schedules || data.schedules.length === 0) && (!data.schedule || data.schedule.length === 0))) {
+            // Log data to console for debugging
+            console.log('Schedule Data Raw:', data);
+            
+            // Handle different response formats
+            let scheduleData = null;
+            let userInfo = '';
+            
+            // Case 1: If data is an array directly (daily schedule format)
+            if (Array.isArray(data)) {
+                scheduleData = data;
+                console.log('Case 1: Data is array with', scheduleData.length, 'items');
+            } 
+            // Case 2: If data has a schedules property
+            else if (data && data.schedules && Array.isArray(data.schedules)) {
+                scheduleData = data.schedules;
+                console.log('Case 2: Data has schedules property with', scheduleData.length, 'items');
+                
+                // Get user info if available
+                if (data.user) {
+                    if (data.role === 'Teacher') {
+                        userInfo = `<p><strong>Giáo viên:</strong> ${data.user.fullName || 'Không xác định'}</p>
+                                   <p><strong>Bộ môn:</strong> ${data.user.major || 'Không xác định'}</p>`;
+                    } else if (data.role === 'Student') {
+                        userInfo = `<p><strong>Học sinh:</strong> ${data.user.fullName || 'Không xác định'}</p>
+                                   <p><strong>Lớp:</strong> ${data.user.classId || 'Không xác định'}</p>`;
+                    }
+                }
+            }
+            // Case 3: If data has a schedule property
+            else if (data && data.schedule && Array.isArray(data.schedule)) {
+                scheduleData = data.schedule;
+                console.log('Case 3: Data has schedule property with', scheduleData.length, 'items');
+            }
+            // Case 4: Handle message property (common in 'Found X schedules' responses)
+            else if (data && data.message && typeof data.message === 'string' && data.message.includes('schedules')) {
+                // Extract user information from the message if possible
+                userInfo = `<p><strong>Thông báo:</strong> ${data.message}</p>`;
+                
+                if (Array.isArray(data.schedules)) {
+                    scheduleData = data.schedules;
+                    console.log('Case 4: Data with message and schedules array with', scheduleData.length, 'items');
+                }
+            }
+            // Case 5: Handle nested data structure in API response
+            else if (data && typeof data === 'object' && data.data) {
+                if (Array.isArray(data.data)) {
+                    scheduleData = data.data;
+                    console.log('Case 5a: Data is nested in data array with', scheduleData.length, 'items');
+                }
+                else if (data.data.schedules && Array.isArray(data.data.schedules)) {
+                    scheduleData = data.data.schedules;
+                    console.log('Case 5b: Data is nested in data.schedules with', scheduleData.length, 'items');
+                    
+                    // Add week range info if available
+                    if (data.data.weekRange) {
+                        userInfo += `<p><strong>Tuần:</strong> ${data.data.weekRange}</p>`;
+                    }
+                    
+                    // Get user info
+                    if (data.data.user) {
+                        if (data.data.role === 'Teacher') {
+                            userInfo += `<p><strong>Giáo viên:</strong> ${data.data.user.fullName || 'Không xác định'}</p>
+                                       <p><strong>Bộ môn:</strong> ${data.data.user.major || 'Không xác định'}</p>`;
+                        } else if (data.data.role === 'Student') {
+                            userInfo += `<p><strong>Học sinh:</strong> ${data.data.user.fullName || 'Không xác định'}</p>
+                                       <p><strong>Lớp:</strong> ${data.data.user.classId || 'Không xác định'}</p>`;
+                        }
+                    }
+                }
+            }
+            
+            // Check if we have any schedule data
+            if (!scheduleData || scheduleData.length === 0) {
                 advancedScheduleResult.innerHTML = '<p>Không có lịch học nào</p>';
                 advancedScheduleResult.classList.remove('hidden');
                 return;
             }
             
-            // Đảm bảo data.schedules tồn tại (có thể API trả về data.schedule)
-            if (!data.schedules && data.schedule) {
-                data.schedules = data.schedule;
+            // Display user information if available
+            if (userInfo) {
+                advancedScheduleResult.innerHTML = userInfo;
+                advancedScheduleResult.classList.remove('hidden');
+            } else {
+                advancedScheduleResult.innerHTML = `<p>Tìm thấy ${scheduleData.length} lịch học</p>`;
+                advancedScheduleResult.classList.remove('hidden');
             }
-            
-            // Hiển thị thông tin người dùng
-            let userInfo = '';
-            if (data.user) {
-                if (data.role === 'Teacher') {
-                    userInfo = `<p><strong>Giáo viên:</strong> ${data.user.fullName || 'Không xác định'}</p>
-                               <p><strong>Bộ môn:</strong> ${data.user.major || 'Không xác định'}</p>`;
-                } else if (data.role === 'Student') {
-                    userInfo = `<p><strong>Học sinh:</strong> ${data.user.fullName || 'Không xác định'}</p>
-                               <p><strong>Lớp:</strong> ${data.user.classId || 'Không xác định'}</p>`;
-                }
-            }
-            
-            if (data.semester) {
-                userInfo += `<p><strong>Học kỳ:</strong> ${data.semester.semesterName || 'Không xác định'}</p>`;
-                
-                // Hiển thị thông tin về tuần
-                if (scheduleTypeSelect.value === 'weekly' && scheduleWeekInput.value) {
-                    userInfo += `<p><strong>Tuần:</strong> ${scheduleWeekInput.value}</p>`;
-                }
-            }
-            
-            advancedScheduleResult.innerHTML = userInfo;
-            advancedScheduleResult.classList.remove('hidden');
             
             scheduleTableBody.innerHTML = '';
             
             // Sắp xếp lịch học theo ngày và tiết
-            const sortedSchedules = [...data.schedules].sort((a, b) => {
-                // So sánh theo ngày
-                const dateA = new Date(a.SessionDate || a.sessionDate || a.date || 0);
-                const dateB = new Date(b.SessionDate || b.sessionDate || b.date || 0);
+            const sortedSchedules = [...scheduleData].sort((a, b) => {
+                // Sắp xếp theo ngày
+                const dateA = a.SessionDate || a.sessionDate || '';
+                const dateB = b.SessionDate || b.sessionDate || '';
+                if (dateA !== dateB) {
+                    return dateA.localeCompare(dateB);
+                }
                 
-                if (dateA - dateB !== 0) return dateA - dateB;
-                
-                // Nếu cùng ngày, so sánh theo tiết học
-                const slotA = a.SlotID || a.slotId || a.periodNumber || 0;
-                const slotB = b.SlotID || b.slotId || b.periodNumber || 0;
+                // Nếu cùng ngày, sắp xếp theo tiết
+                const slotA = a.SlotID || a.slotId || a.periodNumber || a.period || 0;
+                const slotB = b.SlotID || b.slotId || b.periodNumber || b.period || 0;
                 return slotA - slotB;
             });
+            
+            // Log lịch học đã sắp xếp
+            console.log('Sorted Schedules:', sortedSchedules);
             
             sortedSchedules.forEach(schedule => {
                 const row = document.createElement('tr');
                 
-                // Lấy các thông tin quan trọng
-                const slotId = schedule.SlotID || schedule.slotId || schedule.periodNumber || "N/A";
+                // Lấy các thông tin quan trọng với fallback để tương thích với nhiều định dạng
+                const slotId = schedule.SlotID || schedule.slotId || schedule.periodNumber || schedule.period || "N/A";
                 
-                const subjectId = schedule.subjectId || "";
-                const subjectName = schedule.subjectName || `Môn học ${subjectId}`;
+                // Handle subject data which could be in different formats
+                let subjectName = schedule.subjectName || (schedule.subject ? schedule.subject.name : '') || `Môn học ${schedule.subjectId || ''}`;
+                let teacherName = schedule.teacherName || (schedule.teacher ? schedule.teacher.name : '') || `Giáo viên ${schedule.teacherId || ''}`;
+                let roomName = schedule.classroomNumber || schedule.roomNumber || 
+                              (schedule.classroom ? schedule.classroom.room : '') || 
+                              `Phòng ${schedule.classroomId || ''}`;
+                let className = schedule.className || `Lớp ${schedule.classId || ''}`;
                 
-                const teacherId = schedule.teacherId || "";
-                const teacherName = schedule.teacherName || (data.role === "Teacher" ? data.user.fullName : `Giáo viên ${teacherId}`);
-                
-                const roomId = schedule.classroomId || "";
-                const roomNumber = schedule.classroomNumber || schedule.roomNumber || `Phòng ${roomId}`;
-                
-                // Format ngày
+                // Extract date information
                 let sessionDate = 'N/A';
+                let dayOfWeek = 'N/A';
+                
                 if (schedule.SessionDate) {
                     sessionDate = new Date(schedule.SessionDate).toLocaleDateString('vi-VN');
+                    dayOfWeek = new Date(schedule.SessionDate).toLocaleDateString('vi-VN', { weekday: 'long' });
                 } else if (schedule.sessionDate) {
                     sessionDate = new Date(schedule.sessionDate).toLocaleDateString('vi-VN');
+                    dayOfWeek = new Date(schedule.sessionDate).toLocaleDateString('vi-VN', { weekday: 'long' });
                 } else if (schedule.date) {
                     sessionDate = new Date(schedule.date).toLocaleDateString('vi-VN');
+                    dayOfWeek = new Date(schedule.date).toLocaleDateString('vi-VN', { weekday: 'long' });
                 }
                 
-                const topic = schedule.topic || "Chưa cập nhật";
+                // Use dayOfWeek from schedule if available
+                if (schedule.dayOfWeek) {
+                    dayOfWeek = translateDayOfWeek(schedule.dayOfWeek);
+                }
+                
+                const topic = schedule.topic || schedule.Topic || "Chưa cập nhật";
                 
                 row.innerHTML = `
                     <td>${slotId} <small>(${schedule.startTime || 'N/A'} - ${schedule.endTime || 'N/A'})</small></td>
                     <td>${subjectName}</td>
                     <td>${teacherName}</td>
-                    <td>${roomNumber}</td>
-                    <td>${sessionDate} <small>(${schedule.dayOfWeek || 'N/A'})</small></td>
+                    <td>${roomName}</td>
+                    <td>${sessionDate} <small>(${dayOfWeek})</small></td>
                     <td>${topic}</td>
                 `;
                 
@@ -1250,6 +1500,21 @@
             });
             
             scheduleTable.classList.remove('hidden');
+        }
+        
+        // Helper function to translate day of week
+        function translateDayOfWeek(day) {
+            const translations = {
+                'Monday': 'Thứ hai',
+                'Tuesday': 'Thứ ba',
+                'Wednesday': 'Thứ tư',
+                'Thursday': 'Thứ năm',
+                'Friday': 'Thứ sáu',
+                'Saturday': 'Thứ bảy',
+                'Sunday': 'Chủ nhật'
+            };
+            
+            return translations[day] || day;
         }
         
         // Chuyển đổi vai trò sang tiếng Việt
@@ -1361,6 +1626,524 @@
             if (originalScheduleData) {
                 displaySchedule(originalScheduleData);
             }
+        });
+
+        const weekRangeFilter = document.getElementById('week-range-filter');
+        const scheduleWeekRangeInput = document.getElementById('schedule-week-range');
+        const getCurrentWeekBtn = document.getElementById('get-current-week-btn');
+
+        // Lấy tuần hiện tại
+        getCurrentWeekBtn.addEventListener('click', async function() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/schedules/current-week`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Không thể lấy thông tin tuần hiện tại');
+                }
+                
+                // Đặt giá trị cho input
+                scheduleWeekRangeInput.value = result.data.weekRange;
+                
+            } catch (error) {
+                console.error('Error fetching current week:', error);
+                alert(`Lỗi: ${error.message}`);
+            }
+        });
+
+        // Add event listener for the debug button
+        document.getElementById('debug-daily-schedule').addEventListener('click', async function() {
+            const date = document.getElementById('schedule-date').value;
+            if (!date) {
+                alert('Vui lòng chọn ngày');
+                return;
+            }
+            
+            try {
+                const endpoint = `/api/schedules/daily/${date}`;
+                console.log('Debug: Calling API endpoint:', endpoint);
+                
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                console.log('Debug: API Status Code:', response.status);
+                console.log('Debug: Response Headers:', [...response.headers].reduce((obj, [key, val]) => ({ ...obj, [key]: val }), {}));
+                
+                const result = await response.json();
+                console.log('Debug: API Response:', result);
+                
+                // Show in alert for immediate feedback
+                alert(`API Status: ${response.status}\nSuccess: ${result.success}\nData Count: ${result.data && result.data.schedules ? result.data.schedules.length : 'N/A'}`);
+                
+            } catch (error) {
+                console.error('Debug: API Error:', error);
+                alert(`Debug Error: ${error.message}`);
+            }
+        });
+
+        // Add handler for test-daily-api button if not already defined
+        document.getElementById('test-daily-api').addEventListener('click', async function() {
+            const debugResponse = document.getElementById('debug-response');
+            const debugCallInfo = document.getElementById('debug-call-info');
+            
+            debugCallInfo.innerHTML = '<p>Testing Daily Schedule API...</p>';
+            
+            const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+            
+            try {
+                const endpoint = `/api/schedules/daily/${today}`;
+                debugCallInfo.innerHTML += `<p>Endpoint: ${endpoint}</p>`;
+                
+                const start = performance.now();
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                const end = performance.now();
+                
+                debugCallInfo.innerHTML += `<p>Response Time: ${(end - start).toFixed(2)}ms</p>`;
+                debugCallInfo.innerHTML += `<p>Status: ${response.status} ${response.statusText}</p>`;
+                
+                const result = await response.json();
+                debugResponse.textContent = JSON.stringify(result, null, 2);
+                
+                // Additional debug info
+                if (result.data) {
+                    if (Array.isArray(result.data)) {
+                        debugCallInfo.innerHTML += `<p>Data: Array[${result.data.length}]</p>`;
+                    } else if (result.data.schedules) {
+                        debugCallInfo.innerHTML += `<p>Data: Object with schedules[${result.data.schedules.length}]</p>`;
+                    } else {
+                        debugCallInfo.innerHTML += `<p>Data: Object (no schedules array)</p>`;
+                    }
+                }
+                
+            } catch (error) {
+                debugCallInfo.innerHTML += `<p class="error">Error: ${error.message}</p>`;
+                debugResponse.textContent = error.stack || error.message;
+            }
+        });
+
+        // Add handler for test-weekly-api button
+        document.getElementById('test-weekly-api').addEventListener('click', async function() {
+            const debugResponse = document.getElementById('debug-response');
+            const debugCallInfo = document.getElementById('debug-call-info');
+            
+            debugCallInfo.innerHTML = '<p>Testing Weekly Schedule API...</p>';
+            
+            try {
+                // First get the current week
+                const weekResponse = await fetch(`${API_BASE_URL}/api/schedules/current-week`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (!weekResponse.ok) {
+                    throw new Error('Không thể lấy thông tin tuần hiện tại');
+                }
+                
+                const weekResult = await weekResponse.json();
+                const currentWeek = weekResult.data.weekRange;
+                
+                debugCallInfo.innerHTML += `<p>Current Week: ${currentWeek}</p>`;
+                
+                // Now try to get the weekly schedule
+                const endpoint = `/api/schedules/week-range/${encodeURIComponent(currentWeek)}`;
+                debugCallInfo.innerHTML += `<p>Endpoint: ${endpoint}</p>`;
+                
+                const start = performance.now();
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                const end = performance.now();
+                
+                debugCallInfo.innerHTML += `<p>Response Time: ${(end - start).toFixed(2)}ms</p>`;
+                debugCallInfo.innerHTML += `<p>Status: ${response.status} ${response.statusText}</p>`;
+                
+                const result = await response.json();
+                debugResponse.textContent = JSON.stringify(result, null, 2);
+                
+                // Analyze the response
+                if (result.success) {
+                    const schedulesCount = result.data && result.data.schedules ? result.data.schedules.length : 0;
+                    debugCallInfo.innerHTML += `<p style="color: green">✅ API trả về ${schedulesCount} lịch học cho tuần ${currentWeek}</p>`;
+                    
+                    // Count by day of week if available
+                    if (schedulesCount > 0) {
+                        const dayCount = {};
+                        result.data.schedules.forEach(schedule => {
+                            const day = schedule.dayOfWeek || 'Unknown';
+                            dayCount[day] = (dayCount[day] || 0) + 1;
+                        });
+                        
+                        // Display count by day
+                        debugCallInfo.innerHTML += '<p>Số lịch học theo ngày:</p><ul>';
+                        for (const [day, count] of Object.entries(dayCount)) {
+                            debugCallInfo.innerHTML += `<li>${day}: ${count}</li>`;
+                        }
+                        debugCallInfo.innerHTML += '</ul>';
+                    }
+                } else {
+                    debugCallInfo.innerHTML += `<p style="color: red">❌ Lỗi: ${result.message || 'Lỗi không xác định'}</p>`;
+                }
+                
+            } catch (error) {
+                debugCallInfo.innerHTML += `<p class="error">Error: ${error.message}</p>`;
+                debugResponse.textContent = error.stack || error.message;
+            }
+        });
+
+        // Add handler for the SessionWeek field check button
+        document.getElementById('check-sessionweek-field').addEventListener('click', async function() {
+            const debugResponse = document.getElementById('debug-response');
+            const debugCallInfo = document.getElementById('debug-call-info');
+            
+            debugCallInfo.innerHTML = '<p>Kiểm tra trường SessionWeek trong database...</p>';
+            
+            try {
+                // Query the current week for easy testing
+                const weekResponse = await fetch(`${API_BASE_URL}/api/schedules/current-week`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (!weekResponse.ok) {
+                    throw new Error('Không thể lấy thông tin tuần hiện tại');
+                }
+                
+                const weekResult = await weekResponse.json();
+                const currentWeek = weekResult.data.weekRange;
+                
+                debugCallInfo.innerHTML += `<p>Tuần hiện tại: ${currentWeek}</p>`;
+                
+                // Attempt to query schedules by week range
+                const scheduleResponse = await fetch(`${API_BASE_URL}/api/schedules/week-range/${encodeURIComponent(currentWeek)}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const scheduleResult = await scheduleResponse.json();
+                
+                // Display the result
+                debugResponse.textContent = JSON.stringify(scheduleResult, null, 2);
+                
+                // Analyze the response
+                const schedulesCount = scheduleResult.data && scheduleResult.data.schedules ? scheduleResult.data.schedules.length : 0;
+                
+                if (schedulesCount > 0) {
+                    debugCallInfo.innerHTML += `<p style="color: green">✅ API trả về ${schedulesCount} lịch học với SessionWeek = "${currentWeek}"</p>`;
+                    
+                    // Add info about found schedules
+                    const scheduleIds = scheduleResult.data.schedules.map(s => s.scheduleId || s._id).join(', ');
+                    debugCallInfo.innerHTML += `<p>Schedule IDs: ${scheduleIds.substring(0, 100)}${scheduleIds.length > 100 ? '...' : ''}</p>`;
+                } else {
+                    debugCallInfo.innerHTML += `<p style="color: orange">⚠️ API không tìm thấy lịch học nào với SessionWeek = "${currentWeek}"</p>`;
+                    debugCallInfo.innerHTML += `<p>Có thể trường SessionWeek chưa được thiết lập đúng trong database.</p>`;
+                    debugCallInfo.innerHTML += `<p>Hãy thử sử dụng nút "Fix SessionWeek Field" để cập nhật.</p>`;
+                }
+                
+                // Also check for SessionDate field in the same date range
+                const { startDate, endDate } = scheduleService.parseWeekRange(currentWeek);
+                if (startDate && endDate) {
+                    const startDateStr = startDate.toISOString().substr(0, 10);
+                    const endDateStr = endDate.toISOString().substr(0, 10);
+                    
+                    debugCallInfo.innerHTML += `<p>Đang kiểm tra lịch học theo SessionDate từ ${startDateStr} đến ${endDateStr}...</p>`;
+                    
+                    // Use our new debug endpoint
+                    const dateRangeResponse = await fetch(`${API_BASE_URL}/api/schedules/debug/date-range?start=${startDateStr}&end=${endDateStr}`, {
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`
+                        }
+                    });
+                    
+                    if (!dateRangeResponse.ok) {
+                        throw new Error('Không thể kiểm tra lịch học theo khoảng ngày');
+                    }
+                    
+                    const dateRangeResult = await dateRangeResponse.json();
+                    
+                    const dateRangeCount = dateRangeResult.data ? dateRangeResult.data.length : 0;
+                    if (dateRangeCount > 0) {
+                        debugCallInfo.innerHTML += `<p style="color: green">✅ Tìm thấy ${dateRangeCount} lịch học trong khoảng ngày (${dateRangeResult.meta.withSessionWeek} có trường SessionWeek, ${dateRangeResult.meta.withoutSessionWeek} không có)</p>`;
+                        
+                        if (dateRangeResult.meta.withoutSessionWeek > 0) {
+                            debugCallInfo.innerHTML += `<p style="color: orange">⚠️ Có ${dateRangeResult.meta.withoutSessionWeek} lịch học không có trường SessionWeek - cần cập nhật!</p>`;
+                            debugCallInfo.innerHTML += `<p>Hãy sử dụng nút "Fix SessionWeek Field" để cập nhật trường SessionWeek.</p>`;
+                        }
+                    } else {
+                        debugCallInfo.innerHTML += `<p style="color: red">❌ Không tìm thấy lịch học nào trong khoảng ngày ${startDateStr} đến ${endDateStr}</p>`;
+                    }
+                    
+                    // Update the debug response display
+                    debugResponse.textContent = JSON.stringify(dateRangeResult, null, 2);
+                }
+            } catch (error) {
+                console.error('Error checking SessionWeek field:', error);
+                debugCallInfo.innerHTML += `<p class="error">Error: ${error.message}</p>`;
+                debugResponse.textContent = error.stack || error.message;
+            }
+        });
+
+        // Thêm vào phần ngay sau khi tài liệu đã tải xong
+        document.addEventListener('DOMContentLoaded', function() {
+            // Khởi tạo danh sách tuần với năm hiện tại
+            const currentYear = new Date().getFullYear();
+            const yearSelect = document.getElementById('schedule-year');
+            if (yearSelect) {
+                yearSelect.value = currentYear;
+                initWeekDropdown(currentYear);
+            }
+            
+            // Khởi tạo các handler sự kiện khác nếu cần
+            const scheduleTypeSelect = document.getElementById('schedule-type');
+            scheduleTypeSelect.dispatchEvent(new Event('change'));
+        });
+
+        // Khởi tạo danh sách tuần cho dropdown
+        function initWeekDropdown(year) {
+            try {
+                const weekDropdown = document.getElementById('schedule-week-dropdown');
+                if (!weekDropdown) return;
+                
+                const weeks = generateWeeksForYear(year);
+                
+                let options = '';
+                const currentDate = new Date();
+                
+                weeks.forEach((week, index) => {
+                    const startDate = new Date(week.start);
+                    const endDate = new Date(week.end);
+                    
+                    // Kiểm tra xem tuần hiện tại là tuần nào
+                    const isCurrentWeek = currentDate >= startDate && currentDate <= endDate;
+                    
+                    options += `<option value="${index + 1}" data-start="${week.start}" data-end="${week.end}" ${isCurrentWeek ? 'selected' : ''}>
+                        Tuần ${index + 1}: ${formatDate(startDate)} đến ${formatDate(endDate)}
+                    </option>`;
+                });
+                
+                weekDropdown.innerHTML = options;
+            } catch (error) {
+                console.error('Error initializing week dropdown:', error);
+            }
+        }
+
+        // Tạo danh sách các tuần trong năm
+        function generateWeeksForYear(year) {
+            const weeks = [];
+            const firstDayOfYear = new Date(year, 0, 1);
+            
+            // Tìm ngày thứ hai đầu tiên của năm
+            let firstMonday = new Date(firstDayOfYear);
+            while (firstMonday.getDay() !== 1) { // 1 là thứ hai
+                firstMonday.setDate(firstMonday.getDate() + 1);
+            }
+            
+            // Tạo danh sách 52 tuần bắt đầu từ thứ hai đầu tiên
+            let currentMonday = new Date(firstMonday);
+            
+            for (let i = 0; i < 52; i++) {
+                const startDate = new Date(currentMonday);
+                const endDate = new Date(currentMonday);
+                endDate.setDate(endDate.getDate() + 6); // Chủ nhật = thứ 2 + 6 ngày
+                
+                // Tạo SessionWeek string theo đúng format "YYYY-MM-DD to YYYY-MM-DD"
+                const startStr = startDate.toISOString().split('T')[0];
+                const endStr = endDate.toISOString().split('T')[0];
+                const sessionWeek = `${startStr} to ${endStr}`;
+                
+                // Debug
+                if (i < 3 || i > 48) {
+                    console.log(`Tuần ${i+1}: ${sessionWeek}`);
+                }
+                
+                weeks.push({
+                    start: startStr,
+                    end: endStr,
+                    sessionWeek: sessionWeek  // Thêm trường này để dễ truy cập
+                });
+                
+                // Chuyển sang thứ hai tuần tiếp theo
+                currentMonday.setDate(currentMonday.getDate() + 7);
+            }
+            
+            return weeks;
+        }
+
+        // Format ngày dạng dd/MM
+        function formatDate(date) {
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            return `${day}/${month}`;
+        }
+
+        // Debug Weekly Schedule API
+        document.getElementById('get-current-week-debug').addEventListener('click', async function() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/schedules/current-week`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Không thể lấy thông tin tuần hiện tại');
+                }
+                
+                // Đặt giá trị cho input
+                document.getElementById('debug-week-range').value = result.data.weekRange;
+                
+                // Show the week range details
+                document.getElementById('debug-weekly-result').innerHTML = `
+                    <div class="result">
+                        <p><strong>Current Week Range:</strong> ${result.data.weekRange}</p>
+                        <p><strong>Week Start:</strong> ${new Date(result.data.weekStart).toLocaleDateString('vi-VN')}</p>
+                        <p><strong>Week End:</strong> ${new Date(result.data.weekEnd).toLocaleDateString('vi-VN')}</p>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error fetching current week:', error);
+                document.getElementById('debug-weekly-result').innerHTML = `
+                    <div class="error">${error.message}</div>
+                `;
+            }
+        });
+
+        document.getElementById('test-week-range-api').addEventListener('click', async function() {
+            const weekRange = document.getElementById('debug-week-range').value;
+            if (!weekRange) {
+                alert('Vui lòng nhập hoặc chọn khoảng tuần để kiểm tra');
+                return;
+            }
+            
+            const debugWeeklyResult = document.getElementById('debug-weekly-result');
+            const debugResponse = document.getElementById('debug-response');
+            const debugCallInfo = document.getElementById('debug-call-info');
+            
+            debugWeeklyResult.innerHTML = '<p>Đang kiểm tra API lịch học theo tuần...</p>';
+            debugCallInfo.innerHTML = `<p>Testing Week Range API for: "${weekRange}"</p>`;
+            
+            try {
+                const endpoint = `/api/schedules/week-range/${encodeURIComponent(weekRange)}`;
+                
+                debugCallInfo.innerHTML += `<p>Endpoint: ${endpoint}</p>`;
+                
+                const start = performance.now();
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                const end = performance.now();
+                
+                debugCallInfo.innerHTML += `<p>Response Time: ${(end - start).toFixed(2)}ms</p>`;
+                debugCallInfo.innerHTML += `<p>Status: ${response.status} ${response.statusText}</p>`;
+                
+                const result = await response.json();
+                debugResponse.textContent = JSON.stringify(result, null, 2);
+                
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'API trả về lỗi');
+                }
+                
+                // Display success information
+                const schedulesCount = result.data && result.data.schedules ? result.data.schedules.length : 0;
+                
+                debugWeeklyResult.innerHTML = `
+                    <div class="result">
+                        <p><strong>Success:</strong> API trả về ${schedulesCount} lịch học cho tuần ${weekRange}</p>
+                        <p><strong>User Role:</strong> ${result.data.role || 'Không xác định'}</p>
+                    </div>
+                `;
+                
+                // Show more detailed information about the schedules
+                if (schedulesCount > 0) {
+                    let scheduleInfo = '<div class="schedule-table"><table border="1">';
+                    scheduleInfo += `<tr><th>Ngày</th><th>Tiết</th><th>Môn học</th><th>Giáo viên</th><th>Phòng</th></tr>`;
+                    
+                    result.data.schedules.forEach(schedule => {
+                        const date = schedule.sessionDate || schedule.SessionDate || 'N/A';
+                        const period = schedule.SlotID || schedule.slotId || schedule.period || 'N/A';
+                        const subjectName = schedule.subjectName || `Môn học ${schedule.subjectId || ''}`;
+                        const teacherName = schedule.teacherName || `Giáo viên ${schedule.teacherId || ''}`;
+                        const roomName = schedule.classroomNumber || schedule.roomNumber || `Phòng ${schedule.classroomId || ''}`;
+                        
+                        scheduleInfo += `<tr>
+                            <td>${date}</td>
+                            <td>${period}</td>
+                            <td>${subjectName}</td>
+                            <td>${teacherName}</td>
+                            <td>${roomName}</td>
+                        </tr>`;
+                    });
+                    
+                    scheduleInfo += '</table></div>';
+                    debugWeeklyResult.innerHTML += scheduleInfo;
+                }
+            } catch (error) {
+                console.error('Error testing weekly API:', error);
+                debugWeeklyResult.innerHTML = `<div class="error">${error.message}</div>`;
+            }
+        });
+
+        document.getElementById('fix-session-week').addEventListener('click', async function() {
+            // This requires admin privileges
+            const weekRange = document.getElementById('debug-week-range').value;
+            if (!weekRange) {
+                alert('Vui lòng nhập hoặc chọn khoảng tuần để sửa');
+                return;
+            }
+            
+            const debugWeeklyResult = document.getElementById('debug-weekly-result');
+            debugWeeklyResult.innerHTML = '<p>Đang gửi yêu cầu sửa SessionWeek...</p>';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/schedules/check-week/${encodeURIComponent(weekRange)}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.message || 'Lỗi khi sửa SessionWeek');
+                }
+                
+                debugWeeklyResult.innerHTML = `
+                    <div class="result">
+                        <p><strong>Kết quả:</strong> ${result.message}</p>
+                        <p><strong>Đã cập nhật:</strong> ${result.data.schedulesUpdated} lịch học</p>
+                        <p><strong>Tuần:</strong> ${result.data.weekRange}</p>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error fixing SessionWeek:', error);
+                debugWeeklyResult.innerHTML = `<div class="error">${error.message}</div>`;
+            }
+        });
+
+        // Xử lý thay đổi năm
+        document.getElementById('schedule-year').addEventListener('change', function() {
+            initWeekDropdown(parseInt(this.value));
         });
     </script>
 </body>

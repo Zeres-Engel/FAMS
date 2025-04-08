@@ -152,6 +152,7 @@ CREATE TABLE ClassSchedule (
   SlotID INT NOT NULL,
   Topic VARCHAR(255),
   SessionDate DATE,
+  SessionWeek VARCHAR(255),
   FOREIGN KEY (SemesterID) REFERENCES Semester(SemesterID),
   FOREIGN KEY (ClassID) REFERENCES Class(ClassID),
   FOREIGN KEY (SubjectID) REFERENCES Subject(SubjectID),

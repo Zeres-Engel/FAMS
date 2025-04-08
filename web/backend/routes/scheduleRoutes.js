@@ -4,10 +4,13 @@ const {
   getDailySchedule, 
   getSemesterSchedule,
   getCurrentSemester,
-  getAllSemesters
+  getAllSemesters,
+  getCurrentWeekRange,
+  getScheduleByWeekRange
 } = require('../controllers/scheduleController');
 const { protect } = require('../middleware/authMiddleware');
 const mongoose = require('mongoose');
+const scheduleService = require('../services/scheduleService');
 
 const router = express.Router();
 
@@ -190,6 +193,68 @@ debugRouter.get('/student/:userId', async (req, res) => {
   }
 });
 
+// Debug route to check schedules by date range
+debugRouter.get('/date-range', async (req, res) => {
+  try {
+    const startDate = req.query.start;
+    const endDate = req.query.end;
+    
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Both start and end date parameters are required',
+        example: '/api/schedules/debug/date-range?start=2024-09-09&end=2024-09-15'
+      });
+    }
+    
+    // Query schedules by date range
+    const query = {
+      $or: [
+        { SessionDate: { $gte: startDate, $lte: endDate } },
+        { sessionDate: { $gte: startDate, $lte: endDate } }
+      ]
+    };
+    
+    // Add optional filters
+    if (req.query.classId) {
+      query.classId = parseInt(req.query.classId);
+    }
+    
+    if (req.query.teacherId) {
+      query.teacherId = parseInt(req.query.teacherId);
+    }
+    
+    // Query database
+    const schedules = await mongoose.connection.db.collection('ClassSchedule')
+      .find(query)
+      .sort({ SessionDate: 1, SlotID: 1 })
+      .limit(req.query.limit ? parseInt(req.query.limit) : 100)
+      .toArray();
+    
+    // Check SessionWeek field
+    const hasSessionWeekCount = schedules.filter(s => s.SessionWeek || s.sessionWeek).length;
+    
+    return res.json({
+      success: true,
+      message: `Found ${schedules.length} schedules between ${startDate} and ${endDate}`,
+      meta: {
+        query,
+        dateRange: `${startDate} to ${endDate}`,
+        withSessionWeek: hasSessionWeekCount,
+        withoutSessionWeek: schedules.length - hasSessionWeekCount
+      },
+      data: schedules
+    });
+  } catch (error) {
+    console.error('Error in date-range debug route:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      stack: error.stack
+    });
+  }
+});
+
 // Mount debug router WITHOUT protection
 router.use('/debug', debugRouter);
 
@@ -204,6 +269,10 @@ router.get('/semester/:semesterId', getSemesterSchedule);
 router.get('/user/:userId/weekly', getWeeklySchedule);
 router.get('/class/:classId/weekly', getWeeklySchedule);
 router.get('/semesters', getAllSemesters);
+
+// Register the new routes for week range
+router.get('/current-week', getCurrentWeekRange);
+router.get('/week-range/:weekRange', getScheduleByWeekRange);
 
 // Universal endpoint for getting schedule based on user role
 router.get('/me', async (req, res) => {
@@ -512,6 +581,104 @@ router.get('/student', async (req, res) => {
       success: false,
       message: error.message,
       code: 'SERVER_ERROR'
+    });
+  }
+});
+
+// Endpoint to update SessionWeek field for all schedules (ADMIN ONLY)
+router.post('/update-session-weeks', async (req, res) => {
+  try {
+    // Check if user is admin
+    if (req.user.role !== 'Admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Quyền truy cập bị từ chối. Chỉ Admin mới có thể sử dụng chức năng này.',
+        code: 'PERMISSION_DENIED'
+      });
+    }
+    
+    // Run the update function
+    const result = await scheduleService.updateAllSessionWeeks();
+    
+    return res.json({
+      success: true,
+      message: `Đã cập nhật thành công ${result.updatedCount}/${result.totalSchedules} lịch học`,
+      data: result
+    });
+  } catch (error) {
+    console.error('Error updating session weeks:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      stack: error.stack
+    });
+  }
+});
+
+// Endpoint to check and fix SessionWeek field for a specific week (ADMIN ONLY)
+router.post('/check-week/:weekRange', async (req, res) => {
+  try {
+    // Check if user is admin
+    if (req.user.role !== 'Admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Quyền truy cập bị từ chối. Chỉ Admin mới có thể sử dụng chức năng này.',
+        code: 'PERMISSION_DENIED'
+      });
+    }
+    
+    const weekRange = req.params.weekRange;
+    const { startDate, endDate } = scheduleService.parseWeekRange(weekRange);
+    
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Định dạng tuần không hợp lệ. Sử dụng định dạng "YYYY-MM-DD to YYYY-MM-DD"',
+        code: 'INVALID_FORMAT'
+      });
+    }
+    
+    // Find schedules with SessionDate in the given range but missing SessionWeek
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const endDateStr = endDate.toISOString().split('T')[0];
+    
+    const db = mongoose.connection.db;
+    const query = {
+      $or: [
+        { SessionDate: { $gte: startDateStr, $lte: endDateStr } },
+        { sessionDate: { $gte: startDateStr, $lte: endDateStr } }
+      ],
+      $or: [
+        { SessionWeek: { $exists: false } },
+        { sessionWeek: { $exists: false } }
+      ]
+    };
+    
+    const schedules = await db.collection('ClassSchedule')
+      .find(query)
+      .toArray();
+    
+    console.log(`Tìm thấy ${schedules.length} lịch học cần cập nhật SessionWeek cho tuần ${weekRange}`);
+    
+    // Update SessionWeek field for all found schedules
+    await scheduleService.updateSessionWeekField(schedules);
+    
+    return res.json({
+      success: true,
+      message: `Đã kiểm tra và cập nhật SessionWeek cho ${schedules.length} lịch học trong tuần ${weekRange}`,
+      data: { 
+        weekRange,
+        schedulesUpdated: schedules.length,
+        startDate: startDateStr,
+        endDate: endDateStr
+      }
+    });
+  } catch (error) {
+    console.error('Error checking and fixing week schedules:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      stack: error.stack
     });
   }
 });

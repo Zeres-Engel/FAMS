@@ -519,241 +519,422 @@ const getSemesterSchedule = async (semesterId, classId = null, teacherId = null)
 };
 
 /**
- * Format dữ liệu thời khóa biểu trả về
- * @param {Array} schedules - Dữ liệu thời khóa biểu gốc
+ * Lấy tên thứ trong tuần từ một ngày cụ thể
+ * @param {String|Date} dateStr - Chuỗi ngày hoặc đối tượng Date
+ * @returns {String} Tên thứ (Monday, Tuesday, ...)
+ */
+const getDayOfWeekFromDate = (dateStr) => {
+  try {
+    if (!dateStr) return 'Unknown';
+    
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return 'Unknown';
+    
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days[date.getDay()];
+  } catch (error) {
+    console.error('Error in getDayOfWeekFromDate:', error);
+    return 'Unknown';
+  }
+};
+
+/**
+ * Format dữ liệu lịch học cho frontend
+ * @param {Array} schedules - Mảng lịch học
  * @param {String} format - Định dạng (daily, weekly, semester)
- * @returns {Object} Dữ liệu đã được format
+ * @returns {Array} Lịch học đã được format
  */
 const formatScheduleData = async (schedules, format = 'daily') => {
   try {
-    console.log(`Bắt đầu format dữ liệu ${schedules ? schedules.length : 0} lịch học theo định dạng '${format}'`);
+    console.log(`Bắt đầu format dữ liệu ${schedules.length} lịch học theo định dạng '${format}'`);
     
     if (!schedules || schedules.length === 0) {
-      console.log('Không có dữ liệu lịch học để format');
-      return format === 'weekly' ? { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [], Sunday: [] } : [];
+      console.log('Không có lịch học nào để format');
+      return [];
     }
     
-    // Chuẩn hóa dữ liệu input trước khi xử lý
-    const normalizedSchedules = schedules.map(schedule => {
-      // Đảm bảo các trường cần thiết tồn tại
-      const normalized = {
-        ...schedule,
-        scheduleId: schedule.scheduleId || schedule.id || 0,
-        id: schedule.id || schedule.scheduleId || 0,
-        SlotID: schedule.SlotID || schedule.slotId || schedule.period || 0,
-        period: schedule.period || schedule.SlotID || schedule.slotId || 0,
-        subjectId: schedule.subjectId || null,
-        teacherId: schedule.teacherId || null,
-        classroomId: schedule.classroomId || null,
-        startTime: schedule.startTime || "00:00",
-        endTime: schedule.endTime || "00:00",
-        SessionDate: schedule.SessionDate || schedule.sessionDate || "",
-        sessionDate: schedule.sessionDate || schedule.SessionDate || "",
-        dayOfWeek: schedule.dayOfWeek || "Unknown"
-      };
-      
-      // Log chi tiết cho debugging
-      console.log(`Đã chuẩn hóa lịch học ID ${normalized.id}, tiết ${normalized.period}, subject ${normalized.subjectId}`);
-      
-      return normalized;
-    });
-    
-    console.log(`Đã chuẩn hóa ${normalizedSchedules.length} lịch học`);
-    
-    const db = mongoose.connection.db;
-    
-    // Lấy thông tin các môn học, giáo viên, phòng học
-    const subjectIds = [...new Set(normalizedSchedules.filter(s => s.subjectId).map(s => s.subjectId))]; 
-    const teacherIds = [...new Set(normalizedSchedules.filter(s => s.teacherId).map(s => s.teacherId))];
-    const classroomIds = [...new Set(normalizedSchedules.filter(s => s.classroomId).map(s => s.classroomId))];
+    // Lấy thông tin bổ sung (môn học, giáo viên, phòng học)
+    const subjectIds = [...new Set(schedules.map(s => s.subjectId).filter(Boolean))];
+    const teacherIds = [...new Set(schedules.map(s => s.teacherId).filter(Boolean))];
+    const classroomIds = [...new Set(schedules.map(s => s.classroomId).filter(Boolean))];
     
     console.log(`Cần lấy thông tin của ${subjectIds.length} môn học, ${teacherIds.length} giáo viên, ${classroomIds.length} phòng học`);
     
-    // Truy vấn để lấy thông tin chi tiết
-    const subjects = subjectIds.length > 0 
-      ? await db.collection('Subject').find({ subjectId: { $in: subjectIds } }).toArray()
-      : [];
+    // Query subjects
+    const subjects = subjectIds.length > 0 ? 
+      await mongoose.connection.db.collection('Subject').find({ subjectId: { $in: subjectIds } }).toArray() : 
+      [];
     
-    const teachers = teacherIds.length > 0
-      ? await db.collection('Teacher').find({ teacherId: { $in: teacherIds } }).toArray()
-      : [];
+    // Query teachers
+    const teachers = teacherIds.length > 0 ? 
+      await mongoose.connection.db.collection('Teacher').find({ teacherId: { $in: teacherIds } }).toArray() : 
+      [];
     
-    const classrooms = classroomIds.length > 0
-      ? await db.collection('Classroom').find({ classroomId: { $in: classroomIds } }).toArray()
-      : [];
+    // Query classrooms
+    const classrooms = classroomIds.length > 0 ? 
+      await mongoose.connection.db.collection('Classroom').find({ classroomId: { $in: classroomIds } }).toArray() : 
+      [];
     
     console.log(`Đã lấy được ${subjects.length}/${subjectIds.length} môn học, ${teachers.length}/${teacherIds.length} giáo viên, ${classrooms.length}/${classroomIds.length} phòng học`);
     
-    // Tạo map để tra cứu nhanh
-    const subjectMap = Object.fromEntries(subjects.map(s => [s.subjectId, s]));
-    const teacherMap = Object.fromEntries(teachers.map(t => [t.teacherId, t]));
-    const classroomMap = Object.fromEntries(classrooms.map(c => [c.classroomId, c]));
+    // Map entities by ID for easier lookup
+    const subjectMap = new Map(subjects.map(s => [s.subjectId, s]));
+    const teacherMap = new Map(teachers.map(t => [t.teacherId, t]));
+    const classroomMap = new Map(classrooms.map(c => [c.classroomId, c]));
     
-    let result;
-    
-    if (format === 'daily') {
-      result = normalizedSchedules.map(slot => {
-        const formattedItem = {
-          id: slot.scheduleId || slot.id || 0,
-          period: slot.SlotID || slot.period || 0,
-          subject: slot.subjectId && subjectMap[slot.subjectId] ? {
-            id: slot.subjectId,
-            name: subjectMap[slot.subjectId].name || subjectMap[slot.subjectId].SubjectName || `Môn học ${slot.subjectId}`,
-            type: subjectMap[slot.subjectId].type || subjectMap[slot.subjectId].SubjectType || 'Không xác định'
-          } : { id: 0, name: 'Không xác định', type: 'Không xác định' },
-          teacher: slot.teacherId && teacherMap[slot.teacherId] ? {
-            id: slot.teacherId,
-            name: teacherMap[slot.teacherId].fullName || teacherMap[slot.teacherId].FullName || `Giáo viên ${slot.teacherId}`
-          } : { id: 0, name: 'Không xác định' },
-          classroom: slot.classroomId && classroomMap[slot.classroomId] ? {
-            id: slot.classroomId,
-            room: classroomMap[slot.classroomId].RoomNumber || classroomMap[slot.classroomId].roomNumber || `${slot.classroomId}`,
-            building: classroomMap[slot.classroomId].Building || classroomMap[slot.classroomId].building || 'Không xác định'
-          } : { id: 0, room: 'Không xác định', building: 'Không xác định' },
-          startTime: slot.startTime || "00:00",
-          endTime: slot.endTime || "00:00",
-          sessionDate: slot.SessionDate || slot.sessionDate || "",
-          dayOfWeek: slot.dayOfWeek || "Unknown"
+    // Format each schedule
+    const formattedSchedules = schedules.map(schedule => {
+      try {
+        // Normalize field names (camelCase và PascalCase)
+        const normalizedSchedule = {
+          scheduleId: schedule.scheduleId || schedule._id,
+          semesterId: schedule.semesterId,
+          classId: schedule.classId,
+          subjectId: schedule.subjectId,
+          teacherId: schedule.teacherId,
+          classroomId: schedule.classroomId,
+          weekNumber: schedule.WeekNumber || schedule.weekNumber,
+          dayNumber: schedule.DayNumber || schedule.dayNumber,
+          sessionDate: schedule.SessionDate || schedule.sessionDate,
+          sessionWeek: schedule.SessionWeek || schedule.sessionWeek,
+          slotId: schedule.SlotID || schedule.slotId,
+          dayOfWeek: schedule.dayOfWeek || getDayOfWeekFromDate(schedule.SessionDate || schedule.sessionDate),
+          startTime: schedule.startTime,
+          endTime: schedule.endTime,
+          topic: schedule.Topic || schedule.topic || 'Chưa cập nhật'
         };
-        return formattedItem;
-      });
-      
-      // Kiểm tra và in log các phần tử đã được format
-      result.forEach((item, idx) => {
-        if (!item.startTime || !item.endTime) {
-          console.warn(`Cảnh báo: Item ${idx + 1} thiếu thông tin giờ học: ${JSON.stringify(item)}`);
-        }
-      });
-      
-      console.log(`Đã format thành công ${result.length} lịch học theo ngày`);
-    } else if (format === 'weekly') {
-      // Format theo ngày trong tuần
-      const weekSchedule = {
-        Monday: [],
-        Tuesday: [],
-        Wednesday: [],
-        Thursday: [],
-        Friday: [],
-        Saturday: [],
-        Sunday: []
-      };
-      
-      normalizedSchedules.forEach(slot => {
-        if (!slot.dayOfWeek) {
-          console.warn(`Bỏ qua lịch không có thông tin ngày trong tuần:`, slot);
-          return;
+        
+        // Add subject info
+        const subject = subjectMap.get(normalizedSchedule.subjectId);
+        if (subject) {
+          normalizedSchedule.subjectName = subject.name || subject.subjectName;
+        } else {
+          normalizedSchedule.subjectName = `Môn học ${normalizedSchedule.subjectId}`;
         }
         
-        const dayOfWeek = slot.dayOfWeek;
-        if (!weekSchedule[dayOfWeek]) {
-          weekSchedule[dayOfWeek] = [];
+        // Add teacher info
+        const teacher = teacherMap.get(normalizedSchedule.teacherId);
+        if (teacher) {
+          normalizedSchedule.teacherName = teacher.fullName;
+        } else {
+          normalizedSchedule.teacherName = `Giáo viên ${normalizedSchedule.teacherId}`;
         }
         
-        weekSchedule[dayOfWeek].push({
-          id: slot.scheduleId || slot.id || 0,
-          period: slot.SlotID || slot.period || 0,
-          subject: slot.subjectId && subjectMap[slot.subjectId] ? {
-            id: slot.subjectId,
-            name: subjectMap[slot.subjectId].name || subjectMap[slot.subjectId].SubjectName || `Môn học ${slot.subjectId}`,
-            type: subjectMap[slot.subjectId].type || subjectMap[slot.subjectId].SubjectType || 'Không xác định'
-          } : { id: 0, name: 'Không xác định', type: 'Không xác định' },
-          teacher: slot.teacherId && teacherMap[slot.teacherId] ? {
-            id: slot.teacherId,
-            name: teacherMap[slot.teacherId].fullName || teacherMap[slot.teacherId].FullName || `Giáo viên ${slot.teacherId}`
-          } : { id: 0, name: 'Không xác định' },
-          classroom: slot.classroomId && classroomMap[slot.classroomId] ? {
-            id: slot.classroomId,
-            room: classroomMap[slot.classroomId].RoomNumber || classroomMap[slot.classroomId].roomNumber || `${slot.classroomId}`,
-            building: classroomMap[slot.classroomId].Building || classroomMap[slot.classroomId].building || 'Không xác định'
-          } : { id: 0, room: 'Không xác định', building: 'Không xác định' },
-          startTime: slot.startTime || "00:00",
-          endTime: slot.endTime || "00:00",
-          sessionDate: slot.SessionDate || slot.sessionDate || ""
-        });
-      });
-      
-      // Sắp xếp các tiết học theo thứ tự
-      Object.keys(weekSchedule).forEach(day => {
-        weekSchedule[day].sort((a, b) => a.period - b.period);
-      });
-      
-      // Log số lượng lịch học theo từng ngày
-      Object.keys(weekSchedule).forEach(day => {
-        console.log(`${day}: ${weekSchedule[day].length} lịch học`);
-      });
-      
-      result = weekSchedule;
-    } else if (format === 'semester') {
-      // Nhóm theo tuần
-      const semesterSchedule = {};
-      
-      normalizedSchedules.forEach(slot => {
-        if (!slot.WeekNumber) {
-          console.warn(`Bỏ qua lịch không có thông tin tuần:`, slot);
-          return;
+        // Add classroom info
+        const classroom = classroomMap.get(normalizedSchedule.classroomId);
+        if (classroom) {
+          normalizedSchedule.classroomNumber = classroom.roomNumber;
+        } else {
+          normalizedSchedule.classroomNumber = `Phòng ${normalizedSchedule.classroomId}`;
         }
         
-        const week = slot.WeekNumber.toString();
-        if (!semesterSchedule[week]) {
-          semesterSchedule[week] = {
-            Monday: [],
-            Tuesday: [],
-            Wednesday: [],
-            Thursday: [],
-            Friday: [],
-            Saturday: [],
-            Sunday: []
-          };
-        }
+        console.log(`Đã chuẩn hóa lịch học ID ${normalizedSchedule.scheduleId}, tiết ${normalizedSchedule.slotId}, subject ${normalizedSchedule.subjectId}`);
         
-        if (!slot.dayOfWeek) {
-          console.warn(`Bỏ qua lịch không có thông tin ngày trong tuần:`, slot);
-          return;
-        }
-        
-        semesterSchedule[week][slot.dayOfWeek].push({
-          id: slot.scheduleId || slot.id || 0,
-          period: slot.SlotID || slot.period || 0,
-          subject: slot.subjectId && subjectMap[slot.subjectId] ? {
-            id: slot.subjectId,
-            name: subjectMap[slot.subjectId].name || subjectMap[slot.subjectId].SubjectName || `Môn học ${slot.subjectId}`,
-            type: subjectMap[slot.subjectId].type || subjectMap[slot.subjectId].SubjectType || 'Không xác định'
-          } : { id: 0, name: 'Không xác định', type: 'Không xác định' },
-          teacher: slot.teacherId && teacherMap[slot.teacherId] ? {
-            id: slot.teacherId,
-            name: teacherMap[slot.teacherId].fullName || teacherMap[slot.teacherId].FullName || `Giáo viên ${slot.teacherId}`
-          } : { id: 0, name: 'Không xác định' },
-          classroom: slot.classroomId && classroomMap[slot.classroomId] ? {
-            id: slot.classroomId,
-            room: classroomMap[slot.classroomId].RoomNumber || classroomMap[slot.classroomId].roomNumber || `${slot.classroomId}`,
-            building: classroomMap[slot.classroomId].Building || classroomMap[slot.classroomId].building || 'Không xác định'
-          } : { id: 0, room: 'Không xác định', building: 'Không xác định' },
-          startTime: slot.startTime || "00:00",
-          endTime: slot.endTime || "00:00",
-          sessionDate: slot.SessionDate || slot.sessionDate || ""
-        });
+        return normalizedSchedule;
+      } catch (err) {
+        console.error(`Lỗi khi format lịch học:`, err);
+        return schedule; // Trả về schedule gốc nếu có lỗi
+      }
+    });
+    
+    // Group by day of week if needed
+    if (format === 'weekly') {
+      const dayGroups = {};
+      const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      
+      daysOfWeek.forEach(day => {
+        const schedulesForDay = formattedSchedules.filter(s => s.dayOfWeek === day);
+        dayGroups[day] = schedulesForDay;
+        console.log(`${day}: ${schedulesForDay.length} lịch học`);
       });
-      
-      // Sắp xếp các tiết học theo thứ tự trong mỗi ngày
-      Object.keys(semesterSchedule).forEach(week => {
-        Object.keys(semesterSchedule[week]).forEach(day => {
-          semesterSchedule[week][day].sort((a, b) => a.period - b.period);
-        });
-      });
-      
-      // Log số lượng tuần
-      console.log(`Đã format thành công ${Object.keys(semesterSchedule).length} tuần trong học kỳ`);
-      
-      result = semesterSchedule;
-    } else {
-      result = normalizedSchedules;
     }
     
+    console.log(`Đã chuẩn hóa ${formattedSchedules.length} lịch học`);
     console.log(`Hoàn tất format dữ liệu lịch học theo định dạng '${format}'`);
-    return result;
+    
+    // Ensure all schedules have consistent field names
+    formattedSchedules.forEach(schedule => {
+      // Make sure SessionWeek is set (camelCase and PascalCase for compatibility)
+      if (schedule.sessionWeek && !schedule.SessionWeek) {
+        schedule.SessionWeek = schedule.sessionWeek;
+      } else if (schedule.SessionWeek && !schedule.sessionWeek) {
+        schedule.sessionWeek = schedule.SessionWeek;
+      }
+      
+      // Make sure slotId/SlotID is set
+      if (schedule.slotId && !schedule.SlotID) {
+        schedule.SlotID = schedule.slotId;
+      } else if (schedule.SlotID && !schedule.slotId) {
+        schedule.slotId = schedule.SlotID;
+      }
+      
+      // Make sure sessionDate/SessionDate is set
+      if (schedule.sessionDate && !schedule.SessionDate) {
+        schedule.SessionDate = schedule.sessionDate;
+      } else if (schedule.SessionDate && !schedule.sessionDate) {
+        schedule.sessionDate = schedule.SessionDate;
+      }
+    });
+    
+    return formattedSchedules;
   } catch (error) {
-    console.error('Lỗi khi format dữ liệu lịch học:', error);
-    return format === 'weekly' ? { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [], Sunday: [] } : [];
+    console.error('Lỗi trong formatScheduleData:', error);
+    return schedules; // Trả về schedules gốc nếu có lỗi
+  }
+};
+
+/**
+ * Lấy thời khóa biểu theo tuần (dựa vào trường SessionWeek)
+ * @param {String} weekRange - Chuỗi biểu diễn tuần (ví dụ: "2024-08-26 to 2024-09-01")
+ * @param {Number} classId - ID lớp học (tùy chọn)
+ * @param {Number} teacherId - ID giáo viên (tùy chọn)
+ * @returns {Array} Thời khóa biểu theo tuần
+ */
+const getScheduleBySessionWeek = async (weekRange, classId = null, teacherId = null) => {
+  try {
+    console.log(`Tìm lịch học cho tuần: ${weekRange}`);
+    
+    // Truy vấn trực tiếp vào collection ClassSchedule
+    const db = mongoose.connection.db;
+    
+    // Query cơ bản - sử dụng $or để tìm cả SessionWeek và sessionWeek (hỗ trợ nhiều trường hợp)
+    const query = {
+      $or: [
+        { SessionWeek: weekRange },
+        { sessionWeek: weekRange }
+      ]
+    };
+    
+    // Thêm điều kiện lọc theo lớp/giáo viên
+    if (classId) {
+      query.classId = parseInt(classId);
+    }
+    
+    if (teacherId) {
+      query.teacherId = parseInt(teacherId);
+    }
+    
+    console.log('SessionWeek schedule query:', JSON.stringify(query));
+    
+    // Thực hiện truy vấn
+    let schedules = [];
+    try {
+      schedules = await db.collection('ClassSchedule')
+        .find(query)
+        .toArray();
+      
+      console.log(`Tìm thấy ${schedules.length} lịch học cho tuần ${weekRange}`);
+      
+      // Nếu không tìm thấy kết quả, thử tìm kiếm dựa trên SessionDate trong khoảng thời gian
+      if (schedules.length === 0) {
+        console.log('Không tìm thấy lịch theo SessionWeek, thử tìm theo SessionDate...');
+        
+        // Parse weekRange to get start and end dates
+        const { startDate, endDate } = parseWeekRange(weekRange);
+        
+        if (startDate && endDate) {
+          const startDateStr = startDate.toISOString().split('T')[0];
+          const endDateStr = endDate.toISOString().split('T')[0];
+          
+          const dateQuery = {
+            $or: [
+              { 
+                SessionDate: { 
+                  $gte: startDateStr, 
+                  $lte: endDateStr 
+                } 
+              },
+              { 
+                sessionDate: { 
+                  $gte: startDateStr, 
+                  $lte: endDateStr 
+                } 
+              }
+            ]
+          };
+          
+          // Add class or teacher filters if needed
+          if (classId) {
+            dateQuery.classId = parseInt(classId);
+          }
+          
+          if (teacherId) {
+            dateQuery.teacherId = parseInt(teacherId);
+          }
+          
+          console.log('SessionDate range query:', JSON.stringify(dateQuery));
+          
+          schedules = await db.collection('ClassSchedule')
+            .find(dateQuery)
+            .toArray();
+          
+          console.log(`Tìm thấy ${schedules.length} lịch học theo khoảng ngày`);
+          
+          // Cập nhật trường SessionWeek cho các lịch học tìm được
+          await updateSessionWeekField(schedules);
+        }
+      }
+      
+      // Đảm bảo tất cả các lịch học đều có trường SessionWeek đúng 
+      // (ngay cả khi đã có từ trước)
+      if (schedules.length > 0) {
+        await updateSessionWeekField(schedules);
+      }
+      
+    } catch (err) {
+      console.error('Lỗi khi truy vấn lịch học theo tuần:', err);
+    }
+    
+    return schedules;
+  } catch (error) {
+    console.error('Lỗi trong getScheduleBySessionWeek:', error);
+    return [];
+  }
+};
+
+/**
+ * Cập nhật trường SessionWeek cho các lịch học đã được tìm thấy
+ * @param {Array} schedules - Danh sách lịch học cần cập nhật
+ */
+const updateSessionWeekField = async (schedules) => {
+  if (!schedules || schedules.length === 0) return;
+  
+  const db = mongoose.connection.db;
+  let updatedCount = 0;
+  
+  for (const schedule of schedules) {
+    try {
+      // Luôn cập nhật SessionWeek, không cần kiểm tra có tồn tại hay không
+      // để đảm bảo dữ liệu nhất quán
+      const sessionDate = new Date(schedule.SessionDate || schedule.sessionDate);
+      if (isNaN(sessionDate.getTime())) continue;
+      
+      const startOfWeek = getStartOfWeek(sessionDate);
+      const weekRange = getWeekRangeString(startOfWeek);
+      
+      await db.collection('ClassSchedule').updateOne(
+        { _id: schedule._id },
+        { $set: { SessionWeek: weekRange } }
+      );
+      
+      // Cập nhật trường SessionWeek trong object hiện tại
+      schedule.SessionWeek = weekRange;
+      updatedCount++;
+    } catch (err) {
+      console.error(`Lỗi khi cập nhật SessionWeek cho lịch học:`, err);
+    }
+  }
+  
+  console.log(`Đã cập nhật SessionWeek cho ${updatedCount} lịch học`);
+};
+
+/**
+ * Tính chuỗi biểu diễn tuần từ ngày bắt đầu
+ * @param {Date} startDate - Ngày bắt đầu tuần (thứ 2)
+ * @returns {String} Chuỗi biểu diễn tuần (ví dụ: "2024-08-26 to 2024-09-01")
+ */
+const getWeekRangeString = (startDate) => {
+  const start = moment(startDate).startOf('week').add(1, 'days'); // Thứ 2
+  const end = moment(start).add(6, 'days'); // Chủ nhật
+  
+  return `${start.format('YYYY-MM-DD')} to ${end.format('YYYY-MM-DD')}`;
+};
+
+/**
+ * Tính ngày bắt đầu tuần từ một ngày bất kỳ (trả về thứ 2)
+ * @param {Date} date - Ngày bất kỳ
+ * @returns {Date} Ngày thứ 2 của tuần chứa ngày đã cho
+ */
+const getStartOfWeek = (date) => {
+  return moment(date).startOf('week').add(1, 'days').toDate();
+};
+
+/**
+ * Phân tích chuỗi biểu diễn tuần thành ngày bắt đầu và kết thúc
+ * @param {String} weekRange - Chuỗi biểu diễn tuần (ví dụ: "2024-08-26 to 2024-09-01")
+ * @returns {Object} Đối tượng chứa ngày bắt đầu và kết thúc
+ */
+const parseWeekRange = (weekRange) => {
+  if (!weekRange || typeof weekRange !== 'string') {
+    return { startDate: null, endDate: null };
+  }
+  
+  const parts = weekRange.split(' to ');
+  if (parts.length !== 2) {
+    return { startDate: null, endDate: null };
+  }
+  
+  const startDate = moment(parts[0]).toDate();
+  const endDate = moment(parts[1]).toDate();
+  
+  return { startDate, endDate };
+};
+
+/**
+ * Cập nhật trường SessionWeek cho tất cả lịch học dựa trên SessionDate
+ * Hữu ích khi cần đồng bộ dữ liệu cũ
+ * @returns {Object} Kết quả cập nhật
+ */
+const updateAllSessionWeeks = async () => {
+  try {
+    console.log('Bắt đầu cập nhật trường SessionWeek cho tất cả lịch học...');
+    
+    // Truy vấn trực tiếp vào collection ClassSchedule
+    const db = mongoose.connection.db;
+    
+    // Lấy tất cả lịch học
+    const schedules = await db.collection('ClassSchedule')
+      .find({})
+      .toArray();
+    
+    console.log(`Tìm thấy ${schedules.length} lịch học cần cập nhật`);
+    
+    let updatedCount = 0;
+    let failedCount = 0;
+    
+    // Cập nhật từng lịch học
+    for (const schedule of schedules) {
+      try {
+        // Kiểm tra xem có trường SessionDate không
+        if (!schedule.SessionDate) {
+          console.warn(`Bỏ qua lịch học ID ${schedule._id} vì không có trường SessionDate`);
+          failedCount++;
+          continue;
+        }
+        
+        // Tính toán SessionWeek từ SessionDate
+        const sessionDate = new Date(schedule.SessionDate);
+        const startOfWeek = getStartOfWeek(sessionDate);
+        const weekRange = getWeekRangeString(startOfWeek);
+        
+        // Cập nhật trường SessionWeek
+        await db.collection('ClassSchedule').updateOne(
+          { _id: schedule._id },
+          { $set: { SessionWeek: weekRange } }
+        );
+        
+        updatedCount++;
+      } catch (err) {
+        console.error(`Lỗi khi cập nhật lịch học ID ${schedule._id}:`, err);
+        failedCount++;
+      }
+    }
+    
+    console.log(`Hoàn tất cập nhật: ${updatedCount} thành công, ${failedCount} thất bại`);
+    
+    return {
+      totalSchedules: schedules.length,
+      updatedCount,
+      failedCount
+    };
+  } catch (error) {
+    console.error('Lỗi trong updateAllSessionWeeks:', error);
+    return {
+      error: error.message,
+      totalSchedules: 0,
+      updatedCount: 0,
+      failedCount: 0
+    };
   }
 };
 
@@ -764,5 +945,12 @@ module.exports = {
   getDailySchedule,
   getWeeklySchedule,
   getSemesterSchedule,
-  formatScheduleData
+  formatScheduleData,
+  getScheduleBySessionWeek,
+  getWeekRangeString,
+  getStartOfWeek,
+  parseWeekRange,
+  updateAllSessionWeeks,
+  updateSessionWeekField,
+  getDayOfWeekFromDate
 }; 

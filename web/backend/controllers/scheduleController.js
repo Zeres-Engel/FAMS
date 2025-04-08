@@ -500,4 +500,175 @@ exports.getAllSemesters = async (req, res) => {
       code: 'SEMESTER_ERROR'
     });
   }
+};
+
+// @desc    Get schedule by session week range (e.g., "2024-08-26 to 2024-09-01")
+// @route   GET /api/schedules/week-range/:weekRange
+// @access  Private
+exports.getScheduleByWeekRange = async (req, res) => {
+  try {
+    console.log(`Đang xử lý yêu cầu lịch học theo tuần từ user ${req.user.name} (${req.user.userId})`);
+    
+    let classId = null;
+    let teacherId = null;
+    
+    // Get week range from params
+    const weekRange = req.params.weekRange;
+    
+    console.log(`Tìm lịch học cho tuần ${weekRange}`);
+    
+    // Parse the week range
+    const { startDate, endDate } = scheduleService.parseWeekRange(weekRange);
+    
+    // Validate the week range
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Định dạng tuần không hợp lệ. Sử dụng định dạng "YYYY-MM-DD to YYYY-MM-DD"'
+      });
+    }
+    
+    // Get classId or teacherId based on user role
+    if (req.user.role === 'Student') {
+      const Student = mongoose.model('Student');
+      const student = await Student.findOne({ userId: req.user.userId });
+      
+      if (student && student.classId) {
+        classId = student.classId;
+        console.log(`StudentID: ${student.studentId}, ClassID: ${classId}`);
+      }
+    } else if (req.user.role === 'Teacher') {
+      const Teacher = mongoose.model('Teacher');
+      const teacher = await Teacher.findOne({ userId: req.user.userId });
+      
+      if (teacher && teacher.teacherId) {
+        teacherId = teacher.teacherId;
+        console.log(`Teacher ID: ${teacherId}`);
+      }
+    } else if (req.user.role === 'Admin') {
+      // Admin can query with specific parameters
+      if (req.query.classId) {
+        classId = parseInt(req.query.classId);
+      }
+      
+      if (req.query.teacherId) {
+        teacherId = parseInt(req.query.teacherId);
+      }
+    }
+    
+    // Handle specific parameters for Parent role or Admin override
+    if (req.query.classId) {
+      classId = parseInt(req.query.classId);
+    }
+    
+    if (req.query.teacherId) {
+      teacherId = parseInt(req.query.teacherId);
+    }
+    
+    // For parent, check if they have access to the requested student's class
+    if (req.user.role === 'Parent' && req.query.studentId) {
+      const Parent = mongoose.model('Parent');
+      const Student = mongoose.model('Student');
+      
+      const parent = await Parent.findOne({ userId: req.user.userId });
+      
+      if (parent && parent.studentIds && parent.studentIds.includes(parseInt(req.query.studentId))) {
+        const student = await Student.findOne({ studentId: parseInt(req.query.studentId) });
+        
+        if (student && student.classId) {
+          classId = student.classId;
+        }
+      }
+    }
+    
+    // Get the schedules for the specified week range
+    const schedules = await scheduleService.getScheduleBySessionWeek(
+      weekRange,
+      classId, 
+      teacherId
+    );
+    
+    console.log(`Lấy được ${schedules.length} lịch học từ database`);
+    
+    // Format the response
+    const formattedSchedule = await scheduleService.formatScheduleData(schedules, 'weekly');
+    
+    console.log(`Đã format ${formattedSchedule.length} lịch học`);
+    
+    // Add user info
+    let userInfo = null;
+    if (req.user.role === 'Student') {
+      const Student = mongoose.model('Student');
+      const student = await Student.findOne({ userId: req.user.userId });
+      if (student) {
+        userInfo = {
+          fullName: student.fullName,
+          classId: student.classId
+        };
+      }
+    } else if (req.user.role === 'Teacher') {
+      const Teacher = mongoose.model('Teacher');
+      const teacher = await Teacher.findOne({ userId: req.user.userId });
+      if (teacher) {
+        userInfo = {
+          fullName: teacher.fullName,
+          major: teacher.major
+        };
+      }
+    }
+    
+    // Prepare the response with clear structure
+    const responseData = {
+      success: true,
+      data: {
+        schedules: formattedSchedule,
+        weekRange,
+        startDate: startDate.toISOString().slice(0, 10),
+        endDate: endDate.toISOString().slice(0, 10),
+        user: userInfo,
+        role: req.user.role
+      }
+    };
+    
+    // Log the structure for debugging
+    console.log(`Trả về response với ${formattedSchedule.length} lịch học`);
+    console.log(`Cấu trúc dữ liệu: schedules (Array), weekRange, startDate, endDate, user, role`);
+    
+    res.json(responseData);
+  } catch (error) {
+    console.error('Error in getScheduleByWeekRange:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      code: 'SCHEDULE_ERROR'
+    });
+  }
+};
+
+// @desc    Get current week range for easy reference
+// @route   GET /api/schedules/current-week
+// @access  Private
+exports.getCurrentWeekRange = async (req, res) => {
+  try {
+    const today = new Date();
+    const startOfWeek = scheduleService.getStartOfWeek(today);
+    const weekRange = scheduleService.getWeekRangeString(startOfWeek);
+    
+    res.json({
+      success: true,
+      data: {
+        currentDate: today,
+        weekRange,
+        weekStart: startOfWeek,
+        weekEnd: new Date(startOfWeek.getTime() + 6 * 24 * 60 * 60 * 1000)
+      }
+    });
+  } catch (error) {
+    console.error('Error in getCurrentWeekRange:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      code: 'SCHEDULE_ERROR'
+    });
+  }
 }; 
