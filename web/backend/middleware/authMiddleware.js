@@ -1,51 +1,73 @@
 const jwt = require('jsonwebtoken');
 const User = require('../database/models/User');
 
-// Protect routes
+/**
+ * Authentication middleware that protects routes
+ * Verifies JWT token and adds user info to the request
+ */
 exports.protect = async (req, res, next) => {
   let token;
 
+  // Check if auth header exists and starts with Bearer
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
   ) {
-    // Set token from Bearer token in header
+    // Get token from header
     token = req.headers.authorization.split(' ')[1];
-  } else if (req.cookies?.token) {
-    // Set token from cookie
-    token = req.cookies.token;
   }
 
-  // Make sure token exists
+  // Check if no token
   if (!token) {
     return res.status(401).json({
       success: false,
-      message: 'Not authorized to access this route'
+      message: 'Không có quyền truy cập',
+      code: 'NO_TOKEN'
     });
   }
 
   try {
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
+    
+    // Check and log the decoded token
+    console.log('Decoded token:', decoded);
 
-    req.user = await User.findById(decoded.id);
+    // Add user to req - Use the property name in the decoded token (id) 
+    // to fetch user by userId
+    req.user = await User.findOne({ userId: decoded.id });
+    
+    if (!req.user) {
+      console.log('User not found for userId:', decoded.id);
+      return res.status(401).json({
+        success: false, 
+        message: 'Token hợp lệ nhưng người dùng không tồn tại',
+        code: 'USER_NOT_FOUND'
+      });
+    }
 
     next();
   } catch (error) {
+    console.error('Token verification error:', error);
     return res.status(401).json({
       success: false,
-      message: 'Not authorized to access this route'
+      message: 'Token không hợp lệ',
+      code: 'INVALID_TOKEN'
     });
   }
 };
 
-// Grant access to specific roles
+/**
+ * Role-based authorization middleware
+ * Grants access to specific roles only
+ */
 exports.authorize = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: `User role ${req.user.role} is not authorized to access this route`
+        message: 'Không có quyền thực hiện hành động này',
+        code: 'ROLE_UNAUTHORIZED'
       });
     }
     next();

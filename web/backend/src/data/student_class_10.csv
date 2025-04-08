@@ -1,0 +1,61 @@
+FullName,DateOfBirth,Gender,Address,Phone
+Ngô Ngọc Nam,08/04/2007,True,Quảng Ngãi,0999298370
+Vũ Ngọc Như,22/05/2009,False,Thái Nguyên,0919885337
+Bùi Hữu Thảo,24/04/2009,False,Yên Bái,0996878254
+Nguyễn Anh Dũng,04/06/2010,True,Quảng Trị,0957075317
+Đỗ Hữu Trường,03/03/2008,True,TP. Hồ Chí Minh,0905219238
+Hồ Thành Khánh,20/04/2007,True,Bắc Ninh,0972304095
+Dương Minh Ánh,19/12/2006,False,Yên Bái,0984236917
+Lý Đức Mai,25/03/2006,False,An Giang,0908733783
+Dương Thị Lan,04/04/2010,False,Phú Yên,0902357969
+Dương Thành Ánh,10/07/2010,False,Thái Nguyên,0984042865
+Dương Văn Mai,16/06/2006,False,Hậu Giang,0907879390
+Phạm Ngọc Mai,19/03/2010,False,Lai Châu,0927980896
+Ngô Thị Bình,12/03/2011,True,TP. Hồ Chí Minh,0968582078
+Vũ Phước Long,26/11/2007,True,Bến Tre,0925963042
+Lý Hữu Dũng,28/08/2004,True,Thái Bình,0946804061
+Nguyễn Đức Hiếu,14/09/2006,True,Đắk Lắk,0942396979
+Đỗ Thanh Lan,21/03/2010,False,Hòa Bình,0968078099
+Dương Hồng Như,03/02/2006,False,Cần Thơ,0970178448
+Ngô Văn Hiếu,11/12/2005,True,Phú Yên,0916599473
+Đặng Hoàng Như,20/05/2005,False,Đồng Nai,0964662039
+Hoàng Xuân Tuấn,30/12/2006,True,Tây Ninh,0967653903
+Hoàng Thanh Hương,17/07/2008,False,Đồng Nai,0943864829
+Trần Hữu Hiếu,14/11/2004,True,Quảng Ninh,0928364384
+Vũ Hồng Bình,08/01/2008,True,Gia Lai,0900507757
+Phạm Minh Tuấn,08/05/2010,True,Phú Yên,0988236923
+Dương Hồng Hiếu,21/06/2006,True,Bắc Ninh,0929977978
+Đỗ Thanh Nam,27/08/2008,True,Điện Biên,0907376780
+Võ Hoàng Hưng,21/04/2009,True,Hòa Bình,0947316070
+Hồ Hữu Dũng,24/05/2010,True,Nam Định,0941367481
+Huỳnh Minh Hưng,13/03/2006,True,Hải Phòng,0982384567
+Ngô Xuân Trang,02/04/2010,False,Bắc Kạn,0979421556
+Lê Đức Ngân,08/04/2007,False,Vĩnh Long,0999932871
+Đỗ Xuân Trường,19/10/2004,True,Thanh Hóa,0933432096
+Đỗ Minh Lan,10/04/2007,False,Lâm Đồng,0986309671
+Ngô Hoàng Thảo,04/07/2008,False,Bến Tre,0944392683
+Lý Ngọc Nam,20/03/2007,True,Quảng Ngãi,0999719669
+Vũ Minh Ngân,06/07/2004,False,Hưng Yên,0936952198
+Trần Ngọc Hiếu,01/07/2008,True,Hưng Yên,0929412341
+Lý Thị Phát,26/07/2004,True,Sơn La,0998961606
+Hoàng Anh Ánh,28/02/2008,False,Bình Thuận,0954122065
+Đỗ Thành Trang,07/06/2004,False,Thừa Thiên Huế,0922686213
+Ngô Văn Hương,17/03/2005,False,TP. Hồ Chí Minh,0924879009
+Phạm Anh Linh,27/12/2008,False,Phú Thọ,0932531114
+Lý Hoàng Ngân,16/10/2009,False,Lào Cai,0985449111
+Lý Anh Nam,18/06/2008,True,Tây Ninh,0982057093
+Ngô Thị Mai,03/05/2009,False,Tuyên Quang,0943875179
+Phạm Quốc Yến,24/07/2007,False,TP. Hồ Chí Minh,0925367855
+Hồ Phước Hương,08/04/2008,False,Vĩnh Long,0965034048
+Vũ Văn Bình,08/10/2008,True,Lai Châu,0932942749
+Hoàng Thanh Ánh,11/10/2006,False,Tiền Giang,0988663003
+Võ Thanh Khánh,23/05/2008,True,Quảng Bình,0967360429
+Dương Phước Như,18/12/2005,False,Sóc Trăng,0974071095
+Hồ Văn Yến,06/12/2008,False,Sơn La,0991273917
+Phạm Phước Thảo,13/10/2005,False,Cà Mau,0959956608
+Hồ Anh Bình,16/12/2010,True,Nam Định,0923755791
+Hồ Minh Hiếu,01/04/2006,True,Hải Dương,0904306958
+Lý Anh Mai,04/08/2006,False,Lạng Sơn,0988802456
+Phạm Ngọc Thảo,23/05/2005,False,Phú Thọ,0978032859
+Phạm Minh Trang,08/03/2010,False,Quảng Bình,0929804585
+Nguyễn Anh Thảo,21/01/2005,False,Hải Dương,0987738309

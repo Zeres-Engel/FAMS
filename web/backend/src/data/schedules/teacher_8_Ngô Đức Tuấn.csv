@@ -1,0 +1,10 @@
+WeekNumber,Date,Day,Slot,Start,End,Class,Subject,Room
+1,2025-02-03,Monday,4,09:40,10:25,12A1,Vật lý,1
+1,2025-02-03,Monday,5,10:30,11:15,12A1,Vật lý,1
+1,2025-02-03,Monday,6,13:00,13:45,12A1,Vật lý,1
+1,2025-02-04,Tuesday,9,15:30,16:15,12A3,Tin học,3
+1,2025-02-04,Tuesday,10,16:20,17:05,12A3,Tin học,3
+1,2025-02-05,Wednesday,1,07:00,07:45,12A3,Tin học,3
+1,2025-02-05,Wednesday,2,07:50,08:35,12A1,Tin học,1
+1,2025-02-05,Wednesday,3,08:50,09:35,12A1,Tin học,1
+1,2025-02-05,Wednesday,4,09:40,10:25,12A1,Tin học,1

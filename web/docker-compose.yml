@@ -1,25 +1,29 @@
-version: '3.8'
-
 services:
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
+    container_name: fams_backend
+    restart: unless-stopped
     ports:
       - "3000:3000"
     volumes:
       - ./backend:/app
       - /app/node_modules
-      - ./backend/.env:/app/.env
     environment:
-      - NODE_ENV=development
-    command: npm run dev
-    restart: unless-stopped
+      - PORT=3000
+      - MONGO_URI=mongodb+srv://db_server:1234@fams.8istq.mongodb.net/?retryWrites=true&w=majority&appName=FAMS
+      - JWT_SECRET=secret_key
+      - REFRESH_TOKEN_SECRET=refresh_secret_key
+    networks:
+      - app-network
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
+    container_name: fams_frontend
+    restart: unless-stopped
     ports:
       - "3001:3000"
     volumes:
@@ -27,7 +31,14 @@ services:
       - /app/node_modules
     environment:
       - REACT_APP_API_URL=http://localhost:3000/api
-      - WDS_SOCKET_PORT=0
-    stdin_open: true
-    command: npm start
-    restart: unless-stopped 
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo_data: 

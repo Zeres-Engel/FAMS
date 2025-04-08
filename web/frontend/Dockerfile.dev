@@ -1,13 +1,35 @@
-FROM node:16-alpine
+FROM node:18-alpine
 
 WORKDIR /app
 
+# Create and set up .npmrc for legacy-peer-deps
+RUN echo "legacy-peer-deps=true" > .npmrc && \
+    echo "fund=false" >> .npmrc && \
+    echo "audit=false" >> .npmrc
+
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
+# Install dependencies 
 RUN npm install
 
+# Install required packages with specific versions
+RUN npm install --save axios@1.6.0 react-router-dom@6.18.0 react-hook-form@7.46.1 @reduxjs/toolkit@1.9.7 react-redux@8.1.3
+
+# Install global packages
+RUN npm install -g typescript
+
+# Copy the rest of the code
 COPY . .
 
+# Set environment variables
+ENV REACT_APP_API_URL=http://localhost:3000/api
+ENV NODE_ENV=development
+ENV WDS_SOCKET_PORT=0
+ENV NODE_OPTIONS=--max_old_space_size=4096
+
+# Expose port
 EXPOSE 3000
 
+# Start the app
 CMD ["npm", "start"] 

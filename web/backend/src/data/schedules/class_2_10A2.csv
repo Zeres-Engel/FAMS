@@ -1,0 +1,34 @@
+WeekNumber,Date,Day,Slot,Start,End,Teacher,Subject,Room
+1,2025-02-03,Monday,1,07:00,07:45,Hoàng Anh Hiếu,Toán,2
+1,2025-02-03,Monday,2,07:50,08:35,Hoàng Anh Hiếu,Toán,2
+1,2025-02-03,Monday,3,08:50,09:35,Hoàng Anh Hiếu,Toán,2
+1,2025-02-03,Monday,4,09:40,10:25,Lê Ngọc Hương,Vật lý,2
+1,2025-02-03,Monday,5,10:30,11:15,Lê Ngọc Hương,Vật lý,2
+1,2025-02-03,Monday,6,13:00,13:45,Lê Ngọc Hương,Vật lý,2
+1,2025-02-03,Monday,7,13:50,14:35,Đỗ Đức Yến,Hóa học,2
+1,2025-02-03,Monday,8,14:40,15:25,Đỗ Đức Yến,Hóa học,2
+1,2025-02-03,Monday,9,15:30,16:15,Đỗ Đức Yến,Hóa học,2
+1,2025-02-03,Monday,10,16:20,17:05,Đặng Minh Hùng,Sinh học,2
+1,2025-02-04,Tuesday,1,07:00,07:45,Đặng Minh Hùng,Sinh học,2
+1,2025-02-04,Tuesday,2,07:50,08:35,Đặng Minh Hùng,Sinh học,2
+1,2025-02-04,Tuesday,3,08:50,09:35,Đặng Thanh Lan,Lịch sử,2
+1,2025-02-04,Tuesday,4,09:40,10:25,Đặng Thanh Lan,Lịch sử,2
+1,2025-02-04,Tuesday,5,10:30,11:15,Đặng Thanh Lan,Lịch sử,2
+1,2025-02-04,Tuesday,6,13:00,13:45,Phạm Văn Dũng,Dã ngoại,2
+1,2025-02-04,Tuesday,7,13:50,14:35,Phạm Văn Dũng,Dã ngoại,2
+1,2025-02-04,Tuesday,8,14:40,15:25,Phạm Văn Dũng,Dã ngoại,2
+1,2025-02-04,Tuesday,9,15:30,16:15,Ngô Ngọc Hạnh,Địa lý,2
+1,2025-02-04,Tuesday,10,16:20,17:05,Ngô Ngọc Hạnh,Địa lý,2
+1,2025-02-05,Wednesday,1,07:00,07:45,Ngô Ngọc Hạnh,Địa lý,2
+1,2025-02-05,Wednesday,2,07:50,08:35,Lê Anh Tuấn,Tin học,2
+1,2025-02-05,Wednesday,3,08:50,09:35,Lê Anh Tuấn,Tin học,2
+1,2025-02-05,Wednesday,4,09:40,10:25,Lê Anh Tuấn,Tin học,2
+1,2025-02-05,Wednesday,5,10:30,11:15,Bùi Minh Nam,Bơi lội,2
+1,2025-02-05,Wednesday,6,13:00,13:45,Bùi Minh Nam,Bơi lội,2
+1,2025-02-05,Wednesday,7,13:50,14:35,Bùi Minh Nam,Bơi lội,2
+1,2025-02-05,Wednesday,8,14:40,15:25,Lê Anh Tuấn,Cầu lông,2
+1,2025-02-05,Wednesday,9,15:30,16:15,Lê Anh Tuấn,Cầu lông,2
+1,2025-02-05,Wednesday,10,16:20,17:05,Lê Anh Tuấn,Cầu lông,2
+1,2025-02-06,Thursday,1,07:00,07:45,Ngô Minh Bình,Bóng Chuyền,2
+1,2025-02-06,Thursday,2,07:50,08:35,Ngô Minh Bình,Bóng Chuyền,2
+1,2025-02-06,Thursday,3,08:50,09:35,Ngô Minh Bình,Bóng Chuyền,2
