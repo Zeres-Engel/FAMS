@@ -1,0 +1,52 @@
+"""
+Application configuration for FAMS API
+Contains FastAPI configuration and middleware setup
+"""
+import os
+import logging
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+
+from .base import router as base_router
+from .database import router as db_router
+from .schedule import router as schedule_router
+
+# Load environment variables
+load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler()
+    ]
+)
+
+def create_application() -> FastAPI:
+    """Create and configure FastAPI application"""
+    application = FastAPI(
+        title="FAMS API",
+        description="Faculty Administration Management System API",
+        version="1.0.0"
+    )
+
+    # Configure CORS
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # Adjust in production
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    # Include routers
+    application.include_router(base_router)
+    application.include_router(db_router, prefix="/api/db", tags=["database"])
+    application.include_router(schedule_router, prefix="/api/db", tags=["scheduling"])
+
+    return application
+
+# Create app instance
+app = create_application() 

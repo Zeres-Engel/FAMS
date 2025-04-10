@@ -1,0 +1,26 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install Python dependencies (if needed)
+RUN apk add --no-cache python3 py3-pip
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Install nodemon globally
+RUN npm install -g nodemon
+
+# Copy application code
+COPY . .
+
+# Make the entrypoint script executable
+RUN chmod +x docker-entrypoint.sh
+
+EXPOSE 3000
+
+# Run the default command
+CMD ["npm", "run", "dev"] 

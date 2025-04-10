@@ -1,20 +1,39 @@
 services:
-  backend:
+  backend-nodejs:
     build:
-      context: ./backend
+      context: ./backend/NodeJS-services
       dockerfile: Dockerfile.dev
-    container_name: fams_backend
+    container_name: fams_backend_nodejs
     restart: unless-stopped
     ports:
       - "3000:3000"
     volumes:
-      - ./backend:/app
+      - ./backend/NodeJS-services:/app
       - /app/node_modules
+    env_file:
+      - ./backend/NodeJS-services/.env
     environment:
       - PORT=3000
-      - MONGO_URI=mongodb+srv://db_server:1234@fams.8istq.mongodb.net/?retryWrites=true&w=majority&appName=FAMS
-      - JWT_SECRET=secret_key
-      - REFRESH_TOKEN_SECRET=refresh_secret_key
+    networks:
+      - app-network
+
+  backend-python:
+    build:
+      context: ./backend/Python-services
+      dockerfile: Dockerfile.dev
+    container_name: fams_backend_python
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend/Python-services:/app
+      - /app/data
+    env_file:
+      - ./backend/Python-services/.env
+    environment:
+      - PORT=5000
+      - HOST=0.0.0.0
+      - IS_DOCKER=true
     networks:
       - app-network
 
@@ -32,7 +51,8 @@ services:
     environment:
       - REACT_APP_API_URL=http://localhost:3000/api
     depends_on:
-      - backend
+      - backend-nodejs
+      - backend-python
     networks:
       - app-network
 
