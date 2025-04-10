@@ -20,10 +20,6 @@ COPY . .
 # Make the entrypoint script executable
 RUN chmod +x docker-entrypoint.sh
 
-# IMPORTANT: This container no longer runs init_database.py automatically
-# If you need to initialize the database, manually run:
-# npm run init-db
-
 EXPOSE 3000
 
 # Run the default command

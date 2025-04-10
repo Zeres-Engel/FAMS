@@ -2,6 +2,38 @@
 Core scheduling algorithms and utilities
 """
 import datetime
+import logging
+from typing import Dict, List, Set, Tuple, Any
+
+# Cấu hình logging
+logger = logging.getLogger(__name__)
+
+def get_week_date_range(week_number, semester_start_date):
+    """
+    Get date range for a week (Monday to Sunday)
+    
+    Args:
+        week_number: Week number (1-based)
+        semester_start_date: Start date of semester
+    
+    Returns:
+        str: Date range in format "DD/MM/YYYY to DD/MM/YYYY"
+    """
+    # Calculate Monday of the week
+    monday = semester_start_date + datetime.timedelta(days=(week_number-1)*7)
+    
+    # Make sure it's Monday
+    while monday.weekday() != 0:
+        monday = monday - datetime.timedelta(days=1)
+    
+    # Calculate Sunday
+    sunday = monday + datetime.timedelta(days=6)
+    
+    # Format as DD/MM/YYYY
+    monday_str = monday.strftime("%d/%m/%Y")
+    sunday_str = sunday.strftime("%d/%m/%Y")
+    
+    return f"{monday_str} to {sunday_str}"
 
 
 def calculate_semester_slots(start_date, end_date, slots_per_day=10, weekdays=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]):
@@ -91,194 +123,252 @@ def get_period_time(period_index):
     return periods.get(period_index, {"start": "00:00", "end": "00:00"})
 
 
-def generate_greedy_schedule(start_date, end_date, classes, curriculum_subjects, teachers, rooms, db=None):
+def generate_schedule(db, semester_doc, total_weeks=18):
     """
-    Generate a schedule using a greedy algorithm
+    Generate schedule for a semester using the greedy approach
     
     Args:
-        start_date: datetime - semester start date (must be Monday)
-        end_date: datetime - semester end date (should be Sunday)
-        classes: list - list of classes
-        curriculum_subjects: dict - mapping from curriculum_id to subjects and sessions
-        teachers: list - list of teachers
-        rooms: list - list of classrooms
-        db: database connection (optional) - database connection for saving
+        db: MongoDB database connection
+        semester_doc: Semester document with semester info
+        total_weeks: Number of weeks in semester (default 18)
         
     Returns:
-        tuple - (schedule_docs, warnings)
+        tuple - (schedule_entries, warnings)
     """
-    weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-    slots_per_day = 10
+    logger.info(f"Generating schedule for semester {semester_doc.get('semesterName')}")
     
-    # Debug information
-    print(f"DEBUG: Schedule generation with {len(classes)} classes, {len(teachers)} teachers, {len(rooms)} rooms")
-    print(f"DEBUG: Curriculum subjects: {curriculum_subjects.keys()}")
+    # Get batch ID (handle both 'batchId' and 'BatchID')
+    batch_id = semester_doc.get('batchId') or semester_doc.get('BatchID')
+    if not batch_id:
+        error_msg = f"No batchId found in semester document: {semester_doc}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
     
-    # Calculate total slots in semester
-    total_slots, total_weeks = calculate_semester_slots(start_date, end_date, slots_per_day, weekdays)
-    print(f"DEBUG: Total slots: {total_slots}, Total weeks: {total_weeks}")
+    logger.info(f"Using batch ID: {batch_id}")
     
-    # Initialize data structures
-    class_subjects = {}
-    for c in classes:
-        batch_id = c.get("BatchID")
-        curr_id = "0"
-        if batch_id == 3:
-            curr_id = "10"
-        elif batch_id == 2:
-            curr_id = "11"
-        else:
-            curr_id = "12"
-            
-        # Get list of subjects and sessions needed
-        subjects = curriculum_subjects.get(curr_id, [])
-        if not subjects:
-            print(f"DEBUG: No subjects found for curriculum ID {curr_id}")
-        
-        class_subjects[c["classId"]] = {s["subjectId"]: s["sessions"] for s in subjects}
+    # Get curriculum ID
+    curriculum_id = semester_doc.get('curriculumId')
+    if not curriculum_id:
+        # Map batch to curriculum (assuming batch 1=12, 2=11, 3=10)
+        curriculum_map = {"1": "12", "2": "11", "3": "10"}
+        curriculum_id = curriculum_map.get(str(batch_id), "10")
+        logger.info(f"No curriculum found, using default mapping: Batch {batch_id} -> Curriculum {curriculum_id}")
+    else:
+        logger.info(f"Using curriculum ID: {curriculum_id}")
     
-    print(f"DEBUG: Class subjects mapping: {class_subjects}")
+    # Load resources
+    classes = list(db.Class.find({"BatchID": batch_id}))
+    if not classes:
+        classes = list(db.Class.find({"batchId": batch_id}))
     
-    # Initialize free slots for teachers, classes and rooms
-    teacher_free = {t["teacherId"]: set(range(total_slots)) for t in teachers}
-    class_free = {c["classId"]: set(range(total_slots)) for c in classes}
-    room_free = {r["classroomId"]: set(range(total_slots)) for r in rooms}
+    if not classes:
+        logger.error(f"No classes found for batch {batch_id}")
+        return [], [f"No classes found for batch {batch_id}"]
     
-    # Initialize weekly teacher schedules
-    teacher_weekly_schedule = {t["teacherId"]: {w: 0 for w in range(1, total_weeks + 1)} for t in teachers}
-    teacher_weekly_capacity = {t["teacherId"]: int(t.get("WeeklyCapacity", 10)) for t in teachers}
+    logger.info(f"Found {len(classes)} classes for batch {batch_id}")
+    for c in classes[:3]:  # Log a few sample classes
+        class_id = c.get("classId") or c.get("ClassID")
+        class_name = c.get("ClassName", "Unknown")
+        logger.info(f"  - Class: {class_name} (ID: {class_id})")
     
-    # Debug teacher majors
-    print("DEBUG: Teacher majors:")
+    teachers = list(db.Teacher.find())
+    logger.info(f"Found {len(teachers)} teachers")
+    
+    rooms = list(db.Classroom.find())
+    logger.info(f"Found {len(rooms)} rooms")
+    
+    slots = list(db.Slot.find().sort([("dayOfWeek", 1), ("slotNumber", 1)]))
+    logger.info(f"Found {len(slots)} time slots")
+    
+    # Get curriculum subjects and sessions needed
+    curriculum_subjects = {}
+    for cs in db.CurriculumSubject.find({"curriculumId": curriculum_id}):
+        subject_id = cs.get("subjectId")
+        if subject_id:
+            curriculum_subjects[subject_id] = cs.get("sessions", 3)
+    
+    if not curriculum_subjects:
+        logger.error(f"No curriculum subjects found for curriculum {curriculum_id}")
+        return [], [f"No curriculum subjects found for curriculum {curriculum_id}"]
+    
+    logger.info(f"Found {len(curriculum_subjects)} subjects in curriculum {curriculum_id}")
+    
+    # Map subjects to their details
+    subjects_map = {s.get("subjectId"): s for s in db.Subject.find()}
+    logger.info(f"Found {len(subjects_map)} subjects in database")
+    
+    # Debug teacher majors and capacities
+    teacher_info = {}
     for t in teachers:
-        print(f"  - Teacher {t['teacherId']}: {t.get('major', 'No major specified')}")
+        teacher_id = t.get("teacherId")
+        major = t.get("major", "").lower()
+        capacity = int(t.get("WeeklyCapacity", 10))
+        teacher_info[teacher_id] = {"major": major, "capacity": capacity}
+        logger.debug(f"Teacher {teacher_id}: Major={major}, Capacity={capacity}")
     
-    # Map subject_id -> subject
-    subjects_map = {}
-    if db is not None:
-        subjects_map = {s["subjectId"]: s for s in db.Subject.find()}
-        print(f"DEBUG: Found {len(subjects_map)} subjects in database")
-        for sid, subj in subjects_map.items():
-            print(f"  - Subject {sid}: {subj.get('subjectName', 'Unknown')}")
-            
-    # Initialize results
-    schedule_docs = []
+    # Class needs for subjects
+    class_needs = {}
+    for c in classes:
+        class_id = c.get("classId") or c.get("ClassID")
+        class_needs[class_id] = {subj_id: sessions for subj_id, sessions in curriculum_subjects.items()}
+    
+    # Initialize schedule generation
+    total_slots = len(slots) * total_weeks
+    logger.info(f"Total schedule slots: {total_slots}")
+    
+    # Track resources
+    schedule_entries = []
     warnings = []
-    schedule_id = 1
+    entry_id = 1
     
-    # Iterate through each slot
-    for slot_index in range(total_slots):
-        # Get day information for slot
-        day_info = get_day_info(slot_index, start_date, slots_per_day, weekdays)
-        week = day_info["week"]
-        weekday = day_info["weekday"]
-        period = day_info["period"]
+    # Track teacher weekly usage
+    current_week = 1
+    teacher_weekly_usage = {t_id: 0 for t_id in teacher_info.keys()}
+    
+    # Process each slot
+    for week in range(1, total_weeks + 1):
+        logger.info(f"Processing week {week}")
         
-        # Get period time information
-        period_time = get_period_time(period)
+        # Reset weekly teacher usage when week changes
+        if week != current_week:
+            teacher_weekly_usage = {t_id: 0 for t_id in teacher_info.keys()}
+            current_week = week
         
-        # List of available teachers at this slot (and not over capacity this week)
-        teachers_available = []
-        for t in teachers:
-            t_id = t["teacherId"]
-            if (slot_index in teacher_free[t_id] and 
-                teacher_weekly_schedule[t_id][week] < teacher_weekly_capacity[t_id]):
-                teachers_available.append(t)
-        
-        # Iterate through classes
-        for c in classes:
-            c_id = c["classId"]
+        for slot in slots:
+            # Extract slot info
+            slot_id = slot.get("slotId")
+            day_of_week = slot.get("dayOfWeek")
+            slot_number = slot.get("slotNumber")
+            start_time = slot.get("startTime")
+            end_time = slot.get("endTime")
             
-            # Skip if class already has schedule at this slot
-            if slot_index not in class_free[c_id]:
-                continue
+            # Build date - assuming semester start date is day 1
+            # For demonstration, using a fixed date offset
+            session_date = semester_doc.get("startDate", datetime.datetime.now())
+            if isinstance(session_date, str):
+                try:
+                    session_date = datetime.datetime.fromisoformat(session_date.rstrip("Z"))
+                except Exception as e:
+                    logger.error(f"Error parsing date {session_date}: {str(e)}")
+                    session_date = datetime.datetime.now()
             
-            # Iterate through subjects that need scheduling
-            for subject_id, sessions_left in list(class_subjects.get(c_id, {}).items()):
-                if sessions_left <= 0:
+            day_offset = (week - 1) * 7
+            if day_of_week == "Monday": day_offset += 0
+            elif day_of_week == "Tuesday": day_offset += 1
+            elif day_of_week == "Wednesday": day_offset += 2
+            elif day_of_week == "Thursday": day_offset += 3
+            elif day_of_week == "Friday": day_offset += 4
+            elif day_of_week == "Saturday": day_offset += 5
+            elif day_of_week == "Sunday": day_offset += 6
+            
+            session_date = session_date + datetime.timedelta(days=day_offset)
+            
+            # Available teachers for this slot
+            available_teachers = []
+            for t_id, info in teacher_info.items():
+                # Check if teacher has remaining capacity this week
+                if teacher_weekly_usage.get(t_id, 0) < info["capacity"]:
+                    available_teachers.append(t_id)
+            
+            # Available rooms for this slot
+            available_rooms = [r.get("classroomId") for r in rooms]
+            
+            # Process each class
+            for class_doc in classes:
+                class_id = class_doc.get("classId") or class_doc.get("ClassID")
+                if not class_id:
                     continue
                 
-                # Find teachers who can teach this subject
-                subject_name = subjects_map.get(subject_id, {}).get("subjectName", "")
-                candidate_teachers = [t for t in teachers_available 
-                                     if subject_name.lower() in t.get("major", "").lower()]
-                
-                # If no specialized teachers, try with any available teacher
-                if not candidate_teachers:
-                    candidate_teachers = teachers_available.copy()
-                
-                # Find available teacher
-                teacher_found = None
-                for t in candidate_teachers:
-                    t_id = t["teacherId"]
-                    if slot_index in teacher_free[t_id]:
-                        teacher_found = t
-                        break
-                
-                if not teacher_found:
+                # Skip if no subjects left for this class
+                if not any(sessions > 0 for sessions in class_needs.get(class_id, {}).values()):
                     continue
                 
-                # Find available room
-                room_found = None
-                for r in rooms:
-                    r_id = r["classroomId"]
-                    if slot_index in room_free[r_id]:
-                        room_found = r
-                        break
-                
-                if not room_found:
-                    continue
-                
-                # Schedule class
-                t_id = teacher_found["teacherId"]
-                r_id = room_found["classroomId"]
-                
-                # Update status
-                teacher_free[t_id].remove(slot_index)
-                class_free[c_id].remove(slot_index)
-                room_free[r_id].remove(slot_index)
-                
-                # Update teacher's weekly sessions
-                teacher_weekly_schedule[t_id][week] += 1
-                
-                # Reduce number of sessions needed for subject
-                class_subjects[c_id][subject_id] -= 1
-                
-                # Create schedule record
-                schedule_docs.append({
-                    "classScheduleId": str(schedule_id),
-                    "semesterId": c.get("semesterId", "1"),
-                    "weekNumber": week,
-                    "dayNumber": day_info["date"].weekday() + 1,  # 1 = Monday, 7 = Sunday
-                    "classId": c_id,
-                    "subjectId": subject_id,
-                    "teacherId": t_id,
-                    "classroomId": r_id,
-                    "slotId": str(period),
-                    "roomName": room_found.get("roomName", ""),
-                    "topic": f"{subjects_map.get(subject_id, {}).get('subjectName', 'Unknown')} - Week {week}",
-                    "sessionDate": day_info["date"],
-                    "sessionWeek": f"Week {week}",
-                    "dayOfWeek": weekday,
-                    "startTime": period_time["start"],
-                    "endTime": period_time["end"],
-                    "isActive": True
-                })
-                
-                schedule_id += 1
-                break  # Scheduled one subject for this class at this slot, move to next class
+                # Try to find a subject that can be scheduled
+                for subject_id, sessions_left in list(class_needs.get(class_id, {}).items()):
+                    if sessions_left <= 0:
+                        continue
+                    
+                    # Skip if no rooms available
+                    if not available_rooms:
+                        continue
+                    
+                    # Find a teacher for this subject
+                    subject_name = subjects_map.get(subject_id, {}).get("subjectName", "").lower()
+                    suitable_teachers = []
+                    
+                    # Find teachers with matching major
+                    for t_id in available_teachers:
+                        teacher_major = teacher_info.get(t_id, {}).get("major", "").lower()
+                        if teacher_major and subject_name and subject_name in teacher_major:
+                            suitable_teachers.append(t_id)
+                    
+                    # If no specialized teachers, use any available teacher
+                    if not suitable_teachers:
+                        suitable_teachers = available_teachers.copy()
+                    
+                    if not suitable_teachers:
+                        continue
+                    
+                    # Assign resources
+                    teacher_id = suitable_teachers[0]
+                    room_id = available_rooms[0]
+                    
+                    # Update tracking
+                    available_teachers.remove(teacher_id)
+                    available_rooms.remove(room_id)
+                    teacher_weekly_usage[teacher_id] += 1
+                    class_needs[class_id][subject_id] -= 1
+                    
+                    # Create schedule entry
+                    schedule_entry = {
+                        "classScheduleId": str(entry_id),
+                        "semesterId": semester_doc.get("semesterId"),
+                        "weekNumber": week,
+                        "dayNumber": {"Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5, "Saturday": 6, "Sunday": 7}.get(day_of_week, 1),
+                        "classId": class_id,
+                        "subjectId": subject_id,
+                        "teacherId": teacher_id,
+                        "classroomId": room_id,
+                        "slotId": slot_id,
+                        "roomName": next((r.get("roomName", "") for r in rooms if r.get("classroomId") == room_id), ""),
+                        "topic": f"{subject_name.title()} - Week {week}",
+                        "sessionDate": session_date,
+                        "sessionWeek": get_week_date_range(week, session_date - datetime.timedelta(days=day_offset)),
+                        "dayOfWeek": day_of_week,
+                        "startTime": start_time,
+                        "endTime": end_time,
+                        "isActive": True
+                    }
+                    
+                    schedule_entries.append(schedule_entry)
+                    
+                    entry_id += 1
+                    break  # Scheduled one subject for this class at this slot
     
     # Check for subjects not fully scheduled
-    for c_id, subjects in class_subjects.items():
+    for class_id, subjects in class_needs.items():
         for subject_id, sessions_left in subjects.items():
             if sessions_left > 0:
                 subject_name = subjects_map.get(subject_id, {}).get("subjectName", f"Subject ID {subject_id}")
                 warnings.append(
-                    f"Only {subjects[subject_id] - sessions_left}/{subjects[subject_id]} sessions scheduled for subject {subject_name} in class {c_id}. Extend semester required."
+                    f"Could not schedule all sessions for {subject_name} in class {class_id}. {sessions_left} sessions remaining."
                 )
     
-    # Save to database if connection provided
-    if db is not None and len(schedule_docs) > 0:
-        db.ClassSchedule.insert_many(schedule_docs)
+    # Save to database
+    if schedule_entries and db is not None:
+        try:
+            # Đảm bảo các trường datetime được xử lý đúng
+            for entry in schedule_entries:
+                if isinstance(entry["sessionDate"], datetime.datetime):
+                    entry["sessionDate"] = entry["sessionDate"].replace(tzinfo=None)
+            
+            result = db.ClassSchedule.insert_many(schedule_entries)
+            logger.info(f"Inserted {len(result.inserted_ids)} schedule entries into database")
+        except Exception as e:
+            logger.error(f"Error saving schedules to database: {str(e)}")
+            warnings.append(f"Error saving schedules: {str(e)}")
     
-    return schedule_docs, warnings 
+    if not schedule_entries:
+        logger.warning("No schedules were generated!")
+    
+    return schedule_entries, warnings 

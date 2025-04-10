@@ -32,7 +32,25 @@ def drop_all_collections(db):
 def create_indexes(db):
     """Create necessary indexes for performance"""
     # Example indexes - add more as needed
-    db[COLLECTIONS['USER_ACCOUNT']].create_index("userId", unique=True)
-    db[COLLECTIONS['TEACHER']].create_index("teacherId", unique=True)
-    db[COLLECTIONS['STUDENT']].create_index("studentId", unique=True)
-    db[COLLECTIONS['CLASS']].create_index("classId", unique=True) 
+    db[COLLECTIONS['USER_ACCOUNT']].create_index("UserID", unique=True)
+    db[COLLECTIONS['TEACHER']].create_index("TeacherID", unique=True)
+    db[COLLECTIONS['STUDENT']].create_index("StudentID", unique=True)
+    db[COLLECTIONS['CLASS']].create_index("ClassID", unique=True)
+
+
+def normalize_keys(document):
+    """Normalize keys in document to ensure consistent naming"""
+    key_map = {
+        'BatchID': 'batchId',
+        'ClassID': 'classId',
+    }
+    
+    if not isinstance(document, dict):
+        return document
+        
+    result = {}
+    for key, value in document.items():
+        new_key = key_map.get(key, key)
+        result[new_key] = value
+        
+    return result 

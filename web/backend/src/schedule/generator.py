@@ -3,8 +3,9 @@ Schedule generation main module
 """
 import os
 import datetime
-from .core import generate_greedy_schedule
+from .core import generate_schedule
 from .export import export_schedule_to_csv
+from ..constants import COLLECTIONS
 
 
 def prepare_schedule_directory():
@@ -186,7 +187,7 @@ def generate_strict_schedule(db, semester_doc, total_weeks=20):
     """
     import os
     from datetime import datetime, timedelta
-    from src.schedule.core import generate_greedy_schedule
+    from src.schedule.core import generate_schedule
     from src.schedule.export import export_schedule_to_csv
     
     semester_id = semester_doc["_id"]
@@ -235,12 +236,10 @@ def generate_strict_schedule(db, semester_doc, total_weeks=20):
     print(f"Semester period: {start_date.strftime('%d/%m/%Y')} to {end_date.strftime('%d/%m/%Y')}")
     
     # Generate schedule using the core algorithm
-    generation_result = generate_greedy_schedule(
-        db, 
-        semester_id, 
-        class_ids, 
-        teacher_ids,
-        curriculum_docs
+    generation_result = generate_schedule(
+        db,
+        semester_doc,
+        total_weeks
     )
     
     # Generate weekly entries if we have a schedule
@@ -301,6 +300,58 @@ def generate_strict_schedule(db, semester_doc, total_weeks=20):
     return generation_result
 
 
+def generate_semesters(db):
+    """
+    Generate semesters for all batches
+    """
+    # Create semesters for each batch
+    semesters = []
+    
+    # Get all batches
+    batches = list(db[COLLECTIONS['BATCH']].find())
+    
+    # For each batch, create 6 semesters (3 years x 2 semesters)
+    for batch in batches:
+        batch_id = batch.get('BatchID') or batch.get('batchId')
+        if not batch_id:
+            continue
+            
+        start_year = batch.get('startYear', 2022)
+        
+        for year in range(3):  # 3 years of high school
+            for sem in range(1, 3):  # 2 semesters per year
+                semester_name = f"Học kỳ {sem} năm {year + 1}"
+                
+                # Calculate dates
+                if sem == 1:  # First semester: Sep to Dec
+                    start_date = datetime.datetime(start_year + year, 9, 1)
+                    end_date = datetime.datetime(start_year + year, 12, 31)
+                else:  # Second semester: Jan to May
+                    start_date = datetime.datetime(start_year + year + 1, 1, 1)
+                    end_date = datetime.datetime(start_year + year + 1, 5, 31)
+                
+                # Default curriculum based on batch (grade level)
+                curriculum_id = str(12 - year)  # Grade 10 = curriculum 10, etc.
+                
+                semester = {
+                    'semesterId': f"{batch_id}_{year+1}_{sem}",
+                    'semesterName': semester_name,
+                    'startDate': start_date,
+                    'endDate': end_date,
+                    'batchId': batch_id,
+                    'curriculumId': curriculum_id,
+                    'isActive': True,
+                    'createdAt': datetime.datetime.now(),
+                    'updatedAt': datetime.datetime.now()
+                }
+                
+                # Insert into database
+                db[COLLECTIONS['SEMESTER']].insert_one(semester)
+                semesters.append(semester)
+    
+    return semesters
+
+
 def generate_all_schedules(db, semesters):
     """
     Generate schedules for all semesters
@@ -316,8 +367,11 @@ def generate_all_schedules(db, semesters):
     total_schedules = 0
     
     for sem in semesters:
-        print(f"[SCHEDULE] Generating schedule for semester {sem['SemesterName']} of Batch {sem['BatchID']}...")
-        scheds, warnings = generate_strict_schedule(db, sem, total_weeks=18)
+        semester_name = sem.get('semesterName') or sem.get('SemesterName', 'Unknown')
+        batch_id = sem.get('batchId') or sem.get('BatchID', 'Unknown')
+        
+        print(f"[SCHEDULE] Generating schedule for semester {semester_name} of Batch {batch_id}...")
+        scheds, warnings = generate_schedule(db, sem, total_weeks=18)
         total_schedules += len(scheds)
         
         if warnings:
