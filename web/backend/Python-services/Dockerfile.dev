@@ -1,0 +1,46 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Cài đặt các gói hệ thống cần thiết và tối ưu dung lượng
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Sao chép requirements và cài đặt các phụ thuộc
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Thiết lập biến môi trường
+ENV PORT=5000
+ENV HOST=0.0.0.0
+ENV PYTHONPATH=/app
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV IS_DOCKER=true
+
+# Cấu hình MongoDB - thay thế các giá trị mặc định khi cần thiết
+ENV MONGO_URI="mongodb://localhost:27017"
+
+# Tạo người dùng không đặc quyền để chạy ứng dụng
+RUN adduser --disabled-password --gecos "" appuser
+
+# Copy mã nguồn và thiết lập quyền
+COPY . .
+RUN chown -R appuser:appuser /app
+
+# Chuyển sang người dùng không đặc quyền
+USER appuser
+
+# Expose cổng
+EXPOSE 5000
+
+# Tạo volume để lưu trữ dữ liệu và cache
+VOLUME ["/app/data"]
+
+# Khởi chạy ứng dụng sử dụng server.py
+CMD ["python", "server.py"]
+
+# Lệnh để khởi tạo cơ sở dữ liệu:
+# docker run --rm -it your-image python server.py init 

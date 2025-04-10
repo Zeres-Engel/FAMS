@@ -21,4 +21,9 @@ if __name__ == "__main__":
         # Run API server
         port = int(os.getenv("PORT", "5000"))
         host = os.getenv("HOST", "0.0.0.0")
-        uvicorn.run("src.api.app:app", host=host, port=port, reload=True) 
+        
+        # Tắt chế độ reload trong Docker để tránh lỗi bộ nhớ
+        is_docker = os.getenv("IS_DOCKER", "false").lower() == "true"
+        reload_mode = False if is_docker else True
+        
+        uvicorn.run("src.api.app:app", host=host, port=port, reload=reload_mode) 
