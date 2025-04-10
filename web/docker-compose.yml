@@ -50,27 +50,10 @@ services:
       - /app/node_modules
     environment:
       - REACT_APP_API_URL=http://localhost:3002/api
+      - REACT_APP_PYTHON_API_URL=http://localhost:3001/api
     depends_on:
       - backend-nodejs
       - backend-python
-    networks:
-      - app-network
-      
-  nginx:
-    image: nginx:alpine
-    container_name: fams_nginx
-    restart: unless-stopped
-    ports:
-      - "8000:80"
-      - "443:443"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/ssl:/etc/nginx/ssl
-      - ./nginx/logs:/var/log/nginx
-    depends_on:
-      - backend-nodejs
-      - backend-python
-      - frontend
     networks:
       - app-network
 

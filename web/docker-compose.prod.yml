@@ -1,38 +1,66 @@
 version: '3'
 
 services:
-  backend-nodejs:
+  api-nodejs:
     build:
       context: ./backend/NodeJS-services
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
+    container_name: fams_api_nodejs
     restart: always
+    ports:
+      - "3002:3000"
     environment:
       - NODE_ENV=production
+    networks:
+      - app-network
 
-  backend-python:
+  api-python:
     build:
       context: ./backend/Python-services
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
+    container_name: fams_api_python
     restart: always
+    ports:
+      - "3001:3001"
     environment:
       - ENVIRONMENT=production
+      - PORT=3001
+    networks:
+      - app-network
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
+    container_name: fams_frontend
     restart: always
+    ports:
+      - "3003:3000"
     environment:
       - NODE_ENV=production
+      - REACT_APP_API_URL=http://localhost:3002/api
+      - REACT_APP_PYTHON_API_URL=http://localhost:3001/api
+    depends_on:
+      - api-nodejs
+      - api-python
+    networks:
+      - app-network
 
   nginx:
+    image: nginx:alpine
+    container_name: fams_nginx
     restart: always
     volumes:
-      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/logs:/var/log/nginx
     ports:
       - "80:80"
-      - "443:443"
-      - "8000:80"
+    depends_on:
+      - frontend
+      - api-nodejs
+      - api-python
+    networks:
+      - app-network
 
   # MongoDB for production (optional)
   mongodb:
@@ -63,4 +91,11 @@ services:
     depends_on:
       - mongodb
     networks:
-      - app-network 
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo_data: 
