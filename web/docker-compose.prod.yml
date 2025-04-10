@@ -10,7 +10,12 @@ services:
     ports:
       - "3002:3000"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
+      - PORT=3000
+    volumes:
+      - ./backend/NodeJS-services:/app
+      - /app/node_modules
+    command: npm run dev
     networks:
       - app-network
 
@@ -23,8 +28,13 @@ services:
     ports:
       - "3001:3001"
     environment:
-      - ENVIRONMENT=production
+      - ENVIRONMENT=development
       - PORT=3001
+      - IS_DOCKER=true
+    volumes:
+      - ./backend/Python-services:/app
+      - /app/data
+    command: python -m uvicorn src.api.app:app --host 0.0.0.0 --port 3001 --reload
     networks:
       - app-network
 
@@ -37,9 +47,16 @@ services:
     ports:
       - "3003:3000"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - REACT_APP_API_URL=http://localhost:3002/api
       - REACT_APP_PYTHON_API_URL=http://localhost:3001/api
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+      - WDS_SOCKET_PORT=0
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm start
     depends_on:
       - api-nodejs
       - api-python
