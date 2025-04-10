@@ -1,0 +1,66 @@
+version: '3'
+
+services:
+  backend-nodejs:
+    build:
+      context: ./backend/NodeJS-services
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - NODE_ENV=production
+
+  backend-python:
+    build:
+      context: ./backend/Python-services
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - ENVIRONMENT=production
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - NODE_ENV=production
+
+  nginx:
+    restart: always
+    volumes:
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8000:80"
+
+  # MongoDB for production (optional)
+  mongodb:
+    image: mongo:latest
+    restart: always
+    container_name: fams_mongodb
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:-changeme}
+    networks:
+      - app-network
+
+  # MongoDB admin UI (optional)
+  mongo-express:
+    image: mongo-express:latest
+    restart: always
+    container_name: fams_mongo_express
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=${MONGO_PASSWORD:-changeme}
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+    depends_on:
+      - mongodb
+    networks:
+      - app-network 

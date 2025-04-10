@@ -19,7 +19,7 @@ if __name__ == "__main__":
         init_db_command()
     else:
         # Run API server
-        port = int(os.getenv("PORT", "5000"))
+        port = int(os.getenv("PORT", "3000"))
         host = os.getenv("HOST", "0.0.0.0")
         
         # Tắt chế độ reload trong Docker để tránh lỗi bộ nhớ
