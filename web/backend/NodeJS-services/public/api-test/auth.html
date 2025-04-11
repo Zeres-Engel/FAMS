@@ -29,7 +29,7 @@
         
         <div class="alert alert-info mb-3">
             <h5>Thông tin API xác thực</h5>
-            <p class="mb-0">Sử dụng <code>userId</code> để đăng nhập. Tài khoản demo: <code>admin</code> / <code>1234</code></p>
+            <p class="mb-0">Sử dụng <code>userId</code>, <code>email</code> hoặc <code>backup_email</code> để đăng nhập. Tài khoản demo: <code>admin</code> / <code>1234</code></p>
         </div>
         
         <!-- Status bar for authentication info -->
@@ -62,8 +62,8 @@
                         <div class="card-body">
                             <form id="loginForm">
                                 <div class="mb-3">
-                                    <label for="userId" class="form-label">Tên đăng nhập (userId)</label>
-                                    <input type="text" class="form-control" id="userId" value="admin">
+                                    <label for="identifier" class="form-label">Tên đăng nhập / Email / Email dự phòng</label>
+                                    <input type="text" class="form-control" id="identifier" value="admin" placeholder="Nhập userId, email hoặc email dự phòng">
                                 </div>
                                 <div class="mb-3">
                                     <label for="password" class="form-label">Mật khẩu</label>
@@ -87,6 +87,8 @@
                         <div class="card-body">
                             <textarea id="login-json" class="json-editor">{
   "userId": "admin",
+  "email": "admin",
+  "backup_email": "admin",
   "password": "1234"
 }</textarea>
                             <button id="login-execute" class="btn btn-secondary mt-2">Execute</button>
@@ -332,9 +334,15 @@ Authorization: Bearer {token}</pre>
         
         // Login API functions
         function getLoginFormData() {
+            const identifier = document.getElementById('identifier').value;
+            const password = document.getElementById('password').value;
+            
+            // Gửi giá trị identifier trong cả ba trường để backend tự động xác định
             return {
-                userId: document.getElementById('userId').value,
-                password: document.getElementById('password').value
+                userId: identifier,
+                email: identifier,
+                backup_email: identifier,
+                password
             };
         }
         
@@ -610,7 +618,7 @@ Authorization: Bearer {token}</pre>
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             await executeLogout();
         });
-        
+
         // Sync forms to JSON
         syncFormToJson('loginForm', 'login-json', getLoginFormData);
         syncFormToJson('registerForm', 'register-json', getRegisterFormData);

@@ -15,6 +15,8 @@ def create_admin_user(db):
         userId="admin",
         username="admin",
         password=hash_password("1234"),
+        email="admin@fams.edu.vn",
+        backup_email=None,
         role="admin",
         isActive=True
     )
@@ -49,11 +51,16 @@ def import_teachers(db):
             weekly_capacity = row.get("WeeklyCapacity", "10")
             username = generate_username(full_name, teacher_id_counter)
             
+            # Tạo email
+            email = f"{username}@fams.edu.vn"
+            
             # Create user account
             user = UserAccount(
                 userId=username,
                 username=username,
                 password=hash_password("123456"),
+                email=email,
+                backup_email=None,
                 role="teacher",
                 isActive=True
             )
@@ -65,7 +72,7 @@ def import_teachers(db):
                 userId=username,
                 firstName=first_name,
                 lastName=last_name,
-                email=f"{username}@fams.edu.vn",
+                email=email,
                 phone=phone
             )
             
@@ -113,6 +120,9 @@ def import_students(db, csv_path, batch_id, student_id_start):
             phone = row.get("Phone", "")
             address = row.get("Address", "")
             username = generate_username(fn, sid, batch_id)
+            
+            # Tạo email
+            email = f"{username}@fams.edu.vn"
             
             # Xử lý thông tin phụ huynh
             parent_names = []
@@ -169,6 +179,8 @@ def import_students(db, csv_path, batch_id, student_id_start):
                 userId=username,
                 username=username,
                 password=hash_password("123456"),
+                email=email,
+                backup_email=None,
                 role="student",
                 isActive=True
             )
@@ -180,7 +192,7 @@ def import_students(db, csv_path, batch_id, student_id_start):
                 userId=username,
                 firstName=first_name,
                 lastName=last_name,
-                email=f"{username}@fams.edu.vn",
+                email=email,
                 phone=phone,
                 dateOfBirth=dob,
                 gender="Male" if gender else "Female",
@@ -303,11 +315,16 @@ def import_parents(db):
             
             username = generate_username(parent_name, id_num=pid)
             
+            # Tạo email
+            email = f"{username}@fams.edu.vn"
+            
             # Create user account
             user = UserAccount(
                 userId=username,
                 username=username,
                 password=hash_password("123456"),
+                email=email,
+                backup_email=None,
                 role="parent",
                 isActive=True
             )
@@ -319,7 +336,7 @@ def import_parents(db):
                 userId=username,
                 firstName=first_name,
                 lastName=last_name,
-                email=f"{username}@fams.edu.vn",
+                email=email,
                 phone=phone
             )
             

@@ -21,6 +21,11 @@ const UserSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  backup_email: {
+    type: String,
+    sparse: true,
+    index: true
+  },
   password: {
     type: String,
     required: true

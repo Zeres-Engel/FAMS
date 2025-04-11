@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-require('dotenv').config();
 
 // Database connection info - sử dụng chữ thường để khớp với MongoDB Atlas
 const DATABASE_NAME = 'fams';

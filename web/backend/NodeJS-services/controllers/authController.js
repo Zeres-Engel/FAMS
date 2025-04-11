@@ -89,7 +89,7 @@ ensureAdminExists();
  */
 exports.register = async (req, res) => {
   try {
-    const { userId, name, email, password, role } = req.body;
+    const { userId, name, email, backup_email, password, role } = req.body;
     
     // Validate required fields
     if (!userId || !name || !email || !password) {
@@ -101,7 +101,13 @@ exports.register = async (req, res) => {
     }
     
     // Check if user already exists
-    const userExists = await User.findOne({ $or: [{ email }, { userId }] });
+    const userExists = await User.findOne({ 
+      $or: [
+        { email }, 
+        { userId },
+        ...(backup_email ? [{ backup_email }] : [])
+      ] 
+    });
 
     if (userExists) {
       return res.status(400).json({
@@ -116,6 +122,7 @@ exports.register = async (req, res) => {
       userId,
       name,
       email,
+      backup_email,
       password,
       role: role || 'Student'
     });
@@ -160,24 +167,28 @@ exports.register = async (req, res) => {
  */
 exports.login = async (req, res) => {
   try {
-    const { userId, email, password } = req.body;
+    const { userId, email, backup_email, password } = req.body;
 
     // Validate input
-    if ((!userId && !email) || !password) {
+    if ((!userId && !email && !backup_email) || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Vui lòng cung cấp tên đăng nhập/email và mật khẩu',
+        message: 'Vui lòng cung cấp tên đăng nhập/email/backup_email và mật khẩu',
         code: 'MISSING_FIELDS'
       });
     }
 
-    // Check for user by userId or email
+    // Check for user by userId, email, or backup_email
     let user;
-    if (userId) {
-      user = await User.findOne({ userId });
-    } else if (email) {
-      user = await User.findOne({ email });
-    }
+    
+    // Build query with provided identifiers
+    const query = {};
+    if (userId) query.userId = userId;
+    if (email) query.email = email;
+    if (backup_email) query.backup_email = backup_email;
+    
+    // Find user with any of the provided identifiers
+    user = await User.findOne({ $or: Object.keys(query).map(key => ({ [key]: query[key] })) });
 
     if (!user) {
       return res.status(401).json({
