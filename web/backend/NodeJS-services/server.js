@@ -47,6 +47,9 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Test route để kiểm tra kết nối
 app.get('/api/test', (req, res) => {
   res.json({ success: true, message: 'API kết nối thành công!', code: 'CONNECTION_SUCCESS' });
@@ -85,9 +88,9 @@ app.use('/api/parents', parentRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/database', apiRouter);
 
-// Serve the test API page
+// Serve the test API pages
 app.get('/api-test', (req, res) => {
-  res.sendFile(path.join(__dirname, 'api-test.html'));
+  res.redirect('/api-test/index.html');
 });
 
 // Root route
