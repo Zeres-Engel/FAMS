@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin API Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background-color: #f8f9fa; }
+        .card { margin-bottom: 20px; }
+        pre { background-color: #f5f5f5; padding: 10px; border-radius: 5px; max-height: 300px; overflow-y: auto; }
+        .endpoint { font-family: monospace; color: #0d6efd; }
+        .json-editor { height: 150px; width: 100%; font-family: monospace; }
+        .response-area { min-height: 100px; }
+        .api-section { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #ddd; }
+        .api-title { background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+        .sticky-top { top: 1rem; }
+        .status-bar { font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="index.html">API Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Admin API</li>
+            </ol>
+        </nav>
+        
+        <div class="alert alert-info mb-3">
+            <h5>Thông tin API Admin</h5>
+            <p class="mb-0">API dành cho quản trị viên: quản lý người dùng, kiểm tra trạng thái hệ thống, và thao tác với database.</p>
+        </div>
+        
+        <!-- Status bar for authentication info -->
+        <div class="card mb-4">
+            <div class="card-body status-bar">
+                <div class="row">
+                    <div class="col-md-6" id="authStatus">
+                        <span class="badge bg-warning">Chưa đăng nhập</span>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button id="checkAuthBtn" class="btn btn-sm btn-info">Kiểm tra xác thực</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Users List API -->
+        <div class="api-section" id="users-section">
+            <div class="api-title">
+                <h3>Danh sách người dùng</h3>
+                <span class="endpoint">GET /api/users</span>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            Lấy danh sách người dùng
+                        </div>
+                        <div class="card-body">
+                            <form id="getUsersForm">
+                                <div class="mb-3">
+                                    <label for="role" class="form-label">Vai trò</label>
+                                    <select class="form-select" id="role">
+                                        <option value="">Tất cả</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="manager">Manager</option>
+                                        <option value="teacher">Teacher</option>
+                                        <option value="student">Student</option>
+                                        <option value="parent">Parent</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="limit" class="form-label">Số lượng hiển thị</label>
+                                    <input type="number" class="form-control" id="limit" placeholder="10">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="page" class="form-label">Trang</label>
+                                    <input type="number" class="form-control" id="page" placeholder="1">
+                                </div>
+                                <button type="submit" class="btn btn-primary">Gửi yêu cầu</button>
+                            </form>
+                            
+                            <div class="mt-3 response-area" id="users-response-message">
+                                <!-- Users response message will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            Raw JSON Request
+                        </div>
+                        <div class="card-body">
+                            <textarea id="users-json" class="json-editor">{
+  "role": "student",
+  "limit": 10,
+  "page": 1
+}</textarea>
+                            <button id="users-execute" class="btn btn-secondary mt-2">Execute</button>
+                            
+                            <div class="mt-3">
+                                <h6 class="text-muted">Response:</h6>
+                                <pre id="users-response" class="response-area">// Kết quả API danh sách người dùng sẽ hiển thị ở đây</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Create User API -->
+        <div class="api-section" id="create-user-section">
+            <div class="api-title">
+                <h3>Thêm người dùng mới</h3>
+                <span class="endpoint">POST /api/users</span>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            Thêm người dùng mới
+                        </div>
+                        <div class="card-body">
+                            <form id="createUserForm">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Tên đăng nhập</label>
+                                    <input type="text" class="form-control" id="username" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Họ tên</label>
+                                    <input type="text" class="form-control" id="name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Mật khẩu</label>
+                                    <input type="password" class="form-control" id="password" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="userRole" class="form-label">Vai trò</label>
+                                    <select class="form-select" id="userRole" required>
+                                        <option value="admin">Admin</option>
+                                        <option value="manager">Manager</option>
+                                        <option value="teacher">Teacher</option>
+                                        <option value="student">Student</option>
+                                        <option value="parent">Parent</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-success">Tạo người dùng</button>
+                            </form>
+                            
+                            <div class="mt-3 response-area" id="create-user-response-message">
+                                <!-- Create User response message will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            Raw JSON Request
+                        </div>
+                        <div class="card-body">
+                            <textarea id="create-user-json" class="json-editor">{
+  "username": "newuser",
+  "name": "Người dùng mới",
+  "email": "newuser@example.com",
+  "password": "password123",
+  "role": "student"
+}</textarea>
+                            <button id="create-user-execute" class="btn btn-secondary mt-2">Execute</button>
+                            
+                            <div class="mt-3">
+                                <h6 class="text-muted">Response:</h6>
+                                <pre id="create-user-response" class="response-area">// Kết quả API thêm người dùng sẽ hiển thị ở đây</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Database Status API -->
+        <div class="api-section" id="db-status-section">
+            <div class="api-title">
+                <h3>Trạng thái Database</h3>
+                <span class="endpoint">GET /api/database/status</span>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            Kiểm tra trạng thái Database
+                        </div>
+                        <div class="card-body">
+                            <p>Kiểm tra trạng thái kết nối và thông tin của Database hệ thống.</p>
+                            <button id="checkDbStatus" class="btn btn-info">Kiểm tra trạng thái</button>
+                            
+                            <div class="mt-3 response-area" id="db-status-response-message">
+                                <!-- DB Status response message will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            API Details
+                        </div>
+                        <div class="card-body">
+                            <p>Gọi API với token hiện tại:</p>
+                            <pre>GET /api/database/status
+Authorization: Bearer {token}</pre>
+                            
+                            <div class="mt-3">
+                                <h6 class="text-muted">Response:</h6>
+                                <pre id="db-status-response" class="response-area">// Kết quả API trạng thái Database sẽ hiển thị ở đây</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Import Data API -->
+        <div class="api-section" id="import-data-section">
+            <div class="api-title">
+                <h3>Import dữ liệu từ CSV</h3>
+                <span class="endpoint">POST /api/database/import</span>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-warning text-dark">
+                            Import dữ liệu từ CSV
+                        </div>
+                        <div class="card-body">
+                            <form id="importDataForm">
+                                <div class="mb-3">
+                                    <label for="dataType" class="form-label">Loại dữ liệu</label>
+                                    <select class="form-select" id="dataType" required>
+                                        <option value="students">Học sinh</option>
+                                        <option value="teachers">Giáo viên</option>
+                                        <option value="classes">Lớp học</option>
+                                        <option value="subjects">Môn học</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="csvFile" class="form-label">File CSV</label>
+                                    <input type="file" class="form-control" id="csvFile" accept=".csv" required>
+                                </div>
+                                <button type="submit" class="btn btn-warning">Import</button>
+                            </form>
+                            
+                            <div class="mt-3 response-area" id="import-data-response-message">
+                                <!-- Import Data response message will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            API Details
+                        </div>
+                        <div class="card-body">
+                            <p>Gọi API với token hiện tại:</p>
+                            <pre>POST /api/database/import
+Content-Type: multipart/form-data
+Authorization: Bearer {token}
+
+Form Data:
+- dataType: "students"
+- file: [CSV file]</pre>
+                            
+                            <div class="mt-3">
+                                <h6 class="text-muted">Response:</h6>
+                                <pre id="import-data-response" class="response-area">// Kết quả API import dữ liệu sẽ hiển thị ở đây</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- API Response -->
+        <div class="card mt-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">API Response</h5>
+            </div>
+            <div class="card-body">
+                <pre id="response">Kết quả sẽ hiển thị ở đây...</pre>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auth state management
+        let token = localStorage.getItem('auth_token') || '';
+        let currentUser = JSON.parse(localStorage.getItem('current_user') || 'null');
+        const baseUrl = window.location.origin;
+        
+        // Display formatted response message
+        function displayResponseMessage(elementId, data, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            
+            if (isSuccess) {
+                element.innerHTML = `<div class="alert alert-success">${data}</div>`;
+            } else {
+                element.innerHTML = `<div class="alert alert-danger">${data}</div>`;
+            }
+        }
+        
+        // Display raw JSON response
+        function displayRawResponse(elementId, data) {
+            const element = document.getElementById(elementId);
+            element.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+        }
+        
+        // Log to console for debugging
+        function logDebug(message, data) {
+            console.log(`DEBUG - ${message}:`, data);
+        }
+        
+        // Update authentication status display
+        function updateAuthStatus() {
+            const authStatus = document.getElementById('authStatus');
+            
+            if (token && currentUser) {
+                authStatus.innerHTML = `
+                    <span class="badge bg-success">Đã đăng nhập</span>
+                    <span class="ms-2">Người dùng: <strong>${currentUser.name || currentUser.userId}</strong> (${currentUser.role})</span>
+                `;
+            } else {
+                authStatus.innerHTML = `<span class="badge bg-warning">Chưa đăng nhập</span>`;
+            }
+        }
+        
+        // Initialize
+        updateAuthStatus();
+        
+        // Sync form with JSON
+        function syncFormToJson(formId, jsonId, getDataFn) {
+            const form = document.getElementById(formId);
+            form.addEventListener('input', () => {
+                const jsonData = getDataFn();
+                document.getElementById(jsonId).value = JSON.stringify(jsonData, null, 2);
+            });
+        }
+        
+        // Lấy danh sách người dùng
+        document.getElementById('getUsersForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const role = document.getElementById('role').value;
+            const limit = document.getElementById('limit').value;
+            const page = document.getElementById('page').value;
+            
+            try {
+                let url = '/api/users';
+                const params = new URLSearchParams();
+                if (role) params.append('role', role);
+                if (limit) params.append('limit', limit);
+                if (page) params.append('page', page);
+                if (params.toString()) url += `?${params.toString()}`;
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                displayRawResponse('response', data);
+            } catch (error) {
+                displayResponseMessage('response', `Error: ${error.message}`);
+            }
+        });
+
+        // Thêm người dùng mới
+        document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const payload = {
+                    username: document.getElementById('username').value,
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value,
+                    role: document.getElementById('userRole').value
+                };
+                
+                const response = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                displayRawResponse('response', data);
+            } catch (error) {
+                displayResponseMessage('response', `Error: ${error.message}`);
+            }
+        });
+
+        // Kiểm tra trạng thái Database
+        document.getElementById('checkDbStatus').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/database/status', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                displayRawResponse('response', data);
+            } catch (error) {
+                displayResponseMessage('response', `Error: ${error.message}`);
+            }
+        });
+
+        // Import dữ liệu
+        document.getElementById('importDataForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const dataType = document.getElementById('dataType').value;
+                const file = document.getElementById('csvFile').files[0];
+                
+                if (!file) {
+                    throw new Error('Vui lòng chọn file CSV');
+                }
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const response = await fetch(`/api/database/import/${dataType}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                displayRawResponse('response', data);
+            } catch (error) {
+                displayResponseMessage('response', `Error: ${error.message}`);
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -32,3 +32,5 @@
 172.18.0.1 - - [11/Apr/2025:02:42:39 +0000] "GET /api-python/ HTTP/1.1" 200 52 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0"
 172.18.0.1 - - [11/Apr/2025:02:42:42 +0000] "GET /api-python/docs HTTP/1.1" 200 940 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0"
 172.18.0.1 - - [11/Apr/2025:02:42:42 +0000] "GET /openapi.json HTTP/1.1" 404 151 "http://localhost/api-python/docs" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0"
+172.18.0.1 - - [11/Apr/2025:02:57:30 +0000] "GET /ws HTTP/1.1" 101 3018 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0"
+172.18.0.1 - - [11/Apr/2025:03:26:49 +0000] "GET /ws HTTP/1.1" 101 1214 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 Edg/135.0.0.0"
