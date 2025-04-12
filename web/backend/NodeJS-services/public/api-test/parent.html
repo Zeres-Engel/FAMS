@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parent API Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background-color: #f8f9fa; }
+        .card { margin-bottom: 20px; }
+        pre { background-color: #f5f5f5; padding: 10px; border-radius: 5px; max-height: 300px; overflow-y: auto; }
+        .endpoint { font-family: monospace; color: #0d6efd; }
+        .json-editor { height: 150px; width: 100%; font-family: monospace; }
+        .response-area { min-height: 100px; }
+        .api-section { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #ddd; }
+        .api-title { background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+        .sticky-top { top: 1rem; }
+        .status-bar { font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="index.html">API Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Parent API</li>
+            </ol>
+        </nav>
+        
+        <div class="alert alert-info mb-3">
+            <h5>Thông tin API Phụ huynh</h5>
+            <p class="mb-0">API dành cho phụ huynh: xem thông tin con, lịch học, điểm số, và giao tiếp với giáo viên.</p>
+        </div>
+        
+        <!-- Status bar for authentication info -->
+        <div class="card mb-4">
+            <div class="card-body status-bar">
+                <div class="row">
+                    <div class="col-md-6" id="authStatus">
+                        <span class="badge bg-warning">Chưa đăng nhập</span>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button id="checkAuthBtn" class="btn btn-sm btn-info">Kiểm tra xác thực</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Children List API -->
+        <div class="api-section" id="children-section">
+            <div class="api-title">
+                <h3>Danh sách con</h3>
+                <span class="endpoint">GET /api/parents/children</span>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            Lấy danh sách con
+                        </div>
+                        <div class="card-body">
+                            <p>Lấy danh sách thông tin các con của phụ huynh đã đăng nhập.</p>
+                            <button id="getChildrenBtn" class="btn btn-primary">Lấy danh sách</button>
+                            
+                            <div class="mt-3 response-area" id="children-response-message">
+                                <!-- Children response message will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            API Details
+                        </div>
+                        <div class="card-body">
+                            <p>Gọi API với token hiện tại:</p>
+                            <pre>GET /api/parents/children
+Authorization: Bearer {token}</pre>
+                            
+                            <div class="mt-3">
+                                <h6 class="text-muted">Response:</h6>
+                                <pre id="children-response" class="response-area">// Kết quả API danh sách con sẽ hiển thị ở đây</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Child Schedule API -->
+        <div class="api-section" id="child-schedule-section">
+            <div class="api-title">
+                <h3>Lịch học của con</h3>
+                <span class="endpoint">GET /api/parents/children/:childId/schedule</span>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            Lấy lịch học của con
+                        </div>
+                        <div class="card-body">
+                            <form id="getChildScheduleForm">
+                                <div class="mb-3">
+                                    <label for="childId" class="form-label">ID của con</label>
+                                    <input type="text" class="form-control" id="childId" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="dateFrom" class="form-label">Từ ngày</label>
+                                    <input type="date" class="form-control" id="dateFrom">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="dateTo" class="form-label">Đến ngày</label>
+                                    <input type="date" class="form-control" id="dateTo">
+                                </div>
+                                <button type="submit" class="btn btn-info">Lấy lịch học</button>
+                            </form>
+                            
+                            <div class="mt-3 response-area" id="child-schedule-response-message">
+                                <!-- Child Schedule response message will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            Raw JSON Request
+                        </div>
+                        <div class="card-body">
+                            <textarea id="child-schedule-json" class="json-editor">{
+  "childId": "student001",
+  "dateFrom": "2023-09-01",
+  "dateTo": "2023-09-30"
+}</textarea>
+                            <button id="child-schedule-execute" class="btn btn-secondary mt-2">Execute</button>
+                            
+                            <div class="mt-3">
+                                <h6 class="text-muted">Response:</h6>
+                                <pre id="child-schedule-response" class="response-area">// Kết quả API lịch học của con sẽ hiển thị ở đây</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Child Grades API -->
+        <div class="api-section" id="child-grades-section">
+            <div class="api-title">
+                <h3>Điểm số của con</h3>
+                <span class="endpoint">GET /api/parents/children/:childId/grades</span>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-warning text-dark">
+                            Lấy điểm số của con
+                        </div>
+                        <div class="card-body">
+                            <form id="getChildGradesForm">
+                                <div class="mb-3">
+                                    <label for="gradesChildId" class="form-label">ID của con</label>
+                                    <input type="text" class="form-control" id="gradesChildId" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="semester" class="form-label">Học kỳ (tùy chọn)</label>
+                                    <select class="form-select" id="semester">
+                                        <option value="">Tất cả</option>
+                                        <option value="current">Học kỳ hiện tại</option>
+                                        <option value="1-2023-2024">Học kỳ 1 năm 2023-2024</option>
+                                        <option value="2-2023-2024">Học kỳ 2 năm 2023-2024</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-warning">Lấy điểm số</button>
+                            </form>
+                            
+                            <div class="mt-3 response-area" id="child-grades-response-message">
+                                <!-- Child Grades response message will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            Raw JSON Request
+                        </div>
+                        <div class="card-body">
+                            <textarea id="child-grades-json" class="json-editor">{
+  "childId": "student001",
+  "semester": "current"
+}</textarea>
+                            <button id="child-grades-execute" class="btn btn-secondary mt-2">Execute</button>
+                            
+                            <div class="mt-3">
+                                <h6 class="text-muted">Response:</h6>
+                                <pre id="child-grades-response" class="response-area">// Kết quả API điểm số của con sẽ hiển thị ở đây</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contact Teacher API -->
+        <div class="api-section" id="contact-teacher-section">
+            <div class="api-title">
+                <h3>Liên hệ với giáo viên</h3>
+                <span class="endpoint">POST /api/parents/contact-teacher</span>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            Gửi tin nhắn đến giáo viên
+                        </div>
+                        <div class="card-body">
+                            <form id="contactTeacherForm">
+                                <div class="mb-3">
+                                    <label for="teacherId" class="form-label">ID giáo viên</label>
+                                    <input type="text" class="form-control" id="teacherId" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="childIdContact" class="form-label">ID của con (tùy chọn)</label>
+                                    <input type="text" class="form-control" id="childIdContact">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="subject" class="form-label">Tiêu đề</label>
+                                    <input type="text" class="form-control" id="subject" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="message" class="form-label">Nội dung</label>
+                                    <textarea class="form-control" id="message" rows="3" required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-success">Gửi tin nhắn</button>
+                            </form>
+                            
+                            <div class="mt-3 response-area" id="contact-teacher-response-message">
+                                <!-- Contact Teacher response message will be displayed here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            Raw JSON Request
+                        </div>
+                        <div class="card-body">
+                            <textarea id="contact-teacher-json" class="json-editor">{
+  "teacherId": "teacher001",
+  "childId": "student001",
+  "subject": "Về bài tập Toán",
+  "message": "Thầy/cô thân mến, tôi muốn trao đổi về bài tập Toán gần đây của con tôi..."
+}</textarea>
+                            <button id="contact-teacher-execute" class="btn btn-secondary mt-2">Execute</button>
+                            
+                            <div class="mt-3">
+                                <h6 class="text-muted">Response:</h6>
+                                <pre id="contact-teacher-response" class="response-area">// Kết quả API liên hệ giáo viên sẽ hiển thị ở đây</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auth state management
+        let token = localStorage.getItem('auth_token') || '';
+        let currentUser = JSON.parse(localStorage.getItem('current_user') || 'null');
+        const baseUrl = window.location.origin;
+        
+        // Display formatted response message
+        function displayResponseMessage(elementId, data, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            
+            if (isSuccess) {
+                element.innerHTML = `<div class="alert alert-success">${data}</div>`;
+            } else {
+                element.innerHTML = `<div class="alert alert-danger">${data}</div>`;
+            }
+        }
+        
+        // Display raw JSON response
+        function displayRawResponse(elementId, data) {
+            const element = document.getElementById(elementId);
+            element.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+        }
+        
+        // Log to console for debugging
+        function logDebug(message, data) {
+            console.log(`DEBUG - ${message}:`, data);
+        }
+        
+        // Update authentication status display
+        function updateAuthStatus() {
+            const authStatus = document.getElementById('authStatus');
+            
+            if (token && currentUser) {
+                authStatus.innerHTML = `
+                    <span class="badge bg-success">Đã đăng nhập</span>
+                    <span class="ms-2">Người dùng: <strong>${currentUser.name || currentUser.userId}</strong> (${currentUser.role})</span>
+                `;
+            } else {
+                authStatus.innerHTML = `<span class="badge bg-warning">Chưa đăng nhập</span>`;
+            }
+        }
+        
+        // Initialize
+        updateAuthStatus();
+        
+        // Sync form with JSON
+        function syncFormToJson(formId, jsonId, getDataFn) {
+            const form = document.getElementById(formId);
+            form.addEventListener('input', () => {
+                const jsonData = getDataFn();
+                document.getElementById(jsonId).value = JSON.stringify(jsonData, null, 2);
+            });
+        }
+        
+        // Check Auth API functions
+        async function executeCheckAuth() {
+            try {
+                if (!token) {
+                    alert('Bạn chưa đăng nhập! Vui lòng đăng nhập ở trang Auth API trước.');
+                    return { error: 'Không có token xác thực' };
+                }
+                
+                const response = await fetch(`${baseUrl}/api/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const data = await response.json();
+                logDebug('Check auth response', data);
+                
+                if (data.success && data.data) {
+                    displayResponseMessage('children-response-message', 'Xác thực thành công!', true);
+                } else {
+                    displayResponseMessage('children-response-message', data.message || 'Xác thực thất bại!', false);
+                }
+                
+                return data;
+            } catch (error) {
+                logDebug('Check auth error', error);
+                return { error: error.message };
+            }
+        }
+        
+        // Children List API functions
+        async function executeGetChildren() {
+            try {
+                if (!token) {
+                    displayResponseMessage('children-response-message', 'Bạn chưa đăng nhập!', false);
+                    displayRawResponse('children-response', { error: 'Không có token xác thực' });
+                    return { error: 'Không có token xác thực' };
+                }
+                
+                const response = await fetch(`${baseUrl}/api/parents/children`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const data = await response.json();
+                logDebug('Children response', data);
+                
+                // Display raw response
+                displayRawResponse('children-response', data);
+                
+                if (data.success && data.data) {
+                    displayResponseMessage('children-response-message', 'Lấy danh sách con thành công!', true);
+                } else {
+                    displayResponseMessage('children-response-message', data.message || 'Lấy danh sách con thất bại!', false);
+                }
+                
+                return data;
+            } catch (error) {
+                logDebug('Children error', error);
+                displayRawResponse('children-response', { error: error.message });
+                displayResponseMessage('children-response-message', 'Lỗi: ' + error.message, false);
+                return { error: error.message };
+            }
+        }
+        
+        // Child Schedule API functions
+        function getChildScheduleData() {
+            return {
+                childId: document.getElementById('childId').value,
+                dateFrom: document.getElementById('dateFrom').value,
+                dateTo: document.getElementById('dateTo').value
+            };
+        }
+        
+        async function executeGetChildSchedule(payload) {
+            try {
+                if (!token) {
+                    displayResponseMessage('child-schedule-response-message', 'Bạn chưa đăng nhập!', false);
+                    displayRawResponse('child-schedule-response', { error: 'Không có token xác thực' });
+                    return { error: 'Không có token xác thực' };
+                }
+                
+                if (!payload.childId) {
+                    displayResponseMessage('child-schedule-response-message', 'Vui lòng nhập ID của con!', false);
+                    displayRawResponse('child-schedule-response', { error: 'Thiếu ID của con' });
+                    return { error: 'Thiếu ID của con' };
+                }
+                
+                let url = `${baseUrl}/api/parents/children/${payload.childId}/schedule`;
+                const params = new URLSearchParams();
+                if (payload.dateFrom) params.append('dateFrom', payload.dateFrom);
+                if (payload.dateTo) params.append('dateTo', payload.dateTo);
+                if (params.toString()) url += `?${params.toString()}`;
+                
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const data = await response.json();
+                logDebug('Child Schedule response', data);
+                
+                // Display raw response
+                displayRawResponse('child-schedule-response', data);
+                
+                if (data.success && data.data) {
+                    displayResponseMessage('child-schedule-response-message', 'Lấy lịch học của con thành công!', true);
+                } else {
+                    displayResponseMessage('child-schedule-response-message', data.message || 'Lấy lịch học của con thất bại!', false);
+                }
+                
+                return data;
+            } catch (error) {
+                logDebug('Child Schedule error', error);
+                displayRawResponse('child-schedule-response', { error: error.message });
+                displayResponseMessage('child-schedule-response-message', 'Lỗi: ' + error.message, false);
+                return { error: error.message };
+            }
+        }
+        
+        // Child Grades API functions
+        function getChildGradesData() {
+            return {
+                childId: document.getElementById('gradesChildId').value,
+                semester: document.getElementById('semester').value
+            };
+        }
+        
+        async function executeGetChildGrades(payload) {
+            try {
+                if (!token) {
+                    displayResponseMessage('child-grades-response-message', 'Bạn chưa đăng nhập!', false);
+                    displayRawResponse('child-grades-response', { error: 'Không có token xác thực' });
+                    return { error: 'Không có token xác thực' };
+                }
+                
+                if (!payload.childId) {
+                    displayResponseMessage('child-grades-response-message', 'Vui lòng nhập ID của con!', false);
+                    displayRawResponse('child-grades-response', { error: 'Thiếu ID của con' });
+                    return { error: 'Thiếu ID của con' };
+                }
+                
+                let url = `${baseUrl}/api/parents/children/${payload.childId}/grades`;
+                if (payload.semester) {
+                    url += `?semester=${payload.semester}`;
+                }
+                
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const data = await response.json();
+                logDebug('Child Grades response', data);
+                
+                // Display raw response
+                displayRawResponse('child-grades-response', data);
+                
+                if (data.success && data.data) {
+                    displayResponseMessage('child-grades-response-message', 'Lấy điểm số của con thành công!', true);
+                } else {
+                    displayResponseMessage('child-grades-response-message', data.message || 'Lấy điểm số của con thất bại!', false);
+                }
+                
+                return data;
+            } catch (error) {
+                logDebug('Child Grades error', error);
+                displayRawResponse('child-grades-response', { error: error.message });
+                displayResponseMessage('child-grades-response-message', 'Lỗi: ' + error.message, false);
+                return { error: error.message };
+            }
+        }
+        
+        // Contact Teacher API functions
+        function getContactTeacherData() {
+            return {
+                teacherId: document.getElementById('teacherId').value,
+                childId: document.getElementById('childIdContact').value,
+                subject: document.getElementById('subject').value,
+                message: document.getElementById('message').value
+            };
+        }
+        
+        async function executeContactTeacher(payload) {
+            try {
+                if (!token) {
+                    displayResponseMessage('contact-teacher-response-message', 'Bạn chưa đăng nhập!', false);
+                    displayRawResponse('contact-teacher-response', { error: 'Không có token xác thực' });
+                    return { error: 'Không có token xác thực' };
+                }
+                
+                const response = await fetch(`${baseUrl}/api/parents/contact-teacher`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: typeof payload === 'string' ? payload : JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                logDebug('Contact Teacher response', data);
+                
+                // Display raw response
+                displayRawResponse('contact-teacher-response', data);
+                
+                if (data.success && data.data) {
+                    displayResponseMessage('contact-teacher-response-message', 'Gửi tin nhắn đến giáo viên thành công!', true);
+                } else {
+                    displayResponseMessage('contact-teacher-response-message', data.message || 'Gửi tin nhắn đến giáo viên thất bại!', false);
+                }
+                
+                return data;
+            } catch (error) {
+                logDebug('Contact Teacher error', error);
+                displayRawResponse('contact-teacher-response', { error: error.message });
+                displayResponseMessage('contact-teacher-response-message', 'Lỗi: ' + error.message, false);
+                return { error: error.message };
+            }
+        }
+        
+        // Setup event listeners
+        
+        // Check Auth button
+        document.getElementById('checkAuthBtn').addEventListener('click', async () => {
+            await executeCheckAuth();
+        });
+        
+        // Children
+        document.getElementById('getChildrenBtn').addEventListener('click', async () => {
+            await executeGetChildren();
+        });
+        
+        // Child Schedule
+        document.getElementById('getChildScheduleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await executeGetChildSchedule(getChildScheduleData());
+        });
+        
+        document.getElementById('child-schedule-execute').addEventListener('click', async () => {
+            try {
+                const jsonData = JSON.parse(document.getElementById('child-schedule-json').value);
+                await executeGetChildSchedule(jsonData);
+            } catch (error) {
+                displayResponseMessage('child-schedule-response-message', 'JSON không hợp lệ: ' + error.message, false);
+                displayRawResponse('child-schedule-response', { error: 'JSON không hợp lệ: ' + error.message });
+            }
+        });
+        
+        // Child Grades
+        document.getElementById('getChildGradesForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await executeGetChildGrades(getChildGradesData());
+        });
+        
+        document.getElementById('child-grades-execute').addEventListener('click', async () => {
+            try {
+                const jsonData = JSON.parse(document.getElementById('child-grades-json').value);
+                await executeGetChildGrades(jsonData);
+            } catch (error) {
+                displayResponseMessage('child-grades-response-message', 'JSON không hợp lệ: ' + error.message, false);
+                displayRawResponse('child-grades-response', { error: 'JSON không hợp lệ: ' + error.message });
+            }
+        });
+        
+        // Contact Teacher
+        document.getElementById('contactTeacherForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await executeContactTeacher(getContactTeacherData());
+        });
+        
+        document.getElementById('contact-teacher-execute').addEventListener('click', async () => {
+            try {
+                const jsonData = JSON.parse(document.getElementById('contact-teacher-json').value);
+                await executeContactTeacher(jsonData);
+            } catch (error) {
+                displayResponseMessage('contact-teacher-response-message', 'JSON không hợp lệ: ' + error.message, false);
+                displayRawResponse('contact-teacher-response', { error: 'JSON không hợp lệ: ' + error.message });
+            }
+        });
+        
+        // Sync forms to JSON
+        syncFormToJson('getChildScheduleForm', 'child-schedule-json', getChildScheduleData);
+        syncFormToJson('getChildGradesForm', 'child-grades-json', getChildGradesData);
+        syncFormToJson('contactTeacherForm', 'contact-teacher-json', getContactTeacherData);
+    </script>
+</body>
+</html> 

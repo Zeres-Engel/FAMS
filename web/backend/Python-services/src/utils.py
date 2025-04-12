@@ -35,17 +35,27 @@ def parse_date(date_str: str):
     return None
 
 
-def generate_username(full_name: str, id_num: int, batch: int = None) -> str:
+def generate_username(full_name: str, id_num: int, batch: int = None, role: str = None) -> str:
     """Generate a username from a full name and ID"""
     parts = remove_accents(full_name).lower().strip().split()
     if not parts:
         return str(id_num)
-    given_name = parts[-1]
+    
+    # Đảo ngược vì trong tiếng Việt, tên (given name) ở cuối và họ (last name) ở đầu
+    last_name = parts[-1]
     initials = "".join(part[0] for part in parts[:-1])
+    
+    # Thêm hậu tố theo role
+    role_suffix = ""
+    if role == "student":
+        role_suffix = "st"
+    elif role == "parent":
+        role_suffix = "pr"
+    
     if batch is not None:
-        return f"{given_name}{initials}{batch}{id_num}"
+        return f"{last_name}{initials}{role_suffix}{batch}{id_num}"
     else:
-        return f"{given_name}{initials}{id_num}"
+        return f"{last_name}{initials}{role_suffix}{id_num}"
 
 
 def find_file_path(paths):

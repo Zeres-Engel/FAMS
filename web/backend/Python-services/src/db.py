@@ -3,13 +3,11 @@ Database connection and basic operations for FAMS
 """
 import os
 from pymongo import MongoClient
-from dotenv import load_dotenv
 from .constants import COLLECTIONS
 
 
 def connect_to_mongodb():
     """Connect to MongoDB using connection string from environment variables"""
-    load_dotenv()
     mongo_uri = os.getenv('MONGO_URI')
     client = MongoClient(mongo_uri, tlsAllowInvalidCertificates=True)
     client.admin.command('ping')  # Verify connection

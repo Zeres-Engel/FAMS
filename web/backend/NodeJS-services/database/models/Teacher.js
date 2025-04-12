@@ -3,7 +3,7 @@ const { COLLECTIONS } = require('../constants');
 
 const TeacherSchema = new mongoose.Schema({
   teacherId: {
-    type: Number,
+    type: String,
     required: true,
     unique: true
   },
@@ -12,12 +12,23 @@ const TeacherSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  fullName: {
+  firstName: {
     type: String,
     required: true
   },
+  lastName: {
+    type: String,
+    required: true
+  },
+  fullName: {
+    type: String,
+    default: function() {
+      return `${this.firstName} ${this.lastName}`.trim();
+    }
+  },
   email: {
-    type: String
+    type: String,
+    required: true
   },
   dateOfBirth: {
     type: Date
@@ -37,8 +48,14 @@ const TeacherSchema = new mongoose.Schema({
   WeeklyCapacity: {
     type: Number,
     default: 10
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, {
+  timestamps: true,
+  versionKey: false,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
@@ -64,5 +81,22 @@ TeacherSchema.virtual('schedules', {
   localField: 'teacherId',
   foreignField: 'teacherId'
 });
+
+// Generate user ID based on name
+TeacherSchema.statics.generateUserId = function(firstName, lastName, teacherId) {
+  if (!firstName || !lastName || !teacherId) {
+    throw new Error('Missing required fields for userId generation');
+  }
+  
+  // In Vietnamese naming, lastName is the family name (Nguyễn Phước), 
+  // firstName is the given name (Thành)
+  
+  // Extract the first letter of each word in the lastName
+  const lastNameParts = lastName.split(' ');
+  const lastNameInitials = lastNameParts.map(part => part.charAt(0).toLowerCase()).join('');
+  
+  // Combine with firstName and ID
+  return `${firstName.toLowerCase()}${lastNameInitials}${teacherId}`;
+};
 
 module.exports = mongoose.model('Teacher', TeacherSchema, COLLECTIONS.TEACHER); 

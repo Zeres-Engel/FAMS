@@ -1,58 +1,119 @@
 services:
-  backend-nodejs:
+  api-nodejs:
     build:
       context: ./backend/NodeJS-services
       dockerfile: Dockerfile.dev
-    container_name: fams_backend_nodejs
-    restart: unless-stopped
+    container_name: fams_api_nodejs
+    restart: always
     ports:
-      - "3000:3000"
+      - "3002:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - MONGO_URI=mongodb://mongodb:27017/fams
+      - JWT_SECRET=your_jwt_secret_key_change_this_in_production
+      - REFRESH_TOKEN_SECRET=your_refresh_token_secret_key_change_this_in_production
     volumes:
       - ./backend/NodeJS-services:/app
       - /app/node_modules
-    env_file:
-      - ./backend/NodeJS-services/.env
-    environment:
-      - PORT=3000
+    command: npm run dev
     networks:
       - app-network
+    depends_on:
+      - mongodb
 
-  backend-python:
+  api-python:
     build:
       context: ./backend/Python-services
       dockerfile: Dockerfile.dev
-    container_name: fams_backend_python
-    restart: unless-stopped
+    container_name: fams_api_python
+    restart: always
     ports:
-      - "5000:5000"
+      - "3001:3000"
+    environment:
+      - ENVIRONMENT=development
+      - PORT=3000
+      - HOST=0.0.0.0
+      - IS_DOCKER=true
+      - MONGO_URI=mongodb://mongodb:27017/fams
+      - JWT_SECRET=your_jwt_secret_key_change_this_in_production
+      - REFRESH_TOKEN_SECRET=your_refresh_token_secret_key_change_this_in_production
     volumes:
       - ./backend/Python-services:/app
       - /app/data
-    env_file:
-      - ./backend/Python-services/.env
-    environment:
-      - PORT=5000
-      - HOST=0.0.0.0
-      - IS_DOCKER=true
+    command: python -m uvicorn src.api.app:app --host 0.0.0.0 --port 3000 --reload
     networks:
       - app-network
+    depends_on:
+      - mongodb
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
     container_name: fams_frontend
-    restart: unless-stopped
+    restart: always
     ports:
-      - "3001:3000"
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_API_URL=http://localhost:3002/api
+      - REACT_APP_PYTHON_API_URL=http://localhost:3001/api
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+      - WDS_SOCKET_PORT=0
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    environment:
-      - REACT_APP_API_URL=http://localhost:3000/api
+    command: npm start
     depends_on:
-      - backend-nodejs
-      - backend-python
+      - api-nodejs
+      - api-python
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: fams_nginx
+    restart: always
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/logs:/var/log/nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - frontend
+      - api-nodejs
+      - api-python
+    networks:
+      - app-network
+
+  mongodb:
+    image: mongo:latest
+    restart: always
+    container_name: fams_mongodb
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - app-network
+
+  mongo-express:
+    image: mongo-express:latest
+    restart: always
+    container_name: fams_mongo_express
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+      - ME_CONFIG_MONGODB_URL=mongodb://mongodb:27017/
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=pass
+    depends_on:
+      - mongodb
     networks:
       - app-network
 

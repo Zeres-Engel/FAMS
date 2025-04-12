@@ -3,7 +3,7 @@ const { COLLECTIONS } = require('../constants');
 
 const ParentSchema = new mongoose.Schema({
   parentId: {
-    type: Number,
+    type: String,
     required: true,
     unique: true
   },
@@ -12,7 +12,21 @@ const ParentSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  firstName: {
+    type: String,
+    required: true
+  },
+  lastName: {
+    type: String,
+    required: true
+  },
   fullName: {
+    type: String,
+    default: function() {
+      return `${this.firstName} ${this.lastName}`.trim();
+    }
+  },
+  email: {
     type: String,
     required: true
   },
@@ -25,11 +39,13 @@ const ParentSchema = new mongoose.Schema({
   gender: {
     type: Boolean
   },
-  studentIds: [{
-    type: Number,
-    ref: 'Student'
-  }]
+  isActive: {
+    type: Boolean,
+    default: true
+  }
 }, {
+  timestamps: true,
+  versionKey: false,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
@@ -42,12 +58,29 @@ ParentSchema.virtual('user', {
   justOne: true
 });
 
-// Virtual for getting students
+// Virtual for getting students linked to this parent
 ParentSchema.virtual('students', {
-  ref: 'Student',
-  localField: 'studentIds',
-  foreignField: 'studentId',
+  ref: 'ParentStudent',
+  localField: 'parentId',
+  foreignField: 'parentId',
   justOne: false
 });
+
+// Generate user ID based on name
+ParentSchema.statics.generateUserId = function(firstName, lastName, parentId) {
+  if (!firstName || !lastName || !parentId) {
+    throw new Error('Missing required fields for userId generation');
+  }
+  
+  // In Vietnamese naming, lastName is the family name (Nguyễn Phước), 
+  // firstName is the given name (Thành)
+  
+  // Extract the first letter of each word in the lastName
+  const lastNameParts = lastName.split(' ');
+  const lastNameInitials = lastNameParts.map(part => part.charAt(0).toLowerCase()).join('');
+  
+  // Combine with firstName, "pr" suffix and ID
+  return `${firstName.toLowerCase()}${lastNameInitials}pr${parentId}`;
+};
 
 module.exports = mongoose.model('Parent', ParentSchema, COLLECTIONS.PARENT); 

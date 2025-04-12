@@ -7,6 +7,9 @@ const models = require('./models');
 // Export API router
 const apiRouter = require('./api');
 
+// Export batch service
+const batchService = require('./batchService');
+
 // Export initialization function
 const initializeDatabase = () => {
   return new Promise((resolve) => {
@@ -27,6 +30,9 @@ module.exports = {
   
   // API router
   apiRouter,
+  
+  // Batch service
+  batchService,
   
   // Initialization function
   initializeDatabase

@@ -15,6 +15,8 @@ def create_admin_user(db):
         userId="admin",
         username="admin",
         password=hash_password("1234"),
+        email="admin@fams.edu.vn",
+        backup_email=None,
         role="admin",
         isActive=True
     )
@@ -39,21 +41,28 @@ def import_teachers(db):
             full_name = row["FullName"].strip()
             name_parts = full_name.split()
             
-            first_name = " ".join(name_parts[:-1]) if len(name_parts) > 1 else full_name
-            last_name = name_parts[-1] if name_parts else ""
+            # Đảo ngược FirstName và LastName cho phù hợp với tên tiếng Việt
+            # LastName là họ (đầu cùng), FirstName là tên (cuối cùng)
+            last_name = " ".join(name_parts[:-1]) if len(name_parts) > 1 else ""
+            first_name = name_parts[-1] if name_parts else full_name
             
             date_of_birth = parse_date(row.get("DateOfBirth", ""))
             phone = row.get("Phone", "")
             gender = row.get("Gender", "False").lower() in ["true", "1", "yes"]
             major = row.get("Major", "")
             weekly_capacity = row.get("WeeklyCapacity", "10")
-            username = generate_username(full_name, teacher_id_counter)
+            username = generate_username(full_name, teacher_id_counter, role="teacher")
+            
+            # Tạo email
+            email = f"{username}@fams.edu.vn"
             
             # Create user account
             user = UserAccount(
                 userId=username,
                 username=username,
                 password=hash_password("123456"),
+                email=email,
+                backup_email=None,
                 role="teacher",
                 isActive=True
             )
@@ -65,7 +74,7 @@ def import_teachers(db):
                 userId=username,
                 firstName=first_name,
                 lastName=last_name,
-                email=f"{username}@fams.edu.vn",
+                email=email,
                 phone=phone
             )
             
@@ -105,14 +114,19 @@ def import_students(db, csv_path, batch_id, student_id_start):
                 continue
             
             name_parts = fn.split()
-            first_name = " ".join(name_parts[:-1]) if len(name_parts) > 1 else fn
-            last_name = name_parts[-1] if name_parts else ""
+            # Đảo ngược FirstName và LastName cho phù hợp với tên tiếng Việt
+            # LastName là họ (đầu cùng), FirstName là tên (cuối cùng)
+            last_name = " ".join(name_parts[:-1]) if len(name_parts) > 1 else ""
+            first_name = name_parts[-1] if name_parts else fn
                 
             dob = parse_date(row.get("DateOfBirth") or row.get("Date of Birth") or "")
             gender = row.get("Gender", "False").lower() in ["true", "1", "yes"]
             phone = row.get("Phone", "")
             address = row.get("Address", "")
-            username = generate_username(fn, sid, batch_id)
+            username = generate_username(fn, sid, batch_id, role="student")
+            
+            # Tạo email
+            email = f"{username}@fams.edu.vn"
             
             # Xử lý thông tin phụ huynh
             parent_names = []
@@ -169,6 +183,8 @@ def import_students(db, csv_path, batch_id, student_id_start):
                 userId=username,
                 username=username,
                 password=hash_password("123456"),
+                email=email,
+                backup_email=None,
                 role="student",
                 isActive=True
             )
@@ -180,7 +196,7 @@ def import_students(db, csv_path, batch_id, student_id_start):
                 userId=username,
                 firstName=first_name,
                 lastName=last_name,
-                email=f"{username}@fams.edu.vn",
+                email=email,
                 phone=phone,
                 dateOfBirth=dob,
                 gender="Male" if gender else "Female",
@@ -291,8 +307,10 @@ def import_parents(db):
                 
             # Nếu chưa có, tạo parent mới
             name_parts = parent_name.split()
-            first_name = " ".join(name_parts[:-1]) if len(name_parts) > 1 else parent_name
-            last_name = name_parts[-1] if name_parts else ""
+            # Đảo ngược FirstName và LastName cho phù hợp với tên tiếng Việt
+            # LastName là họ (đầu cùng), FirstName là tên (cuối cùng)
+            last_name = " ".join(name_parts[:-1]) if len(name_parts) > 1 else ""
+            first_name = name_parts[-1] if name_parts else parent_name
             
             career = parent_careers[i] if i < len(parent_careers) else ""
             phone = parent_phones[i] if i < len(parent_phones) else ""
@@ -301,13 +319,18 @@ def import_parents(db):
             # Đảm bảo phone là chuỗi
             phone = str(phone) if phone else ""
             
-            username = generate_username(parent_name, id_num=pid)
+            username = generate_username(parent_name, id_num=pid, role="parent")
+            
+            # Tạo email
+            email = f"{username}@fams.edu.vn"
             
             # Create user account
             user = UserAccount(
                 userId=username,
                 username=username,
                 password=hash_password("123456"),
+                email=email,
+                backup_email=None,
                 role="parent",
                 isActive=True
             )
@@ -319,7 +342,7 @@ def import_parents(db):
                 userId=username,
                 firstName=first_name,
                 lastName=last_name,
-                email=f"{username}@fams.edu.vn",
+                email=email,
                 phone=phone
             )
             

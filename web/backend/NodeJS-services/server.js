@@ -2,13 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
-const dotenv = require('dotenv');
 const { connectToFAMS, checkConnectionStatus, getDatabaseInfo, apiRouter } = require('./database');
 const errorService = require('./services/errorService');
 const databaseService = require('./services/databaseService');
-
-// Load environment variables
-dotenv.config();
 
 // Route files
 const authRoutes = require('./routes/authRoutes');
@@ -17,6 +13,7 @@ const userRoutes = require('./routes/userRoutes');
 const teacherRoutes = require('./routes/teacherRoutes');
 const parentRoutes = require('./routes/parentRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -40,12 +37,51 @@ const upload = multer({
 
 // Middleware
 app.use(cors({
-  origin: '*', // Allow all origins for testing
+  origin: '*', // Allow all origins
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With', 
+    'Accept', 
+    'Origin', 
+    'Access-Control-Request-Method', 
+    'Access-Control-Request-Headers',
+    'X-Access-Token'
+  ],
+  exposedHeaders: ['Content-Length', 'X-Requested-With', 'Authorization', 'Content-Type'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
-app.use(express.json());
+
+// Add security headers middleware
+app.use((req, res, next) => {
+  // Disable caching for API responses
+  res.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.header('Pragma', 'no-cache');
+  res.header('Expires', '0');
+  
+  // Help protect against clickjacking
+  res.header('X-Frame-Options', 'DENY');
+  
+  // Help protect against XSS attacks
+  res.header('X-XSS-Protection', '1; mode=block');
+  
+  // Prevent MIME type sniffing
+  res.header('X-Content-Type-Options', 'nosniff');
+  
+  // Allow cross-origin resource sharing
+  res.header('Access-Control-Allow-Origin', '*');
+  
+  next();
+});
+
+app.use(express.json({ limit: '50mb' })); // Increase JSON payload limit
+app.use(express.urlencoded({ extended: true, limit: '50mb' })); // Parse URL-encoded bodies with increased limit
+
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Test route để kiểm tra kết nối
 app.get('/api/test', (req, res) => {
@@ -83,20 +119,66 @@ app.use('/api/users', userRoutes);
 app.use('/api/teachers', teacherRoutes);
 app.use('/api/parents', parentRoutes);
 app.use('/api/schedules', scheduleRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/database', apiRouter);
 
-// Serve the test API page
+// Serve the test API pages
 app.get('/api-test', (req, res) => {
-  res.sendFile(path.join(__dirname, 'api-test.html'));
+  res.redirect('/api-test/index.html');
 });
 
 // Root route
 app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Welcome to FAMS API!',
+  const apiInfo = {
+    name: 'FAMS API',
     version: '1.0.0',
-    documentation: '/api-test' 
-  });
+    description: 'Faculty/School Academic Management System API',
+    environment: process.env.NODE_ENV || 'development',
+    time: new Date().toISOString(),
+    server: {
+      platform: process.platform,
+      nodeVersion: process.version
+    },
+    endpoints: {
+      auth: {
+        base: '/api/auth',
+        endpoints: [
+          { method: 'POST', path: '/login', description: 'Đăng nhập (hỗ trợ userId/email/backup_email)' },
+          { method: 'POST', path: '/register', description: 'Đăng ký tài khoản mới' },
+          { method: 'GET', path: '/me', description: 'Lấy thông tin người dùng hiện tại' },
+          { method: 'POST', path: '/refresh-token', description: 'Làm mới token' }
+        ]
+      },
+      students: {
+        base: '/api/students',
+        endpoints: [
+          { method: 'GET', path: '/', description: 'Lấy danh sách học sinh' },
+          { method: 'GET', path: '/:id', description: 'Lấy thông tin chi tiết học sinh' },
+          { method: 'POST', path: '/', description: 'Tạo học sinh mới' },
+          { method: 'PUT', path: '/:id', description: 'Cập nhật thông tin học sinh' },
+          { method: 'DELETE', path: '/:id', description: 'Xóa học sinh' }
+        ]
+      },
+      teachers: {
+        base: '/api/teachers',
+        description: 'API quản lý giáo viên'
+      },
+      parents: {
+        base: '/api/parents',
+        description: 'API quản lý phụ huynh'
+      },
+      schedules: {
+        base: '/api/schedules',
+        description: 'API quản lý lịch học'
+      }
+    },
+    documentation: `${req.protocol}://${req.get('host')}/api-test`,
+    status: {
+      database: checkConnectionStatus() ? 'connected' : 'disconnected'
+    }
+  };
+
+  res.json(apiInfo);
 });
 
 // Global error handler
@@ -118,9 +200,10 @@ const startServer = async () => {
     console.log('======================================');
 
     // Start server
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on port ${PORT}`);
-      console.log(`Test API page available at: http://localhost:${PORT}/api-test`);
+      console.log(`Server is accessible at http://0.0.0.0:${PORT}`);
+      console.log(`Test API page available at: http://0.0.0.0:${PORT}/api-test`);
     });
   } catch (error) {
     console.error('Server initialization error:', error);

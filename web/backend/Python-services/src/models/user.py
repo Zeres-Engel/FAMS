@@ -12,6 +12,8 @@ class UserAccount(BaseModel):
     userId: str = Field(..., description="Unique identifier for the user")
     username: str = Field(..., description="Username for login")
     password: str = Field(..., description="Hashed password")
+    email: Optional[str] = Field(None, description="User's primary email for login")
+    backup_email: Optional[str] = Field(None, description="User's backup email for login")
     role: str = Field(..., description="User role (admin, teacher, student, parent)")
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     updatedAt: datetime = Field(default_factory=datetime.utcnow)

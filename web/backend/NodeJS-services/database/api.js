@@ -16,6 +16,9 @@ const {
   Curriculum
 } = require('./models');
 
+// Import batch service
+const batchService = require('./batchService');
+
 // Get database info
 router.get('/info', async (req, res) => {
   try {
@@ -32,6 +35,86 @@ router.get('/batches', async (req, res) => {
   try {
     const batches = await Batch.find().sort({ batchId: 1 });
     res.json({ success: true, count: batches.length, data: batches });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get batch options based on current year
+router.get('/batches/options', async (req, res) => {
+  try {
+    const currentYear = req.query.year ? parseInt(req.query.year) : new Date().getFullYear();
+    const count = req.query.count ? parseInt(req.query.count) : 5;
+    
+    const result = await batchService.generateBatchOptions(currentYear, count);
+    
+    if (result.success) {
+      res.json({ 
+        success: true, 
+        count: result.data.length, 
+        currentYear,
+        data: result.data 
+      });
+    } else {
+      res.status(500).json({ success: false, error: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Create batch if not exists
+router.post('/batches/create-if-not-exists', async (req, res) => {
+  try {
+    const batchData = req.body;
+    
+    // Ensure we have either startDate or startYear
+    if (!batchData.startDate && !batchData.startYear && !batchData.batchId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required batch fields: startDate, startYear, or batchId'
+      });
+    }
+    
+    // If startYear is provided but not startDate, generate startDate
+    if (!batchData.startDate && batchData.startYear) {
+      batchData.startDate = batchService.generateStartDate(parseInt(batchData.startYear));
+    }
+    
+    // If endYear is provided but not endDate, generate endDate
+    if (!batchData.endDate && batchData.endYear) {
+      batchData.endDate = batchService.generateEndDate(parseInt(batchData.endYear));
+    }
+    
+    // If we have a batchId but no dates, extract years from batchId and generate dates
+    if (batchData.batchId && (!batchData.startDate || !batchData.endDate)) {
+      const parts = batchData.batchId.split('-');
+      if (parts.length === 2) {
+        const startYear = parseInt(parts[0]);
+        const endYear = parseInt(parts[1]);
+        
+        if (!batchData.startDate && !isNaN(startYear)) {
+          batchData.startDate = batchService.generateStartDate(startYear);
+        }
+        
+        if (!batchData.endDate && !isNaN(endYear)) {
+          batchData.endDate = batchService.generateEndDate(endYear);
+        }
+      }
+    }
+    
+    // Create the batch
+    const result = await batchService.createBatchIfNotExists(batchData);
+    
+    if (result.success) {
+      res.status(result.isNew ? 201 : 200).json({
+        success: true,
+        data: result.data,
+        isNew: result.isNew
+      });
+    } else {
+      res.status(500).json({ success: false, error: result.error });
+    }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -316,6 +399,47 @@ router.post('/reinitialize', async (req, res) => {
     console.log('To initialize database manually, run: npm run init-db');
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/admin/users/:type/basic
+router.get('/users/:type/basic', async (req, res) => {
+  try {
+    const { type } = req.params;
+    const limit = 5; // Chỉ lấy 5 bản ghi
+    
+    let data = [];
+    
+    if (type === 'student') {
+      data = await Student.find().limit(limit).lean();
+    } 
+    else if (type === 'teacher') {
+      data = await Teacher.find().limit(limit).lean();
+    } 
+    else if (type === 'parent') {
+      data = await Parent.find().limit(limit).lean();
+    } 
+    else {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user type',
+        data: []
+      });
+    }
+    
+    return res.json({
+      success: true,
+      count: data.length,
+      data: data
+    });
+    
+  } catch (error) {
+    console.error(`Error fetching ${req.params.type} list:`, error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Server error',
+      error: error.stack
+    });
   }
 });
 

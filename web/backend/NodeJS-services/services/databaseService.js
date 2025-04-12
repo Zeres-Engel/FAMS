@@ -136,4 +136,4 @@ exports.deleteById = async (model, id, idField = '_id') => {
     console.error(`Error deleting document by ${idField}:`, error);
     return false;
   }
-}; 
+};
