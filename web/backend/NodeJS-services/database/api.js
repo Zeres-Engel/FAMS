@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 
 // Import models
 const {
@@ -18,6 +19,9 @@ const {
 
 // Import batch service
 const batchService = require('./batchService');
+
+// Import constants
+const { COLLECTIONS } = require('./constants');
 
 // Get database info
 router.get('/info', async (req, res) => {
@@ -402,44 +406,440 @@ router.post('/reinitialize', async (req, res) => {
   }
 });
 
-// GET /api/admin/users/:type/basic
+// Get all subjects for filter dropdown
+router.get('/subjects/list', async (req, res) => {
+  try {
+    // Get all subjects to use for filtering teachers
+    const subjects = await Subject.find().sort({ name: 1 }).select('subjectId name type');
+    
+    res.json({
+      success: true,
+      count: subjects.length,
+      data: subjects
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// GET /api/database/users/:type/basic
 router.get('/users/:type/basic', async (req, res) => {
   try {
     const { type } = req.params;
-    const limit = 5; // Chỉ lấy 5 bản ghi
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const search = req.query.search || '';
+    const batchId = req.query.batchId;
+    const major = req.query.major;
     
-    let data = [];
+    let model;
+    if (type === 'student') model = Student;
+    else if (type === 'teacher') model = Teacher;
+    else if (type === 'parent') model = Parent;
+    else return res.status(400).json({ success: false, message: 'Invalid user type' });
     
+    // Xây dựng query tìm kiếm
+    const query = {};
+    
+    // Thêm điều kiện tìm kiếm nếu có
+    if (search) {
+      if (type === 'student') {
+        // Tìm kiếm học sinh theo họ, tên, userId hoặc họ tên kết hợp
+        query.$or = [
+          { firstName: { $regex: search, $options: 'i' } },
+          { lastName: { $regex: search, $options: 'i' } },
+          { userId: { $regex: search, $options: 'i' } },
+          { fullName: { $regex: search, $options: 'i' } }
+        ];
+      } else if (type === 'teacher') {
+        query.$or = [
+          { firstName: { $regex: search, $options: 'i' } },
+          { lastName: { $regex: search, $options: 'i' } },
+          { userId: { $regex: search, $options: 'i' } },
+          { fullName: { $regex: search, $options: 'i' } },
+          { major: { $regex: search, $options: 'i' } }
+        ];
+      } else if (type === 'parent') {
+        query.$or = [
+          { firstName: { $regex: search, $options: 'i' } },
+          { lastName: { $regex: search, $options: 'i' } },
+          { userId: { $regex: search, $options: 'i' } },
+          { fullName: { $regex: search, $options: 'i' } }
+        ];
+      }
+    }
+    
+    // Lọc theo batch ID nếu được chỉ định (áp dụng cho học sinh)
+    if (batchId && type === 'student') {
+      query.batchId = parseInt(batchId);
+    }
+    
+    // Lọc theo major cho giáo viên nếu được chỉ định
+    if (major && type === 'teacher') {
+      query.major = { $regex: major, $options: 'i' };
+    }
+    
+    // Lọc theo trạng thái active/inactive
+    if (req.query.status) {
+      if (req.query.status === 'active') {
+        query.isActive = true;
+      } else if (req.query.status === 'inactive') {
+        query.isActive = false;
+      }
+    }
+    
+    // Tính tổng số bản ghi để phân trang
+    let total;
+    
+    // Lấy dữ liệu với skip và limit
+    let data;
     if (type === 'student') {
-      data = await Student.find().limit(limit).lean();
-    } 
-    else if (type === 'teacher') {
-      data = await Teacher.find().limit(limit).lean();
-    } 
-    else if (type === 'parent') {
-      data = await Parent.find().limit(limit).lean();
-    } 
-    else {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid user type',
-        data: []
-      });
+      // Count total for students
+      total = await model.countDocuments(query);
+      
+      // Sử dụng aggregate để join với bảng Class
+      data = await model.aggregate([
+        { $match: query },
+        { $skip: skip },
+        { $limit: limit },
+        {
+          $lookup: {
+            from: COLLECTIONS.CLASS, // Sử dụng constant thay vì 'classes'
+            localField: 'classId',
+            foreignField: 'classId',
+            as: 'classInfo'
+          }
+        },
+        { 
+          $addFields: {
+            className: { 
+              $cond: [
+                { $gt: [{ $size: "$classInfo" }, 0] },
+                { $arrayElemAt: ["$classInfo.className", 0] }, 
+                "Chưa xác định"  // Giá trị mặc định nếu không tìm thấy lớp
+              ]
+            }
+          }
+        },
+        {
+          $project: {
+            _id: 1, studentId: 1, userId: 1, firstName: 1, lastName: 1, fullName: 1,
+            email: 1, phone: 1, dateOfBirth: 1, gender: 1, address: 1,
+            createdAt: 1, updatedAt: 1, isActive: 1, classId: 1, batchId: 1,
+            parentIds: 1, parentNames: 1, parentCareers: 1, parentPhones: 1, parentGenders: 1,
+            className: 1  // Giữ lại trường className đã tạo
+          }
+        }
+      ]);
+    } else if (type === 'teacher') {
+      // Count total for teachers
+      total = await model.countDocuments(query);
+      
+      // For teachers, lookup classes where they are homeroom teachers
+      data = await model.aggregate([
+        { $match: query },
+        { $skip: skip },
+        { $limit: limit },
+        {
+          $lookup: {
+            from: COLLECTIONS.CLASS,
+            localField: 'teacherId',
+            foreignField: 'homeroomTeacherId',
+            as: 'homeroomClasses'
+          }
+        },
+        {
+          $addFields: {
+            homeroomClassName: {
+              $cond: [
+                { $gt: [{ $size: "$homeroomClasses" }, 0] },
+                { $arrayElemAt: ["$homeroomClasses.className", 0] },
+                "Không chủ nhiệm lớp nào"
+              ]
+            },
+            numberOfHomeroomClasses: { $size: "$homeroomClasses" }
+          }
+        },
+        {
+          $project: {
+            _id: 1, teacherId: 1, userId: 1, firstName: 1, lastName: 1, fullName: 1,
+            email: 1, phone: 1, dateOfBirth: 1, gender: 1, address: 1, major: 1,
+            WeeklyCapacity: 1, isActive: 1, createdAt: 1, updatedAt: 1,
+            homeroomClassName: 1, numberOfHomeroomClasses: 1
+          }
+        }
+      ]);
+    } else if (type === 'parent') {
+      // Nếu đang lọc theo batchId cho phụ huynh
+      if (batchId) {
+        try {
+          console.log(`Bắt đầu lọc phụ huynh theo batchId: ${batchId}`);
+          
+          // Đầu tiên tìm tất cả học sinh trong batch
+          const studentsInBatch = await Student.find({ batchId: parseInt(batchId) }).select('studentId');
+          console.log(`Tìm thấy ${studentsInBatch.length} học sinh trong khóa ${batchId}`);
+          
+          if (studentsInBatch && studentsInBatch.length > 0) {
+            const studentIds = studentsInBatch.map(student => student.studentId);
+            console.log('StudentIds:', studentIds);
+            
+            // Xác định tên collection đúng cho ParentStudent
+            const parentStudentCollection = COLLECTIONS.PARENT_STUDENT;
+            console.log('Tên collection ParentStudent:', parentStudentCollection);
+            
+            // Tìm tất cả liên kết phụ huynh-học sinh có chứa các studentId này
+            const ParentStudent = mongoose.model('ParentStudent');
+            const parentStudentLinks = await ParentStudent.find({ 
+              studentId: { $in: studentIds } 
+            });
+            console.log(`Tìm thấy ${parentStudentLinks.length} mối quan hệ phụ huynh-học sinh`);
+            
+            if (parentStudentLinks && parentStudentLinks.length > 0) {
+              // Lấy danh sách parentId từ các liên kết
+              const parentIds = parentStudentLinks.map(link => link.parentId);
+              console.log('ParentIds:', parentIds);
+              
+              // Thêm điều kiện tìm phụ huynh có con trong batch được chỉ định
+              query.parentId = { $in: parentIds };
+            } else {
+              console.log('Không tìm thấy mối quan hệ phụ huynh-học sinh cho các học sinh trong khóa này');
+              // Trả về mảng trống nếu không có kết quả
+              return res.json({
+                success: true,
+                data: [],
+                total: 0,
+                page: page,
+                pages: 0
+              });
+            }
+          } else {
+            console.log('Không tìm thấy học sinh nào trong khóa này');
+            // Trả về mảng trống nếu không có học sinh trong khóa
+            return res.json({
+              success: true,
+              data: [],
+              total: 0,
+              page: page,
+              pages: 0
+            });
+          }
+        } catch (filterError) {
+          console.error('Lỗi khi lọc phụ huynh theo batchId:', filterError);
+          // Nếu có lỗi, trả về thông báo lỗi
+          return res.status(500).json({
+            success: false,
+            message: `Lỗi khi lọc phụ huynh theo batchId: ${filterError.message}`
+          });
+        }
+      }
+      
+      // Count total for parents with the full query
+      try {
+        total = await model.countDocuments(query);
+        console.log(`Tổng số phụ huynh phù hợp với điều kiện: ${total}`);
+      } catch (countError) {
+        console.error('Lỗi khi đếm số phụ huynh:', countError);
+        total = 0;
+      }
+      
+      // Với phụ huynh, tìm thông tin về con của họ
+      try {
+        data = await model.aggregate([
+          { $match: query },
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $lookup: {
+              from: COLLECTIONS.PARENT_STUDENT,
+              localField: 'parentId',
+              foreignField: 'parentId',
+              as: 'parentStudentLinks'
+            }
+          },
+          {
+            $lookup: {
+              from: COLLECTIONS.STUDENT,
+              localField: 'parentStudentLinks.studentId',
+              foreignField: 'studentId',
+              as: 'children'
+            }
+          },
+          {
+            $addFields: {
+              childrenCount: { $size: "$children" },
+              childrenInfo: {
+                $map: {
+                  input: "$children",
+                  as: "child",
+                  in: {
+                    studentId: "$$child.studentId",
+                    userId: "$$child.userId",
+                    fullName: "$$child.fullName",
+                    batchId: "$$child.batchId"
+                  }
+                }
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 1, parentId: 1, userId: 1, firstName: 1, lastName: 1, fullName: 1,
+              email: 1, phone: 1, career: 1, gender: 1, isActive: 1, createdAt: 1, updatedAt: 1,
+              childrenCount: 1, childrenInfo: 1
+            }
+          }
+        ]);
+        
+        console.log(`Đã lấy ${data.length} phụ huynh từ database`);
+      } catch (aggregateError) {
+        console.error('Lỗi khi thực hiện aggregate phụ huynh:', aggregateError);
+        return res.status(500).json({
+          success: false,
+          message: `Lỗi khi thực hiện truy vấn phụ huynh: ${aggregateError.message}`
+        });
+      }
     }
     
     return res.json({
       success: true,
-      count: data.length,
-      data: data
+      data: data,
+      total: total,
+      page: page,
+      pages: Math.ceil(total / limit)
     });
-    
   } catch (error) {
-    console.error(`Error fetching ${req.params.type} list:`, error);
+    console.error(`Error in /users/:type/basic:`, error);
     return res.status(500).json({
       success: false,
-      message: error.message || 'Server error',
-      error: error.stack
+      message: error.message || 'Server error'
     });
+  }
+});
+
+// Update student information
+router.put('/students/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // Remove fields that shouldn't be directly updated
+    const { userId, studentId, _id, ...safeUpdateData } = updateData;
+
+    // If parent information is included, handle it
+    if (updateData.parentNames || updateData.parentPhones || updateData.parentCareers || updateData.parentGenders) {
+      // Keep these arrays in sync if they exist
+      safeUpdateData.parentNames = updateData.parentNames || [];
+      safeUpdateData.parentPhones = updateData.parentPhones || [];
+      safeUpdateData.parentCareers = updateData.parentCareers || [];
+      safeUpdateData.parentGenders = updateData.parentGenders || [];
+    }
+
+    // Update fullName if firstName or lastName changes
+    if (updateData.firstName || updateData.lastName) {
+      const student = await Student.findOne({ studentId: id });
+      const firstName = updateData.firstName || student.firstName;
+      const lastName = updateData.lastName || student.lastName;
+      safeUpdateData.fullName = `${firstName} ${lastName}`.trim();
+    }
+
+    // Update the student
+    const updatedStudent = await Student.findOneAndUpdate(
+      { studentId: id },
+      { $set: safeUpdateData },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedStudent) {
+      return res.status(404).json({ success: false, message: 'Student not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Student updated successfully',
+      data: updatedStudent
+    });
+  } catch (error) {
+    console.error('Error updating student:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Update teacher information
+router.put('/teachers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // Remove fields that shouldn't be directly updated
+    const { userId, teacherId, _id, ...safeUpdateData } = updateData;
+
+    // Update fullName if firstName or lastName changes
+    if (updateData.firstName || updateData.lastName) {
+      const teacher = await Teacher.findOne({ teacherId: id });
+      const firstName = updateData.firstName || teacher.firstName;
+      const lastName = updateData.lastName || teacher.lastName;
+      safeUpdateData.fullName = `${firstName} ${lastName}`.trim();
+    }
+
+    // Update the teacher
+    const updatedTeacher = await Teacher.findOneAndUpdate(
+      { teacherId: id },
+      { $set: safeUpdateData },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedTeacher) {
+      return res.status(404).json({ success: false, message: 'Teacher not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Teacher updated successfully',
+      data: updatedTeacher
+    });
+  } catch (error) {
+    console.error('Error updating teacher:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Update parent information
+router.put('/parents/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // Remove fields that shouldn't be directly updated
+    const { userId, parentId, _id, ...safeUpdateData } = updateData;
+
+    // Update fullName if firstName or lastName changes
+    if (updateData.firstName || updateData.lastName) {
+      const parent = await Parent.findOne({ parentId: id });
+      const firstName = updateData.firstName || parent.firstName;
+      const lastName = updateData.lastName || parent.lastName;
+      safeUpdateData.fullName = `${firstName} ${lastName}`.trim();
+    }
+
+    // Update the parent
+    const updatedParent = await Parent.findOneAndUpdate(
+      { parentId: id },
+      { $set: safeUpdateData },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedParent) {
+      return res.status(404).json({ success: false, message: 'Parent not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Parent updated successfully',
+      data: updatedParent
+    });
+  } catch (error) {
+    console.error('Error updating parent:', error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
