@@ -321,7 +321,7 @@ def format_date(date_obj):
         return str(date_obj)
 
 
-def export_semester_schedules(db, semester_doc, output_dir):
+def export_semester_schedules(db, semester_doc, output_dir="src/data/schedules"):
     """
     Export schedules for a specific semester using aggregation for better performance
     

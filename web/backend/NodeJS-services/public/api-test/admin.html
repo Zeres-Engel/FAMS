@@ -29,7 +29,7 @@
         
         <div class="alert alert-info mb-3">
             <h5>Thông tin API Admin</h5>
-            <p class="mb-0">API dành cho quản trị viên: quản lý người dùng, kiểm tra trạng thái hệ thống, và thao tác với database.</p>
+            <p class="mb-0">API dành cho quản trị viên: quản lý và tạo các đối tượng trong hệ thống (học sinh, giáo viên, phụ huynh).</p>
         </div>
         
         <!-- Status bar for authentication info -->
@@ -46,45 +46,180 @@
             </div>
         </div>
         
-        <!-- Users List API -->
-        <div class="api-section" id="users-section">
+        <!-- Create User API -->
+        <div class="api-section" id="unified-create-section">
             <div class="api-title">
-                <h3>Danh sách người dùng</h3>
-                <span class="endpoint">GET /api/users</span>
+                <h3>Create User API</h3>
+                <span class="endpoint">POST /api/admin/users</span>
             </div>
             
             <div class="row">
                 <div class="col-md-6">
                     <div class="card">
                         <div class="card-header bg-primary text-white">
-                            Lấy danh sách người dùng
+                            Tạo người dùng (Học sinh/Giáo viên)
                         </div>
                         <div class="card-body">
-                            <form id="getUsersForm">
+                            <form id="unifiedCreateForm">
                                 <div class="mb-3">
-                                    <label for="role" class="form-label">Vai trò</label>
-                                    <select class="form-select" id="role">
-                                        <option value="">Tất cả</option>
-                                        <option value="admin">Admin</option>
-                                        <option value="manager">Manager</option>
-                                        <option value="teacher">Teacher</option>
-                                        <option value="student">Student</option>
-                                        <option value="parent">Parent</option>
+                                    <label for="roleField" class="form-label">Loại người dùng</label>
+                                    <select class="form-select" id="roleField" required>
+                                        <option value="Student">Học sinh</option>
+                                        <option value="Teacher">Giáo viên</option>
                                     </select>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="limit" class="form-label">Số lượng hiển thị</label>
-                                    <input type="number" class="form-control" id="limit" placeholder="10">
+                                
+                                <!-- Basic User Fields -->
+                                <div class="border p-3 mb-3">
+                                    <h5>Thông tin cơ bản</h5>
+                                    <div class="mb-3">
+                                        <label for="firstNameField" class="form-label">Tên</label>
+                                        <input type="text" class="form-control" id="firstNameField" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="lastNameField" class="form-label">Họ</label>
+                                        <input type="text" class="form-control" id="lastNameField" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="phoneField" class="form-label">Số điện thoại</label>
+                                        <input type="text" class="form-control" id="phoneField">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Giới tính</label>
+                                        <div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="genderField" id="maleField" value="true" checked>
+                                                <label class="form-check-label" for="maleField">Nam</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="radio" name="genderField" id="femaleField" value="false">
+                                                <label class="form-check-label" for="femaleField">Nữ</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="passwordField" class="form-label">Mật khẩu</label>
+                                        <input type="password" class="form-control" id="passwordField" value="1234">
+                                        <small class="text-muted">Mặc định: 1234</small>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="backupEmailField" class="form-label">Email dự phòng (không bắt buộc)</label>
+                                        <input type="email" class="form-control" id="backupEmailField">
+                                        <small class="text-muted">Email chính sẽ được tự động tạo từ UserID</small>
+                                    </div>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="page" class="form-label">Trang</label>
-                                    <input type="number" class="form-control" id="page" placeholder="1">
+                                
+                                <!-- Student-specific fields -->
+                                <div id="studentFields" class="entity-fields">
+                                    <div class="mb-3">
+                                        <label for="batchField" class="form-label">Khóa học</label>
+                                        <select class="form-select" id="batchField" required>
+                                            <option value="">-- Chọn khóa học --</option>
+                                            <!-- Batch options will be loaded dynamically -->
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="addressField" class="form-label">Địa chỉ</label>
+                                        <input type="text" class="form-control" id="addressField">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="dobField" class="form-label">Ngày sinh</label>
+                                        <input type="date" class="form-control" id="dobField">
+                                    </div>
+                                    
+                                    <!-- Parent section -->
+                                    <div class="border p-3 mb-3">
+                                        <h5>Thông tin phụ huynh <button type="button" id="addParentBtn" class="btn btn-sm btn-primary">+ Thêm phụ huynh</button></h5>
+                                        
+                                        <div id="parentsContainer">
+                                            <!-- Parent 1 (default) -->
+                                            <div class="parent-entry border-bottom pb-2 mb-3">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <h6 class="mb-0">Phụ huynh #1</h6>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger remove-parent-btn" style="display:none;">Xóa</button>
+                                                </div>
+                                                
+                                                <!-- Manual parent info entry -->
+                                                <div class="manual-parent-info">
+                                                    <div class="row mb-2">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Họ tên phụ huynh</label>
+                                                            <input type="text" class="form-control parent-name">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Số điện thoại</label>
+                                                            <input type="text" class="form-control parent-phone">
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="row mb-2">
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Nghề nghiệp</label>
+                                                            <input type="text" class="form-control parent-career">
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <label class="form-label">Giới tính</label>
+                                                            <div>
+                                                                <div class="form-check form-check-inline">
+                                                                    <input class="form-check-input parent-gender" type="radio" name="parentGender1" value="true" checked>
+                                                                    <label class="form-check-label">Nam</label>
+                                                                </div>
+                                                                <div class="form-check form-check-inline">
+                                                                    <input class="form-check-input parent-gender" type="radio" name="parentGender1" value="false">
+                                                                    <label class="form-check-label">Nữ</label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary">Gửi yêu cầu</button>
+                                
+                                <!-- Teacher-specific fields -->
+                                <div id="teacherFields" class="entity-fields" style="display:none;">
+                                    <div class="mb-3">
+                                        <label for="teacherIdField" class="form-label">Teacher ID</label>
+                                        <input type="text" class="form-control" id="teacherIdField" placeholder="Leave empty for auto-generation">
+                                        <small class="text-muted">Leave empty to auto-generate a unique ID</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="teacherAddressField" class="form-label">Địa chỉ</label>
+                                        <input type="text" class="form-control" id="teacherAddressField">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="teacherDobField" class="form-label">Ngày sinh</label>
+                                        <input type="date" class="form-control" id="teacherDobField">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="majorField" class="form-label">Chuyên ngành</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="majorField">
+                                            <button class="btn btn-outline-secondary" type="button" id="addMajorBtn">+</button>
+                                        </div>
+                                        <div id="majorList" class="mt-2">
+                                            <!-- Majors will be added here dynamically -->
+                                        </div>
+                                        <input type="hidden" id="majorListInput" value="">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="weeklyCapacityField" class="form-label">Số giờ dạy/tuần</label>
+                                        <input type="number" class="form-control" id="weeklyCapacityField" value="10">
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-info">
+                                    <small>Lưu ý: UserID và Email sẽ được tự động tạo dựa trên thông tin người dùng</small>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">Tạo mới</button>
                             </form>
                             
-                            <div class="mt-3 response-area" id="users-response-message">
-                                <!-- Users response message will be displayed here -->
+                            <div class="mt-3 response-area" id="unified-create-response-message">
+                                <!-- Response message will be displayed here -->
                             </div>
                         </div>
                     </div>
@@ -96,199 +231,135 @@
                             Raw JSON Request
                         </div>
                         <div class="card-body">
-                            <textarea id="users-json" class="json-editor">{
-  "role": "student",
+                            <textarea id="unified-create-json" class="json-editor">{
+  "role": "Student",
+  "firstName": "Minh",
+  "lastName": "Nguyễn",
+  "phone": "0912345678",
+  "address": "Hà Nội",
+  "dateOfBirth": "2010-01-01",
+  "gender": true,
+  "classId": 1,
+  "batchId": 3
+}</textarea>
+                            <button id="unified-create-execute" class="btn btn-secondary mt-2">Execute</button>
+                            
+                            <div class="mt-3">
+                                <h6 class="text-muted">Response:</h6>
+                                <pre id="unified-create-response" class="response-area">// Kết quả API sẽ hiển thị ở đây</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- User List API -->
+        <div class="api-section" id="user-list-section">
+            <div class="api-title">
+                <h3>User List API</h3>
+                <span class="endpoint">GET /api/admin/users/:type</span>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-7">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            Danh sách người dùng
+                        </div>
+                        <div class="card-body">
+                            <!-- User type selector tabs -->
+                            <ul class="nav nav-tabs mb-3" id="userTypeTab" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="student-tab" data-bs-toggle="tab" data-type="student" type="button" role="tab" aria-controls="student" aria-selected="true">Học sinh</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="teacher-tab" data-bs-toggle="tab" data-type="teacher" type="button" role="tab" aria-controls="teacher" aria-selected="false">Giáo viên</button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="parent-tab" data-bs-toggle="tab" data-type="parent" type="button" role="tab" aria-controls="parent" aria-selected="false">Phụ huynh</button>
+                                </li>
+                            </ul>
+                            
+                            <!-- Filter options -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="userSearchInput" placeholder="Tìm kiếm...">
+                                        <button class="btn btn-outline-secondary" type="button" id="userSearchButton">
+                                            <i class="bi bi-search"></i> Tìm
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <select class="form-select" id="userFilterSelect">
+                                        <option value="">-- Lọc --</option>
+                                        <!-- Filter options will be populated based on user type -->
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- User list table -->
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover" id="userListTable">
+                                    <thead>
+                                        <tr id="userTableHeader">
+                                            <th>Thao tác</th>
+                                            <!-- Table headers will be dynamically populated -->
+                                        </tr>
+                                    </thead>
+                                    <tbody id="userTableBody">
+                                        <!-- Table data will be dynamically populated -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Pagination -->
+                            <nav aria-label="User list pagination">
+                                <ul class="pagination justify-content-center" id="userListPagination">
+                                    <!-- Pagination will be dynamically populated -->
+                                </ul>
+                            </nav>
+                            
+                            <!-- Loading indicator -->
+                            <div class="text-center d-none" id="userListLoading">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Đang tải...</span>
+                                </div>
+                                <p class="text-muted mt-2">Đang tải dữ liệu...</p>
+                            </div>
+                            
+                            <!-- Empty state message -->
+                            <div class="alert alert-info d-none" id="userListEmpty">
+                                Không có dữ liệu người dùng để hiển thị.
+                            </div>
+                            
+                            <!-- Error message -->
+                            <div class="alert alert-danger d-none" id="userListError">
+                                Đã xảy ra lỗi khi tải dữ liệu.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-5">
+                    <div class="card">
+                        <div class="card-header bg-secondary text-white">
+                            Raw JSON Request
+                        </div>
+                        <div class="card-body">
+                            <textarea id="user-list-json-request" class="json-editor">{
+  "type": "student",
+  "search": "",
+  "page": 1,
   "limit": 10,
-  "page": 1
+  "filter": ""
 }</textarea>
-                            <button id="users-execute" class="btn btn-secondary mt-2">Execute</button>
+                            <button id="user-list-execute" class="btn btn-secondary mt-2">Execute</button>
                             
                             <div class="mt-3">
                                 <h6 class="text-muted">Response:</h6>
-                                <pre id="users-response" class="response-area">// Kết quả API danh sách người dùng sẽ hiển thị ở đây</pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Create User API -->
-        <div class="api-section" id="create-user-section">
-            <div class="api-title">
-                <h3>Thêm người dùng mới</h3>
-                <span class="endpoint">POST /api/users</span>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header bg-success text-white">
-                            Thêm người dùng mới
-                        </div>
-                        <div class="card-body">
-                            <form id="createUserForm">
-                                <div class="mb-3">
-                                    <label for="username" class="form-label">Tên đăng nhập</label>
-                                    <input type="text" class="form-control" id="username" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="name" class="form-label">Họ tên</label>
-                                    <input type="text" class="form-control" id="name" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="email" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="password" class="form-label">Mật khẩu</label>
-                                    <input type="password" class="form-control" id="password" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="userRole" class="form-label">Vai trò</label>
-                                    <select class="form-select" id="userRole" required>
-                                        <option value="admin">Admin</option>
-                                        <option value="manager">Manager</option>
-                                        <option value="teacher">Teacher</option>
-                                        <option value="student">Student</option>
-                                        <option value="parent">Parent</option>
-                                    </select>
-                                </div>
-                                <button type="submit" class="btn btn-success">Tạo người dùng</button>
-                            </form>
-                            
-                            <div class="mt-3 response-area" id="create-user-response-message">
-                                <!-- Create User response message will be displayed here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header bg-secondary text-white">
-                            Raw JSON Request
-                        </div>
-                        <div class="card-body">
-                            <textarea id="create-user-json" class="json-editor">{
-  "username": "newuser",
-  "name": "Người dùng mới",
-  "email": "newuser@example.com",
-  "password": "password123",
-  "role": "student"
-}</textarea>
-                            <button id="create-user-execute" class="btn btn-secondary mt-2">Execute</button>
-                            
-                            <div class="mt-3">
-                                <h6 class="text-muted">Response:</h6>
-                                <pre id="create-user-response" class="response-area">// Kết quả API thêm người dùng sẽ hiển thị ở đây</pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Database Status API -->
-        <div class="api-section" id="db-status-section">
-            <div class="api-title">
-                <h3>Trạng thái Database</h3>
-                <span class="endpoint">GET /api/database/status</span>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header bg-info text-white">
-                            Kiểm tra trạng thái Database
-                        </div>
-                        <div class="card-body">
-                            <p>Kiểm tra trạng thái kết nối và thông tin của Database hệ thống.</p>
-                            <button id="checkDbStatus" class="btn btn-info">Kiểm tra trạng thái</button>
-                            
-                            <div class="mt-3 response-area" id="db-status-response-message">
-                                <!-- DB Status response message will be displayed here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header bg-secondary text-white">
-                            API Details
-                        </div>
-                        <div class="card-body">
-                            <p>Gọi API với token hiện tại:</p>
-                            <pre>GET /api/database/status
-Authorization: Bearer {token}</pre>
-                            
-                            <div class="mt-3">
-                                <h6 class="text-muted">Response:</h6>
-                                <pre id="db-status-response" class="response-area">// Kết quả API trạng thái Database sẽ hiển thị ở đây</pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Import Data API -->
-        <div class="api-section" id="import-data-section">
-            <div class="api-title">
-                <h3>Import dữ liệu từ CSV</h3>
-                <span class="endpoint">POST /api/database/import</span>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header bg-warning text-dark">
-                            Import dữ liệu từ CSV
-                        </div>
-                        <div class="card-body">
-                            <form id="importDataForm">
-                                <div class="mb-3">
-                                    <label for="dataType" class="form-label">Loại dữ liệu</label>
-                                    <select class="form-select" id="dataType" required>
-                                        <option value="students">Học sinh</option>
-                                        <option value="teachers">Giáo viên</option>
-                                        <option value="classes">Lớp học</option>
-                                        <option value="subjects">Môn học</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="csvFile" class="form-label">File CSV</label>
-                                    <input type="file" class="form-control" id="csvFile" accept=".csv" required>
-                                </div>
-                                <button type="submit" class="btn btn-warning">Import</button>
-                            </form>
-                            
-                            <div class="mt-3 response-area" id="import-data-response-message">
-                                <!-- Import Data response message will be displayed here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header bg-secondary text-white">
-                            API Details
-                        </div>
-                        <div class="card-body">
-                            <p>Gọi API với token hiện tại:</p>
-                            <pre>POST /api/database/import
-Content-Type: multipart/form-data
-Authorization: Bearer {token}
-
-Form Data:
-- dataType: "students"
-- file: [CSV file]</pre>
-                            
-                            <div class="mt-3">
-                                <h6 class="text-muted">Response:</h6>
-                                <pre id="import-data-response" class="response-area">// Kết quả API import dữ liệu sẽ hiển thị ở đây</pre>
+                                <pre id="user-list-response" class="response-area">// Kết quả API sẽ hiển thị ở đây</pre>
                             </div>
                         </div>
                     </div>
@@ -307,12 +378,45 @@ Form Data:
         </div>
     </div>
 
+    <!-- New Batch Modal -->
+    <div class="modal fade" id="newBatchModal" tabindex="-1" aria-labelledby="newBatchModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newBatchModalLabel">Tạo khóa học mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newBatchForm">
+                        <div class="mb-3">
+                            <label for="batchNameField" class="form-label">Tên khóa học</label>
+                            <input type="text" class="form-control" id="batchNameField" placeholder="Khóa 2024-2027">
+                        </div>
+                        <div class="mb-3">
+                            <label for="startYearField" class="form-label">Năm bắt đầu</label>
+                            <input type="number" class="form-control" id="startYearField" required placeholder="2024">
+                        </div>
+                        <div class="mb-3">
+                            <label for="endYearField" class="form-label">Năm kết thúc</label>
+                            <input type="number" class="form-control" id="endYearField" required placeholder="2027">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary" id="createBatchBtn">Tạo khóa học</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Auth state management
         let token = localStorage.getItem('auth_token') || '';
         let currentUser = JSON.parse(localStorage.getItem('current_user') || 'null');
         const baseUrl = window.location.origin;
+        let parentCounter = 1;
         
         // Display formatted response message
         function displayResponseMessage(elementId, data, isSuccess = true) {
@@ -353,55 +457,671 @@ Form Data:
         // Initialize
         updateAuthStatus();
         
-        // Sync form with JSON
-        function syncFormToJson(formId, jsonId, getDataFn) {
-            const form = document.getElementById(formId);
-            form.addEventListener('input', () => {
-                const jsonData = getDataFn();
-                document.getElementById(jsonId).value = JSON.stringify(jsonData, null, 2);
-            });
+        // Load batches and set up form controls when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBatches();
+            setupParentControls();
+        });
+        
+        // Set up parent controls
+        function setupParentControls() {
+            // Make sure the first parent entry has its remove button hidden
+            const firstRemoveBtn = document.querySelector('.parent-entry .remove-parent-btn');
+            if (firstRemoveBtn) {
+                firstRemoveBtn.style.display = 'none';
+            }
         }
         
-        // Lấy danh sách người dùng
-        document.getElementById('getUsersForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const role = document.getElementById('role').value;
-            const limit = document.getElementById('limit').value;
-            const page = document.getElementById('page').value;
+        // Function to generate batch options based on current year
+        function generateBatchOptions() {
+            const currentYear = new Date().getFullYear();
+            console.log('Current year for generating batches:', currentYear);
             
+            // Make sure these are valid numbers
+            const startYear1 = currentYear - 2;
+            const endYear1 = currentYear + 1;
+            
+            const startYear2 = currentYear - 1;
+            const endYear2 = currentYear + 2;
+            
+            const startYear3 = currentYear;
+            const endYear3 = currentYear + 3;
+            
+            const batchData = [
+                { name: `Khóa ${startYear1}-${endYear1}`, startYear: startYear1, endYear: endYear1 },
+                { name: `Khóa ${startYear2}-${endYear2}`, startYear: startYear2, endYear: endYear2 },
+                { name: `Khóa ${startYear3}-${endYear3}`, startYear: startYear3, endYear: endYear3 }
+            ];
+            
+            console.log('Generated default batches:', batchData);
+            return batchData;
+        }
+        
+        // Function to calculate numeric batchId from year range
+        function calculateBatchId(startYear) {
+            // Formula: 2021-2024 = 1, 2022-2025 = 2, etc.
+            const baseYear = 2021;
+            return (startYear - baseYear) + 1;
+        }
+        
+        // Function to load batches from the API with options based on current year
+        async function loadBatches() {
             try {
-                let url = '/api/users';
-                const params = new URLSearchParams();
-                if (role) params.append('role', role);
-                if (limit) params.append('limit', limit);
-                if (page) params.append('page', page);
-                if (params.toString()) url += `?${params.toString()}`;
-                
-                const response = await fetch(url, {
+                const response = await fetch('/api/database/batches/options', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
                 
                 const data = await response.json();
-                displayRawResponse('response', data);
+                console.log('Batches data from API:', data);
+                
+                const batchSelect = document.getElementById('batchField');
+                
+                // Clear existing options except the first one
+                while (batchSelect.options.length > 1) {
+                    batchSelect.remove(1);
+                }
+                
+                if (data.success && data.data.length > 0) {
+                    // Add batches to the dropdown
+                    data.data.forEach(batch => {
+                        const option = document.createElement('option');
+                        
+                        // Extract years from startDate and endDate if they exist
+                        let startYear, endYear;
+                        
+                        if (batch.startDate) {
+                            startYear = new Date(batch.startDate).getFullYear();
+                        } else if (batch.startYear) {
+                            startYear = parseInt(batch.startYear);
+                        }
+                        
+                        if (batch.endDate) {
+                            endYear = new Date(batch.endDate).getFullYear();
+                        } else if (batch.endYear) {
+                            endYear = parseInt(batch.endYear);
+                        }
+                        
+                        // Calculate the numeric batchId based on start year
+                        let numericId;
+                        if (batch.batchId && !isNaN(parseInt(batch.batchId))) {
+                            numericId = parseInt(batch.batchId);
+                            option.value = numericId.toString();
+                        } else if (startYear) {
+                            numericId = calculateBatchId(startYear);
+                            option.value = numericId.toString();
+                        } else {
+                            option.value = '';
+                            numericId = '';
+                        }
+                        
+                        // Store the data for later use
+                        option.dataset.startYear = (startYear || '').toString();
+                        option.dataset.endYear = (endYear || '').toString();
+                        option.dataset.batchName = batch.batchName || '';
+                        option.dataset.numericId = numericId.toString();
+                        
+                        // Format display text to show year range and ID
+                        option.textContent = `Khóa ${startYear}-${endYear} (ID: ${numericId})`;
+                        batchSelect.appendChild(option);
+                    });
+                } else {
+                    // If API fails, generate default options based on current year
+                    const defaultBatches = generateBatchOptions();
+                    defaultBatches.forEach(batch => {
+                        const option = document.createElement('option');
+                        
+                        // Calculate numeric ID based on year range (2021-2024 = 1)
+                        const numericId = calculateBatchId(batch.startYear);
+                        
+                        // Set the correct value to ensure the batchId is passed correctly
+                        option.value = numericId.toString();
+                        option.textContent = `Khóa ${batch.startYear}-${batch.endYear} (ID: ${numericId})`;
+                        
+                        // Store data for later use
+                        option.dataset.startYear = batch.startYear.toString();
+                        option.dataset.endYear = batch.endYear.toString();
+                        option.dataset.batchName = `Khóa ${batch.startYear}-${batch.endYear}`;
+                        option.dataset.numericId = numericId.toString();
+                        
+                        console.log('Setting dataset for default batch:', {
+                            batchName: option.dataset.batchName,
+                            startYear: option.dataset.startYear,
+                            endYear: option.dataset.endYear,
+                            numericId: option.dataset.numericId,
+                            value: option.value
+                        });
+                        
+                        batchSelect.appendChild(option);
+                    });
+                }
             } catch (error) {
-                displayResponseMessage('response', `Error: ${error.message}`);
+                console.error('Error loading batches:', error);
+            }
+        }
+        
+        // Event handler for creating a new batch
+        document.getElementById('createBatchBtn').addEventListener('click', async function() {
+            try {
+                const batchName = document.getElementById('batchNameField').value;
+                const startYear = parseInt(document.getElementById('startYearField').value);
+                const endYear = parseInt(document.getElementById('endYearField').value);
+                
+                if (!startYear || !endYear || isNaN(startYear) || isNaN(endYear)) {
+                    alert('Vui lòng điền đầy đủ thông tin năm bắt đầu và kết thúc hợp lệ');
+                    return;
+                }
+                
+                // Calculate numeric batch ID (2021-2024 = 1)
+                const baseYear = 2021;
+                const numericId = (startYear - baseYear) + 1;
+                const batchId = numericId.toString();
+                
+                // Always create standard dates for each academic year
+                // September 1st of start year to June 30th of end year
+                const startDate = new Date(Date.UTC(startYear, 8, 1)); // September 1st (months are 0-indexed)
+                const endDate = new Date(Date.UTC(endYear, 5, 30));    // June 30th
+                
+                // Verify dates are valid
+                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                    alert('Lỗi: Không thể tạo ngày hợp lệ từ năm đã nhập');
+                    return;
+                }
+                
+                console.log('Creating batch with dates:', {
+                    startYear,
+                    endYear,
+                    numericId,
+                    startDate: startDate.toISOString(),
+                    endDate: endDate.toISOString()
+                });
+                
+                const response = await fetch('/api/database/batches/create-if-not-exists', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        batchId: batchId,
+                        numericId: numericId,
+                        batchName: batchName || `Khóa ${startYear}-${endYear} (ID: ${batchId})`,
+                        startDate: startDate.toISOString(),
+                        endDate: endDate.toISOString(),
+                        startYear: startYear,
+                        endYear: endYear,
+                        isActive: true
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Batch creation response:', data);
+                
+                if (data.success) {
+                    // Add the new batch to the dropdown and select it
+                    const batchSelect = document.getElementById('batchField');
+                    const option = document.createElement('option');
+                    option.value = data.data.batchId;
+                    option.textContent = `${data.data.batchName}`;
+                    option.dataset.startYear = startYear.toString();
+                    option.dataset.endYear = endYear.toString();
+                    option.dataset.numericId = batchId;
+                    batchSelect.appendChild(option);
+                    batchSelect.value = data.data.batchId;
+                    
+                    // Close the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('newBatchModal'));
+                    modal.hide();
+                    
+                    // Reset the form
+                    document.getElementById('newBatchForm').reset();
+                    
+                    // Only show alert if the batch is newly created
+                    if (data.isNew) {
+                        alert('Khóa học đã được tạo mới thành công!');
+                    }
+                } else {
+                    alert(`Lỗi: ${data.message}`);
+                    console.error('Batch creation error:', data);
+                }
+            } catch (error) {
+                console.error('Error creating batch:', error);
+                alert(`Lỗi: ${error.message}`);
             }
         });
-
-        // Thêm người dùng mới
-        document.getElementById('createUserForm').addEventListener('submit', async (e) => {
+        
+        // Role Change Handler
+        document.getElementById('roleField').addEventListener('change', function() {
+            const selectedRole = this.value.toLowerCase();
+            
+            // Hide all entity-specific fields
+            document.querySelectorAll('.entity-fields').forEach(el => {
+                el.style.display = 'none';
+            });
+            
+            // Show fields for selected entity type based on role
+            if (selectedRole === 'student') {
+                document.getElementById('studentFields').style.display = 'block';
+                loadBatches();
+            } else if (selectedRole === 'teacher') {
+                document.getElementById('teacherFields').style.display = 'block';
+            }
+            
+            // Update JSON editor with template for selected type
+            updateJsonTemplate();
+        });
+        
+        // Add parent button
+        document.getElementById('addParentBtn').addEventListener('click', function() {
+            parentCounter++;
+            const newParentHtml = `
+                <div class="parent-entry border-bottom pb-2 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0">Phụ huynh #${parentCounter}</h6>
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-parent-btn">Xóa</button>
+                    </div>
+                    
+                    <!-- Manual parent info entry -->
+                    <div class="manual-parent-info">
+                        <div class="row mb-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Họ tên phụ huynh</label>
+                                <input type="text" class="form-control parent-name">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Số điện thoại</label>
+                                <input type="text" class="form-control parent-phone">
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-2">
+                            <div class="col-md-6">
+                                <label class="form-label">Nghề nghiệp</label>
+                                <input type="text" class="form-control parent-career">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Giới tính</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input parent-gender" type="radio" name="parentGender${parentCounter}" value="true" checked>
+                                        <label class="form-check-label">Nam</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input parent-gender" type="radio" name="parentGender${parentCounter}" value="false">
+                                        <label class="form-check-label">Nữ</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('parentsContainer').insertAdjacentHTML('beforeend', newParentHtml);
+            
+            // Show remove button on first parent if we have more than one
+            if (parentCounter > 1) {
+                document.querySelector('.remove-parent-btn[style="display:none;"]')?.removeAttribute('style');
+            }
+            
+            // Update the JSON template
+            updateJsonTemplate();
+        });
+        
+        // Remove parent button delegation
+        document.getElementById('parentsContainer').addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-parent-btn')) {
+                e.target.closest('.parent-entry').remove();
+                
+                // Renumber the remaining parents
+                parentCounter = 0;
+                document.querySelectorAll('.parent-entry').forEach((entry, index) => {
+                    parentCounter = index + 1;
+                    entry.querySelector('h6').textContent = `Phụ huynh #${parentCounter}`;
+                    
+                    // Update radio button names
+                    const radioButtons = entry.querySelectorAll('.parent-gender');
+                    radioButtons.forEach(radio => {
+                        radio.name = `parentGender${parentCounter}`;
+                    });
+                });
+                
+                // If we're back to only one parent, hide its remove button
+                if (parentCounter === 1) {
+                    document.querySelector('.remove-parent-btn').style.display = 'none';
+                }
+                
+                // Update the JSON template
+                updateJsonTemplate();
+            }
+        });
+        
+        // Get all parents data from form
+        function getAllParents() {
+            const parentNames = [];
+            const parentPhones = [];
+            const parentCareers = [];
+            const parentGenders = [];
+            
+            document.querySelectorAll('.parent-entry').forEach((entry, index) => {
+                // Get parent info
+                const name = entry.querySelector('.parent-name').value.trim();
+                const phone = entry.querySelector('.parent-phone').value.trim();
+                const career = entry.querySelector('.parent-career').value.trim();
+                const gender = entry.querySelector('.parent-gender:checked').value === 'true';
+                
+                // Only add parent info if we have a name (minimum required field)
+                if (name) {
+                    parentNames.push(name);
+                    parentPhones.push(phone);
+                    parentCareers.push(career);
+                    parentGenders.push(gender);
+                }
+            });
+            
+            return { parentNames, parentPhones, parentCareers, parentGenders };
+        }
+        
+        // Update JSON template
+        function updateJsonTemplate() {
+            // Lấy role từ dropdown
+            const role = document.getElementById('roleField').value;
+            const userType = role.toLowerCase();
+            
+            // Tạo template JSON cơ bản
+            let template = {
+                role: role,
+                firstName: document.getElementById('firstNameField').value || "",
+                lastName: document.getElementById('lastNameField').value || "",
+                phone: document.getElementById('phoneField').value || "",
+                // For students, use boolean true/false like teachers
+                gender: document.querySelector('input[name="genderField"]:checked').value === 'true' ? true : false,
+                password: document.getElementById('passwordField').value || "1234"
+            };
+            
+            // Thêm trường dữ liệu dựa vào loại người dùng
+            if (userType === 'student') {
+                Object.assign(template, {
+                    address: document.getElementById('addressField').value || "",
+                    dateOfBirth: document.getElementById('dobField').value || "",
+                    batchId: parseInt(document.getElementById('batchField').value) || null
+                });
+                
+                // Get parent information
+                const { parentNames, parentPhones, parentCareers, parentGenders } = getAllParents();
+                if (parentNames.length > 0) {
+                    Object.assign(template, {
+                        parentNames: parentNames,
+                        parentCareers: parentCareers,
+                        parentPhones: parentPhones,
+                        parentGenders: parentGenders
+                    });
+                }
+            } else if (userType === 'teacher') {
+                // Generate userId: firstName + lastName initials + teacherId
+                const normalizedFirstName = template.firstName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const normalizedLastName = template.lastName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                
+                // Get initials from last name
+                const lastNameParts = normalizedLastName.split(' ');
+                const lastNameInitials = lastNameParts.map(part => part.charAt(0).toLowerCase()).join('');
+                
+                // Get all majors from both the list and current input
+                let majorsList = document.getElementById('majorListInput').value;
+                const currentMajor = document.getElementById('majorField').value.trim();
+                
+                // Combine if both exist
+                if (majorsList && currentMajor) {
+                    majorsList += ', ' + currentMajor;
+                } else if (currentMajor) {
+                    majorsList = currentMajor;
+                }
+                
+                // Get teacher ID if provided
+                const teacherIdField = document.getElementById('teacherIdField').value.trim();
+                const teacherId = (teacherIdField || Math.floor(Math.random() * 1000) + 1).toString();
+                
+                // Create userId and email with teacherId
+                const userId = `${normalizedFirstName.toLowerCase()}${lastNameInitials}${teacherId}`.replace(/\s+/g, '');
+                const email = `${userId}@fams.edu.vn`;
+                
+                // Add teacher specific fields
+                Object.assign(template, {
+                    address: document.getElementById('teacherAddressField').value || "",
+                    dateOfBirth: document.getElementById('teacherDobField').value || "",
+                    major: majorsList,
+                    weeklyCapacity: parseInt(document.getElementById('weeklyCapacityField').value) || 10
+                });
+            } else if (userType === 'admin') {
+                // Generate userId: firstName + lastName initials
+                const normalizedFirstName = template.firstName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const normalizedLastName = template.lastName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                
+                // Get initials from last name
+                const lastNameParts = normalizedLastName.split(' ');
+                const lastNameInitials = lastNameParts.map(part => part.charAt(0).toLowerCase()).join('');
+                
+                // Create userId and email
+                const userId = `${normalizedFirstName.toLowerCase()}${lastNameInitials}`.replace(/\s+/g, '');
+                const email = `${userId}@fams.edu.vn`;
+                
+                // Add admin specific fields
+                Object.assign(template, {
+                    userId: userId,
+                    email: email  // Auto-generated email
+                });
+            }
+            
+            document.getElementById('unified-create-json').value = JSON.stringify(template, null, 2);
+        }
+        
+        // Update JSON when any field changes
+        document.querySelectorAll('#unifiedCreateForm input, #unifiedCreateForm select').forEach(el => {
+            el.addEventListener('input', function() {
+                updateJsonTemplate();
+            });
+        });
+        
+        // Initial JSON template setup
+        updateJsonTemplate();
+        
+        // Handle form submission
+        document.getElementById('unifiedCreateForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // Basic validation
+            const role = document.getElementById('roleField').value;
+            const firstName = document.getElementById('firstNameField').value.trim();
+            const lastName = document.getElementById('lastNameField').value.trim();
+            
+            if (!firstName || !lastName) {
+                displayResponseMessage('unified-create-response-message', 'Vui lòng nhập đầy đủ họ và tên', false);
+                return;
+            }
+            
+            // Role-specific validation
+            if (role.toLowerCase() === 'student') {
+                const batchField = document.getElementById('batchField');
+                if (!batchField.value) {
+                    displayResponseMessage('unified-create-response-message', 'Vui lòng chọn khóa học cho học sinh', false);
+                    return;
+                }
+            } else if (role.toLowerCase() === 'teacher') {
+                // Check if we have at least one major
+                const majorList = document.getElementById('majorListInput').value;
+                const majorField = document.getElementById('majorField').value.trim();
+                
+                if (!majorList && !majorField) {
+                    displayResponseMessage('unified-create-response-message', 'Vui lòng nhập ít nhất một chuyên ngành cho giáo viên', false);
+                    return;
+                }
+            }
+            
             try {
+                // Lấy role từ dropdown
+                const role = document.getElementById('roleField').value;
+                const userType = role.toLowerCase();
+                const selectedBatch = document.getElementById('batchField').value;
+                
+                // Get gender value as boolean for all user types
+                const genderValue = document.querySelector('input[name="genderField"]:checked').value === 'true';
+                
+                // Get the userId and generate email for students
+                const userId = document.getElementById('userIdField').value.trim();
+                const email = userType === 'student' ? `${userId}@fams.edu.vn` : document.getElementById('emailField').value.trim();
+                const backupEmail = document.getElementById('backupEmailField').value.trim() || null;
+                
+                // Create base payload
                 const payload = {
-                    username: document.getElementById('username').value,
-                    email: document.getElementById('email').value,
-                    password: document.getElementById('password').value,
-                    role: document.getElementById('userRole').value
+                    role: role,
+                    firstName: document.getElementById('firstNameField').value,
+                    lastName: document.getElementById('lastNameField').value,
+                    address: document.getElementById('addressField').value,
+                    dateOfBirth: document.getElementById('dobField').value,
+                    phone: document.getElementById('phoneField').value,
+                    gender: genderValue,
+                    password: document.getElementById('passwordField').value || "1234",
+                    backup_email: backupEmail,  // Add backup email to the payload
+                    email: email, // Use the generated or provided email
+                    userId: userId
                 };
                 
-                const response = await fetch('/api/users', {
+                // Dựa vào role, thêm các trường cụ thể
+                if (userType === 'student') {
+                    const batchParts = selectedBatch.split('-');
+                    const classNum = batchParts[0];
+                    
+                    // Add student-specific fields
+                    payload.batchId = selectedBatch;
+                    
+                    // Generate userId: firstName + lastName initials + batchId + studentId
+                    const normalizedFirstName = payload.firstName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    const normalizedLastName = payload.lastName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    
+                    // Get initials from last name
+                    const lastNameParts = normalizedLastName.split(' ');
+                    const lastNameInitials = lastNameParts.map(part => part.charAt(0).toLowerCase()).join('');
+                    
+                    // For testing purposes, generate a studentId if not provided
+                    // In production, this would be assigned by the server
+                    const studentId = payload.studentId || Math.floor(Math.random() * 1000) + 1;
+                    
+                    // Create userId and email with "st" suffix, batch and studentId
+                    payload.userId = `${normalizedFirstName.toLowerCase()}${lastNameInitials}st${payload.batchId}${studentId}`.replace(/\s+/g, '');
+                    
+                    // Update email with the generated userId
+                    payload.email = `${payload.userId}@fams.edu.vn`;
+                    
+                    // Get parents data
+                    const parents = [];
+                    const parentDivs = document.querySelectorAll('.parent-entry');
+                    const parentNames = [];
+                    const parentPhones = [];
+                    const parentCareers = [];
+                    const parentGenders = [];
+                    
+                    parentDivs.forEach(div => {
+                        const parentFirstName = div.querySelector('.parent-name').value;
+                        const parentLastName = ''; // Parents only have a single name field in the form
+                        
+                        if (parentFirstName) {
+                            // Get gender as boolean - DO NOT convert to string
+                            const parentGenderBoolean = div.querySelector('input[name^="parentGender"]:checked').value === 'true';
+                            
+                            parents.push({
+                                firstName: parentFirstName,
+                                lastName: parentLastName,
+                                gender: parentGenderBoolean, // Keep as boolean
+                                email: '', // No email field in the form
+                                phone: div.querySelector('.parent-phone').value || null
+                            });
+                            
+                            // Also collect for the parentGenders array
+                            parentNames.push(parentFirstName);
+                            parentPhones.push(div.querySelector('.parent-phone').value || null);
+                            parentCareers.push(div.querySelector('.parent-career').value || null);
+                            parentGenders.push(parentGenderBoolean);
+                        }
+                    });
+                    
+                    if (parents.length) {
+                        payload.parents = parents;
+                        // Also add the arrays
+                        payload.parentNames = parentNames;
+                        payload.parentPhones = parentPhones;
+                        payload.parentCareers = parentCareers;
+                        payload.parentGenders = parentGenders;
+                    }
+                    
+                    // Add student specific fields
+                    Object.assign(payload, {
+                        userId: payload.userId,
+                        email: payload.email,  // Auto-generated email
+                        class: selectedBatch
+                    });
+                } else if (userType === 'teacher') {
+                    // Generate userId: firstName + lastName initials + teacherId
+                    const normalizedFirstName = payload.firstName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    const normalizedLastName = payload.lastName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    
+                    // Get initials from last name
+                    const lastNameParts = normalizedLastName.split(' ');
+                    const lastNameInitials = lastNameParts.map(part => part.charAt(0).toLowerCase()).join('');
+                    
+                    // Get all majors from both the list and current input
+                    let majorsList = document.getElementById('majorListInput').value;
+                    const currentMajor = document.getElementById('majorField').value.trim();
+                    
+                    // Combine if both exist
+                    if (majorsList && currentMajor) {
+                        majorsList += ', ' + currentMajor;
+                    } else if (currentMajor) {
+                        majorsList = currentMajor;
+                    }
+                    
+                    // Get teacher ID if provided
+                    const teacherIdField = document.getElementById('teacherIdField').value.trim();
+                    const teacherId = (teacherIdField || Math.floor(Math.random() * 1000) + 1).toString();
+                    
+                    // Create userId and email with teacherId
+                    const userId = `${normalizedFirstName.toLowerCase()}${lastNameInitials}${teacherId}`.replace(/\s+/g, '');
+                    const email = `${userId}@fams.edu.vn`;
+                    
+                    // Add teacher specific fields
+                    Object.assign(payload, {
+                        userId: userId,
+                        email: email,  // Auto-generated email
+                        teacherId: teacherId,
+                        address: document.getElementById('teacherAddressField').value || "",
+                        dateOfBirth: document.getElementById('teacherDobField').value || "",
+                        major: majorsList,
+                        weeklyCapacity: parseInt(document.getElementById('weeklyCapacityField').value) || 10,
+                        subjects: Array.from(document.getElementById('subjectsField')?.selectedOptions || []).map(option => option.value)
+                    });
+                } else if (userType === 'admin') {
+                    // Generate userId: firstName + lastName initials
+                    const normalizedFirstName = payload.firstName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    const normalizedLastName = payload.lastName.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    
+                    // Get initials from last name
+                    const lastNameParts = normalizedLastName.split(' ');
+                    const lastNameInitials = lastNameParts.map(part => part.charAt(0).toLowerCase()).join('');
+                    
+                    // Create userId and email
+                    const userId = `${normalizedFirstName.toLowerCase()}${lastNameInitials}`.replace(/\s+/g, '');
+                    const email = `${userId}@fams.edu.vn`;
+                    
+                    // Add admin specific fields
+                    Object.assign(payload, {
+                        userId: userId,
+                        email: email  // Auto-generated email
+                    });
+                }
+                
+                // Submit user creation request
+                console.log('Creating user with payload:', payload);
+                const response = await fetch('/api/admin/users', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -411,56 +1131,699 @@ Form Data:
                 });
                 
                 const data = await response.json();
+                
+                // Display response
+                displayResponseMessage(
+                    'unified-create-response-message', 
+                    data.success ? `${userType} created successfully! UserID: ${data.data.userId}, Email: ${data.data.email}` : `Error: ${data.message}`,
+                    data.success
+                );
+                
+                displayRawResponse('unified-create-response', data);
                 displayRawResponse('response', data);
+                
             } catch (error) {
-                displayResponseMessage('response', `Error: ${error.message}`);
+                displayResponseMessage('unified-create-response-message', `Error: ${error.message}`, false);
+                displayRawResponse('unified-create-response', { error: error.message });
             }
         });
-
-        // Kiểm tra trạng thái Database
-        document.getElementById('checkDbStatus').addEventListener('click', async () => {
+        
+        // Execute from raw JSON
+        document.getElementById('unified-create-execute').addEventListener('click', async () => {
             try {
-                const response = await fetch('/api/database/status', {
+                const jsonData = JSON.parse(document.getElementById('unified-create-json').value);
+                const role = jsonData.role?.toLowerCase();
+                
+                // Convert gender to boolean if it's a string
+                if (typeof jsonData.gender === 'string') {
+                    jsonData.gender = jsonData.gender === 'Male' || jsonData.gender === 'true' || jsonData.gender === 'True';
+                }
+                
+                // Only create batch for student role
+                if (role === 'student' && jsonData.batchId) {
+                    const batchId = jsonData.batchId.toString();
+                    
+                    // Calculate start and end years based on the batch ID
+                    const baseYear = 2021; // Where batchId 1 = 2021-2024
+                    const startYear = baseYear + parseInt(batchId) - 1;
+                    const endYear = startYear + 3;
+                    
+                    // Create/ensure batch exists before creating the student
+                    try {
+                        const startDate = new Date(Date.UTC(startYear, 8, 1)); // September 1st
+                        const endDate = new Date(Date.UTC(endYear, 5, 30));    // June 30th
+                        
+                        console.log(`Creating batch ${batchId} (${startYear}-${endYear}) for student`);
+                        
+                        const batchResponse = await fetch('/api/database/batches/create-if-not-exists', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({
+                                batchId,
+                                numericId: batchId,
+                                batchName: `Khóa ${startYear}-${endYear}`,
+                                startDate: startDate.toISOString(),
+                                endDate: endDate.toISOString(),
+                                startYear,
+                                endYear,
+                                isActive: true
+                            })
+                        });
+                        
+                        const batchResult = await batchResponse.json();
+                        console.log('Batch creation result:', batchResult);
+                    } catch (batchError) {
+                        console.error('Error creating batch:', batchError);
+                        // Continue with user creation even if batch creation fails
+                    }
+                }
+                
+                // Submit user creation request
+                console.log('Creating user with JSON payload:', jsonData);
+                const response = await fetch('/api/admin/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(jsonData)
+                });
+                
+                const data = await response.json();
+                
+                // Display response
+                displayRawResponse('unified-create-response', data);
+                displayRawResponse('response', data);
+                
+            } catch (error) {
+                displayResponseMessage('unified-create-response-message', `Error: ${error.message}`, false);
+                displayRawResponse('unified-create-response', { error: error.message });
+            }
+        });
+        
+        // Check authentication
+        document.getElementById('checkAuthBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/auth/me', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
                 
                 const data = await response.json();
-                displayRawResponse('response', data);
+                
+                if (data.success) {
+                    localStorage.setItem('current_user', JSON.stringify(data.data));
+                    currentUser = data.data;
+                    displayResponseMessage('response', 'Đã xác thực thành công!', true);
+                } else {
+                    localStorage.removeItem('current_user');
+                    currentUser = null;
+                    displayResponseMessage('response', 'Lỗi xác thực: ' + data.message, false);
+                }
+                
+                updateAuthStatus();
+                
             } catch (error) {
-                displayResponseMessage('response', `Error: ${error.message}`);
+                displayResponseMessage('response', `Error: ${error.message}`, false);
+                localStorage.removeItem('current_user');
+                currentUser = null;
+                updateAuthStatus();
             }
         });
 
-        // Import dữ liệu
-        document.getElementById('importDataForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // Handle User List JSON Execute button
+        document.getElementById('user-list-execute').addEventListener('click', async function() {
             try {
-                const dataType = document.getElementById('dataType').value;
-                const file = document.getElementById('csvFile').files[0];
+                const jsonRequest = JSON.parse(document.getElementById('user-list-json-request').value);
+                const { type = 'student' } = jsonRequest;
                 
-                if (!file) {
-                    throw new Error('Vui lòng chọn file CSV');
+                // Thay đổi url để sử dụng endpoint basic
+                let url = `/api/database/users/${type}/basic`;
+                
+                // Các tham số truy vấn
+                const params = new URLSearchParams();
+                params.append('page', 1);
+                params.append('limit', 10);
+                
+                if (jsonRequest.search) {
+                    params.append('search', jsonRequest.search);
                 }
                 
-                const formData = new FormData();
-                formData.append('file', file);
+                if (jsonRequest.filter) {
+                    const [field, value] = jsonRequest.filter.split(':');
+                    params.append(field, value);
+                }
                 
-                const response = await fetch(`/api/database/import/${dataType}`, {
-                    method: 'POST',
+                url += `?${params.toString()}`;
+                
+                // Show loading state
+                document.getElementById('user-list-response').textContent = 'Loading...';
+                
+                const response = await fetch(url, {
                     headers: {
                         'Authorization': `Bearer ${token}`
-                    },
-                    body: formData
+                    }
                 });
                 
                 const data = await response.json();
-                displayRawResponse('response', data);
+                
+                // Display the response
+                displayRawResponse('user-list-response', data);
+                
+                // Update table if successful
+                if (data.success && Array.isArray(data.data)) {
+                    updateTableBody(type, data.data);
+                    totalUsers = data.data.length;
+                    updatePagination(1, totalUsers);
+                }
+                
             } catch (error) {
-                displayResponseMessage('response', `Error: ${error.message}`);
+                console.error('Error executing user list request:', error);
+                displayRawResponse('user-list-response', { error: error.message });
             }
         });
+
+        // Add major button handler
+        document.getElementById('addMajorBtn').addEventListener('click', function() {
+            const majorField = document.getElementById('majorField');
+            const majorValue = majorField.value.trim();
+            
+            if (majorValue) {
+                // Add to the visual list
+                const majorList = document.getElementById('majorList');
+                const majorItem = document.createElement('div');
+                majorItem.className = 'badge bg-secondary me-2 mb-2 p-2';
+                majorItem.innerHTML = `${majorValue} <span class="remove-major" style="cursor:pointer;">&times;</span>`;
+                majorList.appendChild(majorItem);
+                
+                // Clear the input
+                majorField.value = '';
+                
+                // Update the hidden input with all majors
+                updateMajorsList();
+            }
+        });
+
+        // Remove major badge when clicked
+        document.getElementById('majorList').addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-major')) {
+                e.target.parentNode.remove();
+                updateMajorsList();
+            }
+        });
+
+        // Update the hidden input with all majors
+        function updateMajorsList() {
+            const majors = [];
+            document.querySelectorAll('#majorList .badge').forEach(badge => {
+                majors.push(badge.textContent.replace('×', '').trim());
+            });
+            
+            // Store as comma-separated string
+            document.getElementById('majorListInput').value = majors.join(', ');
+            
+            // Also update the JSON template
+            updateJsonTemplate();
+        }
+
+        // User List Functionality
+        let currentUserType = 'student';
+        let currentPage = 1;
+        let pageSize = 10;
+        let totalUsers = 0;
+
+        // Define column structure for different user types
+        const columnDefinitions = {
+            student: [
+                { field: 'id', label: 'ID', sortable: true },
+                { field: 'studentId', label: 'Mã học sinh', sortable: true },
+                { field: 'userId', label: 'User ID' },
+                { field: 'fullName', label: 'Họ và tên', sortable: true },
+                { field: 'email', label: 'Email', sortable: true },
+                { field: 'phone', label: 'Số điện thoại' },
+                { field: 'gender', label: 'Giới tính' },
+                { field: 'batchInfo.name', label: 'Lớp' },
+                { field: 'status', label: 'Trạng thái', sortable: true }
+            ],
+            teacher: [
+                { field: 'id', label: 'ID', sortable: true },
+                { field: 'teacherId', label: 'Mã giáo viên', sortable: true },
+                { field: 'userId', label: 'User ID' },
+                { field: 'fullName', label: 'Họ và tên', sortable: true },
+                { field: 'email', label: 'Email', sortable: true },
+                { field: 'phone', label: 'Số điện thoại' },
+                { field: 'gender', label: 'Giới tính' },
+                { field: 'major', label: 'Chuyên môn' },
+                { field: 'status', label: 'Trạng thái', sortable: true }
+            ],
+            parent: [
+                { field: 'id', label: 'ID', sortable: true },
+                { field: 'parentId', label: 'Mã phụ huynh', sortable: true },
+                { field: 'userId', label: 'User ID' },
+                { field: 'fullName', label: 'Họ và tên', sortable: true },
+                { field: 'email', label: 'Email', sortable: true },
+                { field: 'phone', label: 'Số điện thoại' },
+                { field: 'gender', label: 'Giới tính' },
+                { field: 'relationship', label: 'Quan hệ với học sinh' },
+                { field: 'status', label: 'Trạng thái', sortable: true }
+            ]
+        };
+        
+        // Assign columnDefinitions to columnDefs to fix references
+        const columnDefs = columnDefinitions;
+
+        // Define filter options for each user type
+        const filterOptions = {
+            student: [
+                { field: 'status', label: 'Trạng thái', options: [
+                    { value: 'active', label: 'Đang hoạt động' },
+                    { value: 'inactive', label: 'Không hoạt động' }
+                ]},
+                { field: 'batchId', label: 'Lớp', optionsLoader: loadBatchOptions }
+            ],
+            teacher: [
+                { field: 'status', label: 'Trạng thái', options: [
+                    { value: 'active', label: 'Đang hoạt động' },
+                    { value: 'inactive', label: 'Không hoạt động' }
+                ]},
+                { field: 'major', label: 'Chuyên môn', options: [
+                    { value: 'math', label: 'Toán học' },
+                    { value: 'physics', label: 'Vật lý' },
+                    { value: 'chemistry', label: 'Hóa học' },
+                    { value: 'biology', label: 'Sinh học' },
+                    { value: 'literature', label: 'Ngữ văn' },
+                    { value: 'history', label: 'Lịch sử' },
+                    { value: 'geography', label: 'Địa lý' },
+                    { value: 'english', label: 'Tiếng Anh' }
+                ]}
+            ],
+            parent: [
+                { field: 'status', label: 'Trạng thái', options: [
+                    { value: 'active', label: 'Đang hoạt động' },
+                    { value: 'inactive', label: 'Không hoạt động' }
+                ]},
+                { field: 'relationship', label: 'Quan hệ', options: [
+                    { value: 'father', label: 'Bố' },
+                    { value: 'mother', label: 'Mẹ' },
+                    { value: 'guardian', label: 'Người giám hộ' }
+                ]}
+            ]
+        };
+
+        // Set up event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            initUserListEvents();
+            loadUserList(currentUserType, currentPage);
+        });
+
+        function initUserListEvents() {
+            // User type tab selection
+            document.querySelectorAll('#userTypeTab button').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs
+                    document.querySelectorAll('#userTypeTab button').forEach(t => {
+                        t.classList.remove('active');
+                        t.setAttribute('aria-selected', 'false');
+                    });
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    this.setAttribute('aria-selected', 'true');
+                    
+                    // Update current user type and reload list
+                    currentUserType = this.dataset.type;
+                    currentPage = 1;
+                    updateFilterOptions(currentUserType);
+                    loadUserList(currentUserType, currentPage);
+                });
+            });
+            
+            // Search button
+            document.getElementById('userSearchButton').addEventListener('click', function() {
+                currentPage = 1;
+                loadUserList(currentUserType, currentPage);
+            });
+            
+            // Search input - search on Enter
+            document.getElementById('userSearchInput').addEventListener('keyup', function(event) {
+                if (event.key === 'Enter') {
+                    currentPage = 1;
+                    loadUserList(currentUserType, currentPage);
+                }
+            });
+            
+            // Filter select change
+            document.getElementById('userFilterSelect').addEventListener('change', function() {
+                currentPage = 1;
+                loadUserList(currentUserType, currentPage);
+            });
+        }
+
+        // Update filter options based on user type
+        function updateFilterOptions(userType) {
+            const filterSelect = document.getElementById('userFilterSelect');
+            filterSelect.innerHTML = '<option value="">-- Lọc --</option>';
+            
+            if (!filterOptions[userType]) return;
+            
+            filterOptions[userType].forEach(filterGroup => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = filterGroup.label;
+                
+                if (filterGroup.optionsLoader) {
+                    // Async load options (e.g., batches from API)
+                    filterGroup.optionsLoader().then(options => {
+                        options.forEach(option => {
+                            const optionEl = document.createElement('option');
+                            optionEl.value = `${filterGroup.field}:${option.value}`;
+                            optionEl.textContent = option.label;
+                            optgroup.appendChild(optionEl);
+                        });
+                    });
+                } else if (filterGroup.options) {
+                    // Static options
+                    filterGroup.options.forEach(option => {
+                        const optionEl = document.createElement('option');
+                        optionEl.value = `${filterGroup.field}:${option.value}`;
+                        optionEl.textContent = option.label;
+                        optgroup.appendChild(optionEl);
+                    });
+                }
+                
+                filterSelect.appendChild(optgroup);
+            });
+        }
+
+        // Function to load batch options for filters
+        async function loadBatchOptions() {
+            try {
+                const response = await fetch('/api/database/batches/options', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.data.length > 0) {
+                    return data.data.map(batch => {
+                        const batchId = batch.batchId || batch.numericId;
+                        const batchName = batch.batchName || `Khóa ${batch.startYear}-${batch.endYear}`;
+                        return {
+                            value: batchId,
+                            label: batchName
+                        };
+                    });
+                } else {
+                    // If API fails, generate default options based on current year
+                    const defaultBatches = generateBatchOptions();
+                    return defaultBatches.map(batch => ({
+                        value: calculateBatchId(batch.startYear),
+                        label: batch.name
+                    }));
+                }
+            } catch (error) {
+                console.error('Error loading batch options:', error);
+                return []; // Return empty array on error
+            }
+        }
+
+        // Load user list from API
+        async function loadUserList(userType, page) {
+            // Show loading state
+            document.getElementById('userListLoading').classList.remove('d-none');
+            document.getElementById('userListEmpty').classList.add('d-none');
+            document.getElementById('userListError').classList.add('d-none');
+            
+            try {
+                const searchTerm = document.getElementById('userSearchInput').value.trim();
+                const filterSelect = document.getElementById('userFilterSelect');
+                const filterValue = filterSelect.value;
+                
+                // Thay đổi url để sử dụng endpoint basic
+                let url = `/api/database/users/${userType}/basic`;
+                
+                // Các tham số truy vấn
+                const params = new URLSearchParams();
+                params.append('page', page);
+                params.append('limit', pageSize);
+                
+                if (searchTerm) {
+                    params.append('search', searchTerm);
+                }
+                
+                if (filterValue) {
+                    const [field, value] = filterValue.split(':');
+                    params.append(field, value);
+                }
+                
+                url += `?${params.toString()}`;
+                
+                // Update JSON request area with current query
+                document.getElementById('user-list-json-request').value = JSON.stringify({
+                    type: userType,
+                    search: searchTerm,
+                    page: page,
+                    limit: pageSize,
+                    filter: filterValue
+                }, null, 2);
+                
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load users');
+                }
+                
+                const data = await response.json();
+                
+                // Display raw response
+                displayRawResponse('user-list-response', data);
+                
+                if (data.success) {
+                    // Get users array from response - handle different response structures
+                    const users = data.data || data.users || [];
+                    
+                    if (users.length === 0) {
+                        // Show empty state
+                        document.getElementById('userListEmpty').classList.remove('d-none');
+                        document.getElementById('userListTable').classList.add('d-none');
+                        document.getElementById('userListPagination').classList.add('d-none');
+                    } else {
+                        // Show table and pagination
+                        document.getElementById('userListTable').classList.remove('d-none');
+                        document.getElementById('userListPagination').classList.remove('d-none');
+                        
+                        // Update table headers
+                        updateTableHeaders(userType);
+                        
+                        // Update table body
+                        updateTableBody(userType, users);
+                        
+                        // Update pagination
+                        totalUsers = data.total || data.count || users.length;
+                        updatePagination(page, totalUsers);
+                    }
+                } else {
+                    throw new Error(data.message || 'Unknown error');
+                }
+                
+                // Hide loading state
+                document.getElementById('userListLoading').classList.add('d-none');
+                
+            } catch (error) {
+                console.error(`Error loading ${userType} list:`, error);
+                document.getElementById('userListLoading').classList.add('d-none');
+                document.getElementById('userListError').classList.remove('d-none');
+                document.getElementById('userListError').textContent = `Đã xảy ra lỗi: ${error.message}`;
+                
+                // Display error in raw response area
+                displayRawResponse('user-list-response', { error: error.message });
+            }
+        }
+
+        // Update table headers based on user type
+        function updateTableHeaders(userType) {
+            const headerRow = document.getElementById('userTableHeader');
+            headerRow.innerHTML = '';
+            
+            // Add action column
+            const actionHeader = document.createElement('th');
+            actionHeader.textContent = 'Thao tác';
+            headerRow.appendChild(actionHeader);
+            
+            // Add data columns
+            columnDefs[userType].forEach(column => {
+                const th = document.createElement('th');
+                th.textContent = column.label || column.header || column.field;
+                headerRow.appendChild(th);
+            });
+        }
+
+        // Update table body with user data
+        function updateTableBody(userType, users) {
+            const tableBody = document.getElementById('userTableBody');
+            tableBody.innerHTML = '';
+            
+            users.forEach(user => {
+                const row = document.createElement('tr');
+                
+                // Add action column
+                const actionCell = document.createElement('td');
+                actionCell.innerHTML = `
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary view-user" data-id="${user._id || user.id}">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary edit-user" data-id="${user._id || user.id}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger delete-user" data-id="${user._id || user.id}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                `;
+                row.appendChild(actionCell);
+                
+                // Add data columns
+                columnDefs[userType].forEach(column => {
+                    const cell = document.createElement('td');
+                    let value = user[column.field];
+                    
+                    // Apply formatter if defined
+                    if (column.formatter && typeof column.formatter === 'function') {
+                        value = column.formatter(value);
+                    }
+                    
+                    cell.textContent = value !== undefined && value !== null ? value : '';
+                    row.appendChild(cell);
+                });
+                
+                tableBody.appendChild(row);
+            });
+            
+            // Add event listeners for action buttons
+            document.querySelectorAll('.view-user').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    viewUser(currentUserType, id);
+                });
+            });
+            
+            document.querySelectorAll('.edit-user').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    editUser(currentUserType, id);
+                });
+            });
+            
+            document.querySelectorAll('.delete-user').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    deleteUser(currentUserType, id);
+                });
+            });
+        }
+
+        // Update pagination controls
+        function updatePagination(currentPage, totalItems) {
+            const pagination = document.getElementById('userListPagination');
+            pagination.innerHTML = '';
+            
+            const totalPages = Math.ceil(totalItems / pageSize);
+            
+            // Previous button
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            const prevLink = document.createElement('a');
+            prevLink.className = 'page-link';
+            prevLink.href = '#';
+            prevLink.setAttribute('aria-label', 'Previous');
+            prevLink.innerHTML = '<span aria-hidden="true">&laquo;</span>';
+            prevLi.appendChild(prevLink);
+            pagination.appendChild(prevLi);
+            
+            // Add page links
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            
+            // Adjust start page if needed to always show 5 pages if available
+            if (endPage - startPage < 4 && totalPages > 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageLi = document.createElement('li');
+                pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                const pageLink = document.createElement('a');
+                pageLink.className = 'page-link';
+                pageLink.href = '#';
+                pageLink.textContent = i;
+                pageLink.dataset.page = i;
+                pageLi.appendChild(pageLink);
+                pagination.appendChild(pageLi);
+            }
+            
+            // Next button
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            const nextLink = document.createElement('a');
+            nextLink.className = 'page-link';
+            nextLink.href = '#';
+            nextLink.setAttribute('aria-label', 'Next');
+            nextLink.innerHTML = '<span aria-hidden="true">&raquo;</span>';
+            nextLi.appendChild(nextLink);
+            pagination.appendChild(nextLi);
+            
+            // Add event listeners for pagination buttons
+            pagination.querySelectorAll('.page-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    if (this.getAttribute('aria-label') === 'Previous' && currentPage > 1) {
+                        loadUserList(currentUserType, currentPage - 1);
+                        currentPage--;
+                    } else if (this.getAttribute('aria-label') === 'Next' && currentPage < totalPages) {
+                        loadUserList(currentUserType, currentPage + 1);
+                        currentPage++;
+                    } else if (this.dataset.page) {
+                        const page = parseInt(this.dataset.page);
+                        loadUserList(currentUserType, page);
+                        currentPage = page;
+                    }
+                });
+            });
+        }
+
+        // View user details
+        function viewUser(userType, id) {
+            // You would implement this to show user details
+            console.log(`View ${userType} with ID: ${id}`);
+            alert(`Xem thông tin chi tiết cho ${userType} ID: ${id}`);
+        }
+
+        // Edit user details
+        function editUser(userType, id) {
+            // You would implement this to edit user details
+            console.log(`Edit ${userType} with ID: ${id}`);
+            alert(`Chỉnh sửa thông tin cho ${userType} ID: ${id}`);
+        }
+
+        // Delete user
+        function deleteUser(userType, id) {
+            // You would implement this to delete a user
+            if (confirm(`Bạn có chắc chắn muốn xóa ${userType} với ID: ${id}?`)) {
+                console.log(`Delete ${userType} with ID: ${id}`);
+                alert(`Đã xóa ${userType} ID: ${id}`);
+            }
+        }
     </script>
 </body>
 </html> 

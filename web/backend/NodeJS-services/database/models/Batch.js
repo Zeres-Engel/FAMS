@@ -3,7 +3,7 @@ const { COLLECTIONS } = require('../constants');
 
 const BatchSchema = new mongoose.Schema({
   batchId: {
-    type: Number,
+    type: String,
     required: true,
     unique: true
   },
@@ -11,21 +11,42 @@ const BatchSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  startYear: {
-    type: Number,
+  startDate: {
+    type: Date,
     required: true
   },
-  endYear: {
-    type: Number,
+  endDate: {
+    type: Date,
     required: true
   },
-  grade: {
-    type: Number,
-    required: true
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, {
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  timestamps: true,
+  versionKey: false,
+  toJSON: { 
+    virtuals: true,
+    transform: function (doc, ret) {
+      return ret;
+    }
+  },
+  toObject: { 
+    virtuals: true,
+    transform: function (doc, ret) {
+      return ret;
+    }
+  }
+});
+
+// Virtual getters for startYear and endYear
+BatchSchema.virtual('startYear').get(function() {
+  return this.startDate ? this.startDate.getFullYear() : null;
+});
+
+BatchSchema.virtual('endYear').get(function() {
+  return this.endDate ? this.endDate.getFullYear() : null;
 });
 
 // Virtual for getting classes in this batch

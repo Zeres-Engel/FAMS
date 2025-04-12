@@ -237,18 +237,11 @@ exports.login = async (req, res) => {
       }
     }
 
-    // Make sure we use a consistent JWT_SECRET
-    const jwtSecret = process.env.JWT_SECRET || 'secret_key';
+    // Generate both access and refresh tokens using the generateTokens function
+    const { accessToken, refreshToken } = generateTokens(user.userId);
     
-    // Create token with a consistent structure
-    const token = jwt.sign(
-      { id: user.userId, role: user.role },
-      jwtSecret,
-      { expiresIn: '30d' }
-    );
-
     // Log token creation for debugging
-    console.log(`Generated token for user ${user.userId} with role ${user.role}`);
+    console.log(`Generated tokens for user ${user.userId} with role ${user.role}`);
 
     res.json({
       success: true,
@@ -259,7 +252,8 @@ exports.login = async (req, res) => {
         email: user.email,
         role: user.role,
         ...additionalInfo,
-        token
+        accessToken,    // Return accessToken instead of token
+        refreshToken    // Add refreshToken to response
       }
     });
   } catch (error) {

@@ -12,7 +12,12 @@ const UserSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  name: {
+  username: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  password: {
     type: String,
     required: true
   },
@@ -24,22 +29,21 @@ const UserSchema = new mongoose.Schema({
   backup_email: {
     type: String,
     sparse: true,
-    index: true
-  },
-  password: {
-    type: String,
-    required: true
+    index: true,
+    default: null
   },
   role: {
     type: String,
-    enum: ['Admin', 'Teacher', 'Parent', 'Student'],
-    default: 'Student'
+    enum: ['admin', 'teacher', 'parent', 'student', 'Admin', 'Teacher', 'Parent', 'Student'],
+    default: 'student'
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, {
+  timestamps: true,
+  versionKey: false,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
@@ -60,7 +64,7 @@ UserSchema.pre('save', async function(next) {
       return next();
     }
 
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
     next();
   } catch (error) {
@@ -77,5 +81,13 @@ UserSchema.methods.matchPassword = async function(enteredPassword) {
   // This assumes bcrypt was used to hash the password
   return await bcrypt.compare(enteredPassword, this.password);
 };
+
+// Set username to userId if not provided
+UserSchema.pre('validate', function(next) {
+  if (!this.username && this.userId) {
+    this.username = this.userId;
+  }
+  next();
+});
 
 module.exports = mongoose.model('User', UserSchema, COLLECTIONS.USER_ACCOUNT); 

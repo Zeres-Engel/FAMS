@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
+const { COLLECTIONS } = require('../constants');
 
 const StudentSchema = new mongoose.Schema({
   studentId: {
-    type: Number,
+    type: String,
     required: true,
     unique: true
   },
@@ -11,9 +12,23 @@ const StudentSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  fullName: {
+  firstName: {
     type: String,
     required: true
+  },
+  lastName: {
+    type: String,
+    required: true
+  },
+  email: {
+    type: String,
+    required: true
+  },
+  fullName: {
+    type: String,
+    default: function() {
+      return `${this.firstName} ${this.lastName}`.trim();
+    }
   },
   dateOfBirth: {
     type: Date
@@ -24,10 +39,13 @@ const StudentSchema = new mongoose.Schema({
   },
   batchId: {
     type: Number,
-    ref: 'Batch'
+    ref: 'Batch',
+    get: v => v,
+    set: v => typeof v === 'string' ? parseInt(v) : v
   },
   gender: {
-    type: Boolean
+    type: Boolean,
+    required: true
   },
   address: {
     type: String
@@ -35,11 +53,29 @@ const StudentSchema = new mongoose.Schema({
   phone: {
     type: String
   },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  // Parent information arrays
   parentIds: [{
-    type: Number,
-    ref: 'Parent'
+    type: String
+  }],
+  parentNames: [{
+    type: String
+  }],
+  parentCareers: [{
+    type: String
+  }],
+  parentPhones: [{
+    type: String
+  }],
+  parentGenders: [{
+    type: Boolean
   }]
 }, {
+  timestamps: true,
+  versionKey: false,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
@@ -52,4 +88,21 @@ StudentSchema.virtual('user', {
   justOne: true
 });
 
-module.exports = mongoose.model('Student', StudentSchema, 'Student'); 
+// Generate user ID based on name and IDs
+StudentSchema.statics.generateUserId = function(firstName, lastName, batchId, studentId) {
+  if (!firstName || !lastName || !batchId || !studentId) {
+    throw new Error('Missing required fields for userId generation');
+  }
+  
+  // In Vietnamese naming, lastName is the family name (Nguyễn Phước), 
+  // firstName is the given name (Thành)
+  
+  // Extract the first letter of each word in the lastName
+  const lastNameParts = lastName.split(' ');
+  const lastNameInitials = lastNameParts.map(part => part.charAt(0).toLowerCase()).join('');
+  
+  // Combine with firstName, "st" suffix, and IDs
+  return `${firstName.toLowerCase()}${lastNameInitials}st${batchId}${studentId}`;
+};
+
+module.exports = mongoose.model('Student', StudentSchema, COLLECTIONS.STUDENT); 

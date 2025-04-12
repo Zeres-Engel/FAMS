@@ -103,81 +103,6 @@
             </div>
         </div>
         
-        <!-- Register API -->
-        <div class="api-section" id="register-section">
-            <div class="api-title">
-                <h3>Đăng ký</h3>
-                <span class="endpoint">POST /api/auth/register</span>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header bg-success text-white">
-                            Form đăng ký
-                        </div>
-                        <div class="card-body">
-                            <form id="registerForm">
-                                <div class="mb-3">
-                                    <label for="regUserId" class="form-label">Tên đăng nhập (userId)</label>
-                                    <input type="text" class="form-control" id="regUserId" placeholder="vd: student001">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="regName" class="form-label">Họ tên</label>
-                                    <input type="text" class="form-control" id="regName">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="regEmail" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="regEmail">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="regPassword" class="form-label">Mật khẩu</label>
-                                    <input type="password" class="form-control" id="regPassword">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="role" class="form-label">Vai trò</label>
-                                    <select class="form-select" id="role">
-                                        <option value="Student">Học sinh</option>
-                                        <option value="Teacher">Giáo viên</option>
-                                        <option value="Parent">Phụ huynh</option>
-                                        <option value="Admin">Admin</option>
-                                    </select>
-                                </div>
-                                <button type="submit" class="btn btn-success">Đăng ký</button>
-                            </form>
-                            
-                            <div class="mt-3 response-area" id="register-response-message">
-                                <!-- Register response message will be displayed here -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header bg-secondary text-white">
-                            Raw JSON Request
-                        </div>
-                        <div class="card-body">
-                            <textarea id="register-json" class="json-editor">{
-  "userId": "newuser001",
-  "name": "Người dùng mới",
-  "email": "newuser@example.com",
-  "password": "password123",
-  "role": "Student"
-}</textarea>
-                            <button id="register-execute" class="btn btn-secondary mt-2">Execute</button>
-                            
-                            <div class="mt-3">
-                                <h6 class="text-muted">Response:</h6>
-                                <pre id="register-response" class="response-area">// Kết quả API đăng ký sẽ hiển thị ở đây</pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
         <!-- Check Auth API -->
         <div class="api-section" id="check-auth-section">
             <div class="api-title">
@@ -367,7 +292,7 @@ Authorization: Bearer {token}</pre>
                 // Handle successful login
                 if (data.success && data.data) {
                     const userData = data.data;
-                    token = userData.token;
+                    token = userData.accessToken || userData.token;
                     refreshToken = userData.refreshToken || '';
                     currentUser = {
                         userId: userData.userId,
@@ -391,62 +316,6 @@ Authorization: Bearer {token}</pre>
                 logDebug('Login error', error);
                 displayRawResponse('login-response', { error: error.message });
                 displayResponseMessage('login-response-message', 'Lỗi: ' + error.message, false);
-                return { error: error.message };
-            }
-        }
-        
-        // Register API functions
-        function getRegisterFormData() {
-            return {
-                userId: document.getElementById('regUserId').value,
-                name: document.getElementById('regName').value,
-                email: document.getElementById('regEmail').value,
-                password: document.getElementById('regPassword').value,
-                role: document.getElementById('role').value
-            };
-        }
-        
-        async function executeRegister(payload) {
-            try {
-                const response = await fetch(`${baseUrl}/api/auth/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: typeof payload === 'string' ? payload : JSON.stringify(payload)
-                });
-                
-                const data = await response.json();
-                logDebug('Register response', data);
-                
-                // Display raw response
-                displayRawResponse('register-response', data);
-                
-                // Handle successful registration
-                if (data.success && data.data) {
-                    const userData = data.data;
-                    token = userData.accessToken;
-                    refreshToken = userData.refreshToken || '';
-                    currentUser = {
-                        userId: userData.userId,
-                        name: userData.name,
-                        email: userData.email,
-                        role: userData.role
-                    };
-                    
-                    localStorage.setItem('auth_token', token);
-                    if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
-                    if (currentUser) localStorage.setItem('current_user', JSON.stringify(currentUser));
-                    
-                    updateAuthStatus();
-                    displayResponseMessage('register-response-message', 'Đăng ký thành công!', true);
-                } else {
-                    displayResponseMessage('register-response-message', data.message || 'Đăng ký thất bại!', false);
-                }
-                
-                return data;
-            } catch (error) {
-                logDebug('Register error', error);
-                displayRawResponse('register-response', { error: error.message });
-                displayResponseMessage('register-response-message', 'Lỗi: ' + error.message, false);
                 return { error: error.message };
             }
         }
@@ -578,22 +447,6 @@ Authorization: Bearer {token}</pre>
             }
         });
         
-        // Register form and execute button
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await executeRegister(getRegisterFormData());
-        });
-        
-        document.getElementById('register-execute').addEventListener('click', async () => {
-            try {
-                const jsonData = JSON.parse(document.getElementById('register-json').value);
-                await executeRegister(jsonData);
-            } catch (error) {
-                displayResponseMessage('register-response-message', 'JSON không hợp lệ: ' + error.message, false);
-                displayRawResponse('register-response', { error: 'JSON không hợp lệ: ' + error.message });
-            }
-        });
-        
         // Check Auth button
         document.getElementById('checkAuthBtn').addEventListener('click', async () => {
             await executeCheckAuth();
@@ -621,7 +474,6 @@ Authorization: Bearer {token}</pre>
 
         // Sync forms to JSON
         syncFormToJson('loginForm', 'login-json', getLoginFormData);
-        syncFormToJson('registerForm', 'register-json', getRegisterFormData);
     </script>
 </body>
 </html> 

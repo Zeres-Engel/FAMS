@@ -4,7 +4,7 @@ Schedule generation main module
 import os
 import datetime
 from .core import generate_schedule
-from .export import export_schedule_to_csv
+from .export import export_schedule_to_csv, export_semester_schedules
 from ..constants import COLLECTIONS
 
 
@@ -363,7 +363,8 @@ def generate_all_schedules(db, semesters):
     Returns:
         int - total number of schedules generated
     """
-    prepare_schedule_directory()
+    # Chuẩn bị thư mục đầu ra
+    output_dir = prepare_schedule_directory()
     total_schedules = 0
     
     for sem in semesters:
@@ -378,5 +379,10 @@ def generate_all_schedules(db, semesters):
             print(f"[WARNING] Found {len(warnings)} warnings while generating schedules:")
             for w in warnings:
                 print(f"  - {w}")
+        
+        # Xuất thời khóa biểu vào thư mục src/data/schedules
+        print(f"[EXPORT] Exporting schedules for semester {semester_name}...")
+        export_semester_schedules(db, sem, output_dir)
+        print(f"[EXPORT] Schedules exported to {output_dir}")
     
     return total_schedules
