@@ -80,9 +80,6 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '50mb' })); // Increase JSON payload limit
 app.use(express.urlencoded({ extended: true, limit: '50mb' })); // Parse URL-encoded bodies with increased limit
 
-// Serve static files from public directory
-app.use(express.static(path.join(__dirname, 'public')));
-
 // Test route để kiểm tra kết nối
 app.get('/api/test', (req, res) => {
   res.json({ success: true, message: 'API kết nối thành công!', code: 'CONNECTION_SUCCESS' });
@@ -121,11 +118,6 @@ app.use('/api/parents', parentRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/database', apiRouter);
-
-// Serve the test API pages
-app.get('/api-test', (req, res) => {
-  res.redirect('/api-test/index.html');
-});
 
 // Root route
 app.get('/', (req, res) => {
@@ -172,7 +164,6 @@ app.get('/', (req, res) => {
         description: 'API quản lý lịch học'
       }
     },
-    documentation: `${req.protocol}://${req.get('host')}/api-test`,
     status: {
       database: checkConnectionStatus() ? 'connected' : 'disconnected'
     }
@@ -203,7 +194,6 @@ const startServer = async () => {
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Server is accessible at http://0.0.0.0:${PORT}`);
-      console.log(`Test API page available at: http://0.0.0.0:${PORT}/api-test`);
     });
   } catch (error) {
     console.error('Server initialization error:', error);

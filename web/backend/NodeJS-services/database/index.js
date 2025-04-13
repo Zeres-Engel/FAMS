@@ -1,14 +1,15 @@
 // Export database connection functions
-const { connectToFAMS, checkConnectionStatus, getDatabaseInfo } = require('./database');
+const { connectToFAMS } = require('./connection');
+const { checkConnectionStatus, getDatabaseInfo } = require('./utils/dbUtils');
 
 // Export models
 const models = require('./models');
 
 // Export API router
-const apiRouter = require('./api');
+const apiRouter = require('./routes/databaseRoutes');
 
 // Export batch service
-const batchService = require('./batchService');
+const batchService = require('./services/batchService');
 
 // Export initialization function
 const initializeDatabase = () => {
