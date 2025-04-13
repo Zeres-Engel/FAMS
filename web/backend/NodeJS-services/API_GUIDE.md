@@ -1,3 +1,166 @@
+# FAMS API Guide
+
+## Tổng quan hệ thống
+
+Hệ thống FAMS cung cấp API thông qua hai backend:
+
+- **NodeJS Backend**: Xử lý chính cho authentication và quản lý dữ liệu
+- **Python Backend**: Xử lý tác vụ lập lịch và các thuật toán phức tạp
+
+## Truy cập API
+
+### Thông qua tên miền (fams.io.vn)
+
+**NodeJS API:**
+- Base URL: `http://fams.io.vn/api` hoặc `http://fams.io.vn/api-nodejs`
+- API Docs: Không có Swagger UI
+
+**Python API:**
+- Base URL: `http://fams.io.vn/api-python`
+- API Docs: 
+  - Swagger UI: `http://fams.io.vn/python-docs`
+  - ReDoc: `http://fams.io.vn/python-redoc`
+
+### Thông qua localhost và port
+
+**NodeJS API:**
+- Base URL: `http://localhost:3002/api`
+
+**Python API:**
+- Base URL: `http://localhost:3001`
+- API Docs:
+  - Swagger UI: `http://localhost:3001/docs`
+  - ReDoc: `http://localhost:3001/redoc`
+
+## NodeJS API Endpoints
+
+### Authentication
+
+- **Login**
+  - URL: `/api/auth/login`
+  - Method: `POST`
+  - Body:
+  ```json
+  {
+    "username": "string",
+    "password": "string"
+  }
+  ```
+  - Response:
+  ```json
+  {
+    "token": "string",
+    "refreshToken": "string",
+    "user": {
+      "id": "string",
+      "username": "string",
+      "role": "string"
+    }
+  }
+  ```
+
+- **Refresh Token**
+  - URL: `/api/auth/refresh`
+  - Method: `POST`
+  - Body:
+  ```json
+  {
+    "refreshToken": "string"
+  }
+  ```
+  - Response:
+  ```json
+  {
+    "token": "string"
+  }
+  ```
+
+### Quản lý người dùng
+
+- **Lấy danh sách người dùng**
+  - URL: `/api/users`
+  - Method: `GET`
+  - Headers: `Authorization: Bearer {token}`
+  - Response:
+  ```json
+  {
+    "data": [
+      {
+        "id": "string",
+        "username": "string",
+        "email": "string",
+        "role": "string"
+      }
+    ]
+  }
+  ```
+
+## Python API Endpoints
+
+### Lịch học (Scheduling)
+
+- **Tạo lịch học**
+  - URL: `/api-python/api/db/scheduling`
+  - Method: `POST`
+  - Body:
+  ```json
+  {
+    "academic_year": "2024-2025"
+  }
+  ```
+
+- **Lấy lịch học**
+  - URL: `/api-python/api/db/schedules`
+  - Method: `GET`
+  - Query Parameters:
+    - `semester_id`: ID học kỳ (optional)
+    - `class_id`: ID lớp học (optional)
+    - `teacher_id`: ID giáo viên (optional)
+    - `subject_id`: ID môn học (optional)
+
+### Quản lý cơ sở dữ liệu
+
+- **Khởi tạo dữ liệu**
+  - URL: `/api-python/api/db/init`
+  - Method: `POST`
+
+- **Thông tin cơ sở dữ liệu**
+  - URL: `/api-python/api/db/info`
+  - Method: `GET`
+
+## Tips khi sử dụng Postman
+
+1. **Tạo các environment variables:**
+   - `base_url`: http://fams.io.vn
+   - `token`: lưu token từ response khi login
+
+2. **Tạo collections riêng** cho NodeJS API và Python API
+
+3. **Sử dụng các biến trong requests:**
+   - NodeJS API: `{{base_url}}/api/users`
+   - Python API: `{{base_url}}/api-python/api/db/schedules`
+   - Headers: `Authorization: Bearer {{token}}`
+
+4. **Authentication Flow:**
+   - Login qua NodeJS API để lấy token
+   - Sử dụng token cho các request khác
+
+## Lỗi thường gặp và cách khắc phục
+
+1. **CORS Error**: Đã cấu hình CORS trong Nginx, các request từ Postman và browser đều được chấp nhận.
+
+2. **401 Unauthorized**: Kiểm tra token đã hết hạn chưa, login lại để lấy token mới.
+
+3. **404 Not Found**: Kiểm tra URL đúng theo định dạng:
+   - NodeJS API: `/api/...` hoặc `/api-nodejs/...`
+   - Python API: `/api-python/...`
+
+4. **500 Internal Server Error**: Kiểm tra logs để biết thêm chi tiết:
+   ```bash
+   docker logs fams_api_nodejs
+   docker logs fams_api_python
+   ```
+
 # API GUIDE - NodeJS Service
 
 ## Thông tin chung
