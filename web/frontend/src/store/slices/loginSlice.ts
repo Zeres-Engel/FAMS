@@ -9,6 +9,7 @@ import { hideLoading, showLoading } from "./loadingSlice";
 import { setRole } from "./authSlice";
 import { saveTokens } from "../../services/tokenServices";
 import axiosInstance from "../../services/axiosInstance";
+import { addNotify } from "./notifySlice";
 
 interface loginState {
   loginData: null | AuthTokens;
@@ -34,12 +35,31 @@ export const loginRequest = createAsyncThunk(
         refreshToken: response.data.data?.refreshToken,
         accessToken: response?.data.data?.accessToken,
       };
+      console.log(formatLoginData);
+      
       const sampleRole = response?.data.data?.role || "user" 
       saveTokens(formatLoginData.accessToken, formatLoginData.refreshToken)
       thunkAPI.dispatch(setRole(sampleRole))
+      thunkAPI.dispatch(
+        addNotify({
+          type: "success",
+          message: "Login successful!",
+          duration: 3000,
+        })
+      );
+
       return formatLoginData;
     } catch (error: any) {
       thunkAPI.dispatch(hideLoading())
+      console.log(error);
+      
+      thunkAPI.dispatch(
+        addNotify({
+          type: "error",
+          message: 'Login Failed!',
+          duration: 3000,
+        })
+      );
       return thunkAPI.rejectWithValue(error.message); 
     } finally {
       thunkAPI.dispatch(hideLoading());

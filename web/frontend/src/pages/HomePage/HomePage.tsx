@@ -7,13 +7,6 @@ function HomePage(): React.JSX.Element {
   const {state,handler}=useHomePageHook()
   return (
     <LayoutComponent pageHeader="Home Page">
-      {state?.alertMessage && (
-        <NotifyBar
-          notifyID={state?.notifyID}
-          notifyType="warning"
-          notifyContent={state?.alertMessage}
-        />
-      )}
       Home Page
     </LayoutComponent>
   );
