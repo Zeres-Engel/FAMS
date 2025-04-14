@@ -9,8 +9,6 @@ import {
   Grid,
   Tooltip,
   Button,
-  CircularProgress,
-  Alert,
 } from "@mui/material";
 import moment from "moment";
 import LayoutComponent from "../../components/Layout/Layout";
@@ -41,31 +39,23 @@ const SchedulePage: React.FC = () => {
           {/* <Grid size={{xs:12, sm:10, md:8, lg:6}}> */}
           <Grid size={12}>
             <Paper elevation={3} sx={{ padding: "16px", overflowX: "auto" }}>
-              {state.isLoading ? (
-                <div style={{ display: 'flex', justifyContent: 'center', padding: '50px' }}>
-                  <CircularProgress />
-                </div>
-              ) : state.error ? (
-                <Alert severity="error">{state.error}</Alert>
-              ) : (
-                <Calendar
-                  localizer={localizer}
-                  view={state.view}
-                  events={state.events}
-                  date={state.currentDate}
-                  startAccessor="start"
-                  endAccessor="end"
-                  views={["month", "week", "day"]}
-                  style={{ height: 500, minWidth: "100%" }}
-                  onSelectEvent={handler.handleSelectEvent}
-                  onView={(newView) => {
-                    handler.handleSetNewView(newView)
-                  }}
-                  onNavigate={(newDate)=>{
-                    handler.handleSetNewViewDate(newDate)
-                  }}
-                />
-              )}
+              <Calendar
+                localizer={localizer}
+                view={state.view}
+                events={state.events}
+                date={state.currentDate}
+                startAccessor="start"
+                endAccessor="end"
+                views={["month", "week", "day"]}
+                style={{ height: 500, minWidth: "100%" }}
+                onSelectEvent={handler.handleSelectEvent}
+                onView={(newView) => {
+                  handler.handleSetNewView(newView)
+                }}
+                onNavigate={(newDate)=>{
+                  handler.handleSetNewViewDate(newDate)
+                }}
+              />
             </Paper>
           </Grid>
         </Grid>
@@ -81,19 +71,6 @@ const SchedulePage: React.FC = () => {
             <Typography component="div">
               End: {moment(state.eventShow?.end).format("YYYY-MM-DD HH:mm")}
             </Typography>
-            {state.eventShow?.resource && (
-              <>
-                <Typography component="div">
-                  Subject ID: {state.eventShow.resource.subjectId}
-                </Typography>
-                <Typography component="div">
-                  Classroom: {state.eventShow.resource.classroomId}
-                </Typography>
-                <Typography component="div">
-                  Teacher ID: {state.eventShow.resource.teacherId}
-                </Typography>
-              </>
-            )}
             <Button
               variant="contained"
               onClick={() => handler.handleSelectEvent()}
