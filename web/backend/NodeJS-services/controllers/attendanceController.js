@@ -3,6 +3,7 @@ const ClassSession = require('../database/models/ClassSession');
 const Student = require('../database/models/Student');
 const User = require('../database/models/User');
 const moment = require('moment');
+const ClassSchedule = require('../database/models/ClassSchedule');
 
 /**
  * @desc    Lấy điểm danh theo buổi học
@@ -249,7 +250,7 @@ exports.getClassAttendanceByDate = async (req, res) => {
       
       // Kiểm tra xem giáo viên có dạy lớp này hoặc là GVCN
       const isHomeroomTeacher = classInfo.homeroomTeacherId === teacher.teacherId;
-      const teachesClass = await Schedule.findOne({ 
+      const teachesClass = await ClassSchedule.findOne({
         classId: parseInt(classId),
         teacherId: teacher.teacherId
       });

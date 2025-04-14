@@ -2423,3 +2423,1048 @@
 2025/04/13 06:14:58 [error] 29#29: *4 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.21.0.5:3000/api/auth/login", host: "fams.io.vn"
 2025/04/13 06:15:03 [error] 30#30: *1 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.21.0.5:3000/api/auth/login", host: "fams.io.vn"
 2025/04/13 06:15:14 [error] 30#30: *1 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.21.0.5:3000/api/auth/login", host: "fams.io.vn"
+2025/04/13 07:05:56 [error] 29#29: *80 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.21.0.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/13 07:22:01 [notice] 35#35: signal process started
+2025/04/13 07:22:01 [notice] 1#1: signal 1 (SIGHUP) received from 35, reconfiguring
+2025/04/13 07:22:01 [notice] 1#1: reconfiguring
+2025/04/13 07:22:01 [notice] 1#1: using the "epoll" event method
+2025/04/13 07:22:01 [notice] 1#1: start worker processes
+2025/04/13 07:22:01 [notice] 1#1: start worker process 41
+2025/04/13 07:22:01 [notice] 1#1: start worker process 42
+2025/04/13 07:22:01 [notice] 1#1: start worker process 43
+2025/04/13 07:22:01 [notice] 1#1: start worker process 44
+2025/04/13 07:22:01 [notice] 1#1: start worker process 45
+2025/04/13 07:22:01 [notice] 1#1: start worker process 46
+2025/04/13 07:22:01 [notice] 29#29: gracefully shutting down
+2025/04/13 07:22:01 [notice] 30#30: gracefully shutting down
+2025/04/13 07:22:01 [notice] 34#34: gracefully shutting down
+2025/04/13 07:22:01 [notice] 33#33: gracefully shutting down
+2025/04/13 07:22:01 [notice] 32#32: gracefully shutting down
+2025/04/13 07:22:01 [notice] 29#29: exiting
+2025/04/13 07:22:01 [notice] 33#33: exiting
+2025/04/13 07:22:01 [notice] 30#30: exiting
+2025/04/13 07:22:01 [notice] 34#34: exiting
+2025/04/13 07:22:01 [notice] 32#32: exiting
+2025/04/13 07:22:01 [notice] 33#33: exit
+2025/04/13 07:22:01 [notice] 29#29: exit
+2025/04/13 07:22:01 [notice] 34#34: exit
+2025/04/13 07:22:01 [notice] 32#32: exit
+2025/04/13 07:22:01 [notice] 30#30: exit
+2025/04/13 07:22:01 [notice] 31#31: gracefully shutting down
+2025/04/13 07:22:01 [notice] 31#31: exiting
+2025/04/13 07:22:01 [notice] 31#31: exit
+2025/04/13 07:22:01 [notice] 1#1: signal 17 (SIGCHLD) received from 34
+2025/04/13 07:22:01 [notice] 1#1: worker process 34 exited with code 0
+2025/04/13 07:22:01 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 07:22:01 [notice] 1#1: signal 17 (SIGCHLD) received from 32
+2025/04/13 07:22:01 [notice] 1#1: worker process 32 exited with code 0
+2025/04/13 07:22:01 [notice] 1#1: worker process 29 exited with code 0
+2025/04/13 07:22:01 [notice] 1#1: worker process 33 exited with code 0
+2025/04/13 07:22:01 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 07:22:01 [notice] 1#1: signal 17 (SIGCHLD) received from 33
+2025/04/13 07:22:01 [notice] 1#1: signal 17 (SIGCHLD) received from 30
+2025/04/13 07:22:01 [notice] 1#1: worker process 30 exited with code 0
+2025/04/13 07:22:01 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 07:22:01 [notice] 1#1: signal 17 (SIGCHLD) received from 31
+2025/04/13 07:22:01 [notice] 1#1: worker process 31 exited with code 0
+2025/04/13 07:22:01 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 07:30:04 [notice] 47#47: signal process started
+2025/04/13 07:30:04 [notice] 1#1: signal 1 (SIGHUP) received from 47, reconfiguring
+2025/04/13 07:30:04 [notice] 1#1: reconfiguring
+2025/04/13 07:30:04 [notice] 1#1: using the "epoll" event method
+2025/04/13 07:30:04 [notice] 1#1: start worker processes
+2025/04/13 07:30:04 [notice] 1#1: start worker process 53
+2025/04/13 07:30:04 [notice] 1#1: start worker process 54
+2025/04/13 07:30:04 [notice] 1#1: start worker process 55
+2025/04/13 07:30:04 [notice] 1#1: start worker process 56
+2025/04/13 07:30:04 [notice] 1#1: start worker process 57
+2025/04/13 07:30:04 [notice] 1#1: start worker process 58
+2025/04/13 07:30:04 [notice] 41#41: gracefully shutting down
+2025/04/13 07:30:04 [notice] 43#43: gracefully shutting down
+2025/04/13 07:30:04 [notice] 42#42: gracefully shutting down
+2025/04/13 07:30:04 [notice] 41#41: exiting
+2025/04/13 07:30:04 [notice] 43#43: exiting
+2025/04/13 07:30:04 [notice] 42#42: exiting
+2025/04/13 07:30:04 [notice] 43#43: exit
+2025/04/13 07:30:04 [notice] 41#41: exit
+2025/04/13 07:30:04 [notice] 44#44: gracefully shutting down
+2025/04/13 07:30:04 [notice] 42#42: exit
+2025/04/13 07:30:04 [notice] 44#44: exiting
+2025/04/13 07:30:04 [notice] 44#44: exit
+2025/04/13 07:30:04 [notice] 45#45: gracefully shutting down
+2025/04/13 07:30:04 [notice] 46#46: gracefully shutting down
+2025/04/13 07:30:04 [notice] 45#45: exiting
+2025/04/13 07:30:04 [notice] 46#46: exiting
+2025/04/13 07:30:04 [notice] 45#45: exit
+2025/04/13 07:30:04 [notice] 46#46: exit
+2025/04/13 07:30:04 [notice] 1#1: signal 17 (SIGCHLD) received from 43
+2025/04/13 07:30:04 [notice] 1#1: worker process 41 exited with code 0
+2025/04/13 07:30:04 [notice] 1#1: worker process 43 exited with code 0
+2025/04/13 07:30:04 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 07:30:04 [notice] 1#1: signal 17 (SIGCHLD) received from 42
+2025/04/13 07:30:04 [notice] 1#1: worker process 42 exited with code 0
+2025/04/13 07:30:04 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 07:30:04 [notice] 1#1: signal 17 (SIGCHLD) received from 46
+2025/04/13 07:30:04 [notice] 1#1: worker process 45 exited with code 0
+2025/04/13 07:30:04 [notice] 1#1: worker process 46 exited with code 0
+2025/04/13 07:30:04 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 07:30:04 [notice] 1#1: signal 17 (SIGCHLD) received from 45
+2025/04/13 07:30:04 [notice] 1#1: signal 17 (SIGCHLD) received from 44
+2025/04/13 07:30:04 [notice] 1#1: worker process 44 exited with code 0
+2025/04/13 07:30:04 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 07:33:22 [notice] 59#59: signal process started
+2025/04/13 07:33:22 [notice] 1#1: signal 1 (SIGHUP) received from 59, reconfiguring
+2025/04/13 07:33:22 [notice] 1#1: reconfiguring
+2025/04/13 07:33:22 [notice] 1#1: using the "epoll" event method
+2025/04/13 07:33:22 [notice] 1#1: start worker processes
+2025/04/13 07:33:22 [notice] 1#1: start worker process 64
+2025/04/13 07:33:22 [notice] 1#1: start worker process 65
+2025/04/13 07:33:22 [notice] 1#1: start worker process 66
+2025/04/13 07:33:22 [notice] 1#1: start worker process 67
+2025/04/13 07:33:22 [notice] 1#1: start worker process 68
+2025/04/13 07:33:22 [notice] 1#1: start worker process 69
+2025/04/13 07:33:22 [notice] 57#57: gracefully shutting down
+2025/04/13 07:33:22 [notice] 53#53: gracefully shutting down
+2025/04/13 07:33:22 [notice] 57#57: exiting
+2025/04/13 07:33:22 [notice] 53#53: exiting
+2025/04/13 07:33:22 [notice] 57#57: exit
+2025/04/13 07:33:22 [notice] 53#53: exit
+2025/04/13 07:33:22 [notice] 54#54: gracefully shutting down
+2025/04/13 07:33:22 [notice] 55#55: gracefully shutting down
+2025/04/13 07:33:22 [notice] 58#58: gracefully shutting down
+2025/04/13 07:33:22 [notice] 54#54: exiting
+2025/04/13 07:33:22 [notice] 58#58: exiting
+2025/04/13 07:33:22 [notice] 54#54: exit
+2025/04/13 07:33:22 [notice] 55#55: exiting
+2025/04/13 07:33:22 [notice] 56#56: gracefully shutting down
+2025/04/13 07:33:22 [notice] 58#58: exit
+2025/04/13 07:33:22 [notice] 55#55: exit
+2025/04/13 07:33:22 [notice] 56#56: exiting
+2025/04/13 07:33:22 [notice] 56#56: exit
+2025/04/13 07:33:22 [notice] 1#1: signal 17 (SIGCHLD) received from 55
+2025/04/13 07:33:22 [notice] 1#1: worker process 55 exited with code 0
+2025/04/13 07:33:22 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 07:33:22 [notice] 1#1: signal 17 (SIGCHLD) received from 57
+2025/04/13 07:33:22 [notice] 1#1: worker process 57 exited with code 0
+2025/04/13 07:33:22 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 07:33:22 [notice] 1#1: signal 17 (SIGCHLD) received from 53
+2025/04/13 07:33:22 [notice] 1#1: worker process 53 exited with code 0
+2025/04/13 07:33:22 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 07:33:22 [notice] 1#1: signal 17 (SIGCHLD) received from 56
+2025/04/13 07:33:22 [notice] 1#1: worker process 54 exited with code 0
+2025/04/13 07:33:22 [notice] 1#1: worker process 56 exited with code 0
+2025/04/13 07:33:22 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 07:33:22 [notice] 1#1: signal 17 (SIGCHLD) received from 54
+2025/04/13 07:33:22 [notice] 1#1: worker process 58 exited with code 0
+2025/04/13 07:33:22 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 07:35:07 [notice] 70#70: signal process started
+2025/04/13 07:35:07 [notice] 1#1: signal 1 (SIGHUP) received from 70, reconfiguring
+2025/04/13 07:35:07 [notice] 1#1: reconfiguring
+2025/04/13 07:35:07 [notice] 1#1: using the "epoll" event method
+2025/04/13 07:35:07 [notice] 1#1: start worker processes
+2025/04/13 07:35:07 [notice] 1#1: start worker process 76
+2025/04/13 07:35:07 [notice] 1#1: start worker process 77
+2025/04/13 07:35:07 [notice] 1#1: start worker process 78
+2025/04/13 07:35:07 [notice] 1#1: start worker process 79
+2025/04/13 07:35:07 [notice] 1#1: start worker process 80
+2025/04/13 07:35:07 [notice] 1#1: start worker process 81
+2025/04/13 07:35:07 [notice] 64#64: gracefully shutting down
+2025/04/13 07:35:07 [notice] 65#65: gracefully shutting down
+2025/04/13 07:35:07 [notice] 67#67: gracefully shutting down
+2025/04/13 07:35:07 [notice] 66#66: gracefully shutting down
+2025/04/13 07:35:07 [notice] 69#69: gracefully shutting down
+2025/04/13 07:35:07 [notice] 68#68: gracefully shutting down
+2025/04/13 07:35:07 [notice] 67#67: exiting
+2025/04/13 07:35:07 [notice] 65#65: exiting
+2025/04/13 07:35:07 [notice] 69#69: exiting
+2025/04/13 07:35:07 [notice] 64#64: exiting
+2025/04/13 07:35:07 [notice] 66#66: exiting
+2025/04/13 07:35:07 [notice] 68#68: exiting
+2025/04/13 07:35:07 [notice] 69#69: exit
+2025/04/13 07:35:07 [notice] 65#65: exit
+2025/04/13 07:35:07 [notice] 67#67: exit
+2025/04/13 07:35:07 [notice] 64#64: exit
+2025/04/13 07:35:07 [notice] 68#68: exit
+2025/04/13 07:35:07 [notice] 66#66: exit
+2025/04/13 07:35:07 [notice] 1#1: signal 17 (SIGCHLD) received from 64
+2025/04/13 07:35:07 [notice] 1#1: worker process 64 exited with code 0
+2025/04/13 07:35:07 [notice] 1#1: worker process 65 exited with code 0
+2025/04/13 07:35:07 [notice] 1#1: worker process 66 exited with code 0
+2025/04/13 07:35:07 [notice] 1#1: worker process 67 exited with code 0
+2025/04/13 07:35:07 [notice] 1#1: worker process 69 exited with code 0
+2025/04/13 07:35:07 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 07:35:07 [notice] 1#1: signal 17 (SIGCHLD) received from 65
+2025/04/13 07:35:07 [notice] 1#1: signal 17 (SIGCHLD) received from 68
+2025/04/13 07:35:07 [notice] 1#1: worker process 68 exited with code 0
+2025/04/13 07:35:07 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 07:36:35 [notice] 82#82: signal process started
+2025/04/13 07:36:35 [notice] 1#1: signal 1 (SIGHUP) received from 82, reconfiguring
+2025/04/13 07:36:35 [notice] 1#1: reconfiguring
+2025/04/13 07:36:35 [notice] 1#1: using the "epoll" event method
+2025/04/13 07:36:35 [notice] 1#1: start worker processes
+2025/04/13 07:36:35 [notice] 1#1: start worker process 88
+2025/04/13 07:36:35 [notice] 1#1: start worker process 89
+2025/04/13 07:36:35 [notice] 1#1: start worker process 90
+2025/04/13 07:36:35 [notice] 1#1: start worker process 91
+2025/04/13 07:36:35 [notice] 1#1: start worker process 92
+2025/04/13 07:36:35 [notice] 1#1: start worker process 93
+2025/04/13 07:36:35 [notice] 76#76: gracefully shutting down
+2025/04/13 07:36:35 [notice] 77#77: gracefully shutting down
+2025/04/13 07:36:35 [notice] 78#78: gracefully shutting down
+2025/04/13 07:36:35 [notice] 76#76: exiting
+2025/04/13 07:36:35 [notice] 81#81: gracefully shutting down
+2025/04/13 07:36:35 [notice] 80#80: gracefully shutting down
+2025/04/13 07:36:35 [notice] 79#79: gracefully shutting down
+2025/04/13 07:36:35 [notice] 78#78: exiting
+2025/04/13 07:36:35 [notice] 81#81: exiting
+2025/04/13 07:36:35 [notice] 76#76: exit
+2025/04/13 07:36:35 [notice] 79#79: exiting
+2025/04/13 07:36:35 [notice] 78#78: exit
+2025/04/13 07:36:35 [notice] 81#81: exit
+2025/04/13 07:36:35 [notice] 79#79: exit
+2025/04/13 07:36:35 [notice] 80#80: exiting
+2025/04/13 07:36:35 [notice] 80#80: exit
+2025/04/13 07:36:35 [notice] 77#77: exiting
+2025/04/13 07:36:35 [notice] 77#77: exit
+2025/04/13 07:36:35 [notice] 1#1: signal 17 (SIGCHLD) received from 79
+2025/04/13 07:36:35 [notice] 1#1: worker process 79 exited with code 0
+2025/04/13 07:36:35 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 07:36:35 [notice] 1#1: signal 17 (SIGCHLD) received from 81
+2025/04/13 07:36:35 [notice] 1#1: worker process 76 exited with code 0
+2025/04/13 07:36:35 [notice] 1#1: worker process 77 exited with code 0
+2025/04/13 07:36:35 [notice] 1#1: worker process 78 exited with code 0
+2025/04/13 07:36:35 [notice] 1#1: worker process 80 exited with code 0
+2025/04/13 07:36:35 [notice] 1#1: worker process 81 exited with code 0
+2025/04/13 07:36:35 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 07:36:35 [notice] 1#1: signal 17 (SIGCHLD) received from 77
+2025/04/13 07:45:49 [error] 88#88: *141 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.21.0.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/13 07:51:23 [error] 88#88: *150 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "GET /api-nodejs/students?page=1&limit=10&search=Th%C3%A0nh&classId=&className=10A1&batchId=&batchYear=2023-2026 HTTP/1.1", upstream: "http://172.21.0.5:3000/api/students?page=1&limit=10&search=Th%C3%A0nh&classId=&className=10A1&batchId=&batchYear=2023-2026", host: "fams.io.vn"
+2025/04/13 09:01:26 [error] 89#89: *191 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/users/create HTTP/1.1", upstream: "http://172.21.0.5:3000/api/users/create", host: "fams.io.vn"
+2025/04/13 09:01:48 [error] 89#89: *191 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.21.0.5:3000/api/auth/login", host: "fams.io.vn"
+2025/04/13 09:02:29 [error] 89#89: *194 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.21.0.5:3000/api/auth/login", host: "fams.io.vn"
+2025/04/13 09:02:32 [error] 89#89: *196 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.21.0.5:3000/api/auth/login", host: "fams.io.vn"
+2025/04/13 09:02:42 [error] 89#89: *198 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.21.0.5:3000/api/auth/login", host: "fams.io.vn"
+2025/04/13 09:04:32 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/13 09:04:32 [notice] 90#90: gracefully shutting down
+2025/04/13 09:04:32 [notice] 88#88: gracefully shutting down
+2025/04/13 09:04:32 [notice] 89#89: gracefully shutting down
+2025/04/13 09:04:32 [notice] 88#88: exiting
+2025/04/13 09:04:32 [notice] 91#91: gracefully shutting down
+2025/04/13 09:04:32 [notice] 89#89: exiting
+2025/04/13 09:04:32 [notice] 91#91: exiting
+2025/04/13 09:04:32 [notice] 92#92: gracefully shutting down
+2025/04/13 09:04:32 [notice] 91#91: exit
+2025/04/13 09:04:32 [notice] 89#89: exit
+2025/04/13 09:04:32 [notice] 88#88: exit
+2025/04/13 09:04:32 [notice] 92#92: exiting
+2025/04/13 09:04:32 [notice] 92#92: exit
+2025/04/13 09:04:32 [notice] 93#93: gracefully shutting down
+2025/04/13 09:04:32 [notice] 93#93: exiting
+2025/04/13 09:04:32 [notice] 93#93: exit
+2025/04/13 09:04:32 [notice] 1#1: signal 17 (SIGCHLD) received from 91
+2025/04/13 09:04:32 [notice] 1#1: worker process 91 exited with code 0
+2025/04/13 09:04:32 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 09:04:32 [notice] 1#1: signal 17 (SIGCHLD) received from 92
+2025/04/13 09:04:32 [notice] 1#1: worker process 88 exited with code 0
+2025/04/13 09:04:32 [notice] 1#1: worker process 89 exited with code 0
+2025/04/13 09:04:32 [notice] 1#1: worker process 92 exited with code 0
+2025/04/13 09:04:32 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 09:04:32 [notice] 1#1: signal 17 (SIGCHLD) received from 89
+2025/04/13 09:04:32 [notice] 1#1: signal 17 (SIGCHLD) received from 93
+2025/04/13 09:04:32 [notice] 1#1: worker process 93 exited with code 0
+2025/04/13 09:04:32 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 09:05:53 [notice] 1#1: using the "epoll" event method
+2025/04/13 09:05:53 [notice] 1#1: nginx/1.27.4
+2025/04/13 09:05:53 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/13 09:05:53 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/13 09:05:53 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/13 09:05:53 [notice] 1#1: start worker processes
+2025/04/13 09:05:53 [notice] 1#1: start worker process 29
+2025/04/13 09:05:53 [notice] 1#1: start worker process 30
+2025/04/13 09:05:53 [notice] 1#1: start worker process 31
+2025/04/13 09:05:53 [notice] 1#1: start worker process 32
+2025/04/13 09:05:53 [notice] 1#1: start worker process 33
+2025/04/13 09:05:53 [notice] 1#1: start worker process 34
+2025/04/13 13:39:34 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/13 13:39:34 [notice] 30#30: gracefully shutting down
+2025/04/13 13:39:34 [notice] 29#29: gracefully shutting down
+2025/04/13 13:39:34 [notice] 30#30: exiting
+2025/04/13 13:39:34 [notice] 29#29: exiting
+2025/04/13 13:39:34 [notice] 31#31: gracefully shutting down
+2025/04/13 13:39:34 [notice] 31#31: exiting
+2025/04/13 13:39:34 [notice] 30#30: exit
+2025/04/13 13:39:34 [notice] 29#29: exit
+2025/04/13 13:39:34 [notice] 31#31: exit
+2025/04/13 13:39:34 [notice] 33#33: gracefully shutting down
+2025/04/13 13:39:34 [notice] 33#33: exiting
+2025/04/13 13:39:34 [notice] 33#33: exit
+2025/04/13 13:39:34 [notice] 34#34: gracefully shutting down
+2025/04/13 13:39:34 [notice] 32#32: gracefully shutting down
+2025/04/13 13:39:34 [notice] 34#34: exiting
+2025/04/13 13:39:34 [notice] 32#32: exiting
+2025/04/13 13:39:34 [notice] 34#34: exit
+2025/04/13 13:39:34 [notice] 32#32: exit
+2025/04/13 13:39:34 [notice] 1#1: signal 17 (SIGCHLD) received from 34
+2025/04/13 13:39:34 [notice] 1#1: worker process 34 exited with code 0
+2025/04/13 13:39:34 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 13:39:34 [notice] 1#1: signal 17 (SIGCHLD) received from 29
+2025/04/13 13:39:34 [notice] 1#1: worker process 29 exited with code 0
+2025/04/13 13:39:34 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 13:39:34 [notice] 1#1: signal 17 (SIGCHLD) received from 33
+2025/04/13 13:39:34 [notice] 1#1: worker process 30 exited with code 0
+2025/04/13 13:39:34 [notice] 1#1: worker process 31 exited with code 0
+2025/04/13 13:39:34 [notice] 1#1: worker process 32 exited with code 0
+2025/04/13 13:39:34 [notice] 1#1: worker process 33 exited with code 0
+2025/04/13 13:39:34 [notice] 1#1: exit
+2025/04/13 13:40:29 [notice] 1#1: using the "epoll" event method
+2025/04/13 13:40:29 [notice] 1#1: nginx/1.27.4
+2025/04/13 13:40:29 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/13 13:40:29 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/13 13:40:29 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/13 13:40:29 [notice] 1#1: start worker processes
+2025/04/13 13:40:29 [notice] 1#1: start worker process 29
+2025/04/13 13:40:29 [notice] 1#1: start worker process 30
+2025/04/13 13:40:29 [notice] 1#1: start worker process 31
+2025/04/13 13:40:29 [notice] 1#1: start worker process 32
+2025/04/13 13:40:29 [notice] 1#1: start worker process 33
+2025/04/13 13:40:29 [notice] 1#1: start worker process 34
+2025/04/13 15:36:07 [error] 32#32: *266 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/refresh-token HTTP/1.1", upstream: "http://172.23.0.5:3000/api/auth/refresh-token", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/13 16:38:30 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/13 16:38:30 [notice] 31#31: gracefully shutting down
+2025/04/13 16:38:30 [notice] 33#33: gracefully shutting down
+2025/04/13 16:38:30 [notice] 29#29: gracefully shutting down
+2025/04/13 16:38:30 [notice] 30#30: gracefully shutting down
+2025/04/13 16:38:30 [notice] 31#31: exiting
+2025/04/13 16:38:30 [notice] 33#33: exiting
+2025/04/13 16:38:30 [notice] 29#29: exiting
+2025/04/13 16:38:30 [notice] 30#30: exiting
+2025/04/13 16:38:30 [notice] 33#33: exit
+2025/04/13 16:38:30 [notice] 29#29: exit
+2025/04/13 16:38:30 [notice] 30#30: exit
+2025/04/13 16:38:30 [notice] 31#31: exit
+2025/04/13 16:38:30 [notice] 34#34: gracefully shutting down
+2025/04/13 16:38:30 [notice] 34#34: exiting
+2025/04/13 16:38:30 [notice] 34#34: exit
+2025/04/13 16:38:30 [notice] 32#32: gracefully shutting down
+2025/04/13 16:38:30 [notice] 32#32: exiting
+2025/04/13 16:38:30 [notice] 32#32: exit
+2025/04/13 16:38:31 [notice] 1#1: signal 17 (SIGCHLD) received from 30
+2025/04/13 16:38:31 [notice] 1#1: worker process 30 exited with code 0
+2025/04/13 16:38:31 [notice] 1#1: worker process 34 exited with code 0
+2025/04/13 16:38:31 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/13 16:38:31 [notice] 1#1: signal 17 (SIGCHLD) received from 34
+2025/04/13 16:38:31 [notice] 1#1: signal 17 (SIGCHLD) received from 29
+2025/04/13 16:38:31 [notice] 1#1: worker process 29 exited with code 0
+2025/04/13 16:38:31 [notice] 1#1: worker process 31 exited with code 0
+2025/04/13 16:38:31 [notice] 1#1: worker process 32 exited with code 0
+2025/04/13 16:38:31 [notice] 1#1: worker process 33 exited with code 0
+2025/04/13 16:38:31 [notice] 1#1: exit
+2025/04/13 16:39:41 [notice] 1#1: using the "epoll" event method
+2025/04/13 16:39:41 [notice] 1#1: nginx/1.27.4
+2025/04/13 16:39:41 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/13 16:39:41 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/13 16:39:41 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/13 16:39:41 [notice] 1#1: start worker processes
+2025/04/13 16:39:41 [notice] 1#1: start worker process 29
+2025/04/13 16:39:41 [notice] 1#1: start worker process 30
+2025/04/13 16:39:41 [notice] 1#1: start worker process 31
+2025/04/13 16:39:41 [notice] 1#1: start worker process 32
+2025/04/13 16:39:41 [notice] 1#1: start worker process 33
+2025/04/13 16:39:41 [notice] 1#1: start worker process 34
+2025/04/14 03:31:58 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/14 03:31:58 [notice] 30#30: gracefully shutting down
+2025/04/14 03:31:58 [notice] 29#29: gracefully shutting down
+2025/04/14 03:31:58 [notice] 31#31: gracefully shutting down
+2025/04/14 03:31:58 [notice] 34#34: gracefully shutting down
+2025/04/14 03:31:58 [notice] 31#31: exiting
+2025/04/14 03:31:58 [notice] 33#33: gracefully shutting down
+2025/04/14 03:31:58 [notice] 32#32: gracefully shutting down
+2025/04/14 03:31:58 [notice] 33#33: exiting
+2025/04/14 03:31:58 [notice] 34#34: exiting
+2025/04/14 03:31:58 [notice] 32#32: exiting
+2025/04/14 03:31:58 [notice] 33#33: exit
+2025/04/14 03:31:58 [notice] 34#34: exit
+2025/04/14 03:31:58 [notice] 32#32: exit
+2025/04/14 03:31:58 [notice] 31#31: exit
+2025/04/14 03:31:58 [notice] 1#1: signal 17 (SIGCHLD) received from 33
+2025/04/14 03:31:58 [notice] 1#1: worker process 32 exited with code 0
+2025/04/14 03:31:58 [notice] 1#1: worker process 33 exited with code 0
+2025/04/14 03:31:58 [notice] 1#1: worker process 34 exited with code 0
+2025/04/14 03:31:58 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 03:31:58 [notice] 1#1: signal 17 (SIGCHLD) received from 34
+2025/04/14 03:31:58 [notice] 1#1: signal 17 (SIGCHLD) received from 31
+2025/04/14 03:31:58 [notice] 1#1: worker process 31 exited with code 0
+2025/04/14 03:31:58 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 03:33:11 [notice] 1#1: using the "epoll" event method
+2025/04/14 03:33:11 [notice] 1#1: nginx/1.27.4
+2025/04/14 03:33:11 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/14 03:33:11 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/14 03:33:11 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/14 03:33:11 [notice] 1#1: start worker processes
+2025/04/14 03:33:11 [notice] 1#1: start worker process 29
+2025/04/14 03:33:11 [notice] 1#1: start worker process 30
+2025/04/14 03:33:11 [notice] 1#1: start worker process 31
+2025/04/14 03:33:11 [notice] 1#1: start worker process 32
+2025/04/14 03:33:11 [notice] 1#1: start worker process 33
+2025/04/14 03:33:11 [notice] 1#1: start worker process 34
+2025/04/14 04:00:36 [error] 31#31: *14 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "GET /api-nodejs/users?page=1&search=&grade=&roles=parent&className=11A3&limit=50&phone HTTP/1.1", upstream: "http://172.25.0.5:3000/api/users?page=1&search=&grade=&roles=parent&className=11A3&limit=50&phone", host: "fams.io.vn"
+2025/04/14 04:01:05 [error] 31#31: *18 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.25.0.5:3000/api/auth/login", host: "fams.io.vn"
+2025/04/14 04:01:39 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/14 04:01:39 [notice] 31#31: gracefully shutting down
+2025/04/14 04:01:39 [notice] 29#29: gracefully shutting down
+2025/04/14 04:01:39 [notice] 32#32: gracefully shutting down
+2025/04/14 04:01:39 [notice] 29#29: exiting
+2025/04/14 04:01:39 [notice] 30#30: gracefully shutting down
+2025/04/14 04:01:39 [notice] 33#33: gracefully shutting down
+2025/04/14 04:01:39 [notice] 30#30: exiting
+2025/04/14 04:01:39 [notice] 32#32: exiting
+2025/04/14 04:01:39 [notice] 33#33: exiting
+2025/04/14 04:01:39 [notice] 32#32: exit
+2025/04/14 04:01:39 [notice] 29#29: exit
+2025/04/14 04:01:39 [notice] 30#30: exit
+2025/04/14 04:01:39 [notice] 33#33: exit
+2025/04/14 04:01:39 [notice] 34#34: gracefully shutting down
+2025/04/14 04:01:39 [notice] 34#34: exiting
+2025/04/14 04:01:39 [notice] 34#34: exit
+2025/04/14 04:01:39 [notice] 1#1: signal 17 (SIGCHLD) received from 30
+2025/04/14 04:01:39 [notice] 1#1: worker process 30 exited with code 0
+2025/04/14 04:01:39 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 04:01:39 [notice] 1#1: signal 17 (SIGCHLD) received from 34
+2025/04/14 04:01:39 [notice] 1#1: worker process 32 exited with code 0
+2025/04/14 04:01:39 [notice] 1#1: worker process 29 exited with code 0
+2025/04/14 04:01:39 [notice] 1#1: worker process 34 exited with code 0
+2025/04/14 04:01:39 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 04:01:39 [notice] 1#1: signal 17 (SIGCHLD) received from 29
+2025/04/14 04:01:39 [notice] 1#1: worker process 33 exited with code 0
+2025/04/14 04:01:39 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 04:03:07 [notice] 1#1: using the "epoll" event method
+2025/04/14 04:03:07 [notice] 1#1: nginx/1.27.4
+2025/04/14 04:03:07 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/14 04:03:07 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/14 04:03:07 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/14 04:03:07 [notice] 1#1: start worker processes
+2025/04/14 04:03:07 [notice] 1#1: start worker process 29
+2025/04/14 04:03:07 [notice] 1#1: start worker process 30
+2025/04/14 04:03:07 [notice] 1#1: start worker process 31
+2025/04/14 04:03:07 [notice] 1#1: start worker process 32
+2025/04/14 04:03:07 [notice] 1#1: start worker process 33
+2025/04/14 04:03:07 [notice] 1#1: start worker process 34
+2025/04/14 04:03:08 [error] 30#30: *1 connect() failed (111: Connection refused) while connecting to upstream, client: 118.68.26.235, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.26.0.6:3000/ws", host: "fams.io.vn"
+2025/04/14 04:03:16 [error] 29#29: *3 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.26.0.5:3000/api/auth/login", host: "fams.io.vn"
+2025/04/14 04:03:42 [error] 29#29: *3 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.26.0.5:3000/api/auth/login", host: "fams.io.vn"
+2025/04/14 04:03:44 [error] 32#32: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.26.0.5:3000/api/auth/login", host: "fams.io.vn"
+2025/04/14 04:03:46 [error] 33#33: *5 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.26.0.5:3000/api/auth/login", host: "fams.io.vn"
+2025/04/14 04:03:52 [error] 31#31: *12 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.26.0.5:3000/api/auth/login", host: "fams.io.vn"
+2025/04/14 04:05:30 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/14 04:05:30 [notice] 29#29: gracefully shutting down
+2025/04/14 04:05:30 [notice] 29#29: exiting
+2025/04/14 04:05:30 [notice] 30#30: gracefully shutting down
+2025/04/14 04:05:30 [notice] 33#33: gracefully shutting down
+2025/04/14 04:05:30 [notice] 33#33: exiting
+2025/04/14 04:05:30 [notice] 31#31: gracefully shutting down
+2025/04/14 04:05:30 [notice] 33#33: exit
+2025/04/14 04:05:30 [notice] 31#31: exiting
+2025/04/14 04:05:30 [notice] 31#31: exit
+2025/04/14 04:05:30 [notice] 29#29: exit
+2025/04/14 04:05:30 [notice] 30#30: exiting
+2025/04/14 04:05:30 [notice] 30#30: exit
+2025/04/14 04:05:30 [notice] 32#32: gracefully shutting down
+2025/04/14 04:05:30 [notice] 34#34: gracefully shutting down
+2025/04/14 04:05:30 [notice] 32#32: exiting
+2025/04/14 04:05:30 [notice] 32#32: exit
+2025/04/14 04:05:30 [notice] 1#1: signal 17 (SIGCHLD) received from 30
+2025/04/14 04:05:30 [notice] 1#1: worker process 30 exited with code 0
+2025/04/14 04:05:30 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 04:05:30 [notice] 1#1: signal 17 (SIGCHLD) received from 29
+2025/04/14 04:05:30 [notice] 1#1: worker process 29 exited with code 0
+2025/04/14 04:05:30 [notice] 1#1: worker process 31 exited with code 0
+2025/04/14 04:05:30 [notice] 1#1: worker process 33 exited with code 0
+2025/04/14 04:05:30 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 04:05:30 [notice] 1#1: signal 17 (SIGCHLD) received from 31
+2025/04/14 04:05:30 [notice] 1#1: signal 17 (SIGCHLD) received from 32
+2025/04/14 04:05:30 [notice] 1#1: worker process 32 exited with code 0
+2025/04/14 04:05:30 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 04:06:42 [notice] 1#1: using the "epoll" event method
+2025/04/14 04:06:42 [notice] 1#1: nginx/1.27.4
+2025/04/14 04:06:42 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/14 04:06:42 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/14 04:06:42 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/14 04:06:42 [notice] 1#1: start worker processes
+2025/04/14 04:06:42 [notice] 1#1: start worker process 29
+2025/04/14 04:06:42 [notice] 1#1: start worker process 30
+2025/04/14 04:06:42 [notice] 1#1: start worker process 31
+2025/04/14 04:06:42 [notice] 1#1: start worker process 32
+2025/04/14 04:06:42 [notice] 1#1: start worker process 33
+2025/04/14 04:06:42 [notice] 1#1: start worker process 34
+2025/04/14 04:25:55 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/14 04:25:55 [notice] 29#29: gracefully shutting down
+2025/04/14 04:25:55 [notice] 30#30: gracefully shutting down
+2025/04/14 04:25:55 [notice] 32#32: gracefully shutting down
+2025/04/14 04:25:55 [notice] 30#30: exiting
+2025/04/14 04:25:55 [notice] 32#32: exiting
+2025/04/14 04:25:55 [notice] 33#33: gracefully shutting down
+2025/04/14 04:25:55 [notice] 31#31: gracefully shutting down
+2025/04/14 04:25:55 [notice] 33#33: exiting
+2025/04/14 04:25:55 [notice] 30#30: exit
+2025/04/14 04:25:55 [notice] 32#32: exit
+2025/04/14 04:25:55 [notice] 31#31: exiting
+2025/04/14 04:25:55 [notice] 33#33: exit
+2025/04/14 04:25:55 [notice] 31#31: exit
+2025/04/14 04:25:55 [notice] 34#34: gracefully shutting down
+2025/04/14 04:25:55 [notice] 34#34: exiting
+2025/04/14 04:25:55 [notice] 34#34: exit
+2025/04/14 04:25:55 [notice] 1#1: signal 17 (SIGCHLD) received from 31
+2025/04/14 04:25:55 [notice] 1#1: worker process 31 exited with code 0
+2025/04/14 04:25:55 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 04:25:55 [notice] 1#1: signal 17 (SIGCHLD) received from 34
+2025/04/14 04:25:55 [notice] 1#1: worker process 34 exited with code 0
+2025/04/14 04:25:55 [notice] 1#1: worker process 32 exited with code 0
+2025/04/14 04:25:55 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 04:25:55 [notice] 1#1: signal 17 (SIGCHLD) received from 32
+2025/04/14 04:25:55 [notice] 1#1: signal 17 (SIGCHLD) received from 33
+2025/04/14 04:25:55 [notice] 1#1: worker process 33 exited with code 0
+2025/04/14 04:25:55 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 04:25:55 [notice] 1#1: signal 17 (SIGCHLD) received from 30
+2025/04/14 04:25:55 [notice] 1#1: worker process 30 exited with code 0
+2025/04/14 04:25:55 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 04:27:59 [notice] 1#1: using the "epoll" event method
+2025/04/14 04:27:59 [notice] 1#1: nginx/1.27.4
+2025/04/14 04:27:59 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/14 04:27:59 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/14 04:27:59 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/14 04:27:59 [notice] 1#1: start worker processes
+2025/04/14 04:27:59 [notice] 1#1: start worker process 29
+2025/04/14 04:27:59 [notice] 1#1: start worker process 30
+2025/04/14 04:27:59 [notice] 1#1: start worker process 31
+2025/04/14 04:27:59 [notice] 1#1: start worker process 32
+2025/04/14 04:27:59 [notice] 1#1: start worker process 33
+2025/04/14 04:27:59 [notice] 1#1: start worker process 34
+2025/04/14 04:28:53 [error] 31#31: *3 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 118.68.26.235, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.28.0.6:3000/ws", host: "fams.io.vn"
+2025/04/14 05:53:07 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/14 05:53:07 [notice] 32#32: gracefully shutting down
+2025/04/14 05:53:07 [notice] 30#30: gracefully shutting down
+2025/04/14 05:53:07 [notice] 29#29: gracefully shutting down
+2025/04/14 05:53:07 [notice] 30#30: exiting
+2025/04/14 05:53:07 [notice] 34#34: gracefully shutting down
+2025/04/14 05:53:07 [notice] 29#29: exiting
+2025/04/14 05:53:07 [notice] 34#34: exiting
+2025/04/14 05:53:07 [notice] 29#29: exit
+2025/04/14 05:53:07 [notice] 30#30: exit
+2025/04/14 05:53:07 [notice] 34#34: exit
+2025/04/14 05:53:07 [notice] 31#31: gracefully shutting down
+2025/04/14 05:53:07 [notice] 31#31: exiting
+2025/04/14 05:53:07 [notice] 31#31: exit
+2025/04/14 05:53:07 [notice] 33#33: gracefully shutting down
+2025/04/14 05:53:07 [notice] 33#33: exiting
+2025/04/14 05:53:07 [notice] 33#33: exit
+2025/04/14 05:53:07 [notice] 1#1: signal 17 (SIGCHLD) received from 34
+2025/04/14 05:53:07 [notice] 1#1: worker process 31 exited with code 0
+2025/04/14 05:53:07 [notice] 1#1: worker process 34 exited with code 0
+2025/04/14 05:53:07 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 05:53:07 [notice] 1#1: signal 17 (SIGCHLD) received from 29
+2025/04/14 05:53:07 [notice] 1#1: worker process 29 exited with code 0
+2025/04/14 05:53:07 [notice] 1#1: worker process 30 exited with code 0
+2025/04/14 05:53:07 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 05:53:07 [notice] 1#1: signal 17 (SIGCHLD) received from 30
+2025/04/14 05:53:07 [notice] 1#1: signal 17 (SIGCHLD) received from 33
+2025/04/14 05:53:07 [notice] 1#1: worker process 33 exited with code 0
+2025/04/14 05:53:07 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 05:57:06 [notice] 1#1: using the "epoll" event method
+2025/04/14 05:57:06 [notice] 1#1: nginx/1.27.4
+2025/04/14 05:57:06 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/14 05:57:06 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/14 05:57:06 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/14 05:57:06 [notice] 1#1: start worker processes
+2025/04/14 05:57:06 [notice] 1#1: start worker process 29
+2025/04/14 05:57:06 [notice] 1#1: start worker process 30
+2025/04/14 05:57:06 [notice] 1#1: start worker process 31
+2025/04/14 05:57:06 [notice] 1#1: start worker process 32
+2025/04/14 05:57:06 [notice] 1#1: start worker process 33
+2025/04/14 05:57:06 [notice] 1#1: start worker process 34
+2025/04/14 06:13:25 [error] 29#29: *19 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 118.68.26.235, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.29.0.6:3000/ws", host: "fams.io.vn"
+2025/04/14 06:28:34 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/14 06:28:34 [notice] 30#30: gracefully shutting down
+2025/04/14 06:28:34 [notice] 31#31: gracefully shutting down
+2025/04/14 06:28:34 [notice] 33#33: gracefully shutting down
+2025/04/14 06:28:34 [notice] 34#34: gracefully shutting down
+2025/04/14 06:28:34 [notice] 32#32: gracefully shutting down
+2025/04/14 06:28:34 [notice] 30#30: exiting
+2025/04/14 06:28:34 [notice] 31#31: exiting
+2025/04/14 06:28:34 [notice] 33#33: exiting
+2025/04/14 06:28:34 [notice] 34#34: exiting
+2025/04/14 06:28:34 [notice] 30#30: exit
+2025/04/14 06:28:34 [notice] 34#34: exit
+2025/04/14 06:28:34 [notice] 33#33: exit
+2025/04/14 06:28:34 [notice] 31#31: exit
+2025/04/14 06:28:34 [notice] 29#29: gracefully shutting down
+2025/04/14 06:28:34 [notice] 29#29: exiting
+2025/04/14 06:28:34 [notice] 29#29: exit
+2025/04/14 06:28:34 [notice] 1#1: signal 17 (SIGCHLD) received from 29
+2025/04/14 06:28:34 [notice] 1#1: worker process 29 exited with code 0
+2025/04/14 06:28:34 [notice] 1#1: worker process 30 exited with code 0
+2025/04/14 06:28:34 [notice] 1#1: worker process 31 exited with code 0
+2025/04/14 06:28:34 [notice] 1#1: worker process 33 exited with code 0
+2025/04/14 06:28:34 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 06:28:34 [notice] 1#1: signal 17 (SIGCHLD) received from 34
+2025/04/14 06:28:34 [notice] 1#1: worker process 34 exited with code 0
+2025/04/14 06:28:34 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 06:37:15 [notice] 1#1: using the "epoll" event method
+2025/04/14 06:37:15 [notice] 1#1: nginx/1.27.4
+2025/04/14 06:37:15 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/14 06:37:15 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/14 06:37:15 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/14 06:37:15 [notice] 1#1: start worker processes
+2025/04/14 06:37:15 [notice] 1#1: start worker process 29
+2025/04/14 06:37:15 [notice] 1#1: start worker process 30
+2025/04/14 06:37:15 [notice] 1#1: start worker process 31
+2025/04/14 06:37:15 [notice] 1#1: start worker process 32
+2025/04/14 06:37:15 [notice] 1#1: start worker process 33
+2025/04/14 06:37:15 [notice] 1#1: start worker process 34
+2025/04/14 06:37:19 [error] 29#29: *1 connect() failed (111: Connection refused) while connecting to upstream, client: 118.68.26.235, server: localhost, request: "GET /login HTTP/1.1", upstream: "http://172.31.0.6:3000/login", host: "fams.io.vn"
+2025/04/14 06:37:19 [error] 29#29: *1 connect() failed (111: Connection refused) while connecting to upstream, client: 118.68.26.235, server: localhost, request: "GET /favicon.ico HTTP/1.1", upstream: "http://172.31.0.6:3000/favicon.ico", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/14 06:47:16 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/14 06:47:16 [notice] 29#29: gracefully shutting down
+2025/04/14 06:47:16 [notice] 32#32: gracefully shutting down
+2025/04/14 06:47:16 [notice] 30#30: gracefully shutting down
+2025/04/14 06:47:16 [notice] 34#34: gracefully shutting down
+2025/04/14 06:47:16 [notice] 32#32: exiting
+2025/04/14 06:47:16 [notice] 30#30: exiting
+2025/04/14 06:47:16 [notice] 34#34: exiting
+2025/04/14 06:47:16 [notice] 32#32: exit
+2025/04/14 06:47:16 [notice] 30#30: exit
+2025/04/14 06:47:16 [notice] 34#34: exit
+2025/04/14 06:47:16 [notice] 31#31: gracefully shutting down
+2025/04/14 06:47:16 [notice] 31#31: exiting
+2025/04/14 06:47:16 [notice] 31#31: exit
+2025/04/14 06:47:16 [notice] 33#33: gracefully shutting down
+2025/04/14 06:47:16 [notice] 33#33: exiting
+2025/04/14 06:47:16 [notice] 33#33: exit
+2025/04/14 06:47:16 [notice] 1#1: signal 17 (SIGCHLD) received from 30
+2025/04/14 06:47:16 [notice] 1#1: worker process 30 exited with code 0
+2025/04/14 06:47:16 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 06:47:16 [notice] 1#1: signal 17 (SIGCHLD) received from 32
+2025/04/14 06:47:16 [notice] 1#1: worker process 32 exited with code 0
+2025/04/14 06:47:16 [notice] 1#1: worker process 33 exited with code 0
+2025/04/14 06:47:16 [notice] 1#1: worker process 34 exited with code 0
+2025/04/14 06:47:16 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 06:47:16 [notice] 1#1: signal 17 (SIGCHLD) received from 31
+2025/04/14 06:47:16 [notice] 1#1: worker process 31 exited with code 0
+2025/04/14 06:47:16 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 06:48:06 [notice] 1#1: using the "epoll" event method
+2025/04/14 06:48:06 [notice] 1#1: nginx/1.27.4
+2025/04/14 06:48:06 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/14 06:48:06 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/14 06:48:06 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/14 06:48:06 [notice] 1#1: start worker processes
+2025/04/14 06:48:06 [notice] 1#1: start worker process 29
+2025/04/14 06:48:06 [notice] 1#1: start worker process 30
+2025/04/14 06:48:06 [notice] 1#1: start worker process 31
+2025/04/14 06:48:06 [notice] 1#1: start worker process 32
+2025/04/14 06:48:06 [notice] 1#1: start worker process 33
+2025/04/14 06:48:06 [notice] 1#1: start worker process 34
+2025/04/14 06:48:46 [error] 29#29: *1 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 118.68.26.235, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://192.168.0.6:3000/ws", host: "fams.io.vn"
+2025/04/14 06:49:00 [error] 32#32: *8 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 118.68.26.235, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://192.168.0.6:3000/ws", host: "fams.io.vn"
+2025/04/14 06:53:08 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/14 06:53:08 [notice] 29#29: gracefully shutting down
+2025/04/14 06:53:08 [notice] 31#31: gracefully shutting down
+2025/04/14 06:53:08 [notice] 30#30: gracefully shutting down
+2025/04/14 06:53:08 [notice] 34#34: gracefully shutting down
+2025/04/14 06:53:08 [notice] 33#33: gracefully shutting down
+2025/04/14 06:53:08 [notice] 31#31: exiting
+2025/04/14 06:53:08 [notice] 32#32: gracefully shutting down
+2025/04/14 06:53:08 [notice] 30#30: exiting
+2025/04/14 06:53:08 [notice] 34#34: exiting
+2025/04/14 06:53:08 [notice] 32#32: exiting
+2025/04/14 06:53:08 [notice] 34#34: exit
+2025/04/14 06:53:08 [notice] 33#33: exiting
+2025/04/14 06:53:08 [notice] 31#31: exit
+2025/04/14 06:53:08 [notice] 33#33: exit
+2025/04/14 06:53:08 [notice] 30#30: exit
+2025/04/14 06:53:08 [notice] 32#32: exit
+2025/04/14 06:53:08 [notice] 1#1: signal 17 (SIGCHLD) received from 33
+2025/04/14 06:53:08 [notice] 1#1: worker process 30 exited with code 0
+2025/04/14 06:53:08 [notice] 1#1: worker process 32 exited with code 0
+2025/04/14 06:53:08 [notice] 1#1: worker process 33 exited with code 0
+2025/04/14 06:53:08 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 06:53:08 [notice] 1#1: signal 17 (SIGCHLD) received from 31
+2025/04/14 06:53:08 [notice] 1#1: worker process 31 exited with code 0
+2025/04/14 06:53:08 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 06:53:08 [notice] 1#1: signal 17 (SIGCHLD) received from 34
+2025/04/14 06:53:08 [notice] 1#1: worker process 34 exited with code 0
+2025/04/14 06:53:08 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 06:53:17 [error] 29#29: *22 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 118.68.26.235, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://192.168.0.6:3000/ws", host: "fams.io.vn"
+2025/04/14 06:53:17 [notice] 29#29: exiting
+2025/04/14 06:53:17 [notice] 29#29: exit
+2025/04/14 06:53:17 [notice] 1#1: signal 17 (SIGCHLD) received from 29
+2025/04/14 06:53:17 [notice] 1#1: worker process 29 exited with code 0
+2025/04/14 06:53:17 [notice] 1#1: exit
+2025/04/14 06:53:58 [notice] 1#1: using the "epoll" event method
+2025/04/14 06:53:58 [notice] 1#1: nginx/1.27.4
+2025/04/14 06:53:58 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/14 06:53:58 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/14 06:53:58 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/14 06:53:58 [notice] 1#1: start worker processes
+2025/04/14 06:53:58 [notice] 1#1: start worker process 29
+2025/04/14 06:53:58 [notice] 1#1: start worker process 30
+2025/04/14 06:53:58 [notice] 1#1: start worker process 31
+2025/04/14 06:53:58 [notice] 1#1: start worker process 32
+2025/04/14 06:53:58 [notice] 1#1: start worker process 33
+2025/04/14 06:53:58 [notice] 1#1: start worker process 34
+2025/04/14 06:54:01 [error] 29#29: *1 connect() failed (111: Connection refused) while connecting to upstream, client: 118.68.26.235, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://192.168.16.6:3000/ws", host: "fams.io.vn"
+2025/04/14 08:51:07 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/14 08:51:07 [notice] 29#29: gracefully shutting down
+2025/04/14 08:51:07 [notice] 33#33: gracefully shutting down
+2025/04/14 08:51:07 [notice] 30#30: gracefully shutting down
+2025/04/14 08:51:07 [notice] 33#33: exiting
+2025/04/14 08:51:07 [notice] 29#29: exiting
+2025/04/14 08:51:07 [notice] 31#31: gracefully shutting down
+2025/04/14 08:51:07 [notice] 34#34: gracefully shutting down
+2025/04/14 08:51:07 [notice] 30#30: exiting
+2025/04/14 08:51:07 [notice] 33#33: exit
+2025/04/14 08:51:07 [notice] 29#29: exit
+2025/04/14 08:51:07 [notice] 34#34: exiting
+2025/04/14 08:51:07 [notice] 31#31: exiting
+2025/04/14 08:51:07 [notice] 30#30: exit
+2025/04/14 08:51:07 [notice] 34#34: exit
+2025/04/14 08:51:07 [notice] 32#32: gracefully shutting down
+2025/04/14 08:51:07 [notice] 31#31: exit
+2025/04/14 08:51:07 [notice] 32#32: exiting
+2025/04/14 08:51:07 [notice] 32#32: exit
+2025/04/14 08:51:07 [notice] 1#1: signal 17 (SIGCHLD) received from 32
+2025/04/14 08:51:07 [notice] 1#1: worker process 30 exited with code 0
+2025/04/14 08:51:07 [notice] 1#1: worker process 32 exited with code 0
+2025/04/14 08:51:07 [notice] 1#1: worker process 33 exited with code 0
+2025/04/14 08:51:07 [notice] 1#1: worker process 34 exited with code 0
+2025/04/14 08:51:07 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 08:51:07 [notice] 1#1: signal 17 (SIGCHLD) received from 29
+2025/04/14 08:51:07 [notice] 1#1: worker process 29 exited with code 0
+2025/04/14 08:51:07 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 08:51:07 [notice] 1#1: signal 17 (SIGCHLD) received from 31
+2025/04/14 08:51:07 [notice] 1#1: worker process 31 exited with code 0
+2025/04/14 08:51:07 [notice] 1#1: exit
+2025/04/14 08:52:20 [notice] 1#1: using the "epoll" event method
+2025/04/14 08:52:20 [notice] 1#1: nginx/1.27.4
+2025/04/14 08:52:20 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/14 08:52:20 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/14 08:52:20 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/14 08:52:20 [notice] 1#1: start worker processes
+2025/04/14 08:52:20 [notice] 1#1: start worker process 29
+2025/04/14 08:52:20 [notice] 1#1: start worker process 30
+2025/04/14 08:52:20 [notice] 1#1: start worker process 31
+2025/04/14 08:52:20 [notice] 1#1: start worker process 32
+2025/04/14 08:52:20 [notice] 1#1: start worker process 33
+2025/04/14 08:52:20 [notice] 1#1: start worker process 34
+2025/04/14 09:43:40 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/14 09:43:40 [notice] 30#30: gracefully shutting down
+2025/04/14 09:43:40 [notice] 29#29: gracefully shutting down
+2025/04/14 09:43:40 [notice] 31#31: gracefully shutting down
+2025/04/14 09:43:40 [notice] 32#32: gracefully shutting down
+2025/04/14 09:43:40 [notice] 33#33: gracefully shutting down
+2025/04/14 09:43:40 [notice] 32#32: exiting
+2025/04/14 09:43:40 [notice] 31#31: exiting
+2025/04/14 09:43:40 [notice] 30#30: exiting
+2025/04/14 09:43:40 [notice] 29#29: exiting
+2025/04/14 09:43:40 [notice] 33#33: exiting
+2025/04/14 09:43:40 [notice] 31#31: exit
+2025/04/14 09:43:40 [notice] 32#32: exit
+2025/04/14 09:43:40 [notice] 29#29: exit
+2025/04/14 09:43:40 [notice] 33#33: exit
+2025/04/14 09:43:40 [notice] 30#30: exit
+2025/04/14 09:43:40 [notice] 34#34: gracefully shutting down
+2025/04/14 09:43:40 [notice] 34#34: exiting
+2025/04/14 09:43:40 [notice] 34#34: exit
+2025/04/14 09:43:40 [notice] 1#1: signal 17 (SIGCHLD) received from 30
+2025/04/14 09:43:40 [notice] 1#1: worker process 29 exited with code 0
+2025/04/14 09:43:40 [notice] 1#1: worker process 30 exited with code 0
+2025/04/14 09:43:40 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 09:43:40 [notice] 1#1: signal 17 (SIGCHLD) received from 31
+2025/04/14 09:43:40 [notice] 1#1: worker process 31 exited with code 0
+2025/04/14 09:43:40 [notice] 1#1: worker process 33 exited with code 0
+2025/04/14 09:43:40 [notice] 1#1: worker process 32 exited with code 0
+2025/04/14 09:43:40 [notice] 1#1: worker process 34 exited with code 0
+2025/04/14 09:43:40 [notice] 1#1: exit
+2025/04/14 09:44:34 [notice] 1#1: using the "epoll" event method
+2025/04/14 09:44:34 [notice] 1#1: nginx/1.27.4
+2025/04/14 09:44:34 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/14 09:44:34 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/14 09:44:34 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/14 09:44:34 [notice] 1#1: start worker processes
+2025/04/14 09:44:34 [notice] 1#1: start worker process 29
+2025/04/14 09:44:34 [notice] 1#1: start worker process 30
+2025/04/14 09:44:34 [notice] 1#1: start worker process 31
+2025/04/14 09:44:34 [notice] 1#1: start worker process 32
+2025/04/14 09:44:34 [notice] 1#1: start worker process 33
+2025/04/14 09:44:34 [notice] 1#1: start worker process 34
+2025/04/14 09:46:00 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/14 09:46:00 [notice] 30#30: gracefully shutting down
+2025/04/14 09:46:00 [notice] 30#30: exiting
+2025/04/14 09:46:00 [notice] 29#29: gracefully shutting down
+2025/04/14 09:46:00 [notice] 31#31: gracefully shutting down
+2025/04/14 09:46:00 [notice] 34#34: gracefully shutting down
+2025/04/14 09:46:00 [notice] 31#31: exiting
+2025/04/14 09:46:00 [notice] 34#34: exiting
+2025/04/14 09:46:00 [notice] 30#30: exit
+2025/04/14 09:46:00 [notice] 31#31: exit
+2025/04/14 09:46:00 [notice] 34#34: exit
+2025/04/14 09:46:00 [notice] 32#32: gracefully shutting down
+2025/04/14 09:46:00 [notice] 32#32: exiting
+2025/04/14 09:46:00 [notice] 32#32: exit
+2025/04/14 09:46:00 [notice] 33#33: gracefully shutting down
+2025/04/14 09:46:00 [notice] 29#29: exiting
+2025/04/14 09:46:00 [notice] 33#33: exiting
+2025/04/14 09:46:00 [notice] 29#29: exit
+2025/04/14 09:46:00 [notice] 33#33: exit
+2025/04/14 09:46:00 [notice] 1#1: signal 17 (SIGCHLD) received from 32
+2025/04/14 09:46:00 [notice] 1#1: worker process 32 exited with code 0
+2025/04/14 09:46:00 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 09:46:00 [notice] 1#1: signal 17 (SIGCHLD) received from 34
+2025/04/14 09:46:00 [notice] 1#1: worker process 34 exited with code 0
+2025/04/14 09:46:00 [notice] 1#1: worker process 31 exited with code 0
+2025/04/14 09:46:00 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 09:46:00 [notice] 1#1: signal 17 (SIGCHLD) received from 31
+2025/04/14 09:46:00 [notice] 1#1: worker process 30 exited with code 0
+2025/04/14 09:46:00 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 09:46:00 [notice] 1#1: signal 17 (SIGCHLD) received from 30
+2025/04/14 09:46:00 [notice] 1#1: worker process 29 exited with code 0
+2025/04/14 09:46:00 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 09:46:00 [notice] 1#1: signal 17 (SIGCHLD) received from 33
+2025/04/14 09:46:00 [notice] 1#1: worker process 33 exited with code 0
+2025/04/14 09:46:00 [notice] 1#1: exit
+2025/04/14 09:46:42 [notice] 1#1: using the "epoll" event method
+2025/04/14 09:46:42 [notice] 1#1: nginx/1.27.4
+2025/04/14 09:46:42 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/14 09:46:42 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/14 09:46:42 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/14 09:46:42 [notice] 1#1: start worker processes
+2025/04/14 09:46:42 [notice] 1#1: start worker process 29
+2025/04/14 09:46:42 [notice] 1#1: start worker process 30
+2025/04/14 09:46:42 [notice] 1#1: start worker process 31
+2025/04/14 09:46:42 [notice] 1#1: start worker process 32
+2025/04/14 09:46:42 [notice] 1#1: start worker process 33
+2025/04/14 09:46:42 [notice] 1#1: start worker process 34
+2025/04/14 12:52:01 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/14 12:52:01 [notice] 29#29: gracefully shutting down
+2025/04/14 12:52:01 [notice] 34#34: gracefully shutting down
+2025/04/14 12:52:01 [notice] 32#32: gracefully shutting down
+2025/04/14 12:52:01 [notice] 30#30: gracefully shutting down
+2025/04/14 12:52:01 [notice] 33#33: gracefully shutting down
+2025/04/14 12:52:01 [notice] 32#32: exiting
+2025/04/14 12:52:01 [notice] 34#34: exiting
+2025/04/14 12:52:01 [notice] 29#29: exiting
+2025/04/14 12:52:01 [notice] 33#33: exiting
+2025/04/14 12:52:01 [notice] 30#30: exiting
+2025/04/14 12:52:01 [notice] 34#34: exit
+2025/04/14 12:52:01 [notice] 33#33: exit
+2025/04/14 12:52:01 [notice] 32#32: exit
+2025/04/14 12:52:01 [notice] 29#29: exit
+2025/04/14 12:52:01 [notice] 30#30: exit
+2025/04/14 12:52:01 [notice] 31#31: gracefully shutting down
+2025/04/14 12:52:01 [notice] 31#31: exiting
+2025/04/14 12:52:01 [notice] 31#31: exit
+2025/04/14 12:52:01 [notice] 1#1: signal 17 (SIGCHLD) received from 30
+2025/04/14 12:52:01 [notice] 1#1: worker process 30 exited with code 0
+2025/04/14 12:52:01 [notice] 1#1: worker process 31 exited with code 0
+2025/04/14 12:52:01 [notice] 1#1: worker process 32 exited with code 0
+2025/04/14 12:52:01 [notice] 1#1: worker process 33 exited with code 0
+2025/04/14 12:52:01 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 12:52:01 [notice] 1#1: signal 17 (SIGCHLD) received from 34
+2025/04/14 12:52:01 [notice] 1#1: worker process 34 exited with code 0
+2025/04/14 12:52:01 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 12:52:01 [notice] 1#1: signal 17 (SIGCHLD) received from 29
+2025/04/14 12:52:01 [notice] 1#1: worker process 29 exited with code 0
+2025/04/14 12:52:01 [notice] 1#1: exit
+2025/04/14 12:53:03 [notice] 1#1: using the "epoll" event method
+2025/04/14 12:53:03 [notice] 1#1: nginx/1.27.4
+2025/04/14 12:53:03 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/14 12:53:03 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/14 12:53:03 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/14 12:53:03 [notice] 1#1: start worker processes
+2025/04/14 12:53:03 [notice] 1#1: start worker process 29
+2025/04/14 12:53:03 [notice] 1#1: start worker process 30
+2025/04/14 12:53:03 [notice] 1#1: start worker process 31
+2025/04/14 12:53:03 [notice] 1#1: start worker process 32
+2025/04/14 12:53:03 [notice] 1#1: start worker process 33
+2025/04/14 12:53:03 [notice] 1#1: start worker process 34
+2025/04/14 14:51:26 [error] 31#31: *442 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/users?page=1&search=&grade=&roles=&className=&limit=500&phone= HTTP/1.1", upstream: "http://192.168.80.5:3000/api/users?page=1&search=&grade=&roles=&className=&limit=500&phone=", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/14 14:51:26 [error] 34#34: *445 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/users?page=1&search=&grade=&roles=&className=&limit=500&phone HTTP/1.1", upstream: "http://192.168.80.5:3000/api/users?page=1&search=&grade=&roles=&className=&limit=500&phone", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/14 14:51:26 [error] 31#31: *443 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/users?page=1&search=&grade=&roles=&className=&limit=500&phone= HTTP/1.1", upstream: "http://192.168.80.5:3000/api/users?page=1&search=&grade=&roles=&className=&limit=500&phone=", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/14 14:51:26 [error] 31#31: *448 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/users?page=1&search=&grade=&roles=&className=&limit=500&phone HTTP/1.1", upstream: "http://192.168.80.5:3000/api/users?page=1&search=&grade=&roles=&className=&limit=500&phone", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/14 14:51:46 [error] 31#31: *448 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/refresh-token HTTP/1.1", upstream: "http://192.168.80.5:3000/api/auth/refresh-token", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/14 14:51:47 [error] 31#31: *448 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/refresh-token HTTP/1.1", upstream: "http://192.168.80.5:3000/api/auth/refresh-token", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/14 14:51:56 [error] 31#31: *448 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.80.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/14 14:52:27 [error] 31#31: *448 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.80.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/14 14:52:43 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/14 14:52:43 [notice] 31#31: gracefully shutting down
+2025/04/14 14:52:43 [notice] 34#34: gracefully shutting down
+2025/04/14 14:52:43 [notice] 32#32: gracefully shutting down
+2025/04/14 14:52:43 [notice] 29#29: gracefully shutting down
+2025/04/14 14:52:43 [notice] 30#30: gracefully shutting down
+2025/04/14 14:52:43 [notice] 32#32: exiting
+2025/04/14 14:52:43 [notice] 34#34: exiting
+2025/04/14 14:52:43 [notice] 29#29: exiting
+2025/04/14 14:52:43 [notice] 30#30: exiting
+2025/04/14 14:52:43 [notice] 31#31: exiting
+2025/04/14 14:52:43 [notice] 30#30: exit
+2025/04/14 14:52:43 [notice] 29#29: exit
+2025/04/14 14:52:43 [notice] 34#34: exit
+2025/04/14 14:52:43 [notice] 32#32: exit
+2025/04/14 14:52:43 [notice] 31#31: exit
+2025/04/14 14:52:43 [notice] 33#33: gracefully shutting down
+2025/04/14 14:52:43 [notice] 33#33: exiting
+2025/04/14 14:52:43 [notice] 33#33: exit
+2025/04/14 14:52:44 [notice] 1#1: signal 17 (SIGCHLD) received from 32
+2025/04/14 14:52:44 [notice] 1#1: worker process 32 exited with code 0
+2025/04/14 14:52:44 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 14:52:44 [notice] 1#1: signal 17 (SIGCHLD) received from 29
+2025/04/14 14:52:44 [notice] 1#1: worker process 29 exited with code 0
+2025/04/14 14:52:44 [notice] 1#1: worker process 31 exited with code 0
+2025/04/14 14:52:44 [notice] 1#1: worker process 33 exited with code 0
+2025/04/14 14:52:44 [notice] 1#1: worker process 34 exited with code 0
+2025/04/14 14:52:44 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 14:52:44 [notice] 1#1: signal 17 (SIGCHLD) received from 33
+2025/04/14 14:52:44 [notice] 1#1: signal 17 (SIGCHLD) received from 30
+2025/04/14 14:52:44 [notice] 1#1: worker process 30 exited with code 0
+2025/04/14 14:52:44 [notice] 1#1: exit
+2025/04/14 14:54:56 [notice] 1#1: using the "epoll" event method
+2025/04/14 14:54:56 [notice] 1#1: nginx/1.27.4
+2025/04/14 14:54:56 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/14 14:54:56 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/14 14:54:56 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/14 14:54:56 [notice] 1#1: start worker processes
+2025/04/14 14:54:56 [notice] 1#1: start worker process 29
+2025/04/14 14:54:56 [notice] 1#1: start worker process 30
+2025/04/14 14:54:56 [notice] 1#1: start worker process 31
+2025/04/14 14:54:56 [notice] 1#1: start worker process 32
+2025/04/14 14:54:56 [notice] 1#1: start worker process 33
+2025/04/14 14:54:56 [notice] 1#1: start worker process 34
+2025/04/14 14:55:40 [error] 30#30: *1 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.96.5:3000/api/auth/login", host: "fams.io.vn"
+2025/04/14 17:04:39 [error] 29#29: *312 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 1.53.225.52, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://192.168.96.6:3000/ws", host: "fams.io.vn"
+2025/04/14 17:59:29 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/14 17:59:29 [notice] 29#29: gracefully shutting down
+2025/04/14 17:59:29 [notice] 30#30: gracefully shutting down
+2025/04/14 17:59:29 [notice] 29#29: exiting
+2025/04/14 17:59:29 [notice] 31#31: gracefully shutting down
+2025/04/14 17:59:29 [notice] 30#30: exiting
+2025/04/14 17:59:29 [notice] 31#31: exiting
+2025/04/14 17:59:29 [notice] 29#29: exit
+2025/04/14 17:59:29 [notice] 30#30: exit
+2025/04/14 17:59:29 [notice] 31#31: exit
+2025/04/14 17:59:29 [notice] 34#34: gracefully shutting down
+2025/04/14 17:59:29 [notice] 34#34: exiting
+2025/04/14 17:59:29 [notice] 34#34: exit
+2025/04/14 17:59:29 [notice] 32#32: gracefully shutting down
+2025/04/14 17:59:29 [notice] 32#32: exiting
+2025/04/14 17:59:29 [notice] 33#33: gracefully shutting down
+2025/04/14 17:59:29 [notice] 33#33: exiting
+2025/04/14 17:59:29 [notice] 32#32: exit
+2025/04/14 17:59:29 [notice] 33#33: exit
+2025/04/14 17:59:29 [notice] 1#1: signal 17 (SIGCHLD) received from 30
+2025/04/14 17:59:29 [notice] 1#1: worker process 30 exited with code 0
+2025/04/14 17:59:29 [notice] 1#1: worker process 31 exited with code 0
+2025/04/14 17:59:29 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 17:59:29 [notice] 1#1: signal 17 (SIGCHLD) received from 34
+2025/04/14 17:59:29 [notice] 1#1: worker process 34 exited with code 0
+2025/04/14 17:59:29 [notice] 1#1: worker process 29 exited with code 0
+2025/04/14 17:59:29 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 17:59:29 [notice] 1#1: signal 17 (SIGCHLD) received from 29
+2025/04/14 17:59:29 [notice] 1#1: worker process 32 exited with code 0
+2025/04/14 17:59:29 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 17:59:29 [notice] 1#1: signal 17 (SIGCHLD) received from 33
+2025/04/14 17:59:29 [notice] 1#1: worker process 33 exited with code 0
+2025/04/14 17:59:29 [notice] 1#1: exit
+2025/04/14 18:00:31 [notice] 1#1: using the "epoll" event method
+2025/04/14 18:00:31 [notice] 1#1: nginx/1.27.4
+2025/04/14 18:00:31 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/14 18:00:31 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/14 18:00:31 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/14 18:00:31 [notice] 1#1: start worker processes
+2025/04/14 18:00:31 [notice] 1#1: start worker process 29
+2025/04/14 18:00:31 [notice] 1#1: start worker process 30
+2025/04/14 18:00:31 [notice] 1#1: start worker process 31
+2025/04/14 18:00:31 [notice] 1#1: start worker process 32
+2025/04/14 18:00:31 [notice] 1#1: start worker process 33
+2025/04/14 18:00:31 [notice] 1#1: start worker process 34
+2025/04/14 18:16:39 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/14 18:16:39 [notice] 30#30: gracefully shutting down
+2025/04/14 18:16:39 [notice] 33#33: gracefully shutting down
+2025/04/14 18:16:39 [notice] 29#29: gracefully shutting down
+2025/04/14 18:16:39 [notice] 31#31: gracefully shutting down
+2025/04/14 18:16:39 [notice] 33#33: exiting
+2025/04/14 18:16:39 [notice] 31#31: exiting
+2025/04/14 18:16:39 [notice] 32#32: gracefully shutting down
+2025/04/14 18:16:39 [notice] 34#34: gracefully shutting down
+2025/04/14 18:16:39 [notice] 33#33: exit
+2025/04/14 18:16:39 [notice] 31#31: exit
+2025/04/14 18:16:39 [notice] 34#34: exiting
+2025/04/14 18:16:39 [notice] 32#32: exiting
+2025/04/14 18:16:39 [notice] 34#34: exit
+2025/04/14 18:16:39 [notice] 32#32: exit
+2025/04/14 18:16:39 [notice] 30#30: exiting
+2025/04/14 18:16:39 [notice] 29#29: exiting
+2025/04/14 18:16:39 [notice] 30#30: exit
+2025/04/14 18:16:39 [notice] 29#29: exit
+2025/04/14 18:16:39 [notice] 1#1: signal 17 (SIGCHLD) received from 34
+2025/04/14 18:16:39 [notice] 1#1: worker process 30 exited with code 0
+2025/04/14 18:16:39 [notice] 1#1: worker process 34 exited with code 0
+2025/04/14 18:16:39 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 18:16:39 [notice] 1#1: signal 17 (SIGCHLD) received from 33
+2025/04/14 18:16:39 [notice] 1#1: worker process 31 exited with code 0
+2025/04/14 18:16:39 [notice] 1#1: worker process 32 exited with code 0
+2025/04/14 18:16:39 [notice] 1#1: worker process 33 exited with code 0
+2025/04/14 18:16:39 [notice] 1#1: signal 17 (SIGCHLD) received from 29
+2025/04/14 18:16:39 [notice] 1#1: worker process 29 exited with code 0
+2025/04/14 18:16:39 [notice] 1#1: exit
+2025/04/14 18:18:28 [notice] 1#1: using the "epoll" event method
+2025/04/14 18:18:28 [notice] 1#1: nginx/1.27.4
+2025/04/14 18:18:28 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/14 18:18:28 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/14 18:18:28 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/14 18:18:28 [notice] 1#1: start worker processes
+2025/04/14 18:18:28 [notice] 1#1: start worker process 29
+2025/04/14 18:18:28 [notice] 1#1: start worker process 30
+2025/04/14 18:18:28 [notice] 1#1: start worker process 31
+2025/04/14 18:18:28 [notice] 1#1: start worker process 32
+2025/04/14 18:18:28 [notice] 1#1: start worker process 33
+2025/04/14 18:18:28 [notice] 1#1: start worker process 34
+2025/04/14 18:45:06 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/14 18:45:06 [notice] 30#30: gracefully shutting down
+2025/04/14 18:45:06 [notice] 34#34: gracefully shutting down
+2025/04/14 18:45:06 [notice] 29#29: gracefully shutting down
+2025/04/14 18:45:06 [notice] 31#31: gracefully shutting down
+2025/04/14 18:45:06 [notice] 30#30: exiting
+2025/04/14 18:45:06 [notice] 34#34: exiting
+2025/04/14 18:45:06 [notice] 31#31: exiting
+2025/04/14 18:45:06 [notice] 29#29: exiting
+2025/04/14 18:45:06 [notice] 30#30: exit
+2025/04/14 18:45:06 [notice] 31#31: exit
+2025/04/14 18:45:06 [notice] 29#29: exit
+2025/04/14 18:45:06 [notice] 34#34: exit
+2025/04/14 18:45:06 [notice] 32#32: gracefully shutting down
+2025/04/14 18:45:06 [notice] 33#33: gracefully shutting down
+2025/04/14 18:45:06 [notice] 32#32: exiting
+2025/04/14 18:45:06 [notice] 33#33: exiting
+2025/04/14 18:45:06 [notice] 32#32: exit
+2025/04/14 18:45:06 [notice] 33#33: exit
+2025/04/14 18:45:06 [notice] 1#1: signal 17 (SIGCHLD) received from 33
+2025/04/14 18:45:06 [notice] 1#1: worker process 29 exited with code 0
+2025/04/14 18:45:06 [notice] 1#1: worker process 33 exited with code 0
+2025/04/14 18:45:06 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/14 18:45:06 [notice] 1#1: signal 17 (SIGCHLD) received from 29
+2025/04/14 18:45:06 [notice] 1#1: signal 17 (SIGCHLD) received from 30
+2025/04/14 18:45:06 [notice] 1#1: worker process 30 exited with code 0
+2025/04/14 18:45:06 [notice] 1#1: worker process 31 exited with code 0
+2025/04/14 18:45:06 [notice] 1#1: worker process 34 exited with code 0
+2025/04/14 18:45:06 [notice] 1#1: worker process 32 exited with code 0
+2025/04/14 18:45:06 [notice] 1#1: exit
+2025/04/14 18:46:09 [notice] 1#1: using the "epoll" event method
+2025/04/14 18:46:09 [notice] 1#1: nginx/1.27.4
+2025/04/14 18:46:09 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/14 18:46:09 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/14 18:46:09 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/14 18:46:09 [notice] 1#1: start worker processes
+2025/04/14 18:46:09 [notice] 1#1: start worker process 29
+2025/04/14 18:46:09 [notice] 1#1: start worker process 30
+2025/04/14 18:46:09 [notice] 1#1: start worker process 31
+2025/04/14 18:46:09 [notice] 1#1: start worker process 32
+2025/04/14 18:46:09 [notice] 1#1: start worker process 33
+2025/04/14 18:46:09 [notice] 1#1: start worker process 34

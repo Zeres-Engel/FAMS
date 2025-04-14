@@ -99,6 +99,11 @@ exports.authorize = (...roles) => {
       });
     }
     
+    // Luôn cho phép Admin truy cập (bất kể roles được chỉ định là gì)
+    if (req.user.role === 'admin' || req.user.role === 'Admin') {
+      return next();
+    }
+    
     // Kiểm tra người dùng có quyền không
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({

@@ -3,10 +3,19 @@ import {
   AddUserForm,
   Data,
   editClassForm,
+  EditTeacherForm,
+  EditUserForm,
   Order,
 } from "../../model/tableModels/tableDataModels.model";
 import getComparator from "../utils/TableDataUtils/useTableDataUtils";
 import { UserData } from "../../model/userModels/userDataModels.model";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../../store/store";
+import {
+  deleteUser,
+  updateStudent,
+  updateTeacher,
+} from "../../store/slices/userSlice";
 
 interface UseDataTableHookProps {
   tableMainData: Data[] | UserData[];
@@ -18,36 +27,45 @@ function useDataTableHook(props: UseDataTableHookProps) {
     teacherId: "",
     batch: "",
   };
-  const editUserDefault: AddUserForm = {
-    fullName: "",
+  const editUserDefault: EditUserForm = {
+    classId: [],
+    firstName: "",
+    lastName: "",
     dob: "",
-    gender: "",
+    gender: true,
     address: "",
     phone: "",
-    parentNames: "",
-    careers: "",
-    parentPhones: "",
-    parentGenders: "",
+    parentNames: ["", ""],
+    parentCareers: ["", ""],
+    parentPhones: ["", ""],
+    parentGenders: [false, false],
     major: "",
     weeklyCapacity: "",
     role: "",
   };
+  const dispatch = useDispatch<AppDispatch>();
   const rows = React.useMemo(() => [...tableMainData], [tableMainData]);
   const [isCreateUser, setIsCreateUser] = useState<boolean>(false);
   const [order, setOrder] = React.useState<Order>("asc");
-  const [orderBy, setOrderBy] = React.useState<keyof Data | keyof UserData>("id");
+  const [orderBy, setOrderBy] = React.useState<keyof Data | keyof UserData>(
+    "id"
+  );
   const [selected, setSelected] = React.useState<readonly number[]>([]);
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [editingUser, setEditingUser] =
-    React.useState<AddUserForm>(editUserDefault);
+    React.useState<EditUserForm>(editUserDefault);
   const [editingClass, setEditingClass] =
     React.useState<editClassForm>(editClassDefaul);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedUserToDelete, setSelectedUserToDelete] = useState<Data | UserData | null>(
-    null
+  const [selectedUserToDelete, setSelectedUserToDelete] = useState<
+    Data | UserData | null
+  >(null);
+  const [editingUserId, setEditingUserId] = useState<string | undefined>(
+    undefined
   );
+  const allUsers = useSelector((state: RootState) => state.users.user);
   const handleRequestSort = (
     event: React.MouseEvent<unknown>,
     property: keyof Data | keyof UserData
@@ -56,8 +74,69 @@ function useDataTableHook(props: UseDataTableHookProps) {
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
   };
-  const handleEditClick = (user: AddUserForm) => {
-    setEditingUser(user);
+  function formatUserToEditUserForm(user: any): EditUserForm {
+    if (user?.role === "teacher") {
+      return {
+        classId: user?.classTeacher || [],
+        firstName: user?.teacherFirstName || "",
+        lastName: user?.teacherLastName || "",
+        dob: user.details?.dateOfBirth
+          ? new Date(user.details.dateOfBirth).toISOString().split("T")[0] // format yyyy-mm-dd
+          : "",
+        gender: user.gender === "Male" ? true : false,
+        address: user.details?.address || "",
+        phone: user?.phoneSub || "",
+
+        parentNames: user.Parent?.map((p: any) => p.fullName) || ["", ""],
+        parentCareers: user.Parent?.map((p: any) => p.career) || ["", ""],
+        parentPhones: user.Parent?.map((p: any) => p.phone) || ["", ""],
+        parentGenders: user.Parent?.map((p: any) => p.gender) || [false, false],
+
+        major: user?.TeacherMajor, // không có dữ liệu trong object gốc, gán rỗng hoặc thêm logic nếu cần
+        weeklyCapacity: user?.TeacherWeeklyCapacity, // tương tự
+        role: user.role || "",
+      };
+    }
+    return {
+      classId: [user?.details?.classId],
+      firstName: user.details?.firstName || "",
+      lastName: user.details?.lastName || "",
+      dob: user.details?.dateOfBirth
+        ? new Date(user.details.dateOfBirth).toISOString().split("T")[0] // format yyyy-mm-dd
+        : "",
+      gender: user.gender === "Male" ? true : false,
+      address: user.details?.address || "",
+      phone: user.details?.phone || "",
+
+      parentNames: user.Parent?.map((p: any) => p.fullName) || ["", ""],
+      parentCareers: user.Parent?.map((p: any) => p.career) || ["", ""],
+      parentPhones: user.Parent?.map((p: any) => p.phone) || ["", ""],
+      parentGenders: user.Parent?.map((p: any) => p.gender) || [false, false],
+
+      major: "", // không có dữ liệu trong object gốc, gán rỗng hoặc thêm logic nếu cần
+      weeklyCapacity: "", // tương tự
+      role: user.role || "",
+    };
+  }
+  const formatTeacherObj = (obj: any): EditTeacherForm => {
+    return {
+      classId: obj.classId.map((id: string) => parseInt(id)), // chuyển classId thành kiểu số
+      firstName: obj.firstName,
+      lastName: obj.lastName,
+      dateOfBirth: obj.dob,
+      gender: obj.gender, // có thể bỏ nếu không cần thiết
+      address: obj.address,
+      phone: obj.phone,
+      major: obj.major,
+      weeklyCapacity: obj.weeklyCapacity.toString(), // chuyển weeklyCapacity thành chuỗi
+      role: obj.role,
+    };
+  };
+  const handleEditClick = (user: EditUserForm, userId?: string) => {
+    const userEdit = allUsers?.find(u => u.id === userId);
+    // Lọc tại đây nếu cần'
+    setEditingUserId(userEdit?.id);
+    setEditingUser(formatUserToEditUserForm(userEdit));
     setIsEditOpen(true);
   };
   const handleEditClassClick = (classData: editClassForm) => {
@@ -72,13 +151,29 @@ function useDataTableHook(props: UseDataTableHookProps) {
   const handleConfirmDelete = () => {
     if (selectedUserToDelete) {
       console.log("Deleting user:", selectedUserToDelete.id);
-      // Gọi API xóa nếu muốn
+      dispatch(deleteUser(selectedUserToDelete.id));
     }
     setIsDeleteDialogOpen(false);
     setSelectedUserToDelete(null);
   };
-  const handleEditSave = (userFormData: AddUserForm) => {
-    console.log("Saving edited user:", userFormData);
+  const handleEditSave = (userFormData: EditUserForm, idUser: string) => {
+    const userEdit = allUsers?.find(u => u.id === idUser);
+    if (userFormData?.role === "teacher") {
+      const teacherEdit = allUsers?.find(u => u.id === editingUserId);
+      dispatch(
+        updateTeacher({
+          id: teacherEdit?.teacherId || "000",
+          data: formatTeacherObj(userFormData),
+        })
+      );
+    } else {
+      dispatch(
+        updateStudent({
+          id: userEdit?.details?.studentId || "000",
+          data: userFormData,
+        })
+      );
+    }
     setIsEditOpen(false);
   };
   const handleEditClassSave = (classFormData: editClassForm) => {

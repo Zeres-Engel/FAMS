@@ -4,8 +4,8 @@
   "settings": {
     "width": 2000,
     "height": 2000,
-    "scrollTop": -252.3889,
-    "scrollLeft": -342.5312,
+    "scrollTop": -269.3889,
+    "scrollLeft": -471.5312,
     "zoomLevel": 0.73,
     "show": 292,
     "database": 4,
@@ -621,14 +621,16 @@
           "0e1dURSSUXyQkG3ga6C1v",
           "M0tP-pyL6IzHzG23MJMWR",
           "mPibfrlXjAyj4jgavwtyo",
-          "2s5MzjfFIL4Er3kSW2B5y"
+          "2s5MzjfFIL4Er3kSW2B5y",
+          "t7svIgTNS3D72cF5x72a4"
         ],
         "seqColumnIds": [
           "UCcAjnaLy1Kt75B6_r6QJ",
           "0e1dURSSUXyQkG3ga6C1v",
           "M0tP-pyL6IzHzG23MJMWR",
           "mPibfrlXjAyj4jgavwtyo",
-          "2s5MzjfFIL4Er3kSW2B5y"
+          "2s5MzjfFIL4Er3kSW2B5y",
+          "t7svIgTNS3D72cF5x72a4"
         ],
         "ui": {
           "x": 1340.4795,
@@ -639,7 +641,7 @@
           "color": ""
         },
         "meta": {
-          "updateAt": 1744395496371,
+          "updateAt": 1744532331291,
           "createAt": 1744038433953
         }
       },
@@ -2595,6 +2597,26 @@
           "updateAt": 1744038433954,
           "createAt": 1744038433954
         }
+      },
+      "t7svIgTNS3D72cF5x72a4": {
+        "id": "t7svIgTNS3D72cF5x72a4",
+        "tableId": "1iHUzpRpFS-IuhqBBLEKM",
+        "name": "",
+        "comment": "",
+        "dataType": "",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1744532331291,
+          "createAt": 1744532331291
+        }
       }
     },
     "relationshipEntities": {
@@ -3234,7 +3256,7 @@
             "0e1dURSSUXyQkG3ga6C1v"
           ],
           "x": 1340.4795,
-          "y": 1023.2602,
+          "y": 1035.2602000000002,
           "direction": 1
         },
         "meta": {
@@ -3303,5 +3325,12 @@
     "indexColumnEntities": {},
     "memoEntities": {}
   },
-  "lww": {}
+  "lww": {
+    "t7svIgTNS3D72cF5x72a4": [
+      "tableColumnEntities",
+      1744532331288,
+      -1,
+      {}
+    ]
+  }
 }

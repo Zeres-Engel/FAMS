@@ -352,37 +352,40 @@ def generate_semesters(db):
     return semesters
 
 
-def generate_all_schedules(db, semesters):
+def generate_all_schedules(db, semesters, output_dir="src/data/schedules"):
     """
-    Generate schedules for all semesters
+    Generate schedules for all semesters.
     
     Args:
-        db: database connection - MongoDB database connection
-        semesters: list - list of semester documents
+        db: MongoDB database connection
+        semesters: List of semester documents
+        output_dir: Directory to export schedules to
         
     Returns:
-        int - total number of schedules generated
+        int: Total number of schedule entries generated
     """
-    # Chuẩn bị thư mục đầu ra
-    output_dir = prepare_schedule_directory()
-    total_schedules = 0
+    total_entries = 0
     
     for sem in semesters:
+        # Generate schedule for this semester
         semester_name = sem.get('semesterName') or sem.get('SemesterName', 'Unknown')
         batch_id = sem.get('batchId') or sem.get('BatchID', 'Unknown')
         
         print(f"[SCHEDULE] Generating schedule for semester {semester_name} of Batch {batch_id}...")
         scheds, warnings = generate_schedule(db, sem, total_weeks=18)
-        total_schedules += len(scheds)
+        total_entries += len(scheds)
         
         if warnings:
             print(f"[WARNING] Found {len(warnings)} warnings while generating schedules:")
             for w in warnings:
                 print(f"  - {w}")
         
-        # Xuất thời khóa biểu vào thư mục src/data/schedules
-        print(f"[EXPORT] Exporting schedules for semester {semester_name}...")
-        export_semester_schedules(db, sem, output_dir)
-        print(f"[EXPORT] Schedules exported to {output_dir}")
-    
-    return total_schedules
+        # Export schedule to CSV if possible
+        try:
+            from .export import export_semester_schedules
+            export_semester_schedules(db, sem, output_dir)
+        except Exception as e:
+            print(f"[WARNING] Failed to export schedules: {str(e)}")
+            print("[WARNING] Schedule export failed, but database initialization continues.")
+            
+    return total_entries

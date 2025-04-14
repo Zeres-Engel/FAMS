@@ -4,7 +4,6 @@
   "description": "Database module for FAMS (Faculty Academic Management System)",
   "main": "index.js",
   "scripts": {
-    "init": "node initDatabase.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

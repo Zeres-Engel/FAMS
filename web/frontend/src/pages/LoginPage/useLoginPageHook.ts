@@ -11,6 +11,7 @@ import { useLocation, useNavigate } from "react-router";
 import { saveTokens } from "../../services/tokenServices";
 import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
+import { addNotify } from "../../store/slices/notifySlice";
 
 function useLoginPageHook() {
   const {
@@ -53,14 +54,17 @@ function useLoginPageHook() {
       });
     }
   }, [loginData, navigate]);
-  useEffect(() => {
-    if (error) {
-      setAlertMessage(
-        "Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản hoặc mật khẩu."
-      );
-      setNotifyID(prev => prev + 1);
-    }
-  }, [error]);
+  // useEffect(() => {
+  //   if (error) {
+  //     dispatch(
+  //       addNotify({
+  //         type: "error",
+  //         message: error,
+  //         duration: 3000,
+  //       })
+  //     );
+  //   }
+  // }, [error,dispatch]);
   const handleSubmitLogin = handleSubmit(data => {
     if (!watchUserName || !watchPassword) {
       setIsError([1, 2]);

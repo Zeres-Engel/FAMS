@@ -1,0 +1,22 @@
+const express = require('express');
+const router = express.Router();
+const classController = require('../controllers/classController');
+const { protect } = require('../middleware/authMiddleware');
+
+// Routes for class management
+// GET /api/classes - Get all classes
+router.get('/', protect, classController.getAllClasses);
+
+// GET /api/classes/:id - Get class by ID
+router.get('/:id', protect, classController.getClassById);
+
+// POST /api/classes - Create a new class
+router.post('/', protect, classController.createClass);
+
+// PUT /api/classes/:id - Update a class
+router.put('/:id', protect, classController.updateClass);
+
+// DELETE /api/classes/:id - Delete a class
+router.delete('/:id', protect, classController.deleteClass);
+
+module.exports = router; 
