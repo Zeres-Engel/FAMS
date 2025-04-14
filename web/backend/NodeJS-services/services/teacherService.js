@@ -378,6 +378,15 @@ exports.updateTeacher = async (teacherId, updateData) => {
       return { success: false, error: 'Related user not found', code: 'UPDATE_FAILED' };
     }
     
+    // Lọc bỏ các trường chỉ dành riêng cho student
+    const studentOnlyFields = ['className', 'classId', 'batchId', 'batchYear', 'parentIds', 'parentNames', 'parentCareers', 'parentPhones', 'parentGenders'];
+    studentOnlyFields.forEach(field => {
+      if (updateData[field] !== undefined) {
+        delete updateData[field];
+        console.log(`Ignored student-specific field: ${field}`);
+      }
+    });
+    
     // Trích xuất thông tin cập nhật backup_email (dành cho user)
     const { backup_email } = updateData;
     

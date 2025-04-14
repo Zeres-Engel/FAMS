@@ -620,3 +620,133 @@ exports.getUserById = async (userId, includeDetails = true) => {
     return { success: false, error: error.message };
   }
 };
+
+/**
+ * Xóa người dùng và dữ liệu liên quan dựa trên userId
+ * @param {string} userId - ID của người dùng cần xóa
+ * @returns {Promise<Object>} Kết quả xóa
+ */
+exports.deleteUser = async (userId) => {
+  try {
+    // Tìm người dùng
+    const user = await models.User.findOne({ userId });
+    
+    if (!user) {
+      return { 
+        success: false, 
+        error: 'User not found', 
+        code: 'USER_NOT_FOUND' 
+      };
+    }
+    
+    // Biến lưu kết quả xóa
+    const deletedData = {
+      user: false,
+      studentData: false,
+      teacherData: false,
+      parentData: false,
+      schedules: []
+    };
+    
+    // Xử lý xóa dữ liệu liên quan dựa trên role
+    const role = user.role.toLowerCase();
+    
+    // Xử lý student
+    if (role === 'student') {
+      // Tìm thông tin học sinh
+      const student = await models.Student.findOne({ userId });
+      
+      if (student) {
+        const studentId = student.studentId;
+        
+        // Xóa quan hệ phụ huynh-học sinh
+        if (student.parentIds && student.parentIds.length > 0) {
+          for (const parentId of student.parentIds) {
+            await models.ParentStudent.deleteOne({ parentId, studentId });
+            
+            // Kiểm tra nếu phụ huynh không còn liên kết với học sinh nào khác
+            const otherRelations = await models.ParentStudent.find({ parentId });
+            if (otherRelations.length === 0) {
+              // Phụ huynh không còn liên kết với học sinh nào, có thể xóa
+              // Tuy nhiên, chúng ta không xóa phụ huynh trong trường hợp này
+              console.log(`Parent ${parentId} no longer has any students, but not deleting`);
+            }
+          }
+        }
+        
+        // Xóa học sinh
+        await models.Student.deleteOne({ studentId });
+        deletedData.studentData = true;
+      }
+    }
+    // Xử lý teacher
+    else if (role === 'teacher') {
+      // Tìm thông tin giáo viên
+      const teacher = await models.Teacher.findOne({ userId });
+      
+      if (teacher) {
+        const teacherId = teacher.teacherId;
+        
+        // Xóa lịch dạy của giáo viên
+        // Truy cập trực tiếp collection
+        const ClassScheduleCollection = mongoose.connection.db.collection('ClassSchedule');
+        
+        // Tìm tất cả lịch dạy cần xóa
+        const teacherSchedules = await ClassScheduleCollection.find({ 
+          teacherId: String(teacherId) 
+        }).toArray();
+        
+        // Lưu ID của lịch
+        deletedData.schedules = teacherSchedules.map(schedule => 
+          schedule._id ? schedule._id.toString() : null
+        ).filter(id => id);
+        
+        // Xóa lịch dạy
+        await ClassScheduleCollection.deleteMany({ teacherId: String(teacherId) });
+        
+        // Bỏ chủ nhiệm lớp nếu có
+        await models.Class.updateMany(
+          { homeroomTeacherId: userId },
+          { $set: { homeroomTeacherId: null } }
+        );
+        
+        // Xóa giáo viên
+        await models.Teacher.deleteOne({ teacherId });
+        deletedData.teacherData = true;
+      }
+    }
+    // Xử lý parent
+    else if (role === 'parent') {
+      // Tìm thông tin phụ huynh
+      const parent = await models.Parent.findOne({ userId });
+      
+      if (parent) {
+        const parentId = parent.parentId;
+        
+        // Xóa quan hệ phụ huynh-học sinh
+        await models.ParentStudent.deleteMany({ parentId });
+        
+        // Xóa phụ huynh
+        await models.Parent.deleteOne({ parentId });
+        deletedData.parentData = true;
+      }
+    }
+    
+    // Xóa tài khoản người dùng
+    await models.User.deleteOne({ userId });
+    deletedData.user = true;
+    
+    return {
+      success: true,
+      message: 'User and related data deleted successfully',
+      deletedData
+    };
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    return { 
+      success: false, 
+      error: error.message,
+      code: 'DELETE_FAILED'
+    };
+  }
+};

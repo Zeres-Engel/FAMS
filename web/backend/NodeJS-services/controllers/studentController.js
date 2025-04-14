@@ -59,7 +59,10 @@ exports.createStudent = async (req, res) => {
 // @access  Private (Admin only)
 exports.updateStudent = async (req, res) => {
   try {
-    const student = await Student.findByIdAndUpdate(req.params.id, req.body, {
+    // Extract RFID data if provided
+    const { rfid, ...studentData } = req.body;
+    
+    const student = await Student.findByIdAndUpdate(req.params.id, studentData, {
       new: true,
       runValidators: true
     });
@@ -68,9 +71,80 @@ exports.updateStudent = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Student not found' });
     }
 
+    let rfidResult = null;
+    
+    // If RFID data provided, update or create RFID card
+    if (rfid) {
+      const RFID = require('../database/models/RFID');
+      const parseExpiryDate = require('../utils/rfidUtils').parseExpiryDate;
+      
+      // First check if student has an RFID card
+      let existingRFID = await RFID.findOne({ UserID: student.userId });
+      
+      if (existingRFID) {
+        // Update existing RFID
+        const updateData = {};
+        
+        if (rfid.RFID_ID) {
+          // If RFID_ID is being changed, verify it doesn't already exist
+          if (rfid.RFID_ID !== existingRFID.RFID_ID) {
+            const duplicateRFID = await RFID.findOne({ 
+              RFID_ID: rfid.RFID_ID,
+              _id: { $ne: existingRFID._id }
+            });
+            
+            if (duplicateRFID) {
+              return res.status(400).json({ 
+                success: false, 
+                message: `RFID ID ${rfid.RFID_ID} already exists`, 
+                code: 'DUPLICATE_RFID' 
+              });
+            }
+            
+            updateData.RFID_ID = rfid.RFID_ID;
+          }
+        }
+        
+        // Update expiry date if provided
+        if (rfid.ExpiryDate) {
+          updateData.ExpiryDate = parseExpiryDate(rfid.ExpiryDate);
+        }
+        
+        if (Object.keys(updateData).length > 0) {
+          rfidResult = await RFID.findByIdAndUpdate(
+            existingRFID._id,
+            updateData,
+            { new: true }
+          );
+        } else {
+          rfidResult = existingRFID;
+        }
+      } else if (rfid.RFID_ID) {
+        // Create new RFID if RFID_ID is provided
+        // Check if RFID_ID already exists
+        const duplicateRFID = await RFID.findOne({ RFID_ID: rfid.RFID_ID });
+        
+        if (duplicateRFID) {
+          return res.status(400).json({ 
+            success: false, 
+            message: `RFID ID ${rfid.RFID_ID} already exists`, 
+            code: 'DUPLICATE_RFID' 
+          });
+        }
+        
+        // Create new RFID
+        rfidResult = await RFID.create({
+          RFID_ID: rfid.RFID_ID,
+          UserID: student.userId,
+          ExpiryDate: parseExpiryDate(rfid.ExpiryDate)
+        });
+      }
+    }
+
     res.status(200).json({
       success: true,
-      data: student
+      data: student,
+      rfid: rfidResult
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

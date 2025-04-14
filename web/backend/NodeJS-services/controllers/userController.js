@@ -614,23 +614,24 @@ exports.updateUser = async (req, res) => {
 // @access  Private/Admin
 exports.deleteUser = async (req, res) => {
   try {
-    const user = await User.findOneAndDelete({ userId: req.params.id });
-
-    if (!user) {
-      return res.status(404).json({
+    // Sử dụng userService để xóa người dùng và dữ liệu liên quan
+    const result = await userService.deleteUser(req.params.id);
+    
+    if (!result.success) {
+      return res.status(result.code === 'USER_NOT_FOUND' ? 404 : 500).json({
         success: false,
-        message: 'User not found'
+        message: result.error,
+        code: result.code || 'DELETE_FAILED'
       });
     }
-
-    res.status(200).json({
-      success: true,
-      data: {}
-    });
+    
+    res.status(200).json(result);
   } catch (error) {
+    console.error('Error in deleteUser controller:', error);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message,
+      code: 'SERVER_ERROR'
     });
   }
 };

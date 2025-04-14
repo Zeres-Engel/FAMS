@@ -135,7 +135,7 @@ router.put('/:id', protect, authorize('Admin'), asyncHandler(async (req, res) =>
   }
   
   return sendError(res, { 
-    statusCode: result.code === 'UPDATE_FAILED' ? 404 : 500,
+    statusCode: result.code === 'UPDATE_FAILED' || result.code === 'CLASS_NOT_FOUND' ? 404 : 500,
     message: result.error,
     code: result.code
   });

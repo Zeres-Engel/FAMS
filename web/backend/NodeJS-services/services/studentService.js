@@ -366,6 +366,31 @@ exports.updateStudent = async (studentId, updateData) => {
       return { success: false, error: 'Related user not found', code: 'UPDATE_FAILED' };
     }
     
+    // Lọc bỏ các trường chỉ dành riêng cho teacher
+    const teacherOnlyFields = ['major', 'weeklyCapacity'];
+    teacherOnlyFields.forEach(field => {
+      if (updateData[field] !== undefined) {
+        delete updateData[field];
+        console.log(`Ignored teacher-specific field: ${field}`);
+      }
+    });
+    
+    // Xử lý cập nhật theo className nếu có
+    if (updateData.className) {
+      // Tìm kiếm lớp theo tên
+      const classInfo = await models.Class.findOne({ className: updateData.className });
+      
+      if (!classInfo) {
+        return { success: false, error: 'Class name does not exist', code: 'CLASS_NOT_FOUND' };
+      }
+      
+      // Cập nhật classId dựa vào className tìm được
+      updateData.classId = classInfo.classId;
+      
+      // Xóa className khỏi updateData vì đã xử lý
+      delete updateData.className;
+    }
+    
     // Trích xuất thông tin cập nhật backup_email (dành cho user)
     const { backup_email } = updateData;
     

@@ -14,6 +14,7 @@ const parentRoutes = require('./routes/parentRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const classRoutes = require('./routes/classRoutes');
+const rfidRoutes = require('./routes/rfidRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -101,6 +102,7 @@ app.use('/api/parents', parentRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/classes', classRoutes);
+app.use('/api/rfid', rfidRoutes);
 app.use('/api/database', apiRouter);
 
 // Root route
@@ -146,6 +148,16 @@ app.get('/', (req, res) => {
       schedules: {
         base: '/api/schedules',
         description: 'API quản lý lịch học'
+      },
+      rfid: {
+        base: '/api/rfid',
+        endpoints: [
+          { method: 'GET', path: '/', description: 'Lấy danh sách thẻ RFID (có phân trang)' },
+          { method: 'GET', path: '/:id', description: 'Lấy thông tin chi tiết thẻ RFID' },
+          { method: 'POST', path: '/', description: 'Tạo thẻ RFID mới (Admin)' },
+          { method: 'PUT', path: '/:id', description: 'Cập nhật thông tin thẻ RFID (Admin)' },
+          { method: 'DELETE', path: '/:id', description: 'Xóa thẻ RFID (Admin)' }
+        ]
       }
     },
     status: {
