@@ -1,38 +1,81 @@
-import { createBrowserRouter, Navigate, RouterProvider } from "react-router-dom";
-import React, { useEffect } from "react";
+import { createBrowserRouter, RouterProvider } from "react-router";
 import LoginPage from "../pages/LoginPage/LoginPage";
 import HomePage from "../pages/HomePage/HomePage";
 import ProfilePage from "../pages/ProfilePage/ProfilePage";
 import SchedulePage from "../pages/SchedulePage/SchedulePage";
 import ClassPage from "../pages/ClassPage/ClassPage";
-import authService from "../services/authService";
-import tokenRefresher from "../services/tokenRefresher";
-
-// Component to protect routes
-const ProtectedRoute = ({ element }: { element: React.JSX.Element }) => {
-  return authService.isAuthenticated() ? element : <Navigate to="/login" replace />;
-};
+import AuthWrapper from "./AuthRoutes";
+import HomePageAdmin from "../pages/HomePage/HomePageAdmin/HomePageAdmin";
+import UserManagementPage from "../pages/UserManagementPage/UserManagementPage";
+import ScheduleManagementPage from "../pages/ScheduleManagementPage/ScheduleManagementPage";
+import ClassManagementPage from "../pages/ClassManagementPage/ClassManagementPage";
+import AttendanceManagementPage from "../pages/AttendanceManagementPage/AttendanceManagementPage";
+import IdentifyManagementPage from "../pages/IdentifyManagement/IdentifyManagementPage";
 
 const router = createBrowserRouter([
-  { path: "/", element: <ProtectedRoute element={<HomePage />} /> },
-  { path: "/login", element: <LoginPage/> },
-  { path: "/profile", element: <ProtectedRoute element={<ProfilePage />} /> },
-  { path: "/schedule", element: <ProtectedRoute element={<SchedulePage />} /> },
-  { path: "/class", element: <ProtectedRoute element={<ClassPage />} /> },
+  // { path: "/", element: <AuthWrapper mode="admin" element={<HomePageAdmin />} /> },
+  // {
+  //   path: "*",
+  //   element: <AuthWrapper mode="admin" element={<HomePageAdmin />} />,
+  // },
+  {
+    path: "/",
+    element: <AuthWrapper mode="private" element={<></>} />,
+  },
+  {
+    path: "/AdminHomePage",
+    element: <AuthWrapper mode="admin" element={<HomePageAdmin />} />,
+  },
+  {
+    path: "/IdentifyManagement",
+    element: <AuthWrapper mode="admin" element={<IdentifyManagementPage />} />,
+  },
+  {
+    path: "/UserManagement",
+    element: <AuthWrapper mode="admin" element={<UserManagementPage />} />,
+  },
+  {
+    path: "/ClassManagement",
+    element: <AuthWrapper mode="admin" element={<ClassManagementPage />} />,
+  },
+  {
+    path: "/ScheduleManagement",
+    element: <AuthWrapper mode="admin" element={<ScheduleManagementPage />} />,
+  },
+  {
+    path: "/AttendanceManagement",
+    element: <AuthWrapper mode="admin" element={<AttendanceManagementPage />} />,
+  },
+  {
+    path: "/login",
+    element: <AuthWrapper mode="guest" element={<LoginPage />} />,
+  },
+  {
+    path: "/UserHomePage",
+    element: <AuthWrapper mode="private" element={<HomePage />} />,
+  },
+  {
+    path: "/profile",
+    element: <AuthWrapper mode="private" element={<ProfilePage />} />,
+  },
+  {
+    path: "/Schedule",
+    element: <AuthWrapper mode="private" element={<SchedulePage />} />,
+  },
+  {
+    path: "/Class",
+    element: <AuthWrapper mode="private" element={<ClassPage />} />,
+  },
+  // {
+  //   path: "/Attendence",
+  //   element: <AuthWrapper mode="private" element={<AttendancePage />} />,
+  // },
+  {
+    path: "*",
+    element: <AuthWrapper mode="private" element={<HomePage />} />,
+  },
 ]);
 
 export default function AppRoutes() {
-  useEffect(() => {
-    // Start token refresh mechanism if user is logged in
-    if (authService.isAuthenticated()) {
-      tokenRefresher.startTokenRefresh();
-    }
-    
-    // Cleanup when component unmounts
-    return () => {
-      tokenRefresher.stopTokenRefresh();
-    };
-  }, []);
-  
   return <RouterProvider router={router} />;
 }

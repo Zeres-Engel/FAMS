@@ -17,6 +17,7 @@
     height: 100vh;
   }
   & .login-Form {
+    backdrop-filter: blur(0px);
     width: 100%;
     height: 80vh;
     border-radius: 20px;
@@ -107,5 +108,8 @@
         font-size: small;
       }
     }
+  }
+  & .tabletMode{
+    position: absolute;
   }
 }

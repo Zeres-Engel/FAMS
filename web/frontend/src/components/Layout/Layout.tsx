@@ -2,6 +2,8 @@ import { Container, Grid, Typography } from "@mui/material";
 import React, { ReactNode } from "react";
 import "./Layout.scss";
 import NavBar from "../../components/NavBar/NavBar"
+import useLayoutHook from "./useLayoutHook";
+import GlobalLoading from "../ShowLoading/ShowLoading";
 
 interface LayoutProps  {
     children: ReactNode;
@@ -9,7 +11,9 @@ interface LayoutProps  {
 }
 
 function LayoutComponent({ children,pageHeader }: LayoutProps): React.JSX.Element {
+    const {state,handler} = useLayoutHook()
     return (<Container maxWidth={false} disableGutters>
+        <GlobalLoading/>
         <Grid container className="mainLayout">
             <Grid size={12}>
                 <NavBar></NavBar>

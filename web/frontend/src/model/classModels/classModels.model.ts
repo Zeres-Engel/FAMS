@@ -1,11 +1,19 @@
-interface classUserModel {
-    id: number;
-    name: string;
-    username: string;
-    email: string;
-    phone: string;
-    class: string;
+// class.model.ts
+
+interface ClassData {
+  _id: string;
+  className: string;
+  grade: string;
+  homeroomTeacherd: string;
+  createdAt: string;
+  updatedAt: string;
+  // Thêm các field khác nếu API trả về thêm
 }
-export type{
-    classUserModel
+
+interface SearchClassFilters {
+  search?: string;
+  grade?: string;
+  homeroomTeacherd?: string;
 }
+
+export type { SearchClassFilters, ClassData };

@@ -1,9 +1,10 @@
 interface ScheduleEvent {
-    id: number,
-    title: string,
-    start: Date,
-    end: Date,
-    resource?: any // To store the original schedule data
+    id: number;
+    title: string;
+    start: Date;
+    end: Date;
+    subject: string;
+    teacher: string;
 }
 export type{
     ScheduleEvent
