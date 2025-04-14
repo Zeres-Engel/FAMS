@@ -292,7 +292,7 @@ const createStudent = async (req, res, defaultPassword) => {
       lastName,
       email: `${userId}@fams.edu.vn`, // Email luôn khớp với email trong tài khoản
       dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-      gender: gender === 'Female' || gender === false ? false : true,
+      gender: typeof gender === 'string' ? gender : (gender === true || gender === 'true' ? 'Male' : 'Female'),
       address,
       phone,
       batchId: parseInt(batch.batchId),
@@ -359,7 +359,11 @@ const createStudent = async (req, res, defaultPassword) => {
           email: `${parentUserId}@fams.edu.vn`, // Luôn sử dụng email được tạo từ userId không dấu
           career: parentCareers && parentCareers[i] ? parentCareers[i] : null,
           phone: parentPhones && parentPhones[i] ? parentPhones[i] : null,
-          gender: parentGenders && parentGenders[i] !== undefined ? parentGenders[i] : null,
+          gender: parentGenders && parentGenders[i] !== undefined 
+                  ? (typeof parentGenders[i] === 'string'
+                     ? (parentGenders[i].toLowerCase() === 'male' || parentGenders[i].toLowerCase() === 'true')
+                     : Boolean(parentGenders[i]))
+                  : null,
           isActive: true
         });
         
@@ -465,7 +469,9 @@ const createTeacher = async (req, res, defaultPassword) => {
       lastName,
       email: `${userId}@fams.edu.vn`, // Email luôn khớp với email trong tài khoản
       dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-      gender: gender === 'Female' || gender === false ? false : true,
+      gender: typeof gender === 'string' 
+              ? (gender.toLowerCase() === 'male' || gender.toLowerCase() === 'true') 
+              : Boolean(gender),
       address,
       phone,
       major,
@@ -550,7 +556,9 @@ const createParent = async (req, res, defaultPassword) => {
       email: `${userId}@fams.edu.vn`, // Email luôn khớp với email trong tài khoản
       career,
       phone,
-      gender: gender === 'Female' || gender === false ? false : true,
+      gender: typeof gender === 'string' 
+              ? (gender.toLowerCase() === 'male' || gender.toLowerCase() === 'true') 
+              : Boolean(gender),
       isActive: true
     });
 

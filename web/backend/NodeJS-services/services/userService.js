@@ -301,6 +301,33 @@ exports.getUsers = async (options = {}) => {
             classId: student.classId,
             batchId: student.batchId
           };
+
+          // Lấy thông tin phụ huynh của học sinh
+          const parentStudentRelations = await models.ParentStudent.find({ studentId: student.studentId });
+          if (parentStudentRelations.length > 0) {
+            const parentIds = parentStudentRelations.map(ps => ps.parentId);
+            const parents = await models.Parent.find({ parentId: { $in: parentIds } });
+            
+            // Lấy thông tin User của phụ huynh
+            const parentUserIds = parents.map(p => p.userId);
+            const parentUsers = await models.User.find({ userId: { $in: parentUserIds } });
+            
+            // Kết hợp thông tin phụ huynh
+            userObj.details.parents = parents.map(parent => {
+              const parentUser = parentUsers.find(u => u.userId === parent.userId);
+              return {
+                parentId: parent.parentId,
+                firstName: parent.firstName,
+                lastName: parent.lastName,
+                fullName: parent.fullName,
+                phone: parent.phone,
+                gender: parent.gender,
+                career: parent.career,
+                email: parentUser ? parentUser.email : null,
+                backup_email: parentUser ? parentUser.backup_email : null
+              };
+            });
+          }
           
           // Thêm thông tin className nếu có
           if (student.classId) {
@@ -513,6 +540,33 @@ exports.getUserById = async (userId, includeDetails = true) => {
           classId: student.classId,
           batchId: student.batchId
         };
+
+        // Lấy thông tin phụ huynh của học sinh
+        const parentStudentRelations = await models.ParentStudent.find({ studentId: student.studentId });
+        if (parentStudentRelations.length > 0) {
+          const parentIds = parentStudentRelations.map(ps => ps.parentId);
+          const parents = await models.Parent.find({ parentId: { $in: parentIds } });
+          
+          // Lấy thông tin User của phụ huynh
+          const parentUserIds = parents.map(p => p.userId);
+          const parentUsers = await models.User.find({ userId: { $in: parentUserIds } });
+          
+          // Kết hợp thông tin phụ huynh
+          userObj.details.parents = parents.map(parent => {
+            const parentUser = parentUsers.find(u => u.userId === parent.userId);
+            return {
+              parentId: parent.parentId,
+              firstName: parent.firstName,
+              lastName: parent.lastName,
+              fullName: parent.fullName,
+              phone: parent.phone,
+              gender: parent.gender,
+              career: parent.career,
+              email: parentUser ? parentUser.email : null,
+              backup_email: parentUser ? parentUser.backup_email : null
+            };
+          });
+        }
       }
     }
     else if (role === 'teacher') {

@@ -226,43 +226,86 @@ Các quy tắc áp dụng cho batchYear:
 - **URL**: `http://fams.io.vn/api-nodejs/students/:id`
 - **Method**: `PUT`
 - **Auth Required**: Yes (Admin only)
+- **Description**: Cập nhật thông tin học sinh. Có thể cập nhật một hoặc nhiều trường cùng lúc.
 - **Body**:
 ```json
 {
+  // Thông tin cơ bản
   "firstName": "Thành",
   "lastName": "Nguyễn Văn",
+  "email": "thanhnvst@fams.edu.vn",
   "phone": "0987654321",
   "address": "456 Đường XYZ, Quận 2, TP.HCM",
+  "dateOfBirth": "2005-05-15",
+  "gender": "Male", // Chấp nhận cả "Male"/"Female" và true/false
+  "isActive": true,
+
+  // Thông tin lớp và khóa
   "classId": 2,
-  // Other fields to update
+  "batchId": 3,
+  "parentNames": ["Nguyễn Văn A", "Trần Thị B"],
+  "parentCareers": ["Kỹ sư", "Giáo viên"],
+  "parentPhones": ["0123456789", "0987123456"],
+  "parentGenders": [true, false] // true = Male, false = Female
 }
 ```
+
 - **Response**:
 ```json
 {
   "success": true,
   "data": {
     "studentId": "7",
+    "userId": "thanhnvst",
     "firstName": "Thành",
     "lastName": "Nguyễn Văn",
     "fullName": "Thành Nguyễn Văn",
     "email": "thanhnvst@fams.edu.vn",
     "phone": "0987654321",
-    "userId": "thanhnvst",
+    "address": "456 Đường XYZ, Quận 2, TP.HCM",
+    "dateOfBirth": "2005-05-15T00:00:00.000Z",
     "classId": 2,
-    // Other student fields
-  }
+    "batchId": 3,
+    "gender": "Male",
+    "isActive": true,
+    "parentIds": ["1", "2"],
+    "parentNames": ["Nguyễn Văn A", "Trần Thị B"],
+    "parentCareers": ["Kỹ sư", "Giáo viên"],
+    "parentPhones": ["0123456789", "0987123456"],
+    "parentGenders": [true, false],
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-02T00:00:00.000Z"
+  },
+  "parentUpdates": [
+    "Updated parent: 1",
+    "Updated parent: 2"
+  ]
 }
 ```
-- **Error Responses**:
-  - `404` - Student not found:
-    ```json
-    {
-      "success": false,
-      "error": "Student not found or update failed",
-      "code": "UPDATE_FAILED"
-    }
-    ```
+
+**Lưu ý quan trọng về cập nhật phụ huynh:**
+1. Khi cập nhật thông tin phụ huynh:
+   - Nếu tên phụ huynh thay đổi, hệ thống sẽ tự động:
+     - Tạo `userId` mới theo định dạng: `{firstName}{lastNameInitials}pr{parentId}`
+     - Tạo email mới: `{newUserId}@fams.edu.vn`
+     - Xóa tài khoản User cũ và tạo tài khoản mới
+     - Cập nhật thông tin phụ huynh với `userId` và email mới
+   - Ví dụ: Nếu phụ huynh "Nguyễn Văn A" (parentId=1) đổi tên thành "Nguyễn Văn B":
+     - `userId` cũ: `angvpr1`
+     - `userId` mới: `bngvpr1`
+     - Email mới: `bngvpr1@fams.edu.vn`
+
+2. Các trường phụ huynh:
+   - `parentNames`: Tên đầy đủ của phụ huynh
+   - `parentCareers`: Nghề nghiệp của phụ huynh
+   - `parentPhones`: Số điện thoại của phụ huynh
+   - `parentGenders`: Giới tính phụ huynh (true = Male, false = Female)
+   - Không cần cung cấp `parentIds` khi cập nhật, hệ thống sẽ tự động quản lý
+
+3. Khi xóa phụ huynh:
+   - Xóa bản ghi phụ huynh
+   - Xóa tài khoản User tương ứng
+   - Cập nhật danh sách phụ huynh trong bản ghi học sinh
 
 #### Delete Student
 - **URL**: `http://fams.io.vn/api-nodejs/students/:id`

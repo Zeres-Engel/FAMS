@@ -46,7 +46,17 @@ const StudentSchema = new mongoose.Schema({
   gender: {
     type: String,
     enum: ['Male', 'Female'],
-    required: true
+    required: true,
+    set: function(v) {
+      if (typeof v === 'boolean') {
+        return v ? 'Male' : 'Female';
+      }
+      if (typeof v === 'string') {
+        if (v.toLowerCase() === 'male' || v === 'true') return 'Male';
+        if (v.toLowerCase() === 'female' || v === 'false') return 'Female';
+      }
+      return v;
+    }
   },
   address: {
     type: String
