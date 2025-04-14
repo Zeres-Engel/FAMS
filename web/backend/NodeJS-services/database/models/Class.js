@@ -12,8 +12,8 @@ const ClassSchema = new mongoose.Schema({
     required: true
   },
   homeroomTeacherId: {
-    type: Number,
-    ref: 'Teacher'
+    type: String,
+    ref: 'User'
   },
   BatchID: {
     type: Number,
@@ -28,7 +28,7 @@ const ClassSchema = new mongoose.Schema({
 ClassSchema.virtual('homeroomTeacher', {
   ref: 'Teacher',
   localField: 'homeroomTeacherId',
-  foreignField: 'teacherId',
+  foreignField: 'userId',
   justOne: true
 });
 

@@ -5,21 +5,33 @@ const {
   createUser, 
   updateUser, 
   deleteUser,
-  getTeacherSchedule
+  getTeacherSchedule,
+  getUserDetails
 } = require('../controllers/userController');
 const { protect, authorize } = require('../middleware/authMiddleware');
+const { asyncHandler, sendResponse, sendError } = require('../utils/routeUtils');
 
 const router = express.Router();
 
 // Get teacher schedule
 router.get('/teachers/:id/schedule', protect, getTeacherSchedule);
 
-// GET all users (Admin only)
-router.get('/', protect, authorize('Admin'), (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'User route is setup but not implemented yet'
-  });
-});
+// Get user details based on role
+router.get('/details/:id', protect, getUserDetails);
+
+// GET all users with filtering (Admin only)
+router.get('/', protect, authorize('Admin', 'admin'), asyncHandler(getUsers));
+
+// Create new user (Admin only) - Existing route
+router.post('/', protect, authorize('Admin', 'admin'), createUser);
+
+// Create new user with /create endpoint (Admin only)
+router.post('/create', protect, authorize('Admin', 'admin'), createUser);
+
+// Manage single user
+router.route('/:id')
+  .get(protect, authorize('Admin', 'admin'), getUser)
+  .put(protect, authorize('Admin', 'admin'), updateUser)
+  .delete(protect, authorize('Admin', 'admin'), deleteUser);
 
 module.exports = router; 

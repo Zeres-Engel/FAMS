@@ -26,7 +26,10 @@ import EditUserModal from "./EditUserForm/EditUserForm";
 import DeleteUserDialog from "./DeleteUserDialog/DeleteUserDialog";
 import EditClassForm from "./EditClassForm/EditClassForm";
 import AddClassForm from "./AddClassForm/AddClassForm";
-import { SearchFilters, UserData } from "../../model/userModels/userDataModels.model";
+import {
+  SearchFilters,
+  UserData,
+} from "../../model/userModels/userDataModels.model";
 import useState from "react";
 
 interface DataTableProps {
@@ -54,7 +57,7 @@ export default function DataTable({
 }: DataTableProps) {
   const { state, handler } = useDataTableHook({ tableMainData });
 
-  const renderActionCell = (row: any) => (
+  const renderActionCell = (row: any) =>  (
     <TableCell align="left">
       <Button
         variant="outlined"
@@ -69,7 +72,7 @@ export default function DataTable({
                 batch: row.batch,
                 teacherId: row.teacherId,
               })
-            : handler.handleEditClick(row);
+            : handler.handleEditClick(row, row?.id);
         }}
         sx={{ mr: 1 }}
       >
@@ -81,8 +84,9 @@ export default function DataTable({
           open={state.isEditOpen}
           onClose={() => handler.setIsEditOpen(false)}
           onSave={handler.handleEditSave}
-          userType={state.editingUser.role}
+          userType={row?.role || state.editingUser.role}
           formData={state.editingUser}
+          idUser={row?.id}
         />
       )}
 
@@ -199,6 +203,7 @@ export default function DataTable({
                     {isAdmin &&
                       !isAttendance &&
                       isUserManagement &&
+                      row?.role !== "admin" &&
                       renderActionCell(row)}
                   </TableRow>
                 );

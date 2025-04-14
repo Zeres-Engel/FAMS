@@ -34,7 +34,7 @@ interface EnhancedTableToolbarProps {
   setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
 }
 
-const roleOptions = ["supervisor", "teacher", "student", "parents", "admin"];
+const roleOptions = ["supervisor", "teacher", "student", "parent", "admin"];
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
 

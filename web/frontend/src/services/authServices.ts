@@ -15,12 +15,11 @@ export const refreshAccessToken = async (dispatch: Dispatch) => {
       refreshToken: refreshToken,
     });
 
-    const { accessToken, refreshToken: newRefreshToken, role } = response.data;
+    const { accessToken, refreshToken: newRefreshToken, role } = response.data.data;
 
     // Lưu token
     setAccessToken(accessToken);
     setRefreshToken(newRefreshToken);
-
     if (role) {
       dispatch(setRole(role)); // sử dụng dispatch truyền vào
     }

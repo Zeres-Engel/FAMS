@@ -10,6 +10,7 @@ import UserManagementPage from "../pages/UserManagementPage/UserManagementPage";
 import ScheduleManagementPage from "../pages/ScheduleManagementPage/ScheduleManagementPage";
 import ClassManagementPage from "../pages/ClassManagementPage/ClassManagementPage";
 import AttendanceManagementPage from "../pages/AttendanceManagementPage/AttendanceManagementPage";
+import IdentifyManagementPage from "../pages/IdentifyManagement/IdentifyManagementPage";
 
 const router = createBrowserRouter([
   // { path: "/", element: <AuthWrapper mode="admin" element={<HomePageAdmin />} /> },
@@ -24,6 +25,10 @@ const router = createBrowserRouter([
   {
     path: "/AdminHomePage",
     element: <AuthWrapper mode="admin" element={<HomePageAdmin />} />,
+  },
+  {
+    path: "/IdentifyManagement",
+    element: <AuthWrapper mode="admin" element={<IdentifyManagementPage />} />,
   },
   {
     path: "/UserManagement",

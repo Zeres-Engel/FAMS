@@ -60,6 +60,105 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Update parent information
+router.put('/:id', protect, async (req, res) => {
+  try {
+    const parent = await models.Parent.findOne({ parentId: req.params.id });
+    
+    if (!parent) {
+      return res.status(404).json({ success: false, error: 'Parent not found', code: 'UPDATE_FAILED' });
+    }
+    
+    // Process gender if provided - convert string to boolean
+    if (req.body.gender !== undefined) {
+      if (typeof req.body.gender === 'string') {
+        // Convert string values to boolean
+        if (req.body.gender.toLowerCase() === 'male' || req.body.gender === 'true') {
+          req.body.gender = true;
+        } else if (req.body.gender.toLowerCase() === 'female' || req.body.gender === 'false') {
+          req.body.gender = false;
+        }
+      }
+    }
+    
+    // Update parent fields
+    Object.keys(req.body).forEach(key => {
+      if (key !== 'parentId' && key !== '_id') { // Prevent changing immutable fields
+        parent[key] = req.body[key];
+      }
+    });
+    
+    const updatedParent = await parent.save();
+    
+    res.json({
+      success: true,
+      data: updatedParent,
+      message: 'Parent updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating parent:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Delete parent
+router.delete('/:id', protect, async (req, res) => {
+  try {
+    // Find the parent first to get their userId
+    const parent = await models.Parent.findOne({ parentId: req.params.id });
+    
+    if (!parent) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Parent not found', 
+        code: 'DELETE_FAILED' 
+      });
+    }
+    
+    // Get the userId for deleting the associated user account
+    const userId = parent.userId;
+    
+    // Store student IDs before deletion (to include in response)
+    const studentIds = parent.studentIds || [];
+    
+    // Delete the parent record
+    const deleteResult = await models.Parent.deleteOne({ parentId: req.params.id });
+    
+    // Delete the user account if it exists
+    let userDeleted = false;
+    if (userId) {
+      const userDeleteResult = await models.User.deleteOne({ userId: userId });
+      userDeleted = userDeleteResult.deletedCount > 0;
+    }
+    
+    // Remove parent from student records (but don't delete students)
+    if (studentIds.length > 0) {
+      // For each student, remove this parent's ID from their parentIds array
+      await models.Student.updateMany(
+        { studentId: { $in: studentIds } },
+        { $pull: { parentIds: parent.parentId } }
+      );
+    }
+    
+    return res.json({
+      success: true,
+      message: 'Parent deleted successfully',
+      deletedData: {
+        parentDeleted: deleteResult.deletedCount > 0,
+        userDeleted: userDeleted,
+        studentRelationshipsUpdated: studentIds
+      }
+    });
+  } catch (error) {
+    console.error('Error deleting parent:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      code: 'SERVER_ERROR'
+    });
+  }
+});
+
 // Get children's schedules
 router.get('/:id/children-schedules', async (req, res) => {
   try {
@@ -98,7 +197,7 @@ router.get('/:id/children-schedules', async (req, res) => {
       }
       
       // Get schedules
-      const schedules = await models.Schedule.find({ 
+      const schedules = await models.ClassSchedule.find({ 
         semesterId: semester.semesterId,
         classId: child.classId
       }).sort({ dayOfWeek: 1, startTime: 1 });

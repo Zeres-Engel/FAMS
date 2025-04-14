@@ -7,7 +7,7 @@ const Class = require('./Class');
 const Batch = require('./Batch');
 const Subject = require('./Subject');
 const Classroom = require('./Classroom');
-const Schedule = require('./Schedule');
+const ClassSchedule = require('./ClassSchedule');
 const Semester = require('./Semester');
 const Curriculum = require('./Curriculum');
 const CurriculumSubject = require('./CurriculumSubject');
@@ -26,7 +26,7 @@ module.exports = {
   Batch,
   Subject,
   Classroom,
-  Schedule,
+  ClassSchedule,
   Semester,
   Curriculum,
   CurriculumSubject,

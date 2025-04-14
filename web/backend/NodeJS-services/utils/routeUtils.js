@@ -19,13 +19,17 @@ exports.asyncHandler = (fn) => (req, res, next) => {
  * @param {Object|Array} data - Dữ liệu trả về
  * @param {string} message - Thông báo
  * @param {number} count - Số lượng items (nếu trả về mảng)
+ * @param {Array} deletedScheduleIds - IDs của lịch bị xóa
+ * @param {boolean} teacherDeleted - Trạng thái giáo viên bị xóa
  */
-exports.sendResponse = (res, { statusCode = 200, success = true, data = null, message = null, count = null }) => {
+exports.sendResponse = (res, { statusCode = 200, success = true, data = null, message = null, count = null, deletedScheduleIds = null, teacherDeleted = null }) => {
   const response = { success };
   
   if (message) response.message = message;
   if (count !== null) response.count = count;
   if (data !== null) response.data = data;
+  if (deletedScheduleIds !== null) response.deletedScheduleIds = deletedScheduleIds;
+  if (teacherDeleted !== null) response.teacherDeleted = teacherDeleted;
   
   return res.status(statusCode).json(response);
 };

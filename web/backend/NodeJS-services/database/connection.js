@@ -20,6 +20,7 @@ const connectToFAMS = async () => {
     }
     
     const mongoURI = process.env.MONGO_URI;
+    console.log('MongoDB URI:', mongoURI.substring(0, mongoURI.indexOf('@') > 0 ? mongoURI.indexOf('@') : 20) + '...');
     
     // Ensure URI has the correct database name (fams)
     const uriWithDatabase = mongoURI.includes('/fams?') ? 
@@ -38,6 +39,25 @@ const connectToFAMS = async () => {
     
     console.log(`MongoDB Connected: ${mongoose.connection.host}`);
     console.log(`Database Name: ${mongoose.connection.db.databaseName}`);
+    
+    // Log connection details and collection names
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const collections = await mongoose.connection.db.listCollections().toArray();
+        console.log(`Found ${collections.length} collections in database`);
+        console.log('Collections:', collections.map(c => c.name).join(', '));
+        
+        // Check if Student collection exists and has documents
+        if (collections.some(c => c.name === 'students')) {
+          const studentsCount = await mongoose.connection.db.collection('students').countDocuments();
+          console.log(`Students collection has ${studentsCount} documents`);
+        } else {
+          console.warn('Students collection not found in database!');
+        }
+      } catch (err) {
+        console.error('Error checking collections:', err.message);
+      }
+    }
     
     return {
       success: true,

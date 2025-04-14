@@ -24,7 +24,7 @@ function LoginPage(): React.JSX.Element {
   return (
     <Container maxWidth={false}>
       <GlobalLoading/>
-      {state?.alertMessage && <NotifyBar notifyID={state?.notifyID}  notifyType='warning' notifyContent={state?.alertMessage}/>}
+      {/* {state?.alertMessage && <NotifyBar notifyID={state?.notifyID}  notifyType='warning' notifyContent={state?.alertMessage}/>} */}
       <div className="login-Page">
         <Grid
           container

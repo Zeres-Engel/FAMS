@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const Semester = require('../database/models/Semester');
-const ClassSchedule = require('../database/models/Schedule');
+const ClassSchedule = require('../database/models/ClassSchedule');
 const moment = require('moment');
 
 /**

@@ -66,12 +66,4 @@ The database module exposes API routes through the `apiRouter`:
 - `GET /api/database/classes/batch/:batchId` - Get classes by batch ID
 - `GET /api/database/classes/:id` - Get class by ID
 - `GET /api/database/teachers` - Get all teachers
-- `GET /api/database/teachers/:id` - Get teacher by ID
-
-## Database Initialization
-
-Database initialization is disabled by default to prevent data loss. To manually initialize the database, run:
-
-```
-python backend/init_database.py
-``` 
+- `GET /api/database/teachers/:id` - Get teacher by ID 
