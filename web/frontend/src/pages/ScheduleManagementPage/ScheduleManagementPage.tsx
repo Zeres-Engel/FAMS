@@ -36,10 +36,11 @@ const ScheduleManagementPage: React.FC = () => {
     start: new Date(),
     end: new Date(),
     teacher: "",
+    classroomNumber: "",
   });
 
   return (
-    <LayoutComponent pageHeader="Schedule">
+    <LayoutComponent pageHeader="Schedule Management">
       <Container maxWidth="xl" style={{ padding: "16px" }}>
         <Box className={state?.eventShow?.id !== 0 ? "schedule-Display" : ""}>
           <Paper elevation={3} sx={{ padding: "16px" }}>
@@ -208,6 +209,19 @@ const ScheduleManagementPage: React.FC = () => {
                     }
                   />
                   <TextField
+                    label="Classroom ID"
+                    fullWidth
+                    sx={{ mb: 2 }}
+                    value={state.eventShow?.classroomNumber || ""}
+                    onChange={e =>
+                      handler.setEventShow({
+                        ...state.eventShow,
+                        classroomNumber: e.target.value,
+                      })
+                    }
+                  />
+
+                  <TextField
                     label="Teacher"
                     fullWidth
                     sx={{ mb: 2 }}
@@ -232,6 +246,10 @@ const ScheduleManagementPage: React.FC = () => {
                   <Typography>
                     <strong>End:</strong>{" "}
                     {moment(state.eventShow?.end).format("YYYY-MM-DD HH:mm")}
+                  </Typography>
+                  <Typography>
+                    <strong>Classroom ID:</strong>{" "}
+                    {state.eventShow?.classroomNumber || "N/A"}
                   </Typography>
                   <Typography>
                     <strong>Teacher:</strong> {state.eventShow?.teacher}
@@ -320,6 +338,15 @@ const ScheduleManagementPage: React.FC = () => {
                 }
               />
               <TextField
+                label="Classroom ID"
+                fullWidth
+                sx={{ mb: 2 }}
+                value={newEvent.classroomNumber}
+                onChange={e =>
+                  setNewEvent({ ...newEvent, classroomNumber: e.target.value })
+                }
+              />
+              <TextField
                 label="Teacher"
                 fullWidth
                 sx={{ mb: 2 }}
@@ -342,6 +369,7 @@ const ScheduleManagementPage: React.FC = () => {
                     start: new Date(),
                     end: new Date(),
                     teacher: "",
+                    classroomNumber:''
                   });
                 }}
               >

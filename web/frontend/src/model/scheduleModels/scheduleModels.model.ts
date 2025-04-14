@@ -4,6 +4,7 @@ interface ScheduleEvent {
     start: Date;
     end: Date;
     subject: string;
+    classroomNumber?:string;
     teacher: string;
 }
 export type{
