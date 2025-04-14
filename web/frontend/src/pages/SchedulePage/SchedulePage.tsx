@@ -17,8 +17,6 @@ import useSchedulePageHook from "./useSchedulePageHook";
 const localizer = momentLocalizer(moment);
 const SchedulePage: React.FC = () => {
   const { state, handler } = useSchedulePageHook();
-  const [view, setView] = useState<View>("month");
-  const [currentDate, setCurrentDate] = useState(new Date());
   return (
     <LayoutComponent pageHeader="Schedule">
       <Container

@@ -1,34 +1,97 @@
-import React, { useEffect } from "react";
-import { Data, Order } from "../../model/tableModels/tableDataModels.model";
+import React, { useEffect, useState } from "react";
+import {
+  AddUserForm,
+  Data,
+  editClassForm,
+  Order,
+} from "../../model/tableModels/tableDataModels.model";
 import getComparator from "../utils/TableDataUtils/useTableDataUtils";
+import { UserData } from "../../model/userModels/userDataModels.model";
 
 interface UseDataTableHookProps {
-  tableMainData: Data[];
+  tableMainData: Data[] | UserData[];
 }
 function useDataTableHook(props: UseDataTableHookProps) {
   const { tableMainData } = props;
+  const editClassDefaul: editClassForm = {
+    className: "",
+    teacherId: "",
+    batch: "",
+  };
+  const editUserDefault: AddUserForm = {
+    fullName: "",
+    dob: "",
+    gender: "",
+    address: "",
+    phone: "",
+    parentNames: "",
+    careers: "",
+    parentPhones: "",
+    parentGenders: "",
+    major: "",
+    weeklyCapacity: "",
+    role: "",
+  };
   const rows = React.useMemo(() => [...tableMainData], [tableMainData]);
+  const [isCreateUser, setIsCreateUser] = useState<boolean>(false);
   const [order, setOrder] = React.useState<Order>("asc");
-  const [orderBy, setOrderBy] = React.useState<keyof Data>("avatar");
+  const [orderBy, setOrderBy] = React.useState<keyof Data | keyof UserData>("id");
   const [selected, setSelected] = React.useState<readonly number[]>([]);
+  const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const [editingUser, setEditingUser] =
+    React.useState<AddUserForm>(editUserDefault);
+  const [editingClass, setEditingClass] =
+    React.useState<editClassForm>(editClassDefaul);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedUserToDelete, setSelectedUserToDelete] = useState<Data | UserData | null>(
+    null
+  );
   const handleRequestSort = (
     event: React.MouseEvent<unknown>,
-    property: keyof Data
+    property: keyof Data | keyof UserData
   ) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
   };
+  const handleEditClick = (user: AddUserForm) => {
+    setEditingUser(user);
+    setIsEditOpen(true);
+  };
+  const handleEditClassClick = (classData: editClassForm) => {
+    setEditingClass(classData);
+    setIsEditOpen(true);
+  };
+  const handleDeleteClick = (user: Data | UserData) => {
+    setSelectedUserToDelete(user);
+    setIsDeleteDialogOpen(true);
+  };
 
-  const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.checked) {
-      const newSelected = rows.map(n => n.id);
-      setSelected(newSelected);
-      return;
+  const handleConfirmDelete = () => {
+    if (selectedUserToDelete) {
+      console.log("Deleting user:", selectedUserToDelete.id);
+      // Gọi API xóa nếu muốn
     }
-    setSelected([]);
+    setIsDeleteDialogOpen(false);
+    setSelectedUserToDelete(null);
+  };
+  const handleEditSave = (userFormData: AddUserForm) => {
+    console.log("Saving edited user:", userFormData);
+    setIsEditOpen(false);
+  };
+  const handleEditClassSave = (classFormData: editClassForm) => {
+    console.log("Saving edited class:", classFormData);
+    setIsEditOpen(false);
+  };
+  const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
+    // if (event.target.checked) {
+    //   const newSelected = rows.map(n => n.id);
+    //   setSelected(newSelected);
+    //   return;
+    // }
+    // setSelected([]);
   };
 
   const handleClick = (event: React.MouseEvent<unknown>, id: number) => {
@@ -80,6 +143,12 @@ function useDataTableHook(props: UseDataTableHookProps) {
     rows,
     rowsPerPage,
     page,
+    isCreateUser,
+    isEditOpen,
+    editingUser,
+    isDeleteDialogOpen,
+    selectedUserToDelete,
+    editingClass,
   };
   const handler = {
     handleRequestSort,
@@ -87,6 +156,15 @@ function useDataTableHook(props: UseDataTableHookProps) {
     handleClick,
     handleChangeRowsPerPage,
     handleChangePage,
+    setIsCreateUser,
+    handleEditClick,
+    setIsEditOpen,
+    handleEditSave,
+    setIsDeleteDialogOpen,
+    handleConfirmDelete,
+    handleDeleteClick,
+    handleEditClassSave,
+    handleEditClassClick,
   };
 
   return { state, handler };

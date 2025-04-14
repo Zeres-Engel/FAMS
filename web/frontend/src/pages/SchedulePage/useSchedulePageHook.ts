@@ -8,22 +8,28 @@ function useSchedulePageHook() {
     title: "Sự kiện mặc định",
     start: new Date(),
     end: new Date(),
+    subject: "",   // 👈 Thêm field subject
+    teacher: "",   // 👈 Thêm field teacher
   };
   const [eventShow, setEventShow] = useState<ScheduleEvent>(defaultEvent);
   const [view, setView] = useState<View>("month");
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState([
+  const [events, setEvents] = useState<ScheduleEvent[]>([
     {
       id: 1,
       title: "Họp với Team",
-      start: new Date(2025, 3, 2, 10, 0), // 5 April 2024, 10:00 AM
-      end: new Date(2025, 3, 2, 12, 0), // 12:00 PM
+      start: new Date(2025, 3, 2, 10, 0),
+      end: new Date(2025, 3, 2, 12, 0),
+      subject: "Scrum",
+      teacher: "Mr. Tâm",
     },
     {
       id: 2,
       title: "Ăn trưa với khách hàng",
-      start: new Date(2025, 3, 3, 13, 0), // 6 April 2024, 1:00 PM
-      end: new Date(2025, 3, 3, 14, 0), // 2:00 PM
+      start: new Date(2025, 3, 3, 13, 0),
+      end: new Date(2025, 3, 3, 14, 0),
+      subject: "N/A",
+      teacher: "N/A",
     },
   ]);
   const handleSelectEvent = (event: ScheduleEvent = defaultEvent) => {
