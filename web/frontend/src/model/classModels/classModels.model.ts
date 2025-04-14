@@ -1,4 +1,4 @@
-interface classUserModel {
+interface userTableModel {
     id: number;
     name: string;
     username: string;
@@ -7,5 +7,5 @@ interface classUserModel {
     class: string;
 }
 export type{
-    classUserModel
+    userTableModel
 }
