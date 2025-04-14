@@ -1,0 +1,33 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install Python dependencies (if needed)
+RUN apk add --no-cache python3 py3-pip
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Install nodemon globally
+RUN npm install -g nodemon
+
+# Trong môi trường development, chúng ta sẽ mount mã nguồn thông qua volume
+# nên không cần COPY toàn bộ mã nguồn vào image
+# COPY . /app
+
+# Chỉ copy file docker-entrypoint.sh
+COPY docker-entrypoint.sh /app/
+
+# Make the entrypoint script executable
+RUN chmod +x docker-entrypoint.sh
+
+# Tạo thư mục public để đảm bảo nó tồn tại khi mount
+RUN mkdir -p /app/public/api-test
+
+EXPOSE 3000
+
+# Run the default command
+CMD ["npm", "run", "dev"] 
