@@ -1,12 +1,52 @@
-import { Navigate } from "react-router";
-// Hàm kiểm tra user có đăng nhập không
+import { useSelector } from "react-redux";
+import { Navigate, useLocation } from "react-router";
+import { RootState } from "../store/store";
+
+interface AuthWrapperProps {
+  element: React.JSX.Element;
+  mode: "private" | "guest" | "admin";
+}
+
 const authUser = () => {
-  return document.cookie.includes("jwtToken");
+  const accessToken = sessionStorage.getItem("accessToken");
+  return !!accessToken;
 };
 
-// Component bảo vệ route
-export default function AuthRoute({ element }: { element: React.JSX.Element }) {
-  return authUser() ? element : <Navigate to="/login" replace />;
+export default function AuthWrapper({ element, mode }: AuthWrapperProps) {
+  const role = useSelector((state: RootState) => state.authUser.role);
+  const location = useLocation();
+  if (location.pathname === "/" && authUser()) {
+    if (role === "admin") return <Navigate to="/AdminHomePage" replace />;
+    return <Navigate to="/UserHomePage" replace />;
+  }
+
+  if (mode === "private") {
+    return authUser() ? (
+      element
+    ) : (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: location.pathname, message: "Bạn cần đăng nhập để tiếp tục" }}
+      />
+    );
+  }
+
+  if (mode === "admin") {
+    return authUser() && role === "admin" ? (
+      element
+    ) : (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: location.pathname, message: "Bạn cần đăng nhập để tiếp tục" }}
+      />
+    );
+  }
+
+  if (mode === "guest") {
+    return authUser() ? <Navigate to="/" replace /> : element;
+  }
+
+  return null;
 }
-// khoong cos thaamr quyeefn quay ve page nao do
-// set logout

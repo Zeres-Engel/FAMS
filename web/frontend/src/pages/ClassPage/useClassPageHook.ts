@@ -6,57 +6,61 @@ import { Data, HeadCell } from "../../model/tableModels/tableDataModels.model";
 function useClassPageHook() {
   const dispatch = useAppDispatch();
   const userState = useAppSelector(state => state.users);
-  const [userMainData, setUserMainData] = useState<Data[]>([]); 
+  const [userMainData, setUserMainData] = useState<Data[]>([]);
   const headCellsData: HeadCell[] = [
     {
-      id: 'id',
+      id: "id",
       numeric: false,
       disablePadding: true,
-      label: 'name',
+      label: "ID",
     },
     {
-      id: 'avatar',
+      id: "name",
       numeric: false,
-      disablePadding: false,
-      label: 'avatar',
+      disablePadding: true,
+      label: "Name",
     },
     {
-      id: 'creationAt',
+      id: "avatar",
       numeric: false,
       disablePadding: false,
-      label: 'creationAt',
+      label: "Avatar",
     },
     {
-      id: 'email',
+      id: "creationAt",
       numeric: false,
       disablePadding: false,
-      label: 'email',
+      label: "CreationAt",
     },
     {
-      id: 'role',
+      id: "email",
       numeric: false,
       disablePadding: false,
-      label: 'role',
+      label: "Email",
     },
     {
-      id: 'updatedAt',
+      id: "role",
       numeric: false,
       disablePadding: false,
-      label: 'updatedAt',
+      label: "Role",
+    },
+    {
+      id: "updatedAt",
+      numeric: false,
+      disablePadding: false,
+      label: "UpdatedAt",
     },
   ];
-  const tableTitle = 'Student Data'
-  useEffect(() => {
+  const isCheckBox = false;
+  const tableTitle = "Student Data";
+  useEffect(() => {  
     if (!userState.user) {
       dispatch(fetchUser());
     } else {
-      setUserMainData(userState.user); 
+      // setUserMainData(userState?.user);
     }
   }, [dispatch, userState.user]);
-  console.log(userMainData);
-  
- 
-  const state = { headCellsData, userMainData,tableTitle };
+  const state = { headCellsData, userMainData, tableTitle, isCheckBox };
   const handler = {};
 
   return { state, handler };

@@ -1,363 +1,280 @@
-# API GUIDE - NodeJS Service
+# FAMS API Guide
 
-## Thông tin chung
+## Base URL
+`http://fams.io.vn/api-nodejs`
 
-- **Base URL:** `http://localhost:3000/api`
-- **Authentication:** Sử dụng JWT Bearer Token
-- **Headers:**
-  - Authentication: `Authorization: Bearer <token>`
-  - Content-Type: `application/json`
+## Authentication
+Most endpoints require authentication using a JWT token.
 
-## Xác thực
+### Postman Setup for Authentication
+1. After login, copy the token from the response
+2. For authenticated requests, add an Authorization header:
+   - Key: `Authorization`
+   - Value: `Bearer YOUR_TOKEN_HERE`
 
-### Đăng nhập
+## API Endpoints
 
-- **URL:** `/auth/login`
-- **Method:** `POST`
-- **Body:**
-  ```json
-  {
-    "username": "string",
-    "password": "string"
+### Auth API
+Base path: `/auth`
+
+#### Login
+- **URL**: `http://fams.io.vn/api-nodejs/auth/login`
+- **Method**: `POST`
+- **Body**:
+```json
+{
+  "userId": "username",  // Can also use "email" or "backup_email"
+  "password": "yourpassword"
+}
+```
+- **Response**:
+```json
+{
+  "success": true,
+  "token": "jwt_token_here",
+  "user": {
+    // User details
   }
-  ```
-- **Response:**
-  ```json
-  {
-    "token": "JWT_TOKEN",
-    "refreshToken": "REFRESH_TOKEN",
-    "user": {
-      "id": "string",
-      "name": "string",
-      "role": "string",
-      "email": "string"
-    }
-  }
-  ```
+}
+```
 
-### Refresh Token
+#### Register
+- **URL**: `http://fams.io.vn/api-nodejs/auth/register`
+- **Method**: `POST`
+- **Body**:
+```json
+{
+  "name": "Full Name",
+  "email": "email@example.com",
+  "password": "password",
+  "role": "student" // Or "teacher", "parent", "admin"
+}
+```
 
-- **URL:** `/auth/refresh`
-- **Method:** `POST`
-- **Body:**
-  ```json
-  {
-    "refreshToken": "REFRESH_TOKEN"
-  }
-  ```
-- **Response:**
-  ```json
-  {
-    "token": "NEW_JWT_TOKEN"
-  }
-  ```
+#### Get Current User
+- **URL**: `http://fams.io.vn/api-nodejs/auth/me`
+- **Method**: `GET`
+- **Auth Required**: Yes
 
-## Quản lý người dùng
+#### Refresh Token
+- **URL**: `http://fams.io.vn/api-nodejs/auth/refresh-token`
+- **Method**: `POST`
+- **Auth Required**: Yes
 
-### Lấy danh sách người dùng
+### Student API
+Base path: `/students`
 
-- **URL:** `/users`
-- **Method:** `GET`
-- **Query Parameters:**
-  - `role` (optional): Lọc theo vai trò (Teacher, Student, Parent, Admin)
-  - `page` (optional): Trang hiện tại (mặc định: 1)
-  - `limit` (optional): Số lượng kết quả trên mỗi trang (mặc định: 10)
-- **Response:**
-  ```json
-  {
-    "users": [
-      {
-        "id": "string",
-        "name": "string",
-        "email": "string",
-        "role": "string"
-      }
-    ],
-    "total": "number",
-    "page": "number",
-    "limit": "number"
-  }
-  ```
+#### Get All Students
+- **URL**: `http://fams.io.vn/api-nodejs/students`
+- **Method**: `GET`
+- **Auth Required**: Yes
+- **Query Parameters**:
+  - `page`: Page number (default: 1)
+  - `limit`: Items per page (default: 10)
+  - `search`: Search term
 
-### Lấy thông tin người dùng
+#### Get Student by ID
+- **URL**: `http://fams.io.vn/api-nodejs/students/:id`
+- **Method**: `GET`
+- **Auth Required**: Yes
 
-- **URL:** `/users/:id`
-- **Method:** `GET`
-- **Response:**
-  ```json
-  {
-    "id": "string",
-    "name": "string",
-    "email": "string",
-    "role": "string",
-    "profile": {
-      // Thông tin chi tiết tùy theo vai trò
-    }
-  }
-  ```
+#### Create Student
+- **URL**: `http://fams.io.vn/api-nodejs/students`
+- **Method**: `POST`
+- **Auth Required**: Yes
+- **Body**: Student information (name, email, etc.)
 
-## Quản lý giáo viên
+#### Update Student
+- **URL**: `http://fams.io.vn/api-nodejs/students/:id`
+- **Method**: `PUT`
+- **Auth Required**: Yes
+- **Body**: Updated student information
 
-### Lấy danh sách giáo viên
+#### Delete Student
+- **URL**: `http://fams.io.vn/api-nodejs/students/:id`
+- **Method**: `DELETE`
+- **Auth Required**: Yes
 
-- **URL:** `/teachers`
-- **Method:** `GET`
-- **Query Parameters:**
-  - `department` (optional): Lọc theo phòng ban
-  - `page` (optional): Trang hiện tại
-  - `limit` (optional): Số lượng kết quả trên mỗi trang
-- **Response:**
-  ```json
-  {
-    "teachers": [
-      {
-        "id": "string",
-        "name": "string",
-        "email": "string",
-        "department": "string",
-        "subjects": ["string"]
-      }
-    ],
-    "total": "number",
-    "page": "number",
-    "limit": "number"
-  }
-  ```
+### User API
+Base path: `/users`
 
-### Thêm giáo viên mới
+#### Get All Users
+- **URL**: `http://fams.io.vn/api-nodejs/users`
+- **Method**: `GET`
+- **Auth Required**: Yes
 
-- **URL:** `/teachers`
-- **Method:** `POST`
-- **Permissions:** Admin
-- **Body:**
-  ```json
-  {
-    "name": "string",
-    "email": "string",
-    "department": "string",
-    "subjects": ["string"],
-    "password": "string"
-  }
-  ```
-- **Response:**
-  ```json
-  {
-    "id": "string",
-    "name": "string",
-    "email": "string",
-    "department": "string"
-  }
-  ```
+#### Get User by ID
+- **URL**: `http://fams.io.vn/api-nodejs/users/:id`
+- **Method**: `GET`
+- **Auth Required**: Yes
 
-## Quản lý học sinh
+#### Create User
+- **URL**: `http://fams.io.vn/api-nodejs/users`
+- **Method**: `POST`
+- **Auth Required**: Yes
+- **Body**: User information
 
-### Lấy danh sách học sinh
+#### Update User
+- **URL**: `http://fams.io.vn/api-nodejs/users/:id`
+- **Method**: `PUT`
+- **Auth Required**: Yes
+- **Body**: Updated user information
 
-- **URL:** `/students`
-- **Method:** `GET`
-- **Query Parameters:**
-  - `class` (optional): Lọc theo lớp
-  - `year` (optional): Lọc theo năm học
-  - `page` (optional): Trang hiện tại
-  - `limit` (optional): Số lượng kết quả trên mỗi trang
-- **Response:**
-  ```json
-  {
-    "students": [
-      {
-        "id": "string",
-        "name": "string",
-        "class": "string",
-        "year": "string"
-      }
-    ],
-    "total": "number",
-    "page": "number",
-    "limit": "number"
-  }
-  ```
+#### Delete User
+- **URL**: `http://fams.io.vn/api-nodejs/users/:id`
+- **Method**: `DELETE`
+- **Auth Required**: Yes
 
-### Thêm học sinh mới
+### Teacher API
+Base path: `/teachers`
 
-- **URL:** `/students`
-- **Method:** `POST`
-- **Permissions:** Admin
-- **Body:**
-  ```json
-  {
-    "name": "string",
-    "dateOfBirth": "string (YYYY-MM-DD)",
-    "class": "string",
-    "year": "string"
-  }
-  ```
-- **Response:**
-  ```json
-  {
-    "id": "string",
-    "name": "string",
-    "class": "string",
-    "year": "string"
-  }
-  ```
+#### Get All Teachers
+- **URL**: `http://fams.io.vn/api-nodejs/teachers`
+- **Method**: `GET`
+- **Auth Required**: Yes
 
-## Quản lý điểm danh
+#### Get Teacher by ID
+- **URL**: `http://fams.io.vn/api-nodejs/teachers/:id`
+- **Method**: `GET`
+- **Auth Required**: Yes
 
-### Lấy điểm danh theo buổi học
+#### Create Teacher
+- **URL**: `http://fams.io.vn/api-nodejs/teachers`
+- **Method**: `POST`
+- **Auth Required**: Yes
+- **Body**: Teacher information
 
-- **URL:** `/attendance/:sessionId`
-- **Method:** `GET`
-- **Response:**
-  ```json
-  {
-    "session": {
-      "id": "string",
-      "date": "string",
-      "class": "string",
-      "subject": "string"
-    },
-    "attendances": [
-      {
-        "student": {
-          "id": "string",
-          "name": "string"
-        },
-        "status": "present|absent|late",
-        "note": "string"
-      }
-    ]
-  }
-  ```
+#### Update Teacher
+- **URL**: `http://fams.io.vn/api-nodejs/teachers/:id`
+- **Method**: `PUT`
+- **Auth Required**: Yes
+- **Body**: Updated teacher information
 
-### Ghi nhận điểm danh
+#### Delete Teacher
+- **URL**: `http://fams.io.vn/api-nodejs/teachers/:id`
+- **Method**: `DELETE`
+- **Auth Required**: Yes
 
-- **URL:** `/attendance/:sessionId`
-- **Method:** `POST`
-- **Permissions:** Teacher, Admin
-- **Body:**
-  ```json
-  {
-    "attendances": [
-      {
-        "studentId": "string",
-        "status": "present|absent|late",
-        "note": "string"
-      }
-    ]
-  }
-  ```
-- **Response:**
-  ```json
-  {
-    "success": true,
-    "message": "Attendance recorded successfully"
-  }
-  ```
+### Parent API
+Base path: `/parents`
 
-## Quản lý phòng học
+#### Get All Parents
+- **URL**: `http://fams.io.vn/api-nodejs/parents`
+- **Method**: `GET`
+- **Auth Required**: Yes
 
-### Lấy danh sách phòng học
+#### Get Parent by ID
+- **URL**: `http://fams.io.vn/api-nodejs/parents/:id`
+- **Method**: `GET`
+- **Auth Required**: Yes
 
-- **URL:** `/classrooms`
-- **Method:** `GET`
-- **Response:**
-  ```json
-  [
-    {
-      "id": "string",
-      "name": "string",
-      "capacity": "number",
-      "building": "string",
-      "floor": "number"
-    }
-  ]
-  ```
+#### Create Parent
+- **URL**: `http://fams.io.vn/api-nodejs/parents`
+- **Method**: `POST`
+- **Auth Required**: Yes
+- **Body**: Parent information
 
-### Thêm phòng học mới
+#### Update Parent
+- **URL**: `http://fams.io.vn/api-nodejs/parents/:id`
+- **Method**: `PUT`
+- **Auth Required**: Yes
+- **Body**: Updated parent information
 
-- **URL:** `/classrooms`
-- **Method:** `POST`
-- **Permissions:** Admin
-- **Body:**
-  ```json
-  {
-    "name": "string",
-    "capacity": "number",
-    "building": "string",
-    "floor": "number"
-  }
-  ```
-- **Response:**
-  ```json
-  {
-    "id": "string",
-    "name": "string",
-    "capacity": "number",
-    "building": "string",
-    "floor": "number"
-  }
-  ```
+#### Delete Parent
+- **URL**: `http://fams.io.vn/api-nodejs/parents/:id`
+- **Method**: `DELETE`
+- **Auth Required**: Yes
 
-## Quản lý chương trình học
+### Schedule API
+Base path: `/schedules`
 
-### Lấy danh sách chương trình học
+#### Get All Schedules
+- **URL**: `http://fams.io.vn/api-nodejs/schedules`
+- **Method**: `GET`
+- **Auth Required**: Yes
 
-- **URL:** `/curriculum`
-- **Method:** `GET`
-- **Response:**
-  ```json
-  [
-    {
-      "id": "string",
-      "name": "string",
-      "year": "string",
-      "description": "string"
-    }
-  ]
-  ```
+#### Get Schedule by ID
+- **URL**: `http://fams.io.vn/api-nodejs/schedules/:id`
+- **Method**: `GET`
+- **Auth Required**: Yes
 
-### Lấy môn học trong chương trình
+#### Create Schedule
+- **URL**: `http://fams.io.vn/api-nodejs/schedules`
+- **Method**: `POST`
+- **Auth Required**: Yes
+- **Body**: Schedule information
 
-- **URL:** `/curriculum/:id/subjects`
-- **Method:** `GET`
-- **Response:**
-  ```json
-  {
-    "curriculum": {
-      "id": "string",
-      "name": "string",
-      "year": "string"
-    },
-    "subjects": [
-      {
-        "id": "string",
-        "name": "string",
-        "credits": "number",
-        "hours": "number"
-      }
-    ]
-  }
-  ```
+#### Update Schedule
+- **URL**: `http://fams.io.vn/api-nodejs/schedules/:id`
+- **Method**: `PUT`
+- **Auth Required**: Yes
+- **Body**: Updated schedule information
 
-## Phụ huynh
+#### Delete Schedule
+- **URL**: `http://fams.io.vn/api-nodejs/schedules/:id`
+- **Method**: `DELETE`
+- **Auth Required**: Yes
 
-### Lấy thông tin học sinh của phụ huynh
+### Admin API
+Base path: `/admin`
 
-- **URL:** `/parents/:id/students`
-- **Method:** `GET`
-- **Response:**
-  ```json
-  {
-    "parent": {
-      "id": "string",
-      "name": "string"
-    },
-    "students": [
-      {
-        "id": "string",
-        "name": "string",
-        "class": "string"
-      }
-    ]
-  }
-  ``` 
+#### Admin Dashboard Data
+- **URL**: `http://fams.io.vn/api-nodejs/admin/dashboard`
+- **Method**: `GET`
+- **Auth Required**: Yes (Admin role)
+
+#### Manage System Settings
+- **URL**: `http://fams.io.vn/api-nodejs/admin/settings`
+- **Method**: `GET` / `PUT`
+- **Auth Required**: Yes (Admin role)
+
+### Database API
+Base path: `/database`
+
+#### Check Database Status
+- **URL**: `http://fams.io.vn/api-nodejs/database/status`
+- **Method**: `GET`
+- **Auth Required**: Yes
+
+## Testing with Postman
+
+### Creating a Collection
+1. Open Postman
+2. Click "New" → "Collection"
+3. Name it "FAMS API"
+4. Add folders for each API category (Auth, Students, etc.)
+
+### Environment Setup
+1. Click on "Environments" → "Create new"
+2. Name it "FAMS Production"
+3. Add these variables:
+   - `baseUrl`: `http://fams.io.vn/api-nodejs`
+   - `token`: (leave empty initially)
+
+### Testing Authentication
+1. Create a login request
+2. Set method to POST and URL to `{{baseUrl}}/auth/login`
+3. In the Body tab, select "raw" and "JSON"
+4. Add login credentials
+5. After successful login, use the "Tests" tab to save the token:
+```javascript
+if (pm.response.code === 200) {
+    var jsonData = pm.response.json();
+    pm.environment.set("token", jsonData.token);
+}
+```
+
+### Testing Other Endpoints
+1. Create a new request in the appropriate folder
+2. Set the method and URL
+3. In the Authorization tab, select "Bearer Token"
+4. In the token field, enter `{{token}}`
+5. Add required body or parameters
+6. Send the request
+
+### Running Collections
+You can run an entire collection or folder to test multiple endpoints at once:
+1. Click on the collection or folder
+2. Click "Run"
+3. Select the requests you want to run
+4. Click "Run FAMS API"

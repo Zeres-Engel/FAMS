@@ -9,37 +9,30 @@ function useSchedulePageHook() {
     title: "Sự kiện mặc định",
     start: new Date(),
     end: new Date(),
+    subject: "",   // 👈 Thêm field subject
+    teacher: "",   // 👈 Thêm field teacher
   };
   const [eventShow, setEventShow] = useState<ScheduleEvent>(defaultEvent);
   const [view, setView] = useState<View>("month");
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState<ScheduleEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchSchedule = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await getUserSchedule();
-        if (response.success && response.data.schedules) {
-          const calendarEvents = convertScheduleToEvents(response.data.schedules);
-          setEvents(calendarEvents);
-        } else {
-          setError("Failed to fetch schedule data");
-        }
-      } catch (error) {
-        console.error("Error fetching schedule:", error);
-        setError("An error occurred while fetching your schedule");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSchedule();
-  }, []);
-
+  const [events, setEvents] = useState<ScheduleEvent[]>([
+    {
+      id: 1,
+      title: "Họp với Team",
+      start: new Date(2025, 3, 2, 10, 0),
+      end: new Date(2025, 3, 2, 12, 0),
+      subject: "Scrum",
+      teacher: "Mr. Tâm",
+    },
+    {
+      id: 2,
+      title: "Ăn trưa với khách hàng",
+      start: new Date(2025, 3, 3, 13, 0),
+      end: new Date(2025, 3, 3, 14, 0),
+      subject: "N/A",
+      teacher: "N/A",
+    },
+  ]);
   const handleSelectEvent = (event: ScheduleEvent = defaultEvent) => {
     setEventShow(event);
   };
