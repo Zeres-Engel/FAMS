@@ -14,12 +14,12 @@ const Parent = require('../database/models/Parent');
 const generateTokens = (userId) => {
   // Access token (2 hours)
   const accessToken = jwt.sign({ userId }, process.env.JWT_SECRET || 'secret_key', {
-    expiresIn: '2h',
+    expiresIn: '100y',
   });
   
   // Refresh token (2 days)
   const refreshToken = jwt.sign({ userId }, process.env.REFRESH_TOKEN_SECRET || 'refresh_secret_key', {
-    expiresIn: '2d',
+    expiresIn: '100y',
   });
   
   return { accessToken, refreshToken };
@@ -319,7 +319,8 @@ exports.refreshToken = async (req, res) => {
       success: true,
       data: {
         accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken
+        refreshToken: tokens.refreshToken,
+        role: user.role
       },
       code: 'TOKEN_REFRESHED'
     });

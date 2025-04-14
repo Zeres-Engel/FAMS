@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const multer = require('multer');
 const path = require('path');
 const { connectToFAMS, checkConnectionStatus, getDatabaseInfo, apiRouter } = require('./database');
 const errorService = require('./services/errorService');
@@ -14,26 +13,10 @@ const teacherRoutes = require('./routes/teacherRoutes');
 const parentRoutes = require('./routes/parentRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const classRoutes = require('./routes/classRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-
-// Check file type
-const fileFilter = (req, file, cb) => {
-  if (file.mimetype === 'text/csv') {
-    cb(null, true);
-  } else {
-    cb(new Error('Only CSV files are allowed'), false);
-  }
-};
-
-const upload = multer({ 
-  storage: multer.memoryStorage(),
-  fileFilter,
-  limits: { fileSize: 5000000 } // 5MB limit
-});
-
 
 // Middleware
 app.use(cors({
@@ -117,6 +100,7 @@ app.use('/api/teachers', teacherRoutes);
 app.use('/api/parents', parentRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/classes', classRoutes);
 app.use('/api/database', apiRouter);
 
 // Root route

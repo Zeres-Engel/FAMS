@@ -33,7 +33,8 @@ const router = express.Router();
 
 // Lấy danh sách tất cả học sinh với phân trang và lọc
 router.get('/', protect, asyncHandler(async (req, res) => {
-  const { page, limit, sortBy, sortDir, ...filter } = req.query;
+  // Tách riêng các tham số đặc biệt
+  const { page, limit, sortBy, sortDir, search, className, batchYear, ...otherFilters } = req.query;
   
   // Build sort object
   const sort = {};
@@ -43,12 +44,19 @@ router.get('/', protect, asyncHandler(async (req, res) => {
     sort.studentId = 1; // Default sorting
   }
   
+  // Cấu hình options với tất cả các tham số
   const options = {
     page: parseInt(page, 10) || 1,
     limit: parseInt(limit, 10) || 10,
     sort,
-    filter
+    filter: otherFilters, // Tất cả các tham số còn lại được xem là filter
+    search,
+    className,
+    batchYear
   };
+  
+  console.log("Request query:", req.query);
+  console.log("Search options:", JSON.stringify(options, null, 2));
   
   const result = await studentService.getStudents(options);
   

@@ -91,6 +91,8 @@ TeacherSchema.statics.generateUserId = function(firstName, lastName, teacherId) 
   // In Vietnamese naming, lastName is the family name (Nguyễn Phước), 
   // firstName is the given name (Thành)
   
+  // Names should already be normalized (accents removed) in the controller
+  
   // Extract the first letter of each word in the lastName
   const lastNameParts = lastName.split(' ');
   const lastNameInitials = lastNameParts.map(part => part.charAt(0).toLowerCase()).join('');

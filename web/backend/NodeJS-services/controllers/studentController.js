@@ -1,6 +1,7 @@
 const Student = require('../database/models/Student');
 const csv = require('fast-csv');
 const fs = require('fs');
+const ClassSchedule = require('../database/models/ClassSchedule');
 
 // @desc    Get all students
 // @route   GET /api/students
@@ -177,9 +178,8 @@ exports.getStudentSchedule = async (req, res) => {
   try {
     const studentId = req.params.id;
     const Student = require('../database/models/Student');
-    const Schedule = require('../database/models/Schedule');
     
-    // First find the student to get their class
+    // First find the student to verify they exist
     const student = await Student.findOne({ userId: studentId });
     
     if (!student) {
@@ -202,7 +202,7 @@ exports.getStudentSchedule = async (req, res) => {
     }
     
     // Find schedules for the student's class in the current semester
-    const schedules = await Schedule.find({ 
+    const schedules = await ClassSchedule.find({
       classId: student.classId,
       semesterId: currentSemester.semesterId
     }).populate('subject').populate('teacher').populate('classroom').populate('class').populate('semester');

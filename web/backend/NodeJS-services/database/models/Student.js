@@ -44,7 +44,8 @@ const StudentSchema = new mongoose.Schema({
     set: v => typeof v === 'string' ? parseInt(v) : v
   },
   gender: {
-    type: Boolean,
+    type: String,
+    enum: ['Male', 'Female'],
     required: true
   },
   address: {
@@ -96,6 +97,8 @@ StudentSchema.statics.generateUserId = function(firstName, lastName, batchId, st
   
   // In Vietnamese naming, lastName is the family name (Nguyễn Phước), 
   // firstName is the given name (Thành)
+  
+  // Names should already be normalized (accents removed) in the controller
   
   // Extract the first letter of each word in the lastName
   const lastNameParts = lastName.split(' ');
