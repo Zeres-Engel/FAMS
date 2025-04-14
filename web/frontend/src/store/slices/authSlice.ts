@@ -14,7 +14,7 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setRole(state, action: PayloadAction<string>) {
-      state.role = action.payload;
+      state.role = action.payload.toLowerCase();
     },
     logout(state) {
       clearAuth()
