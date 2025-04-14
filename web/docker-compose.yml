@@ -59,8 +59,8 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=development
-      - REACT_APP_API_URL=http://localhost:3002/api
-      - REACT_APP_PYTHON_API_URL=http://localhost:3001/api
+      - REACT_APP_API_URL=/api
+      - REACT_APP_PYTHON_API_URL=/api-python
       - WATCHPACK_POLLING=true
       - CHOKIDAR_USEPOLLING=true
       - WDS_SOCKET_PORT=0
