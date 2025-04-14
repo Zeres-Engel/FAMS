@@ -1016,16 +1016,45 @@ Base path: `/schedules`
 {
   "date": "2024-09-10",               // Required - Format: YYYY-MM-DD
   "slotNumber": 3,                    // Required - Slot number (1-10)
-  "classId": 3,                       // Required - Class ID
-  "teacherId": 5,                     // Required - Teacher ID
-  "subjectId": 2,                     // Required - Subject ID
-  "topic": "Đại số",                  // Optional - Topic for the session
-  "classroomId": 10,                  // Optional - Classroom ID
-  "roomName": "Room 101",             // Optional - Room name
-  "weekNumber": 1,                    // Optional - Week number in semester
-  "semesterId": "1"                   // Optional - Semester ID
+  
+  // Cách 1: Sử dụng ID (phương thức truyền thống)
+  "classId": 3,                       // ID của lớp học
+  "teacherId": 5,                     // ID của giáo viên
+  "subjectId": 2,                     // ID của môn học
+  
+  // Cách 2: Sử dụng tên (phương thức thân thiện hơn)
+  "className": "10A3",                // Tên lớp học (thay thế cho classId)
+  "teacherUserId": "tuanpv5",         // UserID của giáo viên (thay thế cho teacherId)
+  "subjectName": "Toán học",          // Tên môn học (thay thế cho subjectId)
+  
+  // Các thông tin khác
+  "topic": "Đại số",                  // Optional - Chủ đề buổi học
+  "roomName": "Room 101",             // Optional - Tên phòng học
+  "classroomId": 10,                  // Optional - ID phòng học
+  "weekNumber": 1,                    // Optional - Số tuần trong học kỳ
+  "semesterId": "1"                   // Optional - ID học kỳ
 }
 ```
+
+**Lưu ý quan trọng:**
+1. Bạn có thể sử dụng *hoặc* ID *hoặc* tên/userID để xác định lớp, giáo viên và môn học:
+   - `classId` hoặc `className` (ưu tiên sử dụng classId nếu cả hai được cung cấp)
+   - `teacherId` hoặc `teacherUserId` (ưu tiên sử dụng teacherId nếu cả hai được cung cấp)
+   - `subjectId` hoặc `subjectName` (ưu tiên sử dụng subjectId nếu cả hai được cung cấp)
+
+2. Các trường bắt buộc:
+   - `date`: Ngày diễn ra buổi học (định dạng YYYY-MM-DD)
+   - `slotNumber`: Số tiết học (1-10)
+   - Thông tin về lớp (classId hoặc className)
+   - Thông tin về giáo viên (teacherId hoặc teacherUserId)
+   - Thông tin về môn học (subjectId hoặc subjectName)
+
+3. **Kiểm tra xung đột lịch học:**
+   Hệ thống sẽ tự động kiểm tra các xung đột lịch trình trước khi tạo lịch học mới:
+   - **Lớp học đã có lịch:** Kiểm tra xem lớp đã có lịch vào tiết đó chưa
+   - **Giáo viên đã bận:** Kiểm tra xem giáo viên đã có lịch dạy lớp khác vào tiết đó chưa
+   - **Phòng học đã được sử dụng:** Nếu chỉ định phòng học, kiểm tra xem phòng đó đã được sử dụng bởi lớp khác chưa
+
 - **Response**:
 ```json
 {
@@ -1066,8 +1095,49 @@ Base path: `/schedules`
     ```json
     {
       "success": false,
-      "message": "Thiếu thông tin bắt buộc (date, slotNumber, classId, teacherId, subjectId)",
+      "message": "Thiếu thông tin bắt buộc (date, slotNumber, classId/className, teacherId/teacherUserId, subjectId/subjectName)",
       "code": "MISSING_REQUIRED_FIELDS"
+    }
+    ```
+  - `404` - Not found (class, teacher, or subject):
+    ```json
+    {
+      "success": false,
+      "message": "Không tìm thấy lớp với tên 10A3",
+      "code": "CLASS_NOT_FOUND"
+    }
+    ```
+  - `409` - Xung đột lịch học của lớp:
+    ```json
+    {
+      "success": false,
+      "message": "Lớp 10A3 đã có lịch học môn Toán học vào ngày 10/09/2024 tiết 3 (08:50-09:35) với giáo viên Nguyễn Văn A",
+      "code": "CLASS_SCHEDULE_CONFLICT",
+      "conflict": {
+        // Chi tiết về lịch học xung đột
+      }
+    }
+    ```
+  - `409` - Xung đột lịch giảng dạy của giáo viên:
+    ```json
+    {
+      "success": false,
+      "message": "Giáo viên đã có lịch dạy lớp 10A1 môn Toán học vào ngày 10/09/2024 tiết 3 (08:50-09:35)",
+      "code": "TEACHER_SCHEDULE_CONFLICT",
+      "conflict": {
+        // Chi tiết về lịch học xung đột
+      }
+    }
+    ```
+  - `409` - Xung đột phòng học:
+    ```json
+    {
+      "success": false,
+      "message": "Phòng Room 101 đã được sử dụng bởi lớp 10A1 học môn Vật lý vào ngày 10/09/2024 tiết 3 (08:50-09:35)",
+      "code": "ROOM_SCHEDULE_CONFLICT",
+      "conflict": {
+        // Chi tiết về lịch học xung đột
+      }
     }
     ```
   - `409` - Schedule already exists:
