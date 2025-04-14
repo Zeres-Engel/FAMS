@@ -146,31 +146,111 @@ exports.createTeacher = asyncHandler(async (req, res, next) => {
 // @route   PUT /api/teachers/:id
 // @access  Private (Admin)
 exports.updateTeacher = asyncHandler(async (req, res, next) => {
-  // Extract RFID data if provided
-  const { rfid, ...teacherData } = req.body;
+  // Extract RFID data and classIds if provided
+  const { rfid, classIds, ...teacherData } = req.body;
   
+  // First find the teacher using multiple possible identifiers
   let teacher = await Teacher.findOne({
     $or: [
-      { _id: req.params.id },
       { teacherId: req.params.id },
       { userId: req.params.id }
     ]
   });
   
+  // Try finding by _id only if the id looks like a valid ObjectId
+  if (!teacher && /^[0-9a-fA-F]{24}$/.test(req.params.id)) {
+    teacher = await Teacher.findById(req.params.id);
+  }
+  
   if (!teacher) {
     return next(new ErrorResponse(`Teacher with ID ${req.params.id} not found`, 404, 'TEACHER_NOT_FOUND'));
   }
   
-  // Update teacher data
-  teacher = await Teacher.findByIdAndUpdate(
-    teacher._id,
+  // Check if major is being updated
+  const majorChanged = teacherData.major && teacherData.major !== teacher.major;
+  
+  // If major changed, find removed subjects
+  let removedSubjectIds = [];
+  let deletedScheduleIds = [];
+  
+  if (majorChanged) {
+    // Get current major subjects
+    const currentMajors = teacher.major.split(',').map(m => m.trim());
+    
+    // Get new major subjects
+    const newMajors = teacherData.major.split(',').map(m => m.trim());
+    
+    // Find removed subjects (in current but not in new)
+    const removedSubjects = currentMajors.filter(subject => !newMajors.includes(subject));
+    
+    if (removedSubjects.length > 0) {
+      // Get subject IDs for the removed subjects
+      const Subject = require('../database/models/Subject');
+      const subjects = await Subject.find({ name: { $in: removedSubjects } });
+      removedSubjectIds = subjects.map(s => s.subjectId);
+      
+      if (removedSubjectIds.length > 0) {
+        // Find and update ClassSchedule entries with this teacher and removed subjects
+        const ClassSchedule = require('../database/models/ClassSchedule');
+        const schedulesToRemove = await ClassSchedule.find({
+          teacherId: teacher.teacherId,
+          subjectId: { $in: removedSubjectIds }
+        });
+        
+        // Store the IDs of deleted schedules
+        deletedScheduleIds = schedulesToRemove.map(s => s._id);
+        
+        // Update schedules to remove this teacher
+        for (const schedule of schedulesToRemove) {
+          schedule.teacherId = null; // Remove teacher from schedule
+          await schedule.save();
+        }
+        
+        console.log(`Removed teacher ${teacher.teacherId} from ${schedulesToRemove.length} schedules for subjects: ${removedSubjects.join(', ')}`);
+      }
+    }
+  }
+  
+  // Handle class changes if classIds provided
+  if (classIds) {
+    // Get current classes of this teacher from ClassSchedule
+    const ClassSchedule = require('../database/models/ClassSchedule');
+    const currentSchedules = await ClassSchedule.find({ teacherId: teacher.teacherId });
+    const currentClassIds = [...new Set(currentSchedules.map(s => s.classId))];
+    
+    // Find removed classes (in current but not in new)
+    const removedClassIds = currentClassIds.filter(id => !classIds.includes(id));
+    
+    if (removedClassIds.length > 0) {
+      // Find and update ClassSchedule entries with this teacher and removed classes
+      const schedulesToUpdate = await ClassSchedule.find({
+        teacherId: teacher.teacherId,
+        classId: { $in: removedClassIds }
+      });
+      
+      // Add to deletedScheduleIds
+      const classScheduleIds = schedulesToUpdate.map(s => s._id);
+      deletedScheduleIds = [...deletedScheduleIds, ...classScheduleIds];
+      
+      // Update schedules to remove this teacher
+      for (const schedule of schedulesToUpdate) {
+        schedule.teacherId = null; // Remove teacher from schedule
+        await schedule.save();
+      }
+      
+      console.log(`Removed teacher ${teacher.teacherId} from ${schedulesToUpdate.length} schedules for classes: ${removedClassIds.join(', ')}`);
+    }
+  }
+  
+  // FIX: Use update instead of findByIdAndUpdate to avoid ObjectId casting issues
+  const updatedTeacher = await Teacher.findOneAndUpdate(
+    { _id: teacher._id }, // We already confirmed this teacher exists
     teacherData,
     { new: true, runValidators: true }
   );
   
+  // RFID handling code...
   let rfidResult = null;
-  
-  // If RFID data provided, update or create RFID card
   if (rfid) {
     const RFID = require('../database/models/RFID');
     const parseExpiryDate = require('../utils/rfidUtils').parseExpiryDate;
@@ -240,8 +320,9 @@ exports.updateTeacher = asyncHandler(async (req, res, next) => {
   
   res.status(200).json({
     success: true,
-    data: teacher,
-    rfid: rfidResult
+    data: updatedTeacher,
+    rfid: rfidResult,
+    deletedScheduleIds: deletedScheduleIds.length > 0 ? deletedScheduleIds : null
   });
 });
 

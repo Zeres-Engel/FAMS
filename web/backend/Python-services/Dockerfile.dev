@@ -10,7 +10,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Sao chép requirements và cài đặt các phụ thuộc
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+
+# Cài đặt các thư viện Python cần thiết
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir pandas openpyxl
 
 # Thiết lập biến môi trường
 ENV PORT=3000

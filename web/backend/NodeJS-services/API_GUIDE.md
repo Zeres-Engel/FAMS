@@ -883,6 +883,120 @@ Base path: `/parents`
 ### Schedule API
 Base path: `/schedules`
 
+#### Get All Schedules (with advanced filtering)
+- **URL**: `http://fams.io.vn/api-nodejs/schedules/all`
+- **Method**: `GET`
+- **Auth Required**: Yes
+- **Query Parameters**:
+  - `className`: Filter by class name (e.g., "10A1")
+  - `userId`: Filter by user ID (works for students, teachers, and parents)
+  - `teacherId`: Filter by teacher ID
+  - `classId`: Filter by class ID
+  - `subjectId`: Filter by subject ID
+  - `fromDate`: Start date for range filter (format: YYYY-MM-DD)
+  - `toDate`: End date for range filter (format: YYYY-MM-DD)
+  - `dayOfWeek`: Filter by day of week (e.g., "Monday", "Tuesday")
+  - `slotId`: Filter by slot ID (e.g., 1, 2, 3)
+  - `weekNumber`: Filter by week number in semester
+  - `semesterId`: Filter by semester ID
+  - `status`: Filter by schedule status ("scheduled", "completed", "cancelled", "rescheduled")
+  - `studentId`: When using with parent userId, specifies which child's schedule to retrieve
+- **Response**:
+```json
+{
+  "success": true,
+  "count": 25,
+  "data": [
+    {
+      "scheduleId": 1,
+      "semesterId": "1",
+      "classId": 3,
+      "subjectId": 2,
+      "teacherId": 5,
+      "classroomId": 10,
+      "WeekNumber": 1,
+      "DayNumber": 2,
+      "SessionDate": "2024-09-10",
+      "SlotID": 3,
+      "dayOfWeek": "Tuesday",
+      "startTime": "08:50",
+      "endTime": "09:35",
+      "Topic": "Đại số",
+      "status": "scheduled",
+      "className": "10A3",
+      "subjectName": "Toán học",
+      "teacherName": "Tuấn Phạm Văn"
+    }
+    // More schedules...
+  ],
+  "query": {
+    "classId": 3,
+    "fromDate": "2024-09-01",
+    "toDate": "2024-09-30"
+  }
+}
+```
+
+#### Get Schedules by Class Name
+- **URL**: `http://fams.io.vn/api-nodejs/schedules/class/:className`
+- **Method**: `GET`
+- **Auth Required**: Yes
+- **URL Parameters**:
+  - `className`: The name of the class (e.g., "10A1")
+- **Query Parameters**:
+  - `fromDate`: Start date for range filter (format: YYYY-MM-DD)
+  - `toDate`: End date for range filter (format: YYYY-MM-DD)
+- **Response**:
+```json
+{
+  "success": true,
+  "count": 15,
+  "class": {
+    "classId": 1,
+    "className": "10A1",
+    "homeroomTeacherId": "dungpv1",
+    "batchId": 3,
+    "grade": "10"
+  },
+  "data": [
+    // Array of schedule objects with enhanced information
+  ]
+}
+```
+
+#### Get Schedules by User ID
+- **URL**: `http://fams.io.vn/api-nodejs/schedules/user/:userId`
+- **Method**: `GET`
+- **Auth Required**: Yes
+- **URL Parameters**:
+  - `userId`: The ID of the user (works for students, teachers, and parents)
+- **Query Parameters**:
+  - `fromDate`: Start date for range filter (format: YYYY-MM-DD)
+  - `toDate`: End date for range filter (format: YYYY-MM-DD)
+  - `studentId`: For parent users, specifies which child's schedule to retrieve
+- **Response**:
+```json
+{
+  "success": true,
+  "count": 20,
+  "context": {
+    "userId": "anhdmst37",
+    "role": "Student",
+    "student": {
+      "studentId": "37",
+      "firstName": "Ánh",
+      "lastName": "Dương Minh",
+      "classId": 3
+      // Other student details
+    },
+    "classId": 3
+  },
+  "data": [
+    // Array of schedule objects with enhanced information
+  ]
+}
+```
+
 #### Get All Schedules
 - **URL**: `http://fams.io.vn/api-nodejs/schedules`
 - **Method**: `GET`
@@ -894,21 +1008,207 @@ Base path: `/schedules`
 - **Auth Required**: Yes
 
 #### Create Schedule
-- **URL**: `http://fams.io.vn/api-nodejs/schedules`
+- **URL**: `http://fams.io.vn/api-nodejs/schedules/create`
 - **Method**: `POST`
-- **Auth Required**: Yes
-- **Body**: Schedule information
+- **Auth Required**: Yes (Admin or Teacher only)
+- **Body**: 
+```json
+{
+  "date": "2024-09-10",               // Required - Format: YYYY-MM-DD
+  "slotNumber": 3,                    // Required - Slot number (1-10)
+  "classId": 3,                       // Required - Class ID
+  "teacherId": 5,                     // Required - Teacher ID
+  "subjectId": 2,                     // Required - Subject ID
+  "topic": "Đại số",                  // Optional - Topic for the session
+  "classroomId": 10,                  // Optional - Classroom ID
+  "roomName": "Room 101",             // Optional - Room name
+  "weekNumber": 1,                    // Optional - Week number in semester
+  "semesterId": "1"                   // Optional - Semester ID
+}
+```
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Tạo lịch học thành công cho lớp 10A3 tiết 3 (08:50-09:35) vào Tuesday, 10/09/2024",
+  "data": {
+    "scheduleId": "650d1f4c8d43e21234567890",
+    "classId": 3,
+    "subjectId": 2,
+    "teacherId": 5,
+    "classroomId": 10,
+    "slotId": "3",
+    "SlotID": "3",
+    "topic": "Đại số",
+    "sessionDate": "2024-09-10T00:00:00.000Z",
+    "SessionDate": "2024-09-10T00:00:00.000Z",
+    "sessionWeek": "09/09/2024 to 15/09/2024",
+    "SessionWeek": "09/09/2024 to 15/09/2024",
+    "dayOfWeek": "Tuesday",
+    "startTime": "08:50",
+    "endTime": "09:35",
+    "className": "10A3",
+    "teacherName": "Tuấn Phạm Văn",
+    "subjectName": "Toán học"
+  }
+}
+```
+- **Error Responses**:
+  - `403` - Unauthorized:
+    ```json
+    {
+      "success": false,
+      "message": "Bạn không có quyền tạo lịch học",
+      "code": "PERMISSION_DENIED"
+    }
+    ```
+  - `400` - Missing required fields:
+    ```json
+    {
+      "success": false,
+      "message": "Thiếu thông tin bắt buộc (date, slotNumber, classId, teacherId, subjectId)",
+      "code": "MISSING_REQUIRED_FIELDS"
+    }
+    ```
+  - `409` - Schedule already exists:
+    ```json
+    {
+      "success": false,
+      "message": "Đã tồn tại lịch học cho lớp 3 vào ngày 10/09/2024 tiết 3",
+      "code": "SCHEDULE_EXISTS"
+    }
+    ```
 
 #### Update Schedule
 - **URL**: `http://fams.io.vn/api-nodejs/schedules/:id`
-- **Method**: `PUT`
-- **Auth Required**: Yes
-- **Body**: Updated schedule information
+- **Method**: `PUT` 
+- **Auth Required**: Yes (Admin or Teacher only)
+- **URL Parameters**:
+  - `id`: Schedule ID to update
+- **Body**: 
+```json
+{
+  "date": "2024-09-12",               // Optional - New date (YYYY-MM-DD)
+  "slotNumber": 4,                    // Optional - New slot number (1-10)
+  "classId": 3,                       // Optional - New class ID
+  "teacherId": 5,                     // Optional - New teacher ID
+  "subjectId": 2,                     // Optional - New subject ID
+  "topic": "Hình học không gian",     // Optional - New topic
+  "classroomId": 12,                  // Optional - New classroom ID
+  "roomName": "Room 202",             // Optional - New room name
+  "status": "rescheduled",            // Optional - New status 
+  "weekNumber": 2,                    // Optional - New week number
+  "semesterId": "1",                  // Optional - New semester ID
+  "isActive": true,                   // Optional - Boolean flag
+  "attendanceRecorded": false         // Optional - Boolean flag
+}
+```
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Cập nhật lịch học thành công",
+  "data": {
+    "scheduleId": "650d1f4c8d43e21234567890",
+    "classId": 3,
+    "subjectId": 2,
+    "teacherId": 5,
+    "classroomId": 12,
+    "slotId": "4",
+    "SlotID": "4",
+    "topic": "Hình học không gian",
+    "sessionDate": "2024-09-12T00:00:00.000Z",
+    "SessionDate": "2024-09-12T00:00:00.000Z",
+    "sessionWeek": "09/09/2024 to 15/09/2024",
+    "SessionWeek": "09/09/2024 to 15/09/2024",
+    "dayOfWeek": "Thursday",
+    "startTime": "09:40",
+    "endTime": "10:25",
+    "status": "rescheduled",
+    "className": "10A3",
+    "teacherName": "Tuấn Phạm Văn",
+    "subjectName": "Toán học"
+  }
+}
+```
+- **Error Responses**:
+  - `403` - Unauthorized:
+    ```json
+    {
+      "success": false,
+      "message": "Bạn không có quyền cập nhật lịch học",
+      "code": "PERMISSION_DENIED"
+    }
+    ```
+  - `404` - Schedule not found:
+    ```json
+    {
+      "success": false,
+      "message": "Không tìm thấy lịch học với ID 650d1f4c8d43e21234567890",
+      "code": "SCHEDULE_NOT_FOUND"
+    }
+    ```
+  - `409` - Schedule already exists:
+    ```json
+    {
+      "success": false,
+      "message": "Đã tồn tại lịch học cho lớp 3 vào ngày 12/09/2024 tiết 4",
+      "code": "SCHEDULE_EXISTS"
+    }
+    ```
 
 #### Delete Schedule
 - **URL**: `http://fams.io.vn/api-nodejs/schedules/:id`
 - **Method**: `DELETE`
-- **Auth Required**: Yes
+- **Auth Required**: Yes (Admin or Teacher only)
+- **URL Parameters**:
+  - `id`: Schedule ID to delete
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Đã xóa lịch học Toán học cho lớp 10A3 vào ngày 12/09/2024 tiết 4",
+  "data": {
+    "deletedSchedule": {
+      "scheduleId": "650d1f4c8d43e21234567890",
+      "classId": 3,
+      "subjectId": 2,
+      "teacherId": 5,
+      "slotId": "4",
+      "dayOfWeek": "Thursday",
+      "topic": "Hình học không gian",
+      "className": "10A3",
+      "teacherName": "Tuấn Phạm Văn",
+      "subjectName": "Toán học"
+    }
+  }
+}
+```
+- **Error Responses**:
+  - `403` - Unauthorized:
+    ```json
+    {
+      "success": false,
+      "message": "Bạn không có quyền xóa lịch học",
+      "code": "PERMISSION_DENIED"
+    }
+    ```
+  - `403` - Teacher permission denied:
+    ```json
+    {
+      "success": false,
+      "message": "Bạn không có quyền xóa lịch học của giáo viên khác",
+      "code": "PERMISSION_DENIED_TEACHER"
+    }
+    ```
+  - `404` - Schedule not found:
+    ```json
+    {
+      "success": false,
+      "message": "Không tìm thấy lịch học với ID 650d1f4c8d43e21234567890",
+      "code": "SCHEDULE_NOT_FOUND"
+    }
+    ```
 
 ### Admin API
 Base path: `/admin`
