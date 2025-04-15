@@ -20,6 +20,7 @@ recognition:
 
 # Face Anti-spoofing parameters
 anti_spoofing:
+  enable: false  # Set to false để tắt tính năng spoofing, true để bật
   var_thresh: 5000.0
   grad_thresh: 0.7
   depth_range_thresh: 30.0

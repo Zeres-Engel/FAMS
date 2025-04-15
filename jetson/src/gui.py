@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
-                             QHBoxLayout, QLabel, QGroupBox, QSizePolicy)
+                             QHBoxLayout, QLabel, QGroupBox, QSizePolicy, QPushButton,
+                             QLineEdit, QDialog, QFormLayout, QDialogButtonBox)
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QImage, QPixmap, QFocusEvent
 import cv2
@@ -7,6 +8,54 @@ import numpy as np
 from .zensys import ZenSys
 from utils.config_utils import config
 import os
+
+class RoomConfigDialog(QDialog):
+    """Dialog for configuring room ID and API settings"""
+    def __init__(self, parent=None, zensys=None):
+        super().__init__(parent)
+        self.zensys = zensys
+        self.setWindowTitle("Room and API Configuration")
+        self.setMinimumWidth(400)
+        
+        layout = QFormLayout(self)
+        
+        # Room ID input
+        self.room_id_input = QLineEdit()
+        self.room_id_input.setText(self.zensys.current_room)
+        layout.addRow("Room ID:", self.room_id_input)
+        
+        # API endpoint input
+        self.api_endpoint_input = QLineEdit()
+        api_config = self.zensys.api_client.get_api_config()
+        if isinstance(api_config, dict) and "endpoint_url" in api_config:
+            self.api_endpoint_input.setText(api_config["endpoint_url"])
+        layout.addRow("API Endpoint:", self.api_endpoint_input)
+        
+        # API key input
+        self.api_key_input = QLineEdit()
+        if isinstance(api_config, dict) and "api_key" in api_config:
+            self.api_key_input.setText(api_config.get("api_key", ""))
+        layout.addRow("API Key:", self.api_key_input)
+        
+        # Dialog buttons
+        self.button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+        layout.addRow(self.button_box)
+    
+    def accept(self):
+        # Save room ID
+        room_id = self.room_id_input.text().strip()
+        if room_id:
+            self.zensys.set_room(room_id)
+        
+        # Update API config
+        endpoint = self.api_endpoint_input.text().strip()
+        api_key = self.api_key_input.text().strip()
+        if endpoint:
+            self.zensys.api_client.update_api_config(endpoint, api_key if api_key else None)
+        
+        super().accept()
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -96,11 +145,22 @@ class MainWindow(QMainWindow):
         self.verification_label.setWordWrap(True)
         verification_layout.addWidget(self.verification_label)
         
+        # Add room config button
+        self.config_button = QPushButton("Room & API Settings")
+        self.config_button.clicked.connect(self.show_room_config)
+        
+        # Add current room label
+        self.room_label = QLabel(f"Room: {self.face_system.current_room}")
+        self.room_label.setAlignment(Qt.AlignCenter)
+        self.room_label.setStyleSheet("font-size: 14px;")
+        
         # Add panels to right layout
         right_layout.addWidget(rfid_group)
         right_layout.addWidget(face_crop_group)
         right_layout.addWidget(depth_face_group)
         right_layout.addWidget(verification_group)
+        right_layout.addWidget(self.room_label)
+        right_layout.addWidget(self.config_button)
         
         # Add main panels to main layout
         main_layout.addWidget(left_container, 1)
@@ -158,7 +218,14 @@ class MainWindow(QMainWindow):
                 if anti_spoof_result is not None:
                     result_text = anti_spoof_result["detection_result"].upper()
                     color = (0, 255, 0) if result_text == "LIVE" else (0, 0, 255)
-                    cv2.putText(display_frame, f"Face: {result_text}", (x1, y2+25), 
+                    
+                    # Hiển thị trạng thái của tính năng anti-spoofing
+                    if self.face_system.face_anti.enable:
+                        status_text = f"Face: {result_text}"
+                    else:
+                        status_text = "Face Anti-Spoofing: DISABLED"
+                        
+                    cv2.putText(display_frame, status_text, (x1, y2+25), 
                               cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
                     
                     # Hiển thị giá trị variance và mean_gradient với màu khác
@@ -361,4 +428,12 @@ class MainWindow(QMainWindow):
     def showEvent(self, event):
         super().showEvent(event)
         # Ensure no widget has focus when window is shown
-        self.clearFocus() 
+        self.clearFocus()
+        
+    def show_room_config(self):
+        """Show dialog for room configuration"""
+        dialog = RoomConfigDialog(self, self.face_system)
+        if dialog.exec():
+            # Update room label
+            self.room_label.setText(f"Room: {self.face_system.current_room}")
+        

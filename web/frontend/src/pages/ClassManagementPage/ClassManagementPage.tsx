@@ -12,14 +12,14 @@ function ClassManagementPage(): React.JSX.Element {
       <Container maxWidth={false} className="classManagementPage-Container">
         <Grid container size={11} className="classManagementPage-Grid">
           <Grid size={12} className="classPage-Header">
-            {/* <DataTable
+            <DataTable
               headCellsData={state.headCellsData}
               tableMainData={state.userMainData}
               tableTitle={state.tableTitle}
               isCheckBox={state.isCheckBox}
               isAdmin={true}
               isClassManagement={true}
-            ></DataTable> */}
+            ></DataTable>
           </Grid>
         </Grid>
       </Container>
