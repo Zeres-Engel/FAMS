@@ -1089,15 +1089,87 @@ router.post('/create', protect, async (req, res) => {
       });
     }
     
-    // Get required parameters from request body
-    const { date, slotNumber, classId, teacherId, subjectId, topic, classroomId } = req.body;
+    // Get parameters from request body
+    const { 
+      date, 
+      slotNumber, 
+      classId, 
+      className, 
+      teacherId, 
+      teacherUserId, 
+      subjectId, 
+      subjectName, 
+      topic, 
+      classroomId, 
+      roomName 
+    } = req.body;
+    
+    // Variables to hold the resolved IDs
+    let resolvedClassId = classId;
+    let resolvedTeacherId = teacherId;
+    let resolvedSubjectId = subjectId;
+    
+    // Lookup className if provided instead of classId
+    if (!resolvedClassId && className) {
+      const classData = await mongoose.connection.db.collection('Class')
+        .findOne({ className: className });
+      
+      if (!classData) {
+        return res.status(404).json({
+          success: false,
+          message: `Không tìm thấy lớp với tên ${className}`,
+          code: 'CLASS_NOT_FOUND'
+        });
+      }
+      
+      resolvedClassId = classData.classId;
+    }
+    
+    // Lookup teacherUserId if provided instead of teacherId
+    if (!resolvedTeacherId && teacherUserId) {
+      const teacherData = await mongoose.connection.db.collection('Teacher')
+        .findOne({ userId: teacherUserId });
+      
+      if (!teacherData) {
+        return res.status(404).json({
+          success: false,
+          message: `Không tìm thấy giáo viên với UserId ${teacherUserId}`,
+          code: 'TEACHER_NOT_FOUND'
+        });
+      }
+      
+      resolvedTeacherId = teacherData.teacherId;
+    }
+    
+    // Lookup subjectName if provided instead of subjectId
+    if (!resolvedSubjectId && subjectName) {
+      const subjectData = await mongoose.connection.db.collection('Subject')
+        .findOne({ subjectName: subjectName });
+      
+      if (!subjectData) {
+        return res.status(404).json({
+          success: false,
+          message: `Không tìm thấy môn học với tên ${subjectName}`,
+          code: 'SUBJECT_NOT_FOUND'
+        });
+      }
+      
+      resolvedSubjectId = subjectData.subjectId;
+    }
     
     // Validate required parameters
-    if (!date || !slotNumber || !classId || !teacherId || !subjectId) {
+    if (!date || !slotNumber || !resolvedClassId || !resolvedTeacherId || !resolvedSubjectId) {
       return res.status(400).json({
         success: false,
-        message: 'Thiếu thông tin bắt buộc (date, slotNumber, classId, teacherId, subjectId)',
-        code: 'MISSING_REQUIRED_FIELDS'
+        message: 'Thiếu thông tin bắt buộc (date, slotNumber, classId/className, teacherId/teacherUserId, subjectId/subjectName)',
+        code: 'MISSING_REQUIRED_FIELDS',
+        providedFields: {
+          date: !!date,
+          slotNumber: !!slotNumber,
+          classId: !!resolvedClassId,
+          teacherId: !!resolvedTeacherId,
+          subjectId: !!resolvedSubjectId
+        }
       });
     }
     
@@ -1234,13 +1306,13 @@ router.post('/create', protect, async (req, res) => {
       semesterId: req.body.semesterId || null,
       weekNumber: weekNumber,
       dayNumber: dayNumber,
-      classId: parseInt(classId),
-      subjectId: subjectId,
-      teacherId: teacherId,
+      classId: parseInt(resolvedClassId),
+      subjectId: resolvedSubjectId,
+      teacherId: resolvedTeacherId,
       classroomId: classroomId || null,
       slotId: slotNumber.toString(),
       SlotID: slotNumber.toString(),
-      roomName: req.body.roomName || null,
+      roomName: roomName || null,
       topic: topic || `Tiết học ${slotNumber} - ${dayOfWeek}`,
       sessionDate: sessionDate,
       SessionDate: sessionDate.toISOString(),
@@ -1256,48 +1328,183 @@ router.post('/create', protect, async (req, res) => {
       updatedAt: new Date()
     };
     
-    // Check if schedule already exists for this class/teacher/date/slot
-    const existingSchedule = await mongoose.connection.db.collection('ClassSchedule')
-      .findOne({
-        classId: parseInt(classId),
-        sessionDate: sessionDate,
-        slotId: slotNumber.toString()
+    // Check for scheduling conflicts
+    const classScheduleCollection = mongoose.connection.db.collection('ClassSchedule');
+    
+    // 1. Check if the class is already scheduled for this time slot
+    const classConflict = await classScheduleCollection.findOne({
+      classId: parseInt(resolvedClassId),
+      sessionDate: sessionDate,
+      slotId: slotNumber.toString(),
+      status: { $ne: 'cancelled' } // Ignore cancelled schedules
+    });
+    
+    if (classConflict) {
+      // Get additional information about the conflicting schedule
+      let conflictSubjectName = null;
+      let conflictTeacherName = null;
+      
+      try {
+        const subjectData = await mongoose.connection.db.collection('Subject')
+          .findOne({ subjectId: classConflict.subjectId });
+        if (subjectData) {
+          conflictSubjectName = subjectData.subjectName;
+        }
+        
+        const teacherData = await mongoose.connection.db.collection('Teacher')
+          .findOne({ teacherId: classConflict.teacherId });
+        if (teacherData) {
+          conflictTeacherName = teacherData.fullName || `${teacherData.firstName} ${teacherData.lastName}`;
+        }
+      } catch (error) {
+        console.warn('Error fetching conflict details:', error.message);
+      }
+      
+      return res.status(409).json({
+        success: false,
+        message: `Lớp ${className || resolvedClassId} đã có lịch học môn ${conflictSubjectName || classConflict.subjectId} vào ngày ${formatDate(sessionDate)} tiết ${slotNumber} (${slotData.startTime}-${slotData.endTime}) với giáo viên ${conflictTeacherName || classConflict.teacherId}`,
+        code: 'CLASS_SCHEDULE_CONFLICT',
+        conflict: {
+          ...classConflict,
+          subjectName: conflictSubjectName,
+          teacherName: conflictTeacherName
+        }
       });
+    }
+    
+    // 2. Check if the teacher is already teaching during this time slot
+    const teacherConflict = await classScheduleCollection.findOne({
+      teacherId: resolvedTeacherId,
+      sessionDate: sessionDate,
+      slotId: slotNumber.toString(),
+      status: { $ne: 'cancelled' } // Ignore cancelled schedules
+    });
+    
+    if (teacherConflict) {
+      // Get additional information about the conflicting schedule
+      let conflictClassName = null;
+      let conflictSubjectName = null;
+      
+      try {
+        const classData = await mongoose.connection.db.collection('Class')
+          .findOne({ classId: teacherConflict.classId });
+        if (classData) {
+          conflictClassName = classData.className;
+        }
+        
+        const subjectData = await mongoose.connection.db.collection('Subject')
+          .findOne({ subjectId: teacherConflict.subjectId });
+        if (subjectData) {
+          conflictSubjectName = subjectData.subjectName;
+        }
+      } catch (error) {
+        console.warn('Error fetching conflict details:', error.message);
+      }
+      
+      return res.status(409).json({
+        success: false,
+        message: `Giáo viên đã có lịch dạy lớp ${conflictClassName || teacherConflict.classId} môn ${conflictSubjectName || teacherConflict.subjectId} vào ngày ${formatDate(sessionDate)} tiết ${slotNumber} (${slotData.startTime}-${slotData.endTime})`,
+        code: 'TEACHER_SCHEDULE_CONFLICT',
+        conflict: {
+          ...teacherConflict,
+          className: conflictClassName,
+          subjectName: conflictSubjectName
+        }
+      });
+    }
+    
+    // 3. Check if the room is already in use during this time slot (if room is specified)
+    if (roomName) {
+      const roomConflict = await classScheduleCollection.findOne({
+        roomName: roomName,
+        sessionDate: sessionDate,
+        slotId: slotNumber.toString(),
+        status: { $ne: 'cancelled' } // Ignore cancelled schedules
+      });
+      
+      if (roomConflict) {
+        // Get additional information about the conflicting schedule
+        let conflictClassName = null;
+        let conflictTeacherName = null;
+        let conflictSubjectName = null;
+        
+        try {
+          const classData = await mongoose.connection.db.collection('Class')
+            .findOne({ classId: roomConflict.classId });
+          if (classData) {
+            conflictClassName = classData.className;
+          }
+          
+          const teacherData = await mongoose.connection.db.collection('Teacher')
+            .findOne({ teacherId: roomConflict.teacherId });
+          if (teacherData) {
+            conflictTeacherName = teacherData.fullName || `${teacherData.firstName} ${teacherData.lastName}`;
+          }
+          
+          const subjectData = await mongoose.connection.db.collection('Subject')
+            .findOne({ subjectId: roomConflict.subjectId });
+          if (subjectData) {
+            conflictSubjectName = subjectData.subjectName;
+          }
+        } catch (error) {
+          console.warn('Error fetching conflict details:', error.message);
+        }
+        
+        return res.status(409).json({
+          success: false,
+          message: `Phòng ${roomName} đã được sử dụng bởi lớp ${conflictClassName || roomConflict.classId} học môn ${conflictSubjectName || roomConflict.subjectId} vào ngày ${formatDate(sessionDate)} tiết ${slotNumber} (${slotData.startTime}-${slotData.endTime})`,
+          code: 'ROOM_SCHEDULE_CONFLICT',
+          conflict: {
+            ...roomConflict,
+            className: conflictClassName,
+            teacherName: conflictTeacherName,
+            subjectName: conflictSubjectName
+          }
+        });
+      }
+    }
+    
+    // Check if schedule already exists for this class/date/slot (general check)
+    const existingSchedule = await classScheduleCollection.findOne({
+      classId: parseInt(resolvedClassId),
+      sessionDate: sessionDate,
+      slotId: slotNumber.toString()
+    });
     
     if (existingSchedule) {
       return res.status(409).json({
         success: false,
-        message: `Đã tồn tại lịch học cho lớp ${classId} vào ngày ${formatDate(sessionDate)} tiết ${slotNumber}`,
+        message: `Đã tồn tại lịch học cho lớp ${resolvedClassId} vào ngày ${formatDate(sessionDate)} tiết ${slotNumber}`,
         code: 'SCHEDULE_EXISTS',
         existing: existingSchedule
       });
     }
     
     // Insert the new schedule entry
-    await mongoose.connection.db.collection('ClassSchedule').insertOne(newSchedule);
+    await classScheduleCollection.insertOne(newSchedule);
     
     // Get additional information for response
-    let className = null;
+    let classNameResult = null;
     let teacherName = null;
-    let subjectName = null;
+    let subjectNameResult = null;
     
     try {
       const classData = await mongoose.connection.db.collection('Class')
-        .findOne({ classId: parseInt(classId) });
+        .findOne({ classId: parseInt(resolvedClassId) });
       if (classData) {
-        className = classData.className;
+        classNameResult = classData.className;
       }
       
       const teacherData = await mongoose.connection.db.collection('Teacher')
-        .findOne({ teacherId: teacherId });
+        .findOne({ teacherId: resolvedTeacherId });
       if (teacherData) {
         teacherName = teacherData.fullName || `${teacherData.firstName} ${teacherData.lastName}`;
       }
       
       const subjectData = await mongoose.connection.db.collection('Subject')
-        .findOne({ subjectId: subjectId });
+        .findOne({ subjectId: resolvedSubjectId });
       if (subjectData) {
-        subjectName = subjectData.subjectName;
+        subjectNameResult = subjectData.subjectName;
       }
     } catch (error) {
       console.warn('Error fetching additional info:', error.message);
@@ -1305,12 +1512,12 @@ router.post('/create', protect, async (req, res) => {
     
     return res.status(201).json({
       success: true,
-      message: `Tạo lịch học thành công cho lớp ${className || classId} tiết ${slotNumber} (${slotData.startTime}-${slotData.endTime}) vào ${dayOfWeek}, ${formatDate(sessionDate)}`,
+      message: `Tạo lịch học thành công cho lớp ${classNameResult || resolvedClassId} tiết ${slotNumber} (${slotData.startTime}-${slotData.endTime}) vào ${dayOfWeek}, ${formatDate(sessionDate)}`,
       data: {
         ...newSchedule,
-        className,
+        className: classNameResult,
         teacherName,
-        subjectName
+        subjectName: subjectNameResult
       }
     });
   } catch (error) {

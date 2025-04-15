@@ -179,3 +179,33 @@ CREATE TABLE Notification (
   ReadStatus BOOLEAN DEFAULT FALSE,
   FOREIGN KEY (UserID) REFERENCES UserAccount(UserID)
 );
+
+CREATE TABLE Device (
+  DeviceID INT AUTO_INCREMENT PRIMARY KEY,
+  DeviceName VARCHAR(100) NOT NULL,
+  DeviceType VARCHAR(50) DEFAULT 'Jetson Nano',
+  Location VARCHAR(100),
+  Status BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE ModelVersion (
+  ModelID INT AUTO_INCREMENT PRIMARY KEY,
+  ModelName VARCHAR(100) NOT NULL,
+  Version VARCHAR(50) NOT NULL,
+  DeploymentDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+  Description TEXT,
+  DeviceID INT,
+  CheckpointPath VARCHAR(255) NOT NULL,
+  Status ENUM('Active','Inactive') DEFAULT 'Active',
+  FOREIGN KEY (DeviceID) REFERENCES Device(DeviceID)
+);
+
+CREATE TABLE FaceVector (
+  FaceVectorID INT AUTO_INCREMENT PRIMARY KEY,
+  UserID INT NOT NULL,
+  Vector JSON NOT NULL,
+  CapturedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+  ModelID INT,
+  FOREIGN KEY (UserID) REFERENCES UserAccount(UserID),
+  FOREIGN KEY (ModelID) REFERENCES ModelVersion(ModelID)
+);

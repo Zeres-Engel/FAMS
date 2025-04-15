@@ -37,7 +37,7 @@ const authService = {
     try {
       // Adapt to backend API naming (userName -> userId)
       const payload = {
-        userId: credentials.userName,
+        userId: credentials.userId,
         password: credentials.password
       };
       
