@@ -18,13 +18,13 @@ function useLoginPageHook() {
     formState: { errors },
   } = useForm<LoginForm>({
     defaultValues: {
-      userName: "",
+      userId: "",
       password: "",
     },
   });
   
   const [isError, setIsError] = useState<number[]>([]);
-  const watchUserName = useWatch({ control, name: "userName" });
+  const watchUserId = useWatch({ control, name: "userId" });
   const watchPassword = useWatch({ control, name: "password" });
   
   const handleLogin = handleSubmit(async (data: LoginForm) => {
@@ -32,15 +32,15 @@ function useLoginPageHook() {
     setLoginError(null);
     
     // Validate form
-    if(!watchUserName || !watchPassword) {
+    if(!watchUserId || !watchPassword) {
       setIsError([1,2]);
-      watchUserName ? setFocus('password') : setFocus('userName');
+      watchUserId ? setFocus('password') : setFocus('userId');
       return;
     }
     
     try {
       setIsLoading(true);
-      console.log('Login attempt with:', { userName: data.userName });
+      console.log('Login attempt with:', { userId: data.userId });
       
       // Call auth service login method
       const user = await authService.login(data);
@@ -72,7 +72,7 @@ function useLoginPageHook() {
   
   const state = { 
     errors, 
-    watchUserName, 
+    watchUserId, 
     watchPassword, 
     isError, 
     setIsError, 

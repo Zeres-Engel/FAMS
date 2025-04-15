@@ -1036,176 +1036,40 @@ Base path: `/schedules`
 }
 ```
 
-**Lưu ý quan trọng:**
-1. Bạn có thể sử dụng *hoặc* ID *hoặc* tên/userID để xác định lớp, giáo viên và môn học:
-   - `classId` hoặc `className` (ưu tiên sử dụng classId nếu cả hai được cung cấp)
-   - `teacherId` hoặc `teacherUserId` (ưu tiên sử dụng teacherId nếu cả hai được cung cấp)
-   - `subjectId` hoặc `subjectName` (ưu tiên sử dụng subjectId nếu cả hai được cung cấp)
-
-2. Các trường bắt buộc:
-   - `date`: Ngày diễn ra buổi học (định dạng YYYY-MM-DD)
-   - `slotNumber`: Số tiết học (1-10)
-   - Thông tin về lớp (classId hoặc className)
-   - Thông tin về giáo viên (teacherId hoặc teacherUserId)
-   - Thông tin về môn học (subjectId hoặc subjectName)
-
-3. **Kiểm tra xung đột lịch học:**
-   Hệ thống sẽ tự động kiểm tra các xung đột lịch trình trước khi tạo lịch học mới:
-   - **Lớp học đã có lịch:** Kiểm tra xem lớp đã có lịch vào tiết đó chưa
-   - **Giáo viên đã bận:** Kiểm tra xem giáo viên đã có lịch dạy lớp khác vào tiết đó chưa
-   - **Phòng học đã được sử dụng:** Nếu chỉ định phòng học, kiểm tra xem phòng đó đã được sử dụng bởi lớp khác chưa
-
-- **Response**:
+**Ví dụ tạo lịch học đơn giản**:
 ```json
 {
-  "success": true,
-  "message": "Tạo lịch học thành công cho lớp 10A3 tiết 3 (08:50-09:35) vào Tuesday, 10/09/2024",
-  "data": {
-    "scheduleId": "650d1f4c8d43e21234567890",
-    "classId": 3,
-    "subjectId": 2,
-    "teacherId": 5,
-    "classroomId": 10,
-    "slotId": "3",
-    "SlotID": "3",
-    "topic": "Đại số",
-    "sessionDate": "2024-09-10T00:00:00.000Z",
-    "SessionDate": "2024-09-10T00:00:00.000Z",
-    "sessionWeek": "09/09/2024 to 15/09/2024",
-    "SessionWeek": "09/09/2024 to 15/09/2024",
-    "dayOfWeek": "Tuesday",
-    "startTime": "08:50",
-    "endTime": "09:35",
-    "className": "10A3",
-    "teacherName": "Tuấn Phạm Văn",
-    "subjectName": "Toán học"
-  }
+  "date": "2024-10-15",
+  "slotNumber": 3,
+  "className": "10A2", 
+  "teacherUserId": "tuanpv5",
+  "subjectName": "Toán học",
+  "topic": "Đại số",
+  "roomName": "B203"
 }
 ```
-- **Error Responses**:
-  - `403` - Unauthorized:
-    ```json
-    {
-      "success": false,
-      "message": "Bạn không có quyền tạo lịch học",
-      "code": "PERMISSION_DENIED"
-    }
-    ```
-  - `400` - Missing required fields:
-    ```json
-    {
-      "success": false,
-      "message": "Thiếu thông tin bắt buộc (date, slotNumber, classId/className, teacherId/teacherUserId, subjectId/subjectName)",
-      "code": "MISSING_REQUIRED_FIELDS"
-    }
-    ```
-  - `404` - Not found (class, teacher, or subject):
-    ```json
-    {
-      "success": false,
-      "message": "Không tìm thấy lớp với tên 10A3",
-      "code": "CLASS_NOT_FOUND"
-    }
-    ```
-  - `409` - Xung đột lịch học của lớp:
-    ```json
-    {
-      "success": false,
-      "message": "Lớp 10A3 đã có lịch học môn Toán học vào ngày 10/09/2024 tiết 3 (08:50-09:35) với giáo viên Nguyễn Văn A",
-      "code": "CLASS_SCHEDULE_CONFLICT",
-      "conflict": {
-        // Chi tiết về lịch học xung đột
-      }
-    }
-    ```
-  - `409` - Xung đột lịch giảng dạy của giáo viên:
-    ```json
-    {
-      "success": false,
-      "message": "Giáo viên đã có lịch dạy lớp 10A1 môn Toán học vào ngày 10/09/2024 tiết 3 (08:50-09:35)",
-      "code": "TEACHER_SCHEDULE_CONFLICT",
-      "conflict": {
-        // Chi tiết về lịch học xung đột
-      }
-    }
-    ```
-  - `409` - Xung đột phòng học:
-    ```json
-    {
-      "success": false,
-      "message": "Phòng Room 101 đã được sử dụng bởi lớp 10A1 học môn Vật lý vào ngày 10/09/2024 tiết 3 (08:50-09:35)",
-      "code": "ROOM_SCHEDULE_CONFLICT",
-      "conflict": {
-        // Chi tiết về lịch học xung đột
-      }
-    }
-    ```
-  - `409` - Schedule already exists:
-    ```json
-    {
-      "success": false,
-      "message": "Đã tồn tại lịch học cho lớp 3 vào ngày 10/09/2024 tiết 3",
-      "code": "SCHEDULE_EXISTS"
-    }
-    ```
 
-#### Update Schedule
-- **URL**: `http://fams.io.vn/api-nodejs/schedules/:id`
-- **Method**: `PUT` 
-- **Auth Required**: Yes (Admin or Teacher only)
-- **URL Parameters**:
-  - `id`: Schedule ID to update
-- **Body**: 
-```json
-{
-  "date": "2024-09-12",               // Optional - New date (YYYY-MM-DD)
-  "slotNumber": 4,                    // Optional - New slot number (1-10)
-  "classId": 3,                       // Optional - New class ID
-  "teacherId": 5,                     // Optional - New teacher ID
-  "subjectId": 2,                     // Optional - New subject ID
-  "topic": "Hình học không gian",     // Optional - New topic
-  "classroomId": 12,                  // Optional - New classroom ID
-  "roomName": "Room 202",             // Optional - New room name
-  "status": "rescheduled",            // Optional - New status 
-  "weekNumber": 2,                    // Optional - New week number
-  "semesterId": "1",                  // Optional - New semester ID
-  "isActive": true,                   // Optional - Boolean flag
-  "attendanceRecorded": false         // Optional - Boolean flag
-}
-```
-- **Response**:
-```json
-{
-  "success": true,
-  "message": "Cập nhật lịch học thành công",
-  "data": {
-    "scheduleId": "650d1f4c8d43e21234567890",
-    "classId": 3,
-    "subjectId": 2,
-    "teacherId": 5,
-    "classroomId": 12,
-    "slotId": "4",
-    "SlotID": "4",
-    "topic": "Hình học không gian",
-    "sessionDate": "2024-09-12T00:00:00.000Z",
-    "SessionDate": "2024-09-12T00:00:00.000Z",
-    "sessionWeek": "09/09/2024 to 15/09/2024",
-    "SessionWeek": "09/09/2024 to 15/09/2024",
-    "dayOfWeek": "Thursday",
-    "startTime": "09:40",
-    "endTime": "10:25",
-    "status": "rescheduled",
-    "className": "10A3",
-    "teacherName": "Tuấn Phạm Văn",
-    "subjectName": "Toán học"
-  }
-}
-```
-- **Error Responses**:
-  - `403` - Unauthorized:
-    ```json
-    {
-      "success": false,
+**Lưu ý về kiểm tra xung đột lịch học:**
+
+Khi tạo lịch học mới, hệ thống sẽ kiểm tra ba loại xung đột có thể xảy ra:
+
+1. **Xung đột lớp học**: Nếu lớp đã có lịch học vào ngày và tiết đó
+   ```json
+   {
+     "success": false,
+     "message": "Lớp 10A3 đã có lịch học môn Toán học vào ngày 10/09/2024 tiết 3 (08:50-09:35) với giáo viên Tuấn Phạm Văn",
+     "code": "CLASS_SCHEDULE_CONFLICT",
+     "conflict": {
+       // Chi tiết về lịch học xung đột
+     }
+   }
+   ```
+
+2. **Xung đột giáo viên**: Nếu giáo viên đã dạy lớp khác vào ngày và tiết đó
+   ```json
+   {
+     "success": false,
+     "message": "Giáo viên đã có lịch dạy lớp 10A1 môn Toán học vào ngày 10/09/2024 tiết 3 (08:50-09:35)",
       "message": "Bạn không có quyền cập nhật lịch học",
       "code": "PERMISSION_DENIED"
     }

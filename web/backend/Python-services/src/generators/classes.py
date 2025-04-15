@@ -5,6 +5,7 @@ import csv
 import os
 from src.utils import find_file_path
 from src.models.class_model import Classroom, Class
+import datetime
 
 
 def import_classrooms(db):
@@ -84,15 +85,27 @@ def distribute_students(db, students, grade, batch_id):
     if "Class" not in db.list_collection_names():
         db.create_collection("Class")
     
+    # Convert batch_id to integer if it's a string
+    if isinstance(batch_id, str):
+        try:
+            batch_id = int(batch_id)
+        except ValueError:
+            print(f"Warning: Could not convert batch_id '{batch_id}' to integer")
+    
     for i in range(0, len(students_sorted), chunk_size):
         chunk = students_sorted[i:i+chunk_size]
-        class_name = f"{grade}A{class_index}"
+        class_name = f"{grade}A{class_index}"  # Using 10A1, 10A2 format
         class_index += 1
         
         c_doc = {
             "className": class_name,
             "homeroomTeacherId": None,
-            "batchId": batch_id  # Sử dụng batchId thay vì BatchID để thống nhất
+            "batchId": batch_id,  # Store as integer
+            "BatchID": batch_id,  # Add BatchID field as integer for compatibility
+            "grade": grade,  # Add grade explicitly
+            "academicYear": f"{datetime.datetime.now().year}-{datetime.datetime.now().year+1}",  # Add academic year
+            "createdAt": datetime.datetime.now(),
+            "isActive": True
         }
         
         r = db.Class.insert_one(c_doc)
@@ -104,6 +117,65 @@ def distribute_students(db, students, grade, batch_id):
             db.Student.update_one({"studentId": st["studentId"]}, {"$set": {"classId": new_class_id}})
             
     return created_classes
+
+
+def create_class_if_needed(db, class_name, grade, batch_id, academic_year):
+    """
+    Check if a class with the given name exists, create if not
+    
+    Args:
+        db: MongoDB database connection
+        class_name: Name of the class (e.g. "10A1")
+        grade: Grade level (e.g. 10)
+        batch_id: Batch ID
+        academic_year: Academic year string (e.g. "2024-2025")
+        
+    Returns:
+        Dictionary with class information
+    """
+    # Make sure classes collection exists
+    if "classes" not in db.list_collection_names() and "Class" not in db.list_collection_names():
+        db.create_collection("Class")
+    
+    # Determine collection name (could be "Class" or "classes")
+    collection_name = "Class" if "Class" in db.list_collection_names() else "classes"
+    
+    # Check if class exists
+    existing_class = db[collection_name].find_one({"className": class_name})
+    
+    if existing_class:
+        return existing_class
+    
+    # Convert batch_id to integer if it's a string
+    if isinstance(batch_id, str):
+        try:
+            batch_id = int(batch_id)
+        except ValueError:
+            print(f"Warning: Could not convert batch_id '{batch_id}' to integer")
+    
+    # Create new class if not exists
+    new_class = {
+        "className": class_name,
+        "grade": grade,
+        "homeroomTeacherId": None,
+        "batchId": batch_id,  # Store as integer
+        "BatchID": batch_id,  # Add BatchID field as integer for compatibility
+        "academicYear": academic_year,
+        "createdAt": datetime.datetime.now(),
+        "isActive": True
+    }
+    
+    result = db[collection_name].insert_one(new_class)
+    
+    # Check if we need to set a classId
+    if "classId" not in new_class:
+        new_class_id = db[collection_name].count_documents({})
+        db[collection_name].update_one({"_id": result.inserted_id}, {"$set": {"classId": new_class_id}})
+        new_class["classId"] = new_class_id
+    
+    print(f"Created new class: {class_name} (Grade {grade}, Batch {batch_id})")
+    
+    return new_class
 
 
 def create_all_classes(db, students_by_grade):

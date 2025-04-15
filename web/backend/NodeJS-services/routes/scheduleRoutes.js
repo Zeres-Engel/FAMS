@@ -1484,15 +1484,15 @@ router.post('/create', protect, async (req, res) => {
     await classScheduleCollection.insertOne(newSchedule);
     
     // Get additional information for response
-    let className = null;
+    let classNameResult = null;
     let teacherName = null;
-    let subjectName = null;
+    let subjectNameResult = null;
     
     try {
       const classData = await mongoose.connection.db.collection('Class')
         .findOne({ classId: parseInt(resolvedClassId) });
       if (classData) {
-        className = classData.className;
+        classNameResult = classData.className;
       }
       
       const teacherData = await mongoose.connection.db.collection('Teacher')
@@ -1504,7 +1504,7 @@ router.post('/create', protect, async (req, res) => {
       const subjectData = await mongoose.connection.db.collection('Subject')
         .findOne({ subjectId: resolvedSubjectId });
       if (subjectData) {
-        subjectName = subjectData.subjectName;
+        subjectNameResult = subjectData.subjectName;
       }
     } catch (error) {
       console.warn('Error fetching additional info:', error.message);
@@ -1512,12 +1512,12 @@ router.post('/create', protect, async (req, res) => {
     
     return res.status(201).json({
       success: true,
-      message: `Tạo lịch học thành công cho lớp ${className || resolvedClassId} tiết ${slotNumber} (${slotData.startTime}-${slotData.endTime}) vào ${dayOfWeek}, ${formatDate(sessionDate)}`,
+      message: `Tạo lịch học thành công cho lớp ${classNameResult || resolvedClassId} tiết ${slotNumber} (${slotData.startTime}-${slotData.endTime}) vào ${dayOfWeek}, ${formatDate(sessionDate)}`,
       data: {
         ...newSchedule,
-        className,
+        className: classNameResult,
         teacherName,
-        subjectName
+        subjectName: subjectNameResult
       }
     });
   } catch (error) {
