@@ -5,7 +5,8 @@ from types import SimpleNamespace
 
 class FaceAntiSpoofing:
     def __init__(self, var_thresh=None, grad_thresh=None, normalize_method=None, 
-                 depth_range_thresh=None, min_depth_thresh=None, max_depth_thresh=None):
+                 depth_range_thresh=None, min_depth_thresh=None, max_depth_thresh=None,
+                 enable=None):
         """
         Initialize face anti-spoofing detector with configurable thresholds.
         
@@ -16,9 +17,11 @@ class FaceAntiSpoofing:
             depth_range_thresh: Ngưỡng khoảng cách giữa min và max depth
             min_depth_thresh: Ngưỡng tối thiểu cho điểm sâu nhất 
             max_depth_thresh: Ngưỡng tối đa cho điểm cao nhất
+            enable: Bật/tắt tính năng anti-spoofing
         """
         # Lấy giá trị threshold từ config nếu không được cung cấp, hoặc sử dụng giá trị mặc định
         try:
+            self.enable = enable if enable is not None else config.anti_spoofing.enable
             self.var_thresh = var_thresh if var_thresh is not None else config.anti_spoofing.var_thresh
             self.grad_thresh = grad_thresh if grad_thresh is not None else config.anti_spoofing.grad_thresh
             self.normalize_method = normalize_method if normalize_method is not None else config.anti_spoofing.normalize_method
@@ -27,6 +30,7 @@ class FaceAntiSpoofing:
             self.max_depth_thresh = max_depth_thresh if max_depth_thresh is not None else config.anti_spoofing.max_depth_thresh
         except AttributeError:
             # Nếu không có trong config, sử dụng giá trị mặc định
+            self.enable = enable if enable is not None else True
             self.var_thresh = var_thresh if var_thresh is not None else 0.0005
             self.grad_thresh = grad_thresh if grad_thresh is not None else 0.7
             self.normalize_method = normalize_method if normalize_method is not None else "min_max"
@@ -38,6 +42,8 @@ class FaceAntiSpoofing:
         # Lưu trữ các giá trị min/max toàn cục cho phương pháp "global"
         self.global_min_depth = None
         self.global_max_depth = None
+        
+        print(f"Anti-spoofing feature is {'enabled' if self.enable else 'disabled'}")
     
     def normalize_depth_map(self, depth_map, min_depth=None, max_depth=None):
         """
@@ -199,9 +205,61 @@ class FaceAntiSpoofing:
             - result: "spoof" hoặc "live"
             - dict: từ điển chứa các giá trị thống kê
         """
+        # Nếu tính năng anti-spoofing bị tắt, luôn trả về "live"
+        if not self.enable:
+            # Vẫn tính toán các giá trị thống kê để hiển thị, nhưng không dùng để phát hiện spoofing
+            if len(depth_crop.shape) == 3:
+                depth_gray = cv2.cvtColor(depth_crop, cv2.COLOR_BGR2GRAY)
+            else:
+                depth_gray = depth_crop.copy()
+            
+            # Lấy giá trị min/max thực tế của depth map
+            raw_min_depth = float(np.min(depth_gray))
+            raw_max_depth = float(np.max(depth_gray))
+            raw_depth_range = raw_max_depth - raw_min_depth
+                
+            # Chuẩn hóa depth map sử dụng phương pháp đã chọn
+            depth_norm = self.normalize_depth_map(depth_gray)
+            
+            # Chuyển về uint8 cho các bước xử lý tiếp theo
+            depth_norm_uint8 = (depth_norm * 255).astype(np.uint8)
+                
+            # Apply Gaussian blur to smooth
+            depth_smooth = cv2.GaussianBlur(depth_norm_uint8, (5, 5), 0)
+            
+            # Calculate depth variance
+            depth_variance = float(np.var(depth_smooth))
+            
+            # Calculate gradient magnitude using Sobel filters
+            grad_x = cv2.Sobel(depth_smooth, cv2.CV_64F, 1, 0, ksize=3)
+            grad_y = cv2.Sobel(depth_smooth, cv2.CV_64F, 0, 1, ksize=3)
+            grad_mag = np.sqrt(grad_x**2 + grad_y**2)
+            mean_grad = float(np.mean(grad_mag))
+            
+            # Tất cả các tiêu chí đều pass vì anti-spoofing đã bị tắt
+            criteria_status = {
+                "variance_pass": True,
+                "gradient_pass": True,
+                "depth_range_pass": True,
+                "min_depth_pass": True,
+                "max_depth_pass": True
+            }
+            
+            # Tạo từ điển với các giá trị thống kê (vẫn giữ để hiển thị)
+            stats = {
+                "depth_variance": depth_variance,
+                "mean_gradient": mean_grad,
+                "min_depth": raw_min_depth,
+                "max_depth": raw_max_depth,
+                "depth_range": raw_depth_range,
+                "criteria_status": criteria_status
+            }
+            
+            return "live", stats
+            
         # Convert to grayscale if it's in RGB format
         if len(depth_crop.shape) == 3:
-            depth_gray = cv2.cvtColor(depth_crop, cv2.COLOR_RGB2GRAY)
+            depth_gray = cv2.cvtColor(depth_crop, cv2.COLOR_BGR2GRAY)
         else:
             depth_gray = depth_crop.copy()
         

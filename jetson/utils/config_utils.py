@@ -68,6 +68,7 @@ class ZenConfig:
     @property
     def anti_spoofing(self):
         return SimpleNamespace(**{
+            'enable': self.config_data.get('anti_spoofing', {}).get('enable', True),
             'var_thresh': self.config_data.get('anti_spoofing', {}).get('var_thresh', 0.0005),
             'grad_thresh': self.config_data.get('anti_spoofing', {}).get('grad_thresh', 0.7),
             'depth_range_thresh': self.config_data.get('anti_spoofing', {}).get('depth_range_thresh', 30.0),

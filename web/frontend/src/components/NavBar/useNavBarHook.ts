@@ -24,7 +24,7 @@ function useNavBarHook() {
       setNavItems([
         "HomePage Admin",
         "Profile",
-        "Identify Management",
+        "System Management",
         "User Management",
         "Schedule Management",
         "Class Management",
@@ -61,7 +61,7 @@ function useNavBarHook() {
         return navigate("/Profile");
       case "User Management":
         return navigate("/UserManagement");
-      case "Identify Management":
+      case "System Management":
         return navigate("/IdentifyManagement");
       case "Schedule":
         return navigate("/Schedule");
