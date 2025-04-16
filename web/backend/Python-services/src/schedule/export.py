@@ -399,9 +399,9 @@ def write_teacher_schedule(csvfile, entries, db):
         
         # Get class name
         class_name = ""
-        class_info = db.Class.find_one({"ClassID": entry.get('classId')})
+        class_info = db.Class.find_one({"classId": entry.get('classId')})
         if class_info:
-            class_name = class_info.get('ClassName', '')
+            class_name = class_info.get('className', '')
             
         # Get subject name
         subject_name = ""
@@ -457,8 +457,8 @@ def export_semester_schedules(db, semester, output_dir="src/data/schedules"):
     
     # Export each class schedule
     for class_id, entries in class_schedules.items():
-        class_info = db.Class.find_one({"ClassID": class_id})
-        filename = f"{output_dir}/class_{class_id}_{class_info.get('ClassName', '')}.csv"
+        class_info = db.Class.find_one({"classId": class_id})
+        filename = f"{output_dir}/class_{class_id}_{class_info.get('className', '')}.csv"
         try:
             with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
                 # Write class schedule
@@ -514,19 +514,18 @@ def export_all_schedules(db, output_base_dir="exports"):
             '$lookup': {
                 'from': 'Batch',
                 'localField': 'batchId',
-                'foreignField': 'BatchID',
+                'foreignField': 'batchId',
                 'as': 'batch'
             }
         },
         {
             '$project': {
-                'semesterId': 1,
                 'semesterName': 1,
                 'batchId': 1,
                 'startDate': 1,
                 'endDate': 1,
                 'curriculumId': 1,
-                'batchName': {'$ifNull': [{'$arrayElemAt': ['$batch.batchName', 0]}, '']}
+                'batch': {'$arrayElemAt': ['$batch', 0]}
             }
         }
     ]

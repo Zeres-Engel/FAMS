@@ -141,6 +141,7 @@ COLLECTIONS = {
         'CAPTURED_DATE': 'capturedDate',
         
         # Model version fields
+        'MODEL_ID': 'modelId',
         'MODEL_NAME': 'modelName',
         'VERSION': 'version',
         'DEPLOYMENT_DATE': 'deploymentDate',
@@ -151,9 +152,15 @@ COLLECTIONS = {
         'DEVICE_ID': 'deviceId',
         'DEVICE_NAME': 'deviceName',
         'DEVICE_TYPE': 'deviceType',
-        'LOCATION': 'location'
+        'LOCATION': 'location',
+        'STATUS': 'status',
+        
+        # RFID fields
+        'RFID_ID': 'rfidId',
+        'ISSUE_DATE': 'issueDate',
+        'EXPIRY_DATE': 'expiryDate'
     }
 }
 
-# Fix the scheduling slot collection name - was incorrectly duplicated
-COLLECTIONS['SLOT'] = 'ScheduleFormat' 
+# Đổi tên collection ScheduleFromat (trong SQL) thành ScheduleFormat (đúng chính tả)
+COLLECTIONS['SCHEDULE_FORMAT'] = 'ScheduleFormat' 

@@ -146,39 +146,31 @@ def generate_semesters(db):
     semester_docs = []
     current_date = datetime.datetime.now()
     
-    batch_semester = [
-        {"BatchID": 3, "CurriculumID": 10, "EndYear": 2026},
-        {"BatchID": 2, "CurriculumID": 11, "EndYear": 2025},
-        {"BatchID": 1, "CurriculumID": 12, "EndYear": 2024}
+    # Define batch-curriculum mappings
+    bs_mapping = [
+        {"batchId": 3, "curriculumId": 10, "endYear": 2026},
+        {"batchId": 2, "curriculumId": 11, "endYear": 2025},
+        {"batchId": 1, "curriculumId": 12, "endYear": 2024}
     ]
     
-    for bs in batch_semester:
-        graduation_date = datetime.datetime(bs["EndYear"] + 1, 6, 15)
+    # Create semester 1 and 2 for each batch/year
+    for bs in bs_mapping:
+        semester_list = []
         
-        if current_date <= graduation_date:
-            if current_date.month < 9:
-                academic_year_start = current_date.year - 1
-            else:
-                academic_year_start = current_date.year
-                
-            sem1_start = datetime.datetime(academic_year_start, 9, 1)
-            sem1_end = datetime.datetime(academic_year_start + 1, 1, 15)
-            sem2_start = datetime.datetime(academic_year_start + 1, 2, 1)
-            sem2_end = datetime.datetime(academic_year_start + 1, 6, 15)
+        for idx, (s, e) in enumerate(semester_dates(bs["endYear"]), 1):
+            sem_doc = {
+                "semesterName": f"Học kỳ {idx}",
+                "startDate": s,
+                "endDate": e,
+                "curriculumId": bs["curriculumId"],
+                "batchId": bs["batchId"]
+            }
+            semester_list.append(sem_doc)
+            sem = db.Semester.find_one({"semesterName": sem_doc["semesterName"], "batchId": bs["batchId"]})
             
-            for idx, (s, e) in enumerate([(sem1_start, sem1_end), (sem2_start, sem2_end)], start=1):
-                sem_doc = {
-                    "SemesterName": f"Học kỳ {idx}",
-                    "StartDate": s,
-                    "EndDate": e,
-                    "CurriculumID": bs["CurriculumID"],
-                    "BatchID": bs["BatchID"]
-                }
-                
+            if not sem and current_date.year < bs['endYear']:
                 db.Semester.insert_one(sem_doc)
-                sem = db.Semester.find_one({"SemesterName": sem_doc["SemesterName"], "BatchID": bs["BatchID"]})
-                semester_docs.append(sem)
-        else:
-            print(f"[INFO] Batch {bs['BatchID']} đã ra trường. Bỏ qua tạo thời khóa biểu.")
-            
+            elif current_date.year >= bs['endYear']:
+                print(f"[INFO] Batch {bs['batchId']} đã ra trường. Bỏ qua tạo thời khóa biểu.")
+                
     return semester_docs 

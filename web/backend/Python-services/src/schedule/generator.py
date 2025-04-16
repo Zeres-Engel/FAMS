@@ -312,7 +312,7 @@ def generate_semesters(db):
     
     # For each batch, create 6 semesters (3 years x 2 semesters)
     for batch in batches:
-        batch_id = batch.get('BatchID') or batch.get('batchId')
+        batch_id = batch.get('batchId')
         if not batch_id:
             continue
             
@@ -368,8 +368,8 @@ def generate_all_schedules(db, semesters, output_dir="src/data/schedules"):
     
     for sem in semesters:
         # Generate schedule for this semester
-        semester_name = sem.get('semesterName') or sem.get('SemesterName', 'Unknown')
-        batch_id = sem.get('batchId') or sem.get('BatchID', 'Unknown')
+        semester_name = sem.get('semesterName', 'Unknown')
+        batch_id = sem.get('batchId', 'Unknown')
         
         print(f"[SCHEDULE] Generating schedule for semester {semester_name} of Batch {batch_id}...")
         scheds, warnings = generate_schedule(db, sem, total_weeks=18)

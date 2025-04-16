@@ -139,36 +139,35 @@ def generate_schedule(db, semester_doc, total_weeks=18):
     logger.info(f"Generating schedule for semester {semester_doc.get('semesterName')}")
     
     # Get batch ID (handle both 'batchId' and 'BatchID')
-    batch_id = semester_doc.get('batchId') or semester_doc.get('BatchID')
+    batch_id = semester_doc.get('batchId')
+    
     if not batch_id:
         error_msg = f"No batchId found in semester document: {semester_doc}"
         logger.error(error_msg)
         raise ValueError(error_msg)
     
-    logger.info(f"Using batch ID: {batch_id}")
+    # Handle both camelCase and PascalCase for class collection
+    # First try the Class collection
+    db_class = db['Class']
     
-    # Get curriculum ID
-    curriculum_id = semester_doc.get('curriculumId')
-    if not curriculum_id:
-        # Map batch to curriculum (assuming batch 1=12, 2=11, 3=10)
-        curriculum_map = {"1": "12", "2": "11", "3": "10"}
-        curriculum_id = curriculum_map.get(str(batch_id), "10")
-        logger.info(f"No curriculum found, using default mapping: Batch {batch_id} -> Curriculum {curriculum_id}")
-    else:
-        logger.info(f"Using curriculum ID: {curriculum_id}")
+    try:
+        # Try first with batch_id 
+        classes = list(db_class.find({"batchId": batch_id}))
+        
+        if not classes:
+            logger.info(f"No classes found for batchId: {batch_id}")
+    except Exception as e:
+        logger.error(f"Error querying classes: {str(e)}")
+        classes = []
     
-    # Load resources
-    classes = list(db.Class.find({"BatchID": batch_id}))
-    if not classes:
-        classes = list(db.Class.find({"batchId": batch_id}))
+    logger.info(f"Found {len(classes)} classes for batch: {batch_id}")
     
-    if not classes:
-        logger.error(f"No classes found for batch {batch_id}")
-        return [], [f"No classes found for batch {batch_id}"]
-    
-    logger.info(f"Found {len(classes)} classes for batch {batch_id}")
-    for c in classes[:3]:  # Log a few sample classes
-        class_id = c.get("classId") or c.get("ClassID")
+    for c in classes:
+        class_id = c.get("classId")
+        if not class_id:
+            logger.error(f"Class missing classId: {c}")
+            continue
+        
         class_name = c.get("ClassName", "Unknown")
         logger.info(f"  - Class: {class_name} (ID: {class_id})")
     
@@ -183,16 +182,16 @@ def generate_schedule(db, semester_doc, total_weeks=18):
     
     # Get curriculum subjects and sessions needed
     curriculum_subjects = {}
-    for cs in db.CurriculumSubject.find({"curriculumId": curriculum_id}):
+    for cs in db.CurriculumSubject.find({"curriculumId": c.get('curriculumId')}):
         subject_id = cs.get("subjectId")
         if subject_id:
             curriculum_subjects[subject_id] = cs.get("sessions", 3)
     
     if not curriculum_subjects:
-        logger.error(f"No curriculum subjects found for curriculum {curriculum_id}")
-        return [], [f"No curriculum subjects found for curriculum {curriculum_id}"]
+        logger.error(f"No curriculum subjects found for curriculum {c.get('curriculumId')}")
+        return [], [f"No curriculum subjects found for curriculum {c.get('curriculumId')}"]
     
-    logger.info(f"Found {len(curriculum_subjects)} subjects in curriculum {curriculum_id}")
+    logger.info(f"Found {len(curriculum_subjects)} subjects in curriculum {c.get('curriculumId')}")
     
     # Map subjects to their details
     subjects_map = {s.get("subjectId"): s for s in db.Subject.find()}
@@ -210,7 +209,11 @@ def generate_schedule(db, semester_doc, total_weeks=18):
     # Class needs for subjects
     class_needs = {}
     for c in classes:
-        class_id = c.get("classId") or c.get("ClassID")
+        class_id = c.get("classId")
+        if not class_id:
+            logger.error(f"Class missing classId: {c}")
+            continue
+        
         class_needs[class_id] = {subj_id: sessions for subj_id, sessions in curriculum_subjects.items()}
     
     # Initialize schedule generation
@@ -276,8 +279,9 @@ def generate_schedule(db, semester_doc, total_weeks=18):
             
             # Process each class
             for class_doc in classes:
-                class_id = class_doc.get("classId") or class_doc.get("ClassID")
+                class_id = class_doc.get("classId")
                 if not class_id:
+                    logger.error(f"Class missing classId: {class_doc}")
                     continue
                 
                 # Skip if no subjects left for this class
