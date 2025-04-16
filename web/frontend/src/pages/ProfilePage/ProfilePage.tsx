@@ -1,99 +1,155 @@
-import { Container, Grid, Typography } from "@mui/material";
+import {
+  Box,
+  Container,
+  Typography,
+  TextField,
+  Button,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import React from "react";
-import "./ProfilePage.scss";
+import useProfilePageHook from "./useProfilePageHook";
 import LayoutComponent from "../../components/Layout/Layout";
+// import "./ProfilePage.scss";
 function ProfilePage(): React.JSX.Element {
+  const {
+    state: { profileData, isEditing },
+    handler: { toggleEdit, setProfileData },
+  } = useProfilePageHook();
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!profileData) return;
+    const { name, value } = e.target;
+    setProfileData({ ...profileData, [name]: value });
+  };
+
   return (
-    <LayoutComponent  pageHeader="Profile Information">
-      <Container maxWidth={false} className="profilePage-Container">
-        <Grid container size={12} className="profilePage-Grid">
-          <Grid size={4} className="profile-Left">
-            <Grid size={12} className="profile-Img">
+    <LayoutComponent pageHeader="Profile Information">
+      <Container
+        maxWidth="lg"
+        sx={{
+          minHeight: "80vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Box
+          display="flex"
+          flexDirection={isMobile ? "column" : "row"}
+          gap={4}
+          width="100%"
+          justifyContent="center"
+          alignItems="center"
+        >
+          {/* LEFT PANEL */}
+          <Box
+            flex={1}
+            sx={{
+              minWidth: isMobile ? "100%" : 300,
+              bgcolor: "#fff",
+              borderRadius: 4,
+              boxShadow: 3,
+              p: 4,
+              textAlign: "center",
+            }}
+          >
+            <Box
+              sx={{
+                width: isMobile ? 120 : 160,
+                height: isMobile ? 120 : 160,
+                borderRadius: "50%",
+                overflow: "hidden",
+                mx: "auto",
+                mb: 2,
+              }}
+            >
               <img
-                src="https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"
+                src={profileData.avatarUrl}
                 alt="User Avatar"
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
-            </Grid>
-            <Grid size={9} container className="img-information">
-              <Grid size={2} className="img-infor-left">
-                <Typography component="div" className="img-infor-item-left">
-                  Name:
-                </Typography>
-                <Typography component="div" className="img-infor-item-left">
-                  ID:
-                </Typography>
-                <Typography component="div" className="img-infor-item-left">
-                  Batch:
-                </Typography>
-                <Typography component="div" className="img-infor-item-left">
-                  Class:
-                </Typography>
-              </Grid>
-              <Grid className="img-infor-item-right">
-                <Typography component="div">Nguyễn Văn A</Typography>
-                <Typography component="div">A001</Typography>
-                <Typography component="div">2025-2026</Typography>
-                <Typography component="div">AI002</Typography>
-              </Grid>
-            </Grid>
-          </Grid>
-          <Grid size={6} className="profile-Right">
-            <Grid size={3} className="profile-Right-Infor">
-              <Typography component="div" className="infor-item-left">
-                User ID:
-              </Typography>
-              <Typography component="div" className="infor-item-left">
-                Username:
-              </Typography>
-              <Typography component="div" className="infor-item-left">
-                Full name:
-              </Typography>
-              <Typography component="div" className="infor-item-left">
-                Date Of Birth:
-              </Typography>
-              <Typography component="div" className="infor-item-left">
-                Gender:
-              </Typography>
-              <Typography component="div" className="infor-item-left">
-                Class ID:
-              </Typography>
-              <Typography component="div" className="infor-item-left">
-                Address:
-              </Typography>
-              <Typography component="div" className="infor-item-left">
-                Phone:
-              </Typography>
-            </Grid>
-            <Grid size={6} className="profile-Right-Infor-Main">
-              <Typography component="div" className="infor-item-right">
-                A001
-              </Typography>
-              <Typography component="div" className="infor-item-right">
-                Ahihi123
-              </Typography>
-              <Typography component="div" className="infor-item-right">
-                Nguyễn Văn A
-              </Typography>
-              <Typography component="div" className="infor-item-right">
-                1/04/2003
-              </Typography>
-              <Typography component="div" className="infor-item-right">
-                Male
-              </Typography>
-              <Typography component="div" className="infor-item-right">
-                AI002
-              </Typography>
-              <Typography component="div" className="infor-item-right">
-                Chung cư xã hội An Phú Thịnh
-              </Typography>
-              <Typography component="div" className="infor-item-right">
-                0123456789
-              </Typography>
-            </Grid>
-          </Grid>
-        </Grid>
+            </Box>
+            <Typography variant="h6">{profileData.fullName}</Typography>
+            <Typography color="textSecondary">ID: {profileData.id}</Typography>
+            <Typography color="textSecondary">
+              Batch: {profileData.batch}
+            </Typography>
+            <Typography color="textSecondary">
+              Class: {profileData.classId}
+            </Typography>
+          </Box>
+
+          {/* RIGHT PANEL */}
+          <Box
+            flex={2}
+            sx={{
+              minWidth: isMobile ? "100%" : 500,
+              bgcolor: "#fff",
+              borderRadius: 4,
+              boxShadow: 3,
+              p: 4,
+            }}
+          >
+            <Box
+              component="form"
+              display="flex"
+              flexDirection="column"
+              gap={2}
+              sx={{ width: "100%" }}
+            >
+              {[
+                { label: "User ID", key: "id" },
+                { label: "Username", key: "username" },
+                { label: "Full name", key: "fullName" },
+                { label: "Date Of Birth", key: "dob" },
+                { label: "Gender", key: "gender" },
+                { label: "Class ID", key: "classId" },
+                { label: "Address", key: "address" },
+                { label: "Phone", key: "phone" },
+              ].map(({ label, key }) => (
+                <Box
+                  key={key}
+                  display="flex"
+                  flexDirection={isMobile ? "column" : "row"}
+                  gap={2}
+                  alignItems={isMobile ? "flex-start" : "center"}
+                >
+                  <Box minWidth={isMobile ? "auto" : 120}>
+                    <Typography fontWeight={600}>{label}:</Typography>
+                  </Box>
+                  <Box flex={1}>
+                    {isEditing ? (
+                      <TextField
+                        fullWidth
+                        size="small"
+                        name={key}
+                        value={profileData[key as keyof typeof profileData]}
+                        onChange={handleChange}
+                      />
+                    ) : (
+                      <Typography>
+                        {profileData[key as keyof typeof profileData]}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              ))}
+
+              <Box textAlign="right" mt={2}>
+                <Button variant="contained" onClick={toggleEdit}>
+                  {isEditing ? "Save" : "Edit"}
+                </Button>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
       </Container>
     </LayoutComponent>
   );
 }
+
 export default ProfilePage;

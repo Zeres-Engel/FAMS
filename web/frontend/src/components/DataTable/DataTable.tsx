@@ -17,6 +17,9 @@ import TableToolBar from "./TableToolBar/TableToolBar";
 import useDataTableHook from "./useDataTableHook";
 import TableHeader from "./TableHeader/TableHeader";
 import {
+  AttendanceHeadCell,
+  AttendanceLog,
+  ClassHeadCell,
   Data,
   HeadCell,
   UserHeadCell,
@@ -31,10 +34,16 @@ import {
   UserData,
 } from "../../model/userModels/userDataModels.model";
 import useState from "react";
+import { ClassData } from "../../model/classModels/classModels.model";
+import EditAttendanceForm from "./EditAttendanceForm/EditAttendanceForm";
 
 interface DataTableProps {
-  headCellsData: HeadCell[] | UserHeadCell[];
-  tableMainData: UserData[] | Data[];
+  headCellsData:
+    | HeadCell[]
+    | UserHeadCell[]
+    | ClassHeadCell[]
+    | AttendanceHeadCell[];
+  tableMainData: UserData[] | Data[] | ClassData[] | AttendanceLog[];
   tableTitle: string;
   isCheckBox: boolean;
   isAdmin?: boolean;
@@ -42,6 +51,7 @@ interface DataTableProps {
   isAttendance?: boolean;
   isUserManagement?: boolean;
   setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
+  isRoleTeacher?: boolean;
 }
 
 export default function DataTable({
@@ -53,11 +63,12 @@ export default function DataTable({
   isClassManagement,
   isAttendance,
   isUserManagement,
+  isRoleTeacher,
   setFiltersUser,
 }: DataTableProps) {
   const { state, handler } = useDataTableHook({ tableMainData });
 
-  const renderActionCell = (row: any) =>  (
+  const renderActionCell = (row: any) => (
     <TableCell align="left">
       <Button
         variant="outlined"
@@ -68,9 +79,22 @@ export default function DataTable({
           e.preventDefault();
           isClassManagement
             ? handler.handleEditClassClick({
-                className: row.name,
-                batch: row.batch,
-                teacherId: row.teacherId,
+                className: row.className,
+                grade: row.grade,
+                teacherId: row.homeroomTeacherd,
+                academicYear: row.academicYear,
+              })
+            : isAttendance && isRoleTeacher
+            ? handler.handleEditAttendanceClick({
+                attendanceId: row.attendanceId,
+                scheduleId: row.scheduleId,
+                userId: row.userId,
+                fullName: row.fullName,
+                face: row.face,
+                checkin: row.checkin,
+                status: row.status,
+                note: row.note || "",
+                checkinFace: row.checkinFace || "",
               })
             : handler.handleEditClick(row, row?.id);
         }}
@@ -98,24 +122,43 @@ export default function DataTable({
           formData={state.editingClass}
         />
       )}
-
-      <Button
-        variant="outlined"
-        color="error"
-        size="small"
-        onClick={e => {
-          e.stopPropagation();
-          handler.handleDeleteClick(row);
-        }}
-      >
-        Delete
-      </Button>
-
+      {state.isEditOpen &&
+        isAttendance &&
+        state.editingClass &&
+        isRoleTeacher && (
+          <EditAttendanceForm
+            open={state.isEditOpen}
+            onClose={() => handler.setIsEditOpen(false)}
+            onSave={handler.handleEditAttendanceSave}
+            formData={state.editingAttendance}
+          />
+        )}
+      {!isRoleTeacher && (
+        <Button
+          variant="outlined"
+          color="error"
+          size="small"
+          onClick={e => {
+            e.stopPropagation();
+            handler.handleDeleteClick(row);
+          }}
+        >
+          Delete
+        </Button>
+      )}
       {state.isDeleteDialogOpen && state.selectedUserToDelete && (
         <DeleteUserDialog
           open={state.isDeleteDialogOpen}
           onClose={() => handler.setIsDeleteDialogOpen(false)}
-          onConfirm={handler.handleConfirmDelete}
+          onConfirm={() =>
+            handler.handleConfirmDelete(
+              isUserManagement
+                ? "userDelete"
+                : isClassManagement
+                ? "classDelete"
+                : "nothing"
+            )
+          }
           userName={state.selectedUserToDelete.name}
         />
       )}
@@ -154,11 +197,57 @@ export default function DataTable({
       <TableCell align="left">{row.updatedAt}</TableCell>
     </>
   );
-
   const renderClassManagementCells = (row: any) => (
     <>
-      <TableCell align="left">{row.teacherId}</TableCell>
-      <TableCell align="left">{row.batch}</TableCell>
+      <TableCell align="left">{row.className}</TableCell>
+      <TableCell align="left">{row.grade}</TableCell>
+      <TableCell align="left">{row.homeroomTeacherd || "none"}</TableCell>
+      <TableCell align="left">{row.batchId}</TableCell>
+      <TableCell align="left">{row.academicYear}</TableCell>
+      <TableCell align="left">{row.createdAt}</TableCell>
+    </>
+  );
+  const renderAttendanceManagementCells = (row: any) => (
+    <>
+      <TableCell align="left">{row.scheduleId}</TableCell>
+      <TableCell align="left">
+        <img
+          src={
+            row.face
+              ? row.face
+              : `https://www.pngplay.com/wp-content/uploads/12/User-Avatar-Profile-Transparent-Clip-Art-PNG.png`
+          }
+          alt="User Avatar"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            objectFit: "cover",
+          }}
+        />
+      </TableCell>
+      <TableCell align="left">
+        <img
+          src={
+            row.checkinFace
+              ? row.checkinFace
+              : `https://www.pngplay.com/wp-content/uploads/12/User-Avatar-Profile-Transparent-Clip-Art-PNG.png`
+          }
+          alt="Checkin Face"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            objectFit: "cover",
+          }}
+        />
+      </TableCell>
+      <TableCell align="left">{row.userId || "none"}</TableCell>
+      {row?.fullName && (
+        <TableCell align="left">{row?.fullName || "none"}</TableCell>
+      )}
+      <TableCell align="left">{row.checkin || "none"}</TableCell>
+      <TableCell align="left">{row.status}</TableCell>
     </>
   );
 
@@ -173,6 +262,7 @@ export default function DataTable({
           isClassManagement={isClassManagement}
           isAttendance={isAttendance}
           setFiltersUser={setFiltersUser}
+          isTeacher={isRoleTeacher}
         />
         <TableContainer>
           <Table sx={{ minWidth: 850 }} aria-labelledby="tableTitle">
@@ -186,6 +276,7 @@ export default function DataTable({
               headCellsData={headCellsData}
               isCheckBox={isCheckBox}
               isAdmin={isAdmin}
+              isTeacher={isRoleTeacher}
             />
             <TableBody>
               {state.visibleRows.map((row, index) => {
@@ -194,17 +285,20 @@ export default function DataTable({
                   <TableRow
                     hover
                     tabIndex={-1}
-                    key={row.id}
+                    key={row?.id}
                     sx={{ cursor: "pointer" }}
                   >
                     {renderCommonCells(row, labelId)}
                     {isUserManagement && renderUserManagementCells(row)}
-                    {/* {isClassManagement && renderClassManagementCells(row)} */}
                     {isAdmin &&
                       !isAttendance &&
                       isUserManagement &&
                       row?.role !== "admin" &&
                       renderActionCell(row)}
+                    {isClassManagement && renderClassManagementCells(row)}
+                    {isClassManagement && renderActionCell(row)}
+                    {isAttendance && renderAttendanceManagementCells(row)}
+                    {isAttendance && isRoleTeacher && renderActionCell(row)}
                   </TableRow>
                 );
               })}

@@ -9,6 +9,9 @@ import {
   TableSortLabel,
 } from "@mui/material";
 import {
+  AttendanceHeadCell,
+  AttendanceLog,
+  ClassHeadCell,
   Data,
   HeadCell,
   Order,
@@ -17,20 +20,23 @@ import {
 import useTableHeaderHook from "./useTableHeaderHook";
 import { visuallyHidden } from "@mui/utils";
 import { UserData } from "../../../model/userModels/userDataModels.model";
+import { ClassData } from "../../../model/classModels/classModels.model";
+import { A } from "react-router/dist/development/route-data-BL8ToWby";
 
 interface EnhancedTableProps {
   numSelected: number;
   onRequestSort: (
     event: React.MouseEvent<unknown>,
-    property: keyof Data | keyof UserData
+    property: keyof Data | keyof UserData |keyof ClassData | keyof AttendanceLog
   ) => void;
   onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
   order: Order;
   orderBy: string;
   rowCount: number;
-  headCellsData: HeadCell[] | UserHeadCell[];
+  headCellsData: HeadCell[] | UserHeadCell[] | ClassHeadCell[] | AttendanceHeadCell[];
   isCheckBox: boolean;
   isAdmin?: boolean;
+  isTeacher?: boolean;
 }
 
 function TableHeader(props: EnhancedTableProps): React.JSX.Element {
@@ -44,6 +50,7 @@ function TableHeader(props: EnhancedTableProps): React.JSX.Element {
     headCellsData,
     isCheckBox,
     isAdmin,
+    isTeacher,
   } = props;
 
   const { state, handler } = useTableHeaderHook({
@@ -90,7 +97,8 @@ function TableHeader(props: EnhancedTableProps): React.JSX.Element {
         ))}
 
         {/* 👇 Thêm cột Action nếu là admin */}
-        {isAdmin && <TableCell align="left">Action</TableCell>}
+        {isAdmin &&  <TableCell align="left">Action</TableCell>}
+        {isTeacher &&  <TableCell align="left">Action</TableCell>}
       </TableRow>
     </TableHead>
   );

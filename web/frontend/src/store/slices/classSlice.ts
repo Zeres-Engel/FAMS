@@ -26,7 +26,23 @@ export const fetchClasses = createAsyncThunk(
       thunkAPI.dispatch(
         addNotify({ type: "success", message: "Fetched all classes successfully", duration: 3000 })
       );
-      return response.data.data;
+      const formattedData:ClassData[] = []
+      for (let e = 0; e < response.data.data.length; e++) {
+        const element = response.data.data[e];
+        formattedData.push({
+          _id: element.classId,
+          id: element.classId,
+          className: element.className,
+          grade: element.grade,
+          homeroomTeacherd: element.homeroomTeacherd,
+          createdAt: element.createdAt,
+          updatedAt: element.updatedAt,
+          academicYear: element.academicYear,
+          batchId: element.batchId,
+          name: element.className,
+        });
+      }
+      return formattedData;
     } catch (error: any) {
       thunkAPI.dispatch(
         addNotify({ type: "error", message: "Failed to fetch classes", duration: 3000 })
@@ -46,8 +62,8 @@ export const searchClasses = createAsyncThunk(
       const params = new URLSearchParams();
       if (filters.search) params.append("search", filters.search);
       if (filters.grade) params.append("grade", filters.grade);
-      if (filters.homeroomTeacherd) params.append("homeroomTeacherd", filters.homeroomTeacherd);
-
+      if (filters.homeroomTeacherd) params.append("homeroomTeacherid", filters.homeroomTeacherd);
+      
       const response = await axiosInstance.get(`/classes?${params}`);
       thunkAPI.dispatch(
         addNotify({ type: "success", message: "Searched classes successfully", duration: 3000 })

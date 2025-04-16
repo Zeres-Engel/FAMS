@@ -127,7 +127,7 @@ export const createUser = createAsyncThunk(
 );
 export const deleteUser = createAsyncThunk(
   "user/deleteUser",
-  async (username: string|number, thunkAPI) => {
+  async (username: string|number|undefined, thunkAPI) => {
     try {
       thunkAPI.dispatch(showLoading());
       const response = await axiosInstance.delete(`/users/${username}`);

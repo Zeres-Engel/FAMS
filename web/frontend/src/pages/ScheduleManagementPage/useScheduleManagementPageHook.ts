@@ -15,8 +15,10 @@ const defaultEvent: ScheduleEvent = {
   teacher: "",
   classroomNumber: "", 
 };
-
 function useScheduleManagementPageHook() {
+  const {lichThuHai, lichThuTu,lichThuSau} = require("./ScheduleSampleData")
+  const fakeEvent: ScheduleEvent[] = [...lichThuHai, ...lichThuTu, ...lichThuSau];
+
   const dispatch = useDispatch<AppDispatch>();
 
   const [eventShow, setEventShow] = useState<ScheduleEvent>(defaultEvent);
@@ -29,13 +31,14 @@ function useScheduleManagementPageHook() {
   const loading = useSelector((state: RootState) => state.schedule.loading);
   const error = useSelector((state: RootState) => state.schedule.error);
   const classes = useSelector((state: RootState) => state.class.classes);
-  const [events, setEvents] = useState<ScheduleEvent[]>([]); // hiển thị tạm thời từ Redux
+  // const [events, setEvents] = useState<ScheduleEvent[]>([]);
+  const [events, setEvents] = useState<ScheduleEvent[]>(fakeEvent); // hiển thị tạm thời từ Redux
 
   // const classOptions = ["10A1", "10A2", "11B1", "12C1"];
   const classOptions = classes?.map(c => c.className) || [];
   useEffect(() => {
     if (!classes) {
-      dispatch(fetchClasses());
+      // dispatch(fetchClasses());
     }
   }, [dispatch, classes]);
   // 👇 Handler để gọi API

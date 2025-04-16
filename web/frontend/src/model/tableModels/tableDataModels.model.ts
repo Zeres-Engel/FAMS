@@ -1,4 +1,6 @@
+import { ClassData } from "../classModels/classModels.model";
 import { UserData } from "../userModels/userDataModels.model";
+import EditAttendanceForm from "../../components/DataTable/EditAttendanceForm/EditAttendanceForm";
 
 type Order = "asc" | "desc";
 interface Data {
@@ -11,9 +13,34 @@ interface Data {
   updatedAt: string;
   // action?:string
 }
+type AttendanceStatus = "Present" | "Late" | "Absent";
+interface AttendanceLog {
+  id: string;
+  attendanceId: number;
+  scheduleId: number;
+  userId: number;
+  face: string | null; // Base64 hoặc binary encoded string
+  checkin: string | null; // ISO datetime string (e.g. "2025-04-16T07:05:00")
+  status: AttendanceStatus;
+  checkinFace:string;
+  role?: string;
+  fullName?: string;
+}
 interface HeadCell {
   disablePadding: boolean;
   id: keyof Data;
+  label: string;
+  numeric: boolean;
+}
+interface AttendanceHeadCell {
+  disablePadding: boolean;
+  id: keyof AttendanceLog;
+  label: string;
+  numeric: boolean;
+}
+interface ClassHeadCell {
+  disablePadding: boolean;
+  id: keyof ClassData;
   label: string;
   numeric: boolean;
 }
@@ -26,7 +53,19 @@ interface UserHeadCell {
 interface editClassForm {
   className: string;
   teacherId: string;
-  batch: string;
+  academicYear: string;
+  grade: string;
+}
+interface EditAttendanceFormProps {
+  attendanceId: number;
+  scheduleId: number;
+  userId: number;
+  fullName: string;
+  face: string | null;
+  checkin: string;
+  status: AttendanceStatus;
+  note: string;
+  checkinFace: string;
 }
 interface AddUserForm {
   fullName: string;
@@ -80,4 +119,9 @@ export type {
   UserHeadCell,
   EditUserForm,
   EditTeacherForm,
+  ClassHeadCell,
+  AttendanceHeadCell,
+  AttendanceLog,
+  EditAttendanceFormProps,
+  AttendanceStatus,
 };

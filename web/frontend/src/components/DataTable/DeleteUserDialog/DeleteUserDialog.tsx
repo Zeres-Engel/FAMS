@@ -12,7 +12,7 @@ interface DeleteUserDialogProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
-  userName: string;
+  userName: string | undefined;
 }
 
 export default function DeleteUserDialog({

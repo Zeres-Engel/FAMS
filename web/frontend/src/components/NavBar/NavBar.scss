@@ -24,6 +24,40 @@
   & .navBar-Item-Font{
     color: #1b78ec;
   }
+  .navBar-Item-Font {
+    font-size: .9rem;
+    @media (max-width: 1800px) {
+      font-size: 0.8rem;
+    }
+    @media (max-width: 1600px) {
+      font-size: 0.7rem;
+    }
+    @media (max-width: 1500px) {
+      font-size: 0.65rem;
+    }
+    @media (max-width: 1200px) {
+      font-size: 0.9rem;
+    }
+    @media (max-width: 1200px) {
+      font-size: 0.9rem;
+    }
+  
+    @media (max-width: 900px) {
+      font-size: 0.8rem;
+    }
+  }
+  
+  .navBar-Logo-font {
+    font-size: 1.7rem;
+  
+    @media (max-width: 1200px) {
+      font-size: 1.4rem;
+    }
+  
+    @media (max-width: 900px) {
+      font-size: 1.2rem;
+    }
+  }
   & .navBar-MB-Icon{
     color: var(--font-color-black);
     font-size: 1.3em;
