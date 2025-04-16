@@ -366,6 +366,14 @@ def generate_all_schedules(db, semesters, output_dir="src/data/schedules"):
     """
     total_entries = 0
     
+    # Ensure output directory exists
+    try:
+        os.makedirs(output_dir, exist_ok=True)
+    except PermissionError:
+        print(f"[WARNING] Permission denied when creating {output_dir}. Using /tmp/schedules")
+        output_dir = "/tmp/schedules"
+        os.makedirs(output_dir, exist_ok=True)
+    
     for sem in semesters:
         # Generate schedule for this semester
         semester_name = sem.get('semesterName', 'Unknown')
@@ -383,7 +391,8 @@ def generate_all_schedules(db, semesters, output_dir="src/data/schedules"):
         # Export schedule to CSV if possible
         try:
             from .export import export_semester_schedules
-            export_semester_schedules(db, sem, output_dir)
+            teachers_count, class_count = export_semester_schedules(db, sem, output_dir)
+            print(f"[INFO] Exported {teachers_count} teacher schedules and {class_count} class schedules")
         except Exception as e:
             print(f"[WARNING] Failed to export schedules: {str(e)}")
             print("[WARNING] Schedule export failed, but database initialization continues.")

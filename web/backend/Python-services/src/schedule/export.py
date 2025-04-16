@@ -430,7 +430,12 @@ def export_semester_schedules(db, semester, output_dir="src/data/schedules"):
     print(f"[INFO] Exporting schedules for semester {semester.get('semesterName', 'Unknown')} (ID: {semester.get('semesterId', None)})")
     
     # Create output directory if it doesn't exist
-    os.makedirs(output_dir, exist_ok=True)
+    try:
+        os.makedirs(output_dir, exist_ok=True)
+    except PermissionError:
+        print(f"[WARNING] Permission denied when creating directory {output_dir}. Using /tmp/schedules instead.")
+        output_dir = "/tmp/schedules"
+        os.makedirs(output_dir, exist_ok=True)
     
     # Get all schedule entries for this semester
     schedule_entries = list(db.ClassSchedule.find({
@@ -455,6 +460,10 @@ def export_semester_schedules(db, semester, output_dir="src/data/schedules"):
             teacher_schedules[teacher_id] = []
         teacher_schedules[teacher_id].append(entry)
     
+    # Count of exported files
+    exported_teacher_count = 0
+    exported_class_count = 0
+    
     # Export each class schedule
     for class_id, entries in class_schedules.items():
         class_info = db.Class.find_one({"classId": class_id})
@@ -464,8 +473,17 @@ def export_semester_schedules(db, semester, output_dir="src/data/schedules"):
                 # Write class schedule
                 write_class_schedule(csvfile, entries, db)
             print(f"[INFO] Exported class schedule to {filename}")
+            exported_class_count += 1
         except PermissionError as e:
-            print(f"[ERROR] Permission denied when exporting class schedule to {filename}: {str(e)}")
+            # Try alternative directory if permission denied
+            alt_filename = f"/tmp/class_{class_id}_{class_info.get('className', '')}.csv"
+            try:
+                with open(alt_filename, 'w', newline='', encoding='utf-8') as csvfile:
+                    write_class_schedule(csvfile, entries, db)
+                print(f"[INFO] Exported class schedule to alternative location: {alt_filename}")
+                exported_class_count += 1
+            except Exception as e2:
+                print(f"[ERROR] Failed to export class schedule to alternative location: {str(e2)}")
         except Exception as e:
             print(f"[ERROR] Failed to export class schedule to {filename}: {str(e)}")
     
@@ -481,14 +499,23 @@ def export_semester_schedules(db, semester, output_dir="src/data/schedules"):
                     # Write teacher schedule
                     write_teacher_schedule(csvfile, entries, db)
                 print(f"[INFO] Exported teacher schedule to {filename}")
+                exported_teacher_count += 1
             except PermissionError as e:
-                print(f"[WARNING] Permission denied when exporting teacher schedule to {filename}: {str(e)}")
+                # Try alternative directory if permission denied
+                alt_filename = f"/tmp/teacher_{teacher_id}_{first_name}_{last_name}.csv"
+                try:
+                    with open(alt_filename, 'w', newline='', encoding='utf-8') as csvfile:
+                        write_teacher_schedule(csvfile, entries, db)
+                    print(f"[INFO] Exported teacher schedule to alternative location: {alt_filename}")
+                    exported_teacher_count += 1
+                except Exception as e2:
+                    print(f"[ERROR] Failed to export teacher schedule to alternative location: {str(e2)}")
             except Exception as e:
                 print(f"[ERROR] Failed to export teacher schedule to {filename}: {str(e)}")
         else:
             print(f"[WARNING] Teacher information not found for ID: {teacher_id}")
     
-    return len(schedule_entries)
+    return exported_teacher_count, exported_class_count
 
 
 def export_all_schedules(db, output_base_dir="exports"):
@@ -505,8 +532,13 @@ def export_all_schedules(db, output_base_dir="exports"):
     print("[INFO] Exporting all schedules...")
     
     # Create output directory
-    if not os.path.exists(output_base_dir):
-        os.makedirs(output_base_dir)
+    try:
+        if not os.path.exists(output_base_dir):
+            os.makedirs(output_base_dir)
+    except PermissionError:
+        print(f"[WARNING] Permission denied when creating directory {output_base_dir}. Using /tmp/schedules instead.")
+        output_base_dir = "/tmp/schedules"
+        os.makedirs(output_base_dir, exist_ok=True)
     
     # Get batch info with aggregation
     batch_pipeline = [
@@ -538,19 +570,24 @@ def export_all_schedules(db, output_base_dir="exports"):
     
     # Process each semester
     for semester in semesters:
-        semester_id = semester.get('semesterId')
         semester_name = semester.get('semesterName', 'Unknown')
         batch_id = semester.get('batchId')
-        batch_name = semester.get('batchName') or f'Batch_{batch_id}'
+        batch_name = semester.get('batch', {}).get('batchName') or f'Batch_{batch_id}'
         
         # Create organized output directory
-        semester_dir = os.path.join(output_base_dir, f"{batch_name}_{semester_name}")
+        try:
+            semester_dir = os.path.join(output_base_dir, f"{batch_name}_{semester_name}")
+            os.makedirs(semester_dir, exist_ok=True)
+        except PermissionError:
+            print(f"[WARNING] Permission denied for directory {semester_dir}. Using alternative.")
+            semester_dir = os.path.join("/tmp/schedules", f"{batch_name}_{semester_name}")
+            os.makedirs(semester_dir, exist_ok=True)
         
         # Export schedules for this semester
-        teachers, classes = export_semester_schedules(db, semester, semester_dir)
+        teacher_count, class_count = export_semester_schedules(db, semester, semester_dir)
         
-        total_teachers += teachers
-        total_classes += classes
+        total_teachers += teacher_count
+        total_classes += class_count
     
     print(f"\n[COMPLETED] Exported schedules for {total_teachers} teachers and {total_classes} classes")
     return total_teachers, total_classes
