@@ -7,6 +7,7 @@ from src.utils import find_file_path
 from src.models.Classroom import Classroom
 from src.models.Class import Class
 import datetime
+from bson import ObjectId
 
 
 def import_classrooms(db):
@@ -109,7 +110,9 @@ def distribute_students(db, students, grade, batch_id):
         class_index += 1
         
         c_doc = {
+            "_id": ObjectId(),  # Pre-generate an ObjectId
             "className": class_name,
+            "grade": grade,
             "homeroomTeacherId": None,
             "grade": grade,  # Add grade explicitly
             "academicYear": f"{datetime.datetime.now().year}-{datetime.datetime.now().year+1}",  # Add academic year
@@ -164,6 +167,7 @@ def create_class_if_needed(db, class_name, grade, batch_id, academic_year):
     
     # Create new class if not exists
     new_class = {
+        "_id": ObjectId(),  # Pre-generate an ObjectId
         "className": class_name,
         "grade": grade,
         "homeroomTeacherId": None,

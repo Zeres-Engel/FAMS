@@ -76,15 +76,15 @@ async def _generate_schedules_task(academic_year: str):
         all_semesters = list(semester_collection.find())
         
         for semester in all_semesters:
-            # Extract year from StartDate
+            # Extract year from startDate
             start_date = None
             
-            if 'StartDate' in semester and isinstance(semester['StartDate'], datetime):
-                start_date = semester['StartDate']
+            if 'startDate' in semester and isinstance(semester['startDate'], datetime):
+                start_date = semester['startDate']
             
             if start_date and start_date.year in years:
                 semesters.append(semester)
-                print(f"[INFO] Found semester: {semester.get('SemesterName')} starting in {start_date.year}")
+                print(f"[INFO] Found semester: {semester.get('semesterName')} starting in {start_date.year}")
         
         if not semesters:
             print(f"[ERROR] No semesters found with start dates in years: {years}")
@@ -152,17 +152,15 @@ async def _export_schedules_by_year_task(academic_year: str, output_dir: str = "
         all_semesters = list(semester_collection.find())
         
         for semester in all_semesters:
-            # Extract year from StartDate
+            # Extract year from startDate
             start_date = None
             
-            if 'StartDate' in semester and isinstance(semester['StartDate'], datetime):
-                start_date = semester['StartDate']
-            elif 'startDate' in semester and isinstance(semester['startDate'], datetime):
+            if 'startDate' in semester and isinstance(semester['startDate'], datetime):
                 start_date = semester['startDate']
             
             if start_date and start_date.year in years:
                 semesters.append(semester)
-                semester_name = semester.get('SemesterName') or semester.get('semesterName', 'Unknown')
+                semester_name = semester.get('semesterName', 'Unknown')
                 print(f"[INFO] Found semester: {semester_name} starting in {start_date.year}")
         
         if not semesters:
@@ -180,7 +178,7 @@ async def _export_schedules_by_year_task(academic_year: str, output_dir: str = "
         total_classes = 0
         
         for semester in semesters:
-            semester_name = semester.get('semesterName') or semester.get('SemesterName', 'Unknown')
+            semester_name = semester.get('semesterName', 'Unknown')
             print(f"[INFO] Exporting schedules for semester: {semester_name}")
             
             teacher_count, class_count = export_semester_schedules(db, semester, output_dir)

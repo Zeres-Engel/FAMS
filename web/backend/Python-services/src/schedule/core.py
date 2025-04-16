@@ -139,7 +139,8 @@ def generate_schedule(db, semester_doc, total_weeks=18):
     logger.info(f"Generating schedule for semester {semester_doc.get('semesterName')}")
     
     # Get batch ID (handle both 'batchId' and 'BatchID')
-    batch_id = semester_doc.get('batchId') or semester_doc.get('BatchID')
+    batch_id = semester_doc.get('batchId')
+    
     if not batch_id:
         error_msg = f"No batchId found in semester document: {semester_doc}"
         logger.error(error_msg)
@@ -191,16 +192,16 @@ def generate_schedule(db, semester_doc, total_weeks=18):
     
     # Get curriculum subjects and sessions needed
     curriculum_subjects = {}
-    for cs in db.CurriculumSubject.find({"curriculumId": curriculum_id}):
+    for cs in db.CurriculumSubject.find({"curriculumId": c.get('curriculumId')}):
         subject_id = cs.get("subjectId")
         if subject_id:
             curriculum_subjects[subject_id] = cs.get("sessions", 3)
     
     if not curriculum_subjects:
-        logger.error(f"No curriculum subjects found for curriculum {curriculum_id}")
-        return [], [f"No curriculum subjects found for curriculum {curriculum_id}"]
+        logger.error(f"No curriculum subjects found for curriculum {c.get('curriculumId')}")
+        return [], [f"No curriculum subjects found for curriculum {c.get('curriculumId')}"]
     
-    logger.info(f"Found {len(curriculum_subjects)} subjects in curriculum {curriculum_id}")
+    logger.info(f"Found {len(curriculum_subjects)} subjects in curriculum {c.get('curriculumId')}")
     
     # Map subjects to their details
     subjects_map = {s.get("subjectId"): s for s in db.Subject.find()}
@@ -218,7 +219,11 @@ def generate_schedule(db, semester_doc, total_weeks=18):
     # Class needs for subjects
     class_needs = {}
     for c in classes:
-        class_id = c.get("classId") or c.get("ClassID")
+        class_id = c.get("classId")
+        if not class_id:
+            logger.error(f"Class missing classId: {c}")
+            continue
+        
         class_needs[class_id] = {subj_id: sessions for subj_id, sessions in curriculum_subjects.items()}
     
     # Initialize schedule generation
@@ -284,8 +289,9 @@ def generate_schedule(db, semester_doc, total_weeks=18):
             
             # Process each class
             for class_doc in classes:
-                class_id = class_doc.get("classId") or class_doc.get("ClassID")
+                class_id = class_doc.get("classId")
                 if not class_id:
+                    logger.error(f"Class missing classId: {class_doc}")
                     continue
                 
                 # Skip if no subjects left for this class

@@ -320,7 +320,7 @@ def generate_semesters(db):
     
     # For each batch, create 6 semesters (3 years x 2 semesters)
     for batch in batches:
-        batch_id = batch.get('BatchID') or batch.get('batchId')
+        batch_id = batch.get('batchId')
         if not batch_id:
             continue
             
@@ -374,10 +374,18 @@ def generate_all_schedules(db, semesters, output_dir="src/data/schedules"):
     """
     total_entries = 0
     
+    # Ensure output directory exists
+    try:
+        os.makedirs(output_dir, exist_ok=True)
+    except PermissionError:
+        print(f"[WARNING] Permission denied when creating {output_dir}. Using /tmp/schedules")
+        output_dir = "/tmp/schedules"
+        os.makedirs(output_dir, exist_ok=True)
+    
     for sem in semesters:
         # Generate schedule for this semester
-        semester_name = sem.get('semesterName') or sem.get('SemesterName', 'Unknown')
-        batch_id = sem.get('batchId') or sem.get('BatchID', 'Unknown')
+        semester_name = sem.get('semesterName', 'Unknown')
+        batch_id = sem.get('batchId', 'Unknown')
         
         print(f"[SCHEDULE] Generating schedule for semester {semester_name} of Batch {batch_id}...")
         scheds, warnings = generate_schedule(db, sem, total_weeks=18)
@@ -391,7 +399,8 @@ def generate_all_schedules(db, semesters, output_dir="src/data/schedules"):
         # Export schedule to CSV if possible
         try:
             from .export import export_semester_schedules
-            export_semester_schedules(db, sem, output_dir)
+            teachers_count, class_count = export_semester_schedules(db, sem, output_dir)
+            print(f"[INFO] Exported {teachers_count} teacher schedules and {class_count} class schedules")
         except Exception as e:
             print(f"[WARNING] Failed to export schedules: {str(e)}")
             print("[WARNING] Schedule export failed, but database initialization continues.")
