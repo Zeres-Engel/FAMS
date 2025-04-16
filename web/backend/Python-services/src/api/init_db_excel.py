@@ -5,11 +5,12 @@ Contains functions to initialize database from Excel files
 import os
 from dotenv import load_dotenv
 
-from ..db import connect_to_mongodb, drop_all_collections
+from ..db import connect_to_mongodb, drop_all_collections, create_indexes
 from ..data_loader import DataLoader
 from ..excel_data_loader import (
     import_all_teachers_from_excel, 
-    generate_all_students_from_excel
+    generate_all_students_from_excel,
+    generate_missing_parents
 )
 from ..generators.users import (
     create_admin_user,
@@ -117,10 +118,13 @@ def init_database_from_excel(excel_files=None):
 def init_fams(excel_files=None):
     """
     Initialize FAMS with basic data only (no students, teachers, or schedules)
+    - Updated to match SQL database structure from FAMS.sql
+    
     Flow:
     1. Load data from files
     2. Create admin user only
     3. Generate semesters
+    4. Setup proper database structure based on SQL schema
     
     Args:
         excel_files: Not used, added for compatibility
@@ -136,11 +140,29 @@ def init_fams(excel_files=None):
     drop_all_collections(db)
     print("[INFO] Dropped all collections")
     
-    # Step 1: Load basic data
-    print("\n[1] Loading basic data...")
+    # Step 1: Setup collections to match SQL schema structure
+    print("\n[1] Setting up database collections according to SQL schema...")
+    
+    # Ensure all collections from the SQL schema exist
+    # These match the tables defined in FAMS.sql
+    required_collections = [
+        'UserAccount', 'AttendanceLog', 'Batch', 'Class', 'Classroom',
+        'ClassSchedule', 'Curriculum', 'CurriculumSubject', 'Device',
+        'FaceVector', 'ModelVersion', 'Notification', 'Parent',
+        'ParentStudent', 'RFID', 'ScheduleFormat', 'Semester',
+        'Student', 'Subject', 'Teacher', 'Announcement'
+    ]
+    
+    for collection in required_collections:
+        if collection not in db.list_collection_names():
+            db.create_collection(collection)
+            print(f"  - Created collection: {collection}")
     
     # Create data loader
     data_loader = DataLoader(db)
+    
+    # Step 2: Load basic data
+    print("\n[2] Loading basic data...")
     
     # Import subjects from CSV
     subjects = data_loader.load_subjects()
@@ -158,23 +180,29 @@ def init_fams(excel_files=None):
     curriculums = data_loader.load_all_curricula()
     print(f"  - Created {len(curriculums)} curriculums")
     
-    # Step 2: Create admin only
-    print("\n[2] Creating admin user...")
+    # Step 3: Create admin only
+    print("\n[3] Creating admin user...")
     
     # Create admin user
     create_admin_user(db)
     print(f"  - Created admin user")
     
-    # Step 3: Generate semesters 
-    print("\n[3] Generating semesters...")
+    # Step 4: Generate semesters 
+    print("\n[4] Generating semesters...")
     
     # Generate semesters
     semesters = generate_semesters(db)
     print(f"  - Created {len(semesters)} semesters")
     
+    # Step 5: Create indexes for better performance
+    print("\n[5] Creating database indexes...")
+    create_indexes(db)
+    print(f"  - Created indexes for database collections")
+    
     print(f"\n[INIT] Completed FAMS initialization!")
     
     return {
+        "collections": len(required_collections),
         "teachers": 0,
         "classrooms": len(classrooms),
         "classes": 0,
@@ -248,4 +276,19 @@ def init_users_only_from_excel(excel_files=None):
         "teachers": len(teachers),
         "classrooms": len(classrooms),
         "students": total_students,
-    } 
+    }
+
+
+def link_parents_to_students(db):
+    """Link parents to students using the generate_missing_parents function"""
+    # Get all students
+    students = list(db.Student.find({"isActive": True}))
+    
+    if not students:
+        print("No students found to link parents")
+        return 0
+    
+    # Generate parent records and relationships
+    parents_created = generate_missing_parents(db, students)
+    
+    return parents_created 

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const { COLLECTIONS } = require('../constants');
+const { COLLECTIONS, FIELDS } = require('../constants');
 
 /**
  * UserAccount Schema
@@ -8,14 +8,9 @@ const { COLLECTIONS } = require('../constants');
  */
 const UserAccountSchema = new mongoose.Schema({
   userId: {
-    type: Number,
-    required: true,
-    unique: true,
-    auto: true
-  },
-  name: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
   email: {
     type: String,

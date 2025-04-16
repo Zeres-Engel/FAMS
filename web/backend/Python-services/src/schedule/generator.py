@@ -195,10 +195,18 @@ def generate_strict_schedule(db, semester_doc, total_weeks=20):
     
     print(f"Generating schedule for semester {semester_id} (batch {batch_id})")
     
-    # Get classes for this batch
-    classes = list(db.Class.find({"batchId": batch_id}))
+    # Map batch to grade (assuming batch 1=12, 2=11, 3=10)
+    grade_map = {"1": 12, "2": 11, "3": 10}
+    grade = grade_map.get(str(batch_id))
+    
+    if not grade:
+        print(f"Warning: Could not map batch {batch_id} to grade, using default grade 10")
+        grade = 10
+    
+    # Get classes for this grade
+    classes = list(db.Class.find({"grade": grade}))
     class_ids = [c["_id"] for c in classes]
-    print(f"Found {len(classes)} classes with batch ID {batch_id}")
+    print(f"Found {len(classes)} classes for grade {grade}")
     
     # Get teachers
     teachers = list(db.Teacher.find({}))

@@ -81,13 +81,19 @@ def import_curriculum_data(db, grade):
         print(f"[Warning] Curriculum file for grade {grade} not found.")
         return None
     
+    # Mapping grade to curriculum ID
+    curriculum_id_map = {10: 1, 11: 2, 12: 3}
+    curriculum_id = curriculum_id_map.get(grade, 1)  # Default to 1 if grade not in map
+    
     # Check if curriculum exists, if not create it
-    curriculum_doc = db.Curriculum.find_one({"curriculumId": str(grade)})
+    curriculum_doc = db.Curriculum.find_one({"curriculumId": str(curriculum_id)})
     if not curriculum_doc:
         curriculum = Curriculum.from_grade(grade)
         curriculum_dict = curriculum.dict(exclude={"collection"})
+        # Update curriculumId to use the mapped value
+        curriculum_dict["curriculumId"] = str(curriculum_id)
         db.Curriculum.insert_one(curriculum_dict)
-        curriculum_doc = db.Curriculum.find_one({"curriculumId": str(grade)})
+        curriculum_doc = db.Curriculum.find_one({"curriculumId": str(curriculum_id)})
     
     # Import subjects from curriculum file    
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -104,7 +110,7 @@ def import_curriculum_data(db, grade):
                 
             subject_id = subj["subjectId"]
             existing = db.CurriculumSubject.find_one({
-                "curriculumId": str(grade),
+                "curriculumId": str(curriculum_id),
                 "subjectId": subject_id
             })
             
@@ -115,8 +121,8 @@ def import_curriculum_data(db, grade):
                 )
             else:
                 curriculum_subject = CurriculumSubject.from_csv_row(
-                    row, str(grade), subject_id, 
-                    f"{grade}_{subject_id}"
+                    row, str(curriculum_id), subject_id, 
+                    f"{curriculum_id}_{subject_id}"
                 )
                 db.CurriculumSubject.insert_one(
                     curriculum_subject.dict(exclude={"collection"})
@@ -146,10 +152,11 @@ def generate_semesters(db):
     semester_docs = []
     current_date = datetime.datetime.now()
     
+    # Use sequential curriculumId instead of grade
     batch_semester = [
-        {"BatchID": 3, "CurriculumID": 10, "EndYear": 2026},
-        {"BatchID": 2, "CurriculumID": 11, "EndYear": 2025},
-        {"BatchID": 1, "CurriculumID": 12, "EndYear": 2024}
+        {"BatchID": 3, "CurriculumID": 1, "EndYear": 2026, "Grade": 10},
+        {"BatchID": 2, "CurriculumID": 2, "EndYear": 2025, "Grade": 11},
+        {"BatchID": 1, "CurriculumID": 3, "EndYear": 2024, "Grade": 12}
     ]
     
     for bs in batch_semester:
@@ -171,12 +178,12 @@ def generate_semesters(db):
                     "SemesterName": f"Học kỳ {idx}",
                     "StartDate": s,
                     "EndDate": e,
-                    "CurriculumID": bs["CurriculumID"],
-                    "BatchID": bs["BatchID"]
+                    "CurriculumID": bs["CurriculumID"],  # Use sequential ID
+                    "grade": bs["Grade"]  # Add grade field explicitly
                 }
                 
                 db.Semester.insert_one(sem_doc)
-                sem = db.Semester.find_one({"SemesterName": sem_doc["SemesterName"], "BatchID": bs["BatchID"]})
+                sem = db.Semester.find_one({"SemesterName": sem_doc["SemesterName"], "batchId": bs["BatchID"]})
                 semester_docs.append(sem)
         else:
             print(f"[INFO] Batch {bs['BatchID']} đã ra trường. Bỏ qua tạo thời khóa biểu.")

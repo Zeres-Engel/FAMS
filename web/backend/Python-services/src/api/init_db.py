@@ -76,7 +76,11 @@ def init_database():
     
     # Import parents and link to students
     parents = import_parents(db)
-    print(f"  - Imported {len(parents)} parents and linked to students")
+    print(f"  - Imported {len(parents)} parents")
+    
+    # Link parents to students (ensure proper relationships are created)
+    link_count = link_parents_to_students(db)
+    print(f"  - Created {link_count} parent-student relationships")
     
     # Step 3: Generate classes and distribute students
     print("\n[3] Generating classes...")

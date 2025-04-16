@@ -1,5 +1,5 @@
 const RFID = require('../database/models/RFID');
-const User = require('../database/models/User');
+const UserAccount = require('../database/models/UserAccount');
 const asyncHandler = require('../middleware/asyncHandler');
 const ErrorResponse = require('../utils/errorResponse');
 
@@ -120,7 +120,7 @@ exports.getRFIDByUserId = asyncHandler(async (req, res, next) => {
 // @access  Private (Admin)
 exports.createRFID = asyncHandler(async (req, res, next) => {
   // Validate the UserID exists
-  const user = await User.findOne({ userId: req.body.UserID });
+  const user = await UserAccount.findOne({ userId: req.body.UserID });
   if (!user) {
     return next(new ErrorResponse(`User with ID ${req.body.UserID} not found`, 400, 'INVALID_USER_ID'));
   }
@@ -165,7 +165,7 @@ exports.updateRFID = asyncHandler(async (req, res, next) => {
   
   // If UserID is being updated, validate it exists
   if (req.body.UserID) {
-    const user = await User.findOne({ userId: req.body.UserID });
+    const user = await UserAccount.findOne({ userId: req.body.UserID });
     if (!user) {
       return next(new ErrorResponse(`User with ID ${req.body.UserID} not found`, 400, 'INVALID_USER_ID'));
     }

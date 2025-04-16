@@ -45,5 +45,8 @@ module.exports = {
   Notification,
   FaceVector,
   ModelVersion,
-  Device
+  Device,
+  
+  // Compatibility alias - User is an alias for UserAccount
+  User: UserAccount
 }; 

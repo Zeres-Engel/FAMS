@@ -1,4 +1,4 @@
-const User = require('../database/models/User');
+const UserAccount = require('../database/models/UserAccount');
 const ClassSchedule = require('../database/models/ClassSchedule');
 const userService = require('../services/userService');
 const { asyncHandler } = require('../utils/routeUtils');
@@ -209,7 +209,7 @@ const createStudent = async (req, res, defaultPassword) => {
     const normalizedFirstName = removeVietnameseAccents(firstName);
     const normalizedLastName = removeVietnameseAccents(lastName);
 
-    const User = require('../database/models/User');
+    const UserAccount = require('../database/models/UserAccount');
     const Student = require('../database/models/Student');
     const Parent = require('../database/models/Parent');
     const ParentStudent = require('../database/models/ParentStudent');
@@ -274,7 +274,7 @@ const createStudent = async (req, res, defaultPassword) => {
     const userId = Student.generateUserId(normalizedFirstName, normalizedLastName, batch.batchId, newStudentId);
     
     // 4. Create user account - Email luôn được tạo từ userId (không dấu)
-    const user = await User.create({
+    const user = await UserAccount.create({
       userId,
       username: userId,
       password: defaultPassword,
@@ -341,7 +341,7 @@ const createStudent = async (req, res, defaultPassword) => {
         const parentUserId = Parent.generateUserId(normalizedParentFirstName, normalizedParentLastName, newParentId);
         
         // Create parent user account
-        await User.create({
+        await UserAccount.create({
           userId: parentUserId,
           username: parentUserId,
           password: defaultPassword,
@@ -427,7 +427,7 @@ const createTeacher = async (req, res, defaultPassword) => {
     const normalizedFirstName = removeVietnameseAccents(firstName);
     const normalizedLastName = removeVietnameseAccents(lastName);
 
-    const User = require('../database/models/User');
+    const UserAccount = require('../database/models/UserAccount');
     const Teacher = require('../database/models/Teacher');
 
     // 1. Cải tiến cách tạo teacher ID để đảm bảo luôn lấy giá trị lớn nhất
@@ -451,7 +451,7 @@ const createTeacher = async (req, res, defaultPassword) => {
     const userId = Teacher.generateUserId(normalizedFirstName, normalizedLastName, newTeacherId);
     
     // 3. Create user account
-    const user = await User.create({
+    const user = await UserAccount.create({
       userId,
       username: userId,
       password: defaultPassword,
@@ -513,7 +513,7 @@ const createParent = async (req, res, defaultPassword) => {
     const normalizedFirstName = removeVietnameseAccents(firstName);
     const normalizedLastName = removeVietnameseAccents(lastName);
 
-    const User = require('../database/models/User');
+    const UserAccount = require('../database/models/UserAccount');
     const Parent = require('../database/models/Parent');
 
     // 1. Cải tiến cách tạo parent ID để đảm bảo luôn lấy giá trị lớn nhất
@@ -537,7 +537,7 @@ const createParent = async (req, res, defaultPassword) => {
     const userId = Parent.generateUserId(normalizedFirstName, normalizedLastName, newParentId);
     
     // 3. Create user account
-    const user = await User.create({
+    const user = await UserAccount.create({
       userId,
       username: userId,
       password: defaultPassword,
@@ -584,7 +584,7 @@ const createParent = async (req, res, defaultPassword) => {
 // @access  Private/Admin
 exports.updateUser = async (req, res) => {
   try {
-    const user = await User.findOneAndUpdate(
+    const user = await UserAccount.findOneAndUpdate(
       { userId: req.params.id },
       req.body,
       { new: true, runValidators: true }
@@ -710,8 +710,8 @@ exports.getUserDetails = async (req, res) => {
     const userId = req.params.id;
     
     // Get user account
-    const User = require('../database/models/User');
-    const user = await User.findOne({ userId });
+    const UserAccount = require('../database/models/UserAccount');
+    const user = await UserAccount.findOne({ userId });
     
     if (!user) {
       return res.status(404).json({

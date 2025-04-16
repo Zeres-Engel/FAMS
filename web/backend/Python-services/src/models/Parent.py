@@ -10,7 +10,7 @@ from ..constants import COLLECTIONS
 class Parent(BaseModel):
     """Parent model representing student guardians"""
     parentId: int = Field(..., description="Unique identifier for the parent")
-    userId: int = Field(..., description="Reference to UserAccount")
+    userId: str = Field(..., description="Reference to UserAccount")
     fullName: str = Field(..., description="Parent's full name")
     career: Optional[str] = Field(None, description="Parent's career/occupation")
     phone: Optional[str] = Field(None, description="Parent's phone number")

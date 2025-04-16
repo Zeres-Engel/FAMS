@@ -4,6 +4,7 @@
  */
 
 const mongoose = require('mongoose');
+const { models } = require('../database');
 
 /**
  * Connect to MongoDB with error handling and retry logic
@@ -306,3 +307,94 @@ exports.advancedSearch = async (model, queryOptions = {}) => {
     return [];
   }
 };
+
+/**
+ * Database compatibility layer to support transition between 
+ * old and new database structures
+ */
+const databaseService = {
+  /**
+   * Maps fields from the new database schema to the old schema
+   * @param {Object} data - Data from the new database structure
+   * @param {String} modelName - Name of the model being processed
+   * @returns {Object} Data transformed to match the old schema
+   */
+  mapToOldSchema: function(data, modelName) {
+    if (!data) return null;
+    
+    // Clone the data to avoid modifying the original
+    const result = JSON.parse(JSON.stringify(data));
+    
+    // Apply model-specific transformations
+    switch(modelName) {
+      case 'Student':
+        // Add any field mappings needed for the Student model
+        // Example: if the new schema uses 'name' but old uses 'fullName'
+        if (result.name && !result.fullName) {
+          result.fullName = result.name;
+        }
+        break;
+        
+      case 'Teacher':
+        // Add teacher-specific mappings
+        break;
+        
+      case 'UserAccount':
+        // Add user account specific mappings
+        break;
+        
+      // Add cases for other models as needed
+    }
+    
+    return result;
+  },
+  
+  /**
+   * Maps fields from the old database schema to the new schema
+   * @param {Object} data - Data from the old database structure
+   * @param {String} modelName - Name of the model being processed
+   * @returns {Object} Data transformed to match the new schema
+   */
+  mapToNewSchema: function(data, modelName) {
+    if (!data) return null;
+    
+    // Clone the data to avoid modifying the original
+    const result = JSON.parse(JSON.stringify(data));
+    
+    // Apply model-specific transformations
+    switch(modelName) {
+      case 'Student':
+        // Add any field mappings needed for the Student model
+        // Example: if the old schema uses 'fullName' but new uses 'name'
+        if (result.fullName && !result.name) {
+          result.name = result.fullName;
+        }
+        break;
+        
+      case 'Teacher':
+        // Add teacher-specific mappings
+        break;
+        
+      case 'UserAccount':
+        // Add user account specific mappings
+        break;
+        
+      // Add cases for other models as needed
+    }
+    
+    return result;
+  },
+  
+  /**
+   * Resolves references between different collections/models
+   * @param {Object} data - The data with references to resolve
+   * @param {Array} populateFields - Fields to populate
+   * @returns {Promise<Object>} Data with resolved references
+   */
+  resolveReferences: async function(data, populateFields = []) {
+    // Implementation depends on your specific reference structure
+    return data;
+  }
+};
+
+module.exports = databaseService;

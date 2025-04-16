@@ -10,16 +10,16 @@ from src.models.Teacher import Teacher
 from src.models.Student import Student
 from src.models.Parent import Parent
 from src.models.Batch import Batch
+from src.models.ParentStudent import ParentStudent
 
 
 def create_admin_user(db):
     """Create default admin user"""
     admin_user = UserAccount(
         userId="admin",
-        username="admin",
-        password=hash_password("1234"),
+        name="Administrator",
         email="admin@fams.edu.vn",
-        backup_email=None,
+        password=hash_password("1234"),
         role="admin",
         isActive=True
     )
@@ -62,10 +62,9 @@ def import_teachers(db):
             # Create user account
             user = UserAccount(
                 userId=username,
-                username=username,
-                password=hash_password("123456"),
+                name=full_name,
                 email=email,
-                backup_email=None,
+                password=hash_password("123456"),
                 role="teacher",
                 isActive=True
             )
@@ -184,10 +183,9 @@ def import_students(db, csv_path, batch_id, student_id_start):
             # Create user account
             user = UserAccount(
                 userId=username,
-                username=username,
-                password=hash_password("123456"),
+                name=fn,
                 email=email,
-                backup_email=None,
+                password=hash_password("123456"),
                 role="student",
                 isActive=True
             )
@@ -285,14 +283,16 @@ def generate_all_students(db):
 
 
 def import_parents(db):
-    """Import parents and link to students"""
+    """
+    Import parents from student data
+    Returns a list of created parents
+    """
     parents = []
     parent_users = []
-    parent_student_links = []
     
-    # Lấy tất cả sinh viên từ database
+    # Get all students from database
     all_students = list(db.Student.find())
-    print(f"DEBUG: Tìm thấy {len(all_students)} sinh viên để tạo phụ huynh")
+    print(f"[INFO] Found {len(all_students)} students for parent creation")
     
     pid = 1
     for student in all_students:
@@ -301,94 +301,149 @@ def import_parents(db):
         parent_phones = student.get("parentPhones", [])
         parent_genders = student.get("parentGenders", [])
         
-        print(f"DEBUG: Student {student.get('firstName', '')} {student.get('lastName', '')} has parents: {parent_names}")
+        # Debug log
+        if parent_names:
+            print(f"[DEBUG] Student {student.get('fullName', '')}, ID: {student.get('studentId', '')} has {len(parent_names)} parents")
         
         student_parent_ids = []
         for i, parent_name in enumerate(parent_names):
-            if not parent_name:
+            if not parent_name or parent_name.strip() == "":
                 continue
                 
-            # Nếu chưa có, tạo parent mới
+            # Process parent name into Vietnamese name format
             name_parts = parent_name.split()
-            # Đảo ngược FirstName và LastName cho phù hợp với tên tiếng Việt
-            # LastName là họ (đầu cùng), FirstName là tên (cuối cùng)
             last_name = " ".join(name_parts[:-1]) if len(name_parts) > 1 else ""
             first_name = name_parts[-1] if name_parts else parent_name
             
+            # Get career, phone, and gender
             career = parent_careers[i] if i < len(parent_careers) else ""
             phone = parent_phones[i] if i < len(parent_phones) else ""
-            gender = parent_genders[i] if i < len(parent_genders) else False
+            gender = parent_genders[i] if i < len(parent_genders) else True
             
-            # Đảm bảo phone là chuỗi
+            # Ensure phone is a string
             phone = str(phone) if phone else ""
             
+            # Generate username and email
             username = generate_username(parent_name, id_num=pid, role="parent")
-            
-            # Tạo email
             email = f"{username}@fams.edu.vn"
+            
+            # Check if parent already exists
+            existing_parent = db.Parent.find_one({"$or": [
+                {"fullName": parent_name, "phone": phone},
+                {"email": email}
+            ]})
+            
+            if existing_parent:
+                parent_id = existing_parent.get("parentId")
+                student_parent_ids.append(parent_id)
+                print(f"[INFO] Using existing parent: {parent_name} (ID: {parent_id})")
+                continue
             
             # Create user account
             user = UserAccount(
                 userId=username,
-                username=username,
-                password=hash_password("123456"),
                 email=email,
-                backup_email=None,
+                password=hash_password("123456"),
                 role="parent",
                 isActive=True
             )
             parent_users.append(user.dict(exclude={"collection"}))
             
-            # Create parent
+            # Create parent record
             parent = Parent(
-                parentId=str(pid),
+                parentId=pid,
                 userId=username,
-                firstName=first_name,
-                lastName=last_name,
+                fullName=parent_name,
                 email=email,
-                phone=phone
+                phone=phone,
+                gender=gender,  # Store as boolean
+                career=career
             )
             
             parent_dict = parent.dict(exclude={"collection"})
-            parent_dict.update({
-                "career": career,
-                "gender": gender
-            })
-            
             parents.append(parent_dict)
-            student_parent_ids.append(str(pid))
-            
-            # Liên kết phụ huynh với học sinh
-            parent_student_links.append({
-                "parentId": str(pid),
-                "studentId": student["studentId"],
-                "relationship": "Father" if not gender else "Mother"
-            })
+            student_parent_ids.append(pid)
             
             pid += 1
             
-        # Cập nhật parentIds cho student
+        # Update student with parent IDs
         if student_parent_ids:
             db.Student.update_one(
-                {"studentId": student["studentId"]}, 
+                {"studentId": student.get("studentId")}, 
                 {"$set": {"parentIds": student_parent_ids}}
             )
             
-    # Thêm vào database
+    # Add to database
     if parent_users:
         db.UserAccount.insert_many(parent_users)
         
     if parents:
         db.Parent.insert_many(parents)
         
-    if parent_student_links:
-        db.ParentStudent.insert_many(parent_student_links)
-        
-    print(f"[INIT] Imported {len(parents)} parents for {len(all_students)} students.")
+    print(f"[INFO] Imported {len(parents)} parents for {len(all_students)} students")
     return parents
 
 
-# Không cần hàm link_parents_to_students nữa vì đã liên kết khi tạo
 def link_parents_to_students(db):
-    """Link parents to students - không cần thiết nữa"""
-    print(f"[INIT] Parents already linked to students during creation.") 
+    """
+    Link parents to students by creating proper ParentStudent relationships
+    Returns the number of created relationships
+    """
+    # Get collections
+    parent_student_collection = db.ParentStudent
+    student_collection = db.Student
+    parent_collection = db.Parent
+    
+    # Find all students that have parent IDs
+    students = list(student_collection.find({"parentIds": {"$exists": True, "$ne": []}}))
+    
+    # Check if parent-student relationships already exist
+    existing_relations = list(parent_student_collection.find())
+    if existing_relations:
+        print(f"[INFO] Found {len(existing_relations)} existing parent-student relationships")
+        return len(existing_relations)
+    
+    # Create relationships
+    relation_id = 1
+    parent_student_links = []
+    
+    for student in students:
+        student_id = student.get("studentId")
+        parent_ids = student.get("parentIds", [])
+        
+        # Get parent genders to determine relationship type
+        for i, parent_id in enumerate(parent_ids):
+            parent = parent_collection.find_one({"parentId": parent_id})
+            if parent:
+                # Determine relationship type based on gender
+                gender = parent.get("gender")
+                is_male = None
+                
+                # Handle different gender formats (boolean or string)
+                if isinstance(gender, bool):
+                    is_male = gender
+                elif isinstance(gender, str):
+                    is_male = gender.lower() in ["male", "nam", "true"]
+                else:
+                    is_male = True  # Default to male if unknown
+                
+                relationship_type = "Father" if is_male else "Mother"
+                
+                # Create parent-student relationship
+                relation = ParentStudent(
+                    parentStudentId=relation_id,
+                    parentId=parent_id,
+                    studentId=student_id,
+                    relationship=relationship_type,
+                    isEmergencyContact=(i == 0)  # First parent is emergency contact
+                )
+                
+                parent_student_links.append(relation.dict(exclude={"collection"}))
+                relation_id += 1
+    
+    # Insert all relationships at once if any exist
+    if parent_student_links:
+        parent_student_collection.insert_many(parent_student_links)
+        print(f"[INFO] Created {len(parent_student_links)} parent-student relationships")
+    
+    return len(parent_student_links) 

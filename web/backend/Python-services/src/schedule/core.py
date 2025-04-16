@@ -147,6 +147,16 @@ def generate_schedule(db, semester_doc, total_weeks=18):
     
     logger.info(f"Using batch ID: {batch_id}")
     
+    # Map batch to grade (assuming batch 1=12, 2=11, 3=10)
+    grade_map = {"1": 12, "2": 11, "3": 10}
+    grade = grade_map.get(str(batch_id))
+    
+    if not grade:
+        logger.warning(f"Could not map batch {batch_id} to grade, using default grade 10")
+        grade = 10
+    
+    logger.info(f"Using grade: {grade} for batch ID: {batch_id}")
+    
     # Get curriculum ID
     curriculum_id = semester_doc.get('curriculumId')
     if not curriculum_id:
@@ -157,16 +167,14 @@ def generate_schedule(db, semester_doc, total_weeks=18):
     else:
         logger.info(f"Using curriculum ID: {curriculum_id}")
     
-    # Load resources
-    classes = list(db.Class.find({"BatchID": batch_id}))
-    if not classes:
-        classes = list(db.Class.find({"batchId": batch_id}))
+    # Load resources - Use grade instead of batchId to find classes
+    classes = list(db.Class.find({"grade": grade}))
     
     if not classes:
-        logger.error(f"No classes found for batch {batch_id}")
-        return [], [f"No classes found for batch {batch_id}"]
+        logger.error(f"No classes found for grade {grade}")
+        return [], [f"No classes found for grade {grade}"]
     
-    logger.info(f"Found {len(classes)} classes for batch {batch_id}")
+    logger.info(f"Found {len(classes)} classes for grade {grade}")
     for c in classes[:3]:  # Log a few sample classes
         class_id = c.get("classId") or c.get("ClassID")
         class_name = c.get("ClassName", "Unknown")

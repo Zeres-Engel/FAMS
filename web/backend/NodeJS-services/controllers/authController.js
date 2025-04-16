@@ -1,4 +1,4 @@
-const User = require('../database/models/User');
+const UserAccount = require('../database/models/UserAccount');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const Student = require('../database/models/Student');
@@ -31,14 +31,15 @@ const generateTokens = (userId) => {
  */
 const ensureAdminExists = async () => {
   try {
+    console.log("Finding user with userId as string: admin");
     // Check if admin account exists
-    const adminUser = await User.findOne({ userId: 'admin' });
+    const adminUser = await UserAccount.findOne({ userId: 'admin' });
     
     if (!adminUser) {
       console.log('Admin account not found, creating new admin user...');
       
       // Create a new admin with password hashed by Node.js
-      const admin = new User({
+      const admin = new UserAccount({
         userId: 'admin',
         name: 'Administrator',
         email: 'admin@fams.edu.vn',
@@ -57,7 +58,7 @@ const ensureAdminExists = async () => {
         console.log('Admin exists but password validation failed. Creating admin2 account...');
         
         // Create a new admin2 account as backup
-        const admin2 = new User({
+        const admin2 = new UserAccount({
           userId: 'admin2',
           name: 'Administrator 2',
           email: 'admin2@fams.edu.vn',
@@ -101,7 +102,7 @@ exports.register = async (req, res) => {
     }
     
     // Check if user already exists
-    const userExists = await User.findOne({ 
+    const userExists = await UserAccount.findOne({ 
       $or: [
         { email }, 
         { userId },
@@ -118,7 +119,7 @@ exports.register = async (req, res) => {
     }
 
     // Create user
-    const user = await User.create({
+    const user = await UserAccount.create({
       userId,
       name,
       email,
@@ -187,8 +188,18 @@ exports.login = async (req, res) => {
     if (email) query.email = email;
     if (backup_email) query.backup_email = backup_email;
     
-    // Find user with any of the provided identifiers
-    user = await User.findOne({ $or: Object.keys(query).map(key => ({ [key]: query[key] })) });
+    try {
+      // Find user with any of the provided identifiers
+      user = await UserAccount.findOne({ $or: Object.keys(query).map(key => ({ [key]: query[key] })) });
+    } catch (error) {
+      console.error('Login error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Lỗi xác thực đăng nhập',
+        error: error.message,
+        code: 'AUTH_ERROR'
+      });
+    }
 
     if (!user) {
       return res.status(401).json({
@@ -252,15 +263,16 @@ exports.login = async (req, res) => {
         email: user.email,
         role: user.role,
         ...additionalInfo,
-        accessToken,    // Return accessToken instead of token
-        refreshToken    // Add refreshToken to response
-      }
+        accessToken,
+        refreshToken
+      },
+      code: 'LOGIN_SUCCESS'
     });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({
       success: false,
-      message: 'Lỗi đăng nhập',
+      message: 'Lỗi server',
       error: error.message,
       code: 'SERVER_ERROR'
     });
@@ -301,7 +313,7 @@ exports.refreshToken = async (req, res) => {
     }
     
     // Check if user exists
-    const user = await User.findOne({ userId: decoded.userId });
+    const user = await UserAccount.findOne({ userId: decoded.userId });
     
     if (!user) {
       return res.status(401).json({
@@ -355,7 +367,7 @@ exports.logout = async (req, res) => {
  */
 exports.getMe = async (req, res) => {
   try {
-    const user = await User.findOne({ userId: req.user.userId });
+    const user = await UserAccount.findOne({ userId: req.user.userId });
     
     if (!user) {
       return res.status(404).json({
@@ -421,11 +433,11 @@ exports.getMe = async (req, res) => {
 exports.resetAdminPassword = async (req, res) => {
   try {
     // Find admin user
-    const admin = await User.findOne({ userId: 'admin2' });
+    const admin = await UserAccount.findOne({ userId: 'admin2' });
     
     if (!admin) {
       // Create admin2 account if it doesn't exist
-      const newAdmin = new User({
+      const newAdmin = new UserAccount({
         userId: 'admin2',
         name: 'Administrator 2',
         email: 'admin2@fams.edu.vn',
@@ -435,27 +447,27 @@ exports.resetAdminPassword = async (req, res) => {
       
       await newAdmin.save();
       
-      return res.status(201).json({
+      return res.json({
         success: true,
-        message: 'Admin2 account created with default password: 1234',
+        message: 'Admin account created successfully',
         code: 'ADMIN_CREATED'
       });
     }
     
-    // Reset password
+    // Reset password to default
     admin.password = '1234';
     await admin.save();
     
-    return res.status(200).json({
+    return res.json({
       success: true,
-      message: 'Admin2 password reset to: 1234',
-      code: 'PASSWORD_RESET'
+      message: 'Admin password reset successfully',
+      code: 'ADMIN_RESET'
     });
   } catch (error) {
-    console.error('Reset admin password error:', error);
+    console.error('Reset admin error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error resetting admin password: ' + error.message,
+      message: 'Server error during admin reset',
       code: 'SERVER_ERROR'
     });
   }
@@ -495,6 +507,115 @@ exports.verifyToken = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Lỗi xác thực token',
+      code: 'SERVER_ERROR'
+    });
+  }
+};
+
+/**
+ * @desc    Change password
+ * @route   POST /api/auth/change-password
+ * @access  Private
+ */
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    
+    // Validate inputs
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide both current and new password',
+        code: 'MISSING_FIELDS'
+      });
+    }
+    
+    // Find the user
+    const user = await UserAccount.findOne({ userId: req.user.userId });
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+    
+    // Check if current password is correct
+    const isMatch = await user.matchPassword(currentPassword);
+    
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect',
+        code: 'INVALID_PASSWORD'
+      });
+    }
+    
+    // Update password
+    user.password = newPassword;
+    await user.save();
+    
+    res.json({
+      success: true,
+      message: 'Password changed successfully',
+      code: 'PASSWORD_CHANGED'
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during password change',
+      code: 'SERVER_ERROR'
+    });
+  }
+};
+
+/**
+ * @desc    Update user profile
+ * @route   PUT /api/auth/profile
+ * @access  Private
+ */
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name, email, backup_email } = req.body;
+    
+    // Find user
+    const user = await UserAccount.findOne({ userId: req.user.userId });
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+    
+    // Update fields if provided
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (backup_email) user.backup_email = backup_email;
+    
+    // Save the updated user
+    await user.save();
+    
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: {
+        userId: user.userId,
+        name: user.name,
+        email: user.email,
+        backup_email: user.backup_email,
+        role: user.role
+      },
+      code: 'PROFILE_UPDATED'
+    });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during profile update',
       code: 'SERVER_ERROR'
     });
   }

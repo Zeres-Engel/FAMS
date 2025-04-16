@@ -39,11 +39,22 @@ async def initialize_database_excel(background_tasks: BackgroundTasks):
 
 @router.post("/initFAMS")
 async def initialize_fams(background_tasks: BackgroundTasks):
-    """Initialize FAMS with basic data only (no students, teachers, or schedules)"""
+    """
+    Initialize FAMS with basic data only (no students, teachers, or schedules)
+    
+    This endpoint will:
+    1. Create all collections based on FAMS.sql schema
+    2. Create appropriate indexes for performance
+    3. Load basic data (subjects, classrooms, time slots)
+    4. Create admin user
+    5. Generate semester structure
+    
+    Returns a response when initialization has started.
+    """
     background_tasks.add_task(init_fams)
     return ResponseModel(
         "FAMS initialization started in background",
-        "FAMS initialization process (without students and teachers) has been queued. Check logs for progress."
+        "FAMS initialization process with database structure based on SQL schema has been queued. Check logs for progress."
     )
 
 @router.post("/upload/fams")
@@ -112,7 +123,7 @@ async def upload_fams_excel(file: UploadFile = File(...)):
             
             for sheet in sheets:
                 df = pd.read_excel(file_path, sheet_name=sheet)
-                role = "Teacher" if sheet.lower() == "teachers" else "Student"
+                role = "teacher" if sheet.lower() == "teachers" else "student"
                 
                 for _, row in df.iterrows():
                     # Try various possible column names
@@ -255,7 +266,7 @@ async def import_users(
         
         # Check if semesters exist for this batch, create if not
         semester_collection = COLLECTIONS.get('SEMESTER', 'semesters')
-        existing_semesters = list(db[semester_collection].find({"BatchID": batch_id}))
+        existing_semesters = list(db[semester_collection].find({"batchId": batch_id}))
         
         if len(existing_semesters) < 2:
             # Create semesters if they don't exist
@@ -268,12 +279,17 @@ async def import_users(
                     except ValueError:
                         print(f"Warning: Could not convert batch_id '{batch_id}' to integer")
                 
+                # Map grade to curriculum ID
+                curriculum_id_map = {10: 1, 11: 2, 12: 3}
+                curriculum_id = curriculum_id_map.get(grade, 1)  # Default to 1 if grade not in map
+                
                 semester1 = {
                     "SemesterName": "Học kỳ 1",
                     "StartDate": datetime.datetime(academic_year, 9, 1),
                     "EndDate": datetime.datetime(academic_year + 1, 1, 15),
-                    "CurriculumID": grade,  # Use grade as curriculum ID
-                    "BatchID": batch_id_int  # Store as integer
+                    "CurriculumID": curriculum_id,  # Use mapped curriculum ID
+                    "batchId": batch_id_int,  # Store as integer
+                    "grade": grade  # Add grade explicitly
                 }
                 db[semester_collection].insert_one(semester1)
                 print(f"Created Semester 1 for batch {batch_name}")
@@ -287,12 +303,17 @@ async def import_users(
                     except ValueError:
                         print(f"Warning: Could not convert batch_id '{batch_id}' to integer")
                 
+                # Map grade to curriculum ID
+                curriculum_id_map = {10: 1, 11: 2, 12: 3}
+                curriculum_id = curriculum_id_map.get(grade, 1)  # Default to 1 if grade not in map
+                
                 semester2 = {
                     "SemesterName": "Học kỳ 2",
                     "StartDate": datetime.datetime(academic_year + 1, 1, 16),
                     "EndDate": datetime.datetime(academic_year + 1, 6, 30),
-                    "CurriculumID": grade,  # Use grade as curriculum ID
-                    "BatchID": batch_id_int  # Store as integer
+                    "CurriculumID": curriculum_id,  # Use mapped curriculum ID
+                    "batchId": batch_id_int,  # Store as integer
+                    "grade": grade  # Add grade explicitly
                 }
                 db[semester_collection].insert_one(semester2)
                 print(f"Created Semester 2 for batch {batch_name}")

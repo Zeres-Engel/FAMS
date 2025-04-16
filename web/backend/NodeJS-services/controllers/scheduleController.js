@@ -1,4 +1,4 @@
-const User = require('../database/models/User');
+const UserAccount = require('../database/models/UserAccount');
 const Student = require('../database/models/Student');
 const Teacher = require('../database/models/Teacher');
 const Class = require('../database/models/Class');
@@ -55,7 +55,7 @@ exports.getWeeklySchedule = async (req, res) => {
         });
       }
       
-      const targetUser = await User.findOne({ userId: req.params.userId });
+      const targetUser = await UserAccount.findOne({ userId: req.params.userId });
       if (!targetUser) {
         return res.status(404).json({
           success: false,
