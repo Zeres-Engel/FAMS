@@ -4,8 +4,12 @@ Curriculum and subject data generation for FAMS
 import csv
 import datetime
 import os
-from src.utils import find_file_path
-from src.models.curriculum import Subject, Curriculum, CurriculumSubject, Slot
+from ..utils import find_file_path
+from ..models.Subject import Subject
+from ..models.Curriculum import Curriculum
+from ..models.CurriculumSubject import CurriculumSubject
+from ..models.ScheduleFormat import ScheduleFormat
+from ..constants import COLLECTIONS
 
 
 def import_subjects(db):
@@ -57,11 +61,11 @@ def import_slot_format(db):
         with open(slot_csv, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for i, row in enumerate(reader, start=1):
-                slot = Slot.from_csv_row(row, i)
+                slot = ScheduleFormat.from_csv_row(row, i)
                 slots.append(slot.dict(exclude={"collection"}))
                 
         if slots:
-            db.Slot.insert_many(slots)
+            db[COLLECTIONS['SCHEDULE_FORMAT']].insert_many(slots)
             print(f"[INIT] Imported {len(slots)} slots from scheduleformat.csv.")
     else:
         print("[WARNING] Schedule format data file not found.")

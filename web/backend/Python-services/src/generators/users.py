@@ -4,9 +4,12 @@ User data generation for FAMS - Teachers, Students, Parents and Admin
 import csv
 import os
 import random
-from src.utils import hash_password, generate_username, parse_date
-from src.models.user import UserAccount, Teacher, Student, Parent
-from src.models.batch import Batch
+from ..utils import hash_password, generate_username, parse_date
+from src.models.UserAccount import UserAccount
+from src.models.Teacher import Teacher
+from src.models.Student import Student
+from src.models.Parent import Parent
+from src.models.Batch import Batch
 
 
 def create_admin_user(db):

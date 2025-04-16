@@ -562,7 +562,7 @@ if __name__ == "__main__":
     import sys
     sys.path.append('.')  # Add current directory to path
     
-    from src.db import connect_to_mongodb
+    from .db import connect_to_mongodb
     
     print("[INFO] Connecting to MongoDB...")
     client = connect_to_mongodb()

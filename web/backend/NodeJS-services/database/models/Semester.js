@@ -1,36 +1,60 @@
 const mongoose = require('mongoose');
 const { COLLECTIONS } = require('../constants');
 
+/**
+ * Semester Schema
+ * Represents a semester in the academic year
+ */
 const SemesterSchema = new mongoose.Schema({
   semesterId: {
-    type: mongoose.Schema.Types.Mixed,
+    type: Number,
+    required: true,
     unique: true,
-    sparse: true
+    auto: true
   },
-  SemesterName: {
+  semesterName: {
     type: String,
     required: true
   },
-  StartDate: {
+  startDate: {
     type: Date,
     required: true
   },
-  EndDate: {
+  endDate: {
     type: Date,
     required: true
   },
-  CurriculumID: {
+  curriculumId: {
     type: Number,
+    required: true,
     ref: 'Curriculum'
   },
-  BatchID: {
+  batchId: {
     type: Number,
+    required: true,
     ref: 'Batch'
   }
 }, {
+  timestamps: true,
+  versionKey: false,
   toJSON: { virtuals: true },
-  toObject: { virtuals: true },
-  id: false
+  toObject: { virtuals: true }
+});
+
+// Virtual for getting curriculum info
+SemesterSchema.virtual('curriculum', {
+  ref: 'Curriculum',
+  localField: 'curriculumId',
+  foreignField: 'curriculumId',
+  justOne: true
+});
+
+// Virtual for getting batch info
+SemesterSchema.virtual('batch', {
+  ref: 'Batch',
+  localField: 'batchId',
+  foreignField: 'batchId',
+  justOne: true
 });
 
 // Virtual for getting schedules in this semester

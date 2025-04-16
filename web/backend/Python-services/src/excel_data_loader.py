@@ -7,9 +7,12 @@ import pandas as pd
 from datetime import datetime
 from typing import Dict, List, Tuple, Any
 
-from src.utils import hash_password, generate_username, parse_date, remove_accents
-from src.models.user import UserAccount, Teacher, Student, Parent
-from src.models.batch import Batch
+from .utils import hash_password, generate_username, parse_date, remove_accents
+from .models.UserAccount import UserAccount
+from .models.Teacher import Teacher
+from .models.Student import Student
+from .models.Parent import Parent
+from .models.Batch import Batch
 
 
 def read_excel_file(file_path: str) -> Dict[str, pd.DataFrame]:

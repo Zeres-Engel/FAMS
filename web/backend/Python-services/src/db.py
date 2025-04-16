@@ -1,5 +1,5 @@
 """
-Database connection and basic operations for FAMS
+Database connection and utilities for MongoDB
 """
 import os
 from pymongo import MongoClient
@@ -52,3 +52,37 @@ def normalize_keys(document):
         result[new_key] = value
         
     return result 
+
+
+def get_collection(db, collection_key):
+    """
+    Get a MongoDB collection using the constants defined in COLLECTIONS
+    
+    Args:
+        db: MongoDB database instance
+        collection_key: Key from COLLECTIONS dictionary (e.g., 'USER_ACCOUNT')
+        
+    Returns:
+        MongoDB collection
+    """
+    collection_name = COLLECTIONS.get(collection_key)
+    if not collection_name:
+        raise ValueError(f"Collection key '{collection_key}' not found in COLLECTIONS")
+    return db[collection_name]
+
+
+def get_field_name(field_key):
+    """
+    Get the MongoDB field name using the constants defined in COLLECTIONS['FIELDS']
+    
+    Args:
+        field_key: Key from COLLECTIONS['FIELDS'] dictionary (e.g., 'USER_ID')
+        
+    Returns:
+        MongoDB field name (e.g., 'userId')
+    """
+    fields = COLLECTIONS.get('FIELDS', {})
+    field_name = fields.get(field_key)
+    if not field_name:
+        raise ValueError(f"Field key '{field_key}' not found in COLLECTIONS['FIELDS']")
+    return field_name 

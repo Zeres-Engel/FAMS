@@ -1,20 +1,48 @@
 """
 FAMS Models Package
 """
-from .user import UserAccount, Teacher, Student, Parent
-from .curriculum import Subject, Curriculum, CurriculumSubject, Slot
-from .class_model import Class, Classroom, ClassSchedule
-from .semester import Semester, SemesterSchedule
-from .relationship import ParentStudent, TeacherClassAssignment
-from .attendance import AttendanceLog, RFID
-from .batch import Batch
+from .UserAccount import UserAccount
+from .Teacher import Teacher
+from .Student import Student
+from .Parent import Parent
+from .Class import Class
+from .Classroom import Classroom
+from .Subject import Subject
+from .ScheduleFormat import ScheduleFormat
+from .ClassSchedule import ClassSchedule
+from .AttendanceLog import AttendanceLog
+from .ParentStudent import ParentStudent
+from .RFID import RFID
+from .Curriculum import Curriculum
+from .CurriculumSubject import CurriculumSubject
+from .Semester import Semester
+from .Batch import Batch
+from .Announcement import Announcement
+from .Notification import Notification
+from .FaceVector import FaceVector
+from .ModelVersion import ModelVersion
+from .Device import Device
 
 __all__ = [
-    'UserAccount', 'Teacher', 'Student', 'Parent',
-    'Subject', 'Curriculum', 'CurriculumSubject', 'Slot',
-    'Class', 'Classroom', 'ClassSchedule',
-    'Semester', 'SemesterSchedule',
-    'ParentStudent', 'TeacherClassAssignment',
-    'AttendanceLog', 'RFID',
-    'Batch'
+    'UserAccount',
+    'Teacher',
+    'Student',
+    'Parent',
+    'Class',
+    'Classroom',
+    'Subject',
+    'ScheduleFormat',
+    'ClassSchedule',
+    'AttendanceLog',
+    'ParentStudent',
+    'RFID',
+    'Curriculum',
+    'CurriculumSubject',
+    'Semester',
+    'Batch',
+    'Announcement',
+    'Notification',
+    'FaceVector',
+    'ModelVersion',
+    'Device'
 ] 

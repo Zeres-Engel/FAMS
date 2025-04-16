@@ -4,6 +4,7 @@ Core scheduling algorithms and utilities
 import datetime
 import logging
 from typing import Dict, List, Set, Tuple, Any
+from ..constants import COLLECTIONS
 
 # Cấu hình logging
 logger = logging.getLogger(__name__)
@@ -177,7 +178,7 @@ def generate_schedule(db, semester_doc, total_weeks=18):
     rooms = list(db.Classroom.find())
     logger.info(f"Found {len(rooms)} rooms")
     
-    slots = list(db.Slot.find().sort([("dayOfWeek", 1), ("slotNumber", 1)]))
+    slots = list(db[COLLECTIONS['SCHEDULE_FORMAT']].find().sort([("dayOfWeek", 1), ("slotNumber", 1)]))
     logger.info(f"Found {len(slots)} time slots")
     
     # Get curriculum subjects and sessions needed

@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 const { COLLECTIONS } = require('../constants');
 
+/**
+ * CurriculumSubject Schema
+ * Represents the relationship between a curriculum and its subjects
+ */
 const CurriculumSubjectSchema = new mongoose.Schema({
   curriculumId: {
     type: Number,
@@ -18,14 +22,16 @@ const CurriculumSubjectSchema = new mongoose.Schema({
     default: 2
   }
 }, {
+  timestamps: true,
+  versionKey: false,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
 
-// Compound index to ensure uniqueness of curriculumId + subjectId combination
+// Compound index to ensure unique curriculum-subject combinations
 CurriculumSubjectSchema.index({ curriculumId: 1, subjectId: 1 }, { unique: true });
 
-// Virtual for getting curriculum info
+// Virtual for getting curriculum details
 CurriculumSubjectSchema.virtual('curriculum', {
   ref: 'Curriculum',
   localField: 'curriculumId',
@@ -33,7 +39,7 @@ CurriculumSubjectSchema.virtual('curriculum', {
   justOne: true
 });
 
-// Virtual for getting subject info
+// Virtual for getting subject details
 CurriculumSubjectSchema.virtual('subject', {
   ref: 'Subject',
   localField: 'subjectId',

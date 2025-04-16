@@ -4,7 +4,8 @@ Classroom and class data generation for FAMS
 import csv
 import os
 from src.utils import find_file_path
-from src.models.class_model import Classroom, Class
+from src.models.Classroom import Classroom
+from src.models.Class import Class
 import datetime
 
 

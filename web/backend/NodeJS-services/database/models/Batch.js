@@ -1,52 +1,37 @@
 const mongoose = require('mongoose');
 const { COLLECTIONS } = require('../constants');
 
+/**
+ * Batch Schema
+ * Represents a batch/cohort of students
+ */
 const BatchSchema = new mongoose.Schema({
   batchId: {
-    type: String,
+    type: Number,
     required: true,
-    unique: true
+    unique: true,
+    auto: true
   },
   batchName: {
     type: String,
     required: true
   },
-  startDate: {
-    type: Date,
-    required: true
-  },
-  endDate: {
-    type: Date,
-    required: true
-  },
-  isActive: {
-    type: Boolean,
-    default: true
+  startYear: {
+    type: Number
   }
 }, {
   timestamps: true,
   versionKey: false,
-  toJSON: { 
-    virtuals: true,
-    transform: function (doc, ret) {
-      return ret;
-    }
-  },
-  toObject: { 
-    virtuals: true,
-    transform: function (doc, ret) {
-      return ret;
-    }
-  }
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
-// Virtual getters for startYear and endYear
-BatchSchema.virtual('startYear').get(function() {
-  return this.startDate ? this.startDate.getFullYear() : null;
-});
-
-BatchSchema.virtual('endYear').get(function() {
-  return this.endDate ? this.endDate.getFullYear() : null;
+// Virtual for getting semesters for this batch
+BatchSchema.virtual('semesters', {
+  ref: 'Semester',
+  localField: 'batchId',
+  foreignField: 'batchId',
+  justOne: false
 });
 
 // Virtual for getting classes in this batch
@@ -55,22 +40,6 @@ BatchSchema.virtual('classes', {
   localField: 'batchId',
   foreignField: 'batchId',
   justOne: false
-});
-
-// Virtual for getting students in this batch
-BatchSchema.virtual('students', {
-  ref: 'Student',
-  localField: 'batchId',
-  foreignField: 'batchId',
-  justOne: false
-});
-
-// Virtual for getting curriculum for this batch
-BatchSchema.virtual('curriculum', {
-  ref: 'Curriculum',
-  localField: 'batchId',
-  foreignField: 'batchId',
-  justOne: true
 });
 
 module.exports = mongoose.model('Batch', BatchSchema, COLLECTIONS.BATCH); 

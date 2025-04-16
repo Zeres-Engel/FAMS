@@ -3,21 +3,17 @@ const bcrypt = require('bcryptjs');
 const { COLLECTIONS } = require('../constants');
 
 /**
- * User Schema
+ * UserAccount Schema
  * Represents users in the system with authentication capabilities
  */
-const UserSchema = new mongoose.Schema({
+const UserAccountSchema = new mongoose.Schema({
   userId: {
-    type: String,
+    type: Number,
     required: true,
-    unique: true
+    unique: true,
+    auto: true
   },
-  username: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  password: {
+  name: {
     type: String,
     required: true
   },
@@ -26,16 +22,18 @@ const UserSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  backup_email: {
+  password: {
     type: String,
-    sparse: true,
-    index: true,
-    default: null
+    required: true
   },
   role: {
     type: String,
-    enum: ['admin', 'teacher', 'parent', 'student', 'Admin', 'Teacher', 'Parent', 'Student'],
-    default: 'student'
+    enum: ['Admin', 'Teacher', 'Parent', 'Student'],
+    default: 'Student'
+  },
+  avatar: {
+    type: String,
+    default: null
   },
   isActive: {
     type: Boolean,
@@ -52,7 +50,7 @@ const UserSchema = new mongoose.Schema({
  * Pre-save middleware to hash passwords
  * Only hashes the password if it has been modified
  */
-UserSchema.pre('save', async function(next) {
+UserAccountSchema.pre('save', async function(next) {
   if (!this.isModified('password')) {
     return next();
   }
@@ -60,7 +58,6 @@ UserSchema.pre('save', async function(next) {
   try {
     // Check if the password is already hashed
     if (this.password.startsWith('$2')) {
-      console.log('Password already hashed, skipping...');
       return next();
     }
 
@@ -75,19 +72,9 @@ UserSchema.pre('save', async function(next) {
 
 /**
  * Method to match user entered password to hashed password in database
- * Handles both Node.js and Python-generated bcrypt hashes
  */
-UserSchema.methods.matchPassword = async function(enteredPassword) {
-  // This assumes bcrypt was used to hash the password
+UserAccountSchema.methods.matchPassword = async function(enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Set username to userId if not provided
-UserSchema.pre('validate', function(next) {
-  if (!this.username && this.userId) {
-    this.username = this.userId;
-  }
-  next();
-});
-
-module.exports = mongoose.model('User', UserSchema, COLLECTIONS.USER_ACCOUNT); 
+module.exports = mongoose.model('UserAccount', UserAccountSchema, COLLECTIONS.USER_ACCOUNT); 

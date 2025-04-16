@@ -1,38 +1,49 @@
-// Export all models from the models directory
-const User = require('./User');
-const Student = require('./Student');
+const mongoose = require('mongoose');
+
+// Import all models
+const UserAccount = require('./UserAccount');
 const Teacher = require('./Teacher');
+const Student = require('./Student');
 const Parent = require('./Parent');
 const Class = require('./Class');
-const Batch = require('./Batch');
+const ParentStudent = require('./ParentStudent');
+const ClassSchedule = require('./ClassSchedule');
+const AttendanceLog = require('./AttendanceLog');
 const Subject = require('./Subject');
 const Classroom = require('./Classroom');
-const ClassSchedule = require('./ClassSchedule');
-const Semester = require('./Semester');
+const ScheduleFormat = require('./ScheduleFormat');
+const RFID = require('./RFID');
 const Curriculum = require('./Curriculum');
 const CurriculumSubject = require('./CurriculumSubject');
-const ParentStudent = require('./ParentStudent');
-const TeacherClassAssignment = require('./TeacherClassAssignment');
-const RFID = require('./RFID');
-const Slot = require('./Slot');
-const AttendanceLog = require('./AttendanceLog');
+const Semester = require('./Semester');
+const Batch = require('./Batch');
+const Announcement = require('./Announcement');
+const Notification = require('./Notification');
+const FaceVector = require('./FaceVector');
+const ModelVersion = require('./ModelVersion');
+const Device = require('./Device');
 
+// Export all models for easy importing
 module.exports = {
-  User,
-  Student,
+  UserAccount,
   Teacher,
+  Student,
   Parent,
   Class,
-  Batch,
+  ParentStudent,
+  ClassSchedule,
+  AttendanceLog,
   Subject,
   Classroom,
-  ClassSchedule,
-  Semester,
+  ScheduleFormat,
+  RFID,
   Curriculum,
   CurriculumSubject,
-  ParentStudent,
-  TeacherClassAssignment,
-  RFID,
-  Slot,
-  AttendanceLog
+  Semester,
+  Batch,
+  Announcement,
+  Notification,
+  FaceVector,
+  ModelVersion,
+  Device
 }; 

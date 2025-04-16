@@ -1,14 +1,18 @@
 const mongoose = require('mongoose');
 const { COLLECTIONS } = require('../constants');
 
+/**
+ * ParentStudent Schema
+ * Represents the relationship between parents and students
+ */
 const ParentStudentSchema = new mongoose.Schema({
   parentId: {
-    type: String,
+    type: Number,
     required: true,
     ref: 'Parent'
   },
   studentId: {
-    type: String,
+    type: Number,
     required: true,
     ref: 'Student'
   },
@@ -28,10 +32,10 @@ const ParentStudentSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Compound index to ensure uniqueness of parentId + studentId combination
+// Compound index to ensure unique parent-student relationships
 ParentStudentSchema.index({ parentId: 1, studentId: 1 }, { unique: true });
 
-// Virtual for getting parent info
+// Virtual for getting parent details
 ParentStudentSchema.virtual('parent', {
   ref: 'Parent',
   localField: 'parentId',
@@ -39,7 +43,7 @@ ParentStudentSchema.virtual('parent', {
   justOne: true
 });
 
-// Virtual for getting student info
+// Virtual for getting student details
 ParentStudentSchema.virtual('student', {
   ref: 'Student',
   localField: 'studentId',

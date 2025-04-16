@@ -1,25 +1,31 @@
 const mongoose = require('mongoose');
 const { COLLECTIONS } = require('../constants');
 
+/**
+ * Class Schema
+ * Represents a class in the system
+ */
 const ClassSchema = new mongoose.Schema({
   classId: {
     type: Number,
     required: true,
-    unique: true
+    unique: true,
+    auto: true
+  },
+  homeroomTeacherId: {
+    type: Number,
+    ref: 'Teacher'
   },
   className: {
     type: String,
     required: true
   },
-  homeroomTeacherId: {
-    type: String,
-    ref: 'User'
-  },
-  BatchID: {
-    type: Number,
-    ref: 'Batch'
+  grade: {
+    type: Number
   }
 }, {
+  timestamps: true,
+  versionKey: false,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
@@ -28,15 +34,7 @@ const ClassSchema = new mongoose.Schema({
 ClassSchema.virtual('homeroomTeacher', {
   ref: 'Teacher',
   localField: 'homeroomTeacherId',
-  foreignField: 'userId',
-  justOne: true
-});
-
-// Virtual for getting batch info
-ClassSchema.virtual('batch', {
-  ref: 'Batch',
-  localField: 'BatchID',
-  foreignField: 'batchId',
+  foreignField: 'teacherId',
   justOne: true
 });
 
@@ -44,12 +42,13 @@ ClassSchema.virtual('batch', {
 ClassSchema.virtual('students', {
   ref: 'Student',
   localField: 'classId',
-  foreignField: 'classId'
+  foreignField: 'classId',
+  justOne: false
 });
 
-// Virtual for getting schedules for this class
+// Virtual for getting class schedules
 ClassSchema.virtual('schedules', {
-  ref: 'Schedule',
+  ref: 'ClassSchedule',
   localField: 'classId',
   foreignField: 'classId',
   justOne: false

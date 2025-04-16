@@ -1,34 +1,26 @@
 const mongoose = require('mongoose');
 const { COLLECTIONS } = require('../constants');
 
+/**
+ * Student Schema
+ * Represents students in the system
+ */
 const StudentSchema = new mongoose.Schema({
   studentId: {
-    type: String,
+    type: Number,
     required: true,
-    unique: true
+    unique: true,
+    auto: true
   },
   userId: {
-    type: String,
+    type: Number,
     required: true,
-    unique: true
-  },
-  firstName: {
-    type: String,
-    required: true
-  },
-  lastName: {
-    type: String,
-    required: true
-  },
-  email: {
-    type: String,
-    required: true
+    unique: true,
+    ref: 'UserAccount'
   },
   fullName: {
     type: String,
-    default: function() {
-      return `${this.firstName} ${this.lastName}`.trim();
-    }
+    required: true
   },
   dateOfBirth: {
     type: Date
@@ -37,25 +29,16 @@ const StudentSchema = new mongoose.Schema({
     type: Number,
     ref: 'Class'
   },
-  batchId: {
-    type: Number,
-    ref: 'Batch',
-    get: v => v,
-    set: v => typeof v === 'string' ? parseInt(v) : v
-  },
   gender: {
-    type: String,
-    enum: ['Male', 'Female'],
-    required: true,
+    type: Boolean,
     set: function(v) {
-      if (typeof v === 'boolean') {
-        return v ? 'Male' : 'Female';
-      }
       if (typeof v === 'string') {
-        if (v.toLowerCase() === 'male' || v === 'true') return 'Male';
-        if (v.toLowerCase() === 'female' || v === 'false') return 'Female';
+        return v.toLowerCase() === 'male' || v === 'true';
       }
       return v;
+    },
+    get: function(v) {
+      return v ? 'Male' : 'Female';
     }
   },
   address: {
@@ -63,27 +46,7 @@ const StudentSchema = new mongoose.Schema({
   },
   phone: {
     type: String
-  },
-  isActive: {
-    type: Boolean,
-    default: true
-  },
-  // Parent information arrays
-  parentIds: [{
-    type: String
-  }],
-  parentNames: [{
-    type: String
-  }],
-  parentCareers: [{
-    type: String
-  }],
-  parentPhones: [{
-    type: String
-  }],
-  parentGenders: [{
-    type: Boolean
-  }]
+  }
 }, {
   timestamps: true,
   versionKey: false,
@@ -93,29 +56,26 @@ const StudentSchema = new mongoose.Schema({
 
 // Virtual for getting user info
 StudentSchema.virtual('user', {
-  ref: 'User',
+  ref: 'UserAccount',
   localField: 'userId',
   foreignField: 'userId',
   justOne: true
 });
 
-// Generate user ID based on name and IDs
-StudentSchema.statics.generateUserId = function(firstName, lastName, batchId, studentId) {
-  if (!firstName || !lastName || !batchId || !studentId) {
-    throw new Error('Missing required fields for userId generation');
-  }
-  
-  // In Vietnamese naming, lastName is the family name (Nguyễn Phước), 
-  // firstName is the given name (Thành)
-  
-  // Names should already be normalized (accents removed) in the controller
-  
-  // Extract the first letter of each word in the lastName
-  const lastNameParts = lastName.split(' ');
-  const lastNameInitials = lastNameParts.map(part => part.charAt(0).toLowerCase()).join('');
-  
-  // Combine with firstName, "st" suffix, and IDs
-  return `${firstName.toLowerCase()}${lastNameInitials}st${batchId}${studentId}`;
-};
+// Virtual for getting class info
+StudentSchema.virtual('class', {
+  ref: 'Class',
+  localField: 'classId',
+  foreignField: 'classId',
+  justOne: true
+});
+
+// Virtual for getting parent information through ParentStudent relation
+StudentSchema.virtual('parents', {
+  ref: 'ParentStudent',
+  localField: 'studentId',
+  foreignField: 'studentId',
+  justOne: false
+});
 
 module.exports = mongoose.model('Student', StudentSchema, COLLECTIONS.STUDENT); 

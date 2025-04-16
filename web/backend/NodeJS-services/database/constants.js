@@ -17,12 +17,16 @@ const COLLECTIONS = {
   CURRICULUM: 'Curriculum',
   CURRICULUM_SUBJECT: 'CurriculumSubject',
   PARENT_STUDENT: 'ParentStudent',
-  TEACHER_CLASS_ASSIGNMENT: 'TeacherClassAssignment',
   RFID: 'RFID',
   CLASS_SCHEDULE: 'ClassSchedule',
-  SEMESTER_SCHEDULE: 'SemesterSchedule',
   ATTENDANCE_LOG: 'AttendanceLog',
-  SLOT: 'Slot'
+  SCHEDULE_FORMAT: 'ScheduleFormat',
+  ANNOUNCEMENT: 'Announcement',
+  NOTIFICATION: 'Notification',
+  FACE_VECTOR: 'FaceVector',
+  MODEL_VERSION: 'ModelVersion',
+  DEVICE: 'Device',
+  SLOT: 'ScheduleFormat'  // Legacy reference for compatibility
 };
 
 module.exports = { COLLECTIONS }; 

@@ -7,9 +7,14 @@ import csv
 import random
 from typing import List, Dict, Any
 from datetime import datetime, timedelta
-from src.models.curriculum import Subject, Curriculum, CurriculumSubject, Slot
-from src.models.class_model import Classroom
-from src.models.user import Teacher, Parent
+from .models.Subject import Subject
+from .models.Curriculum import Curriculum
+from .models.CurriculumSubject import CurriculumSubject
+from .models.ScheduleFormat import ScheduleFormat
+from .models.Classroom import Classroom
+from .models.Teacher import Teacher
+from .models.Parent import Parent
+from .constants import COLLECTIONS
 
 
 class DataLoader:
@@ -232,9 +237,9 @@ class DataLoader:
         # Insert slots to database
         if slots:
             # Clear existing slots
-            self.db.Slot.delete_many({})
-            self.db.Slot.insert_many(slots)
-            print(f"Imported {len(slots)} slots")
+            self.db[COLLECTIONS['SCHEDULE_FORMAT']].delete_many({})
+            self.db[COLLECTIONS['SCHEDULE_FORMAT']].insert_many(slots)
+            print(f"Imported {len(slots)} time slots")
         else:
             print("WARNING: No slots found!")
             
