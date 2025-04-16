@@ -2,11 +2,17 @@
 
 interface ClassData {
   _id: string;
+  id?:string;
   className: string;
   grade: string;
   homeroomTeacherd: string;
   createdAt: string;
   updatedAt: string;
+  academicYear?: string;
+  role?: string;
+  classId?:number;
+  batchId?:number;
+  name?:string;
   // Thêm các field khác nếu API trả về thêm
 }
 

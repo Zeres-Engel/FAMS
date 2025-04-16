@@ -14,7 +14,7 @@ function ClassManagementPage(): React.JSX.Element {
           <Grid size={12} className="classPage-Header">
             <DataTable
               headCellsData={state.headCellsData}
-              tableMainData={state.userMainData}
+              tableMainData={state.classMainData}
               tableTitle={state.tableTitle}
               isCheckBox={state.isCheckBox}
               isAdmin={true}

@@ -8,11 +8,13 @@ function useTableToolBarHook({
   isAttendance,
   isClassManagement,
   isUserManagement,
+  isTeacher,
   setFiltersUser
 }: {
   isAttendance: boolean;
   isClassManagement: boolean;
   isUserManagement: boolean;
+  isTeacher?: boolean;
   setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
 }) {
   const dispatch = useDispatch<AppDispatch>();
@@ -27,6 +29,8 @@ function useTableToolBarHook({
     batch: "",
     dateFrom: "",
     dateTo: "",
+    slotID: "",
+    date: "",
   });
 
   const handleFilterChange = (
@@ -37,7 +41,13 @@ function useTableToolBarHook({
   };
 
   const handleFilterSubmit = () => {
-    if (isAttendance) {
+    if (isTeacher) {
+      const teacherFilters = {
+        slotID: filters.slotID,
+        date: filters.date,
+      };
+      console.log("Teacher Filter submitted:", teacherFilters);
+    } else if (isAttendance) {
       const attendanceFilters = {
         className: filters.className,
         userID: filters.userID,

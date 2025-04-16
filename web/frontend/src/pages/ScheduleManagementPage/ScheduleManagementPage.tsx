@@ -259,6 +259,7 @@ const ScheduleManagementPage: React.FC = () => {
             </DialogContent>
 
             <DialogActions>
+              {/* Nếu là admin thì có nút Edit/Delete */}
               {role === "admin" &&
                 (state.isEditing ? (
                   <>
@@ -288,6 +289,17 @@ const ScheduleManagementPage: React.FC = () => {
                     </Button>
                   </>
                 ))}
+
+              {/* Nếu là giáo viên thì có nút Check Attendance */}
+              {role === "teacher" && (
+                <Button
+                  variant="contained"
+                  color="secondary"
+                >
+                  Check Attendance
+                </Button>
+              )}
+
               <Button
                 variant="outlined"
                 onClick={() => {
@@ -369,7 +381,7 @@ const ScheduleManagementPage: React.FC = () => {
                     start: new Date(),
                     end: new Date(),
                     teacher: "",
-                    classroomNumber:''
+                    classroomNumber: "",
                   });
                 }}
               >

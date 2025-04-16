@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import {
   AddUserForm,
+  AttendanceLog,
   Data,
+  EditAttendanceFormProps,
   editClassForm,
   EditTeacherForm,
   EditUserForm,
@@ -16,17 +18,30 @@ import {
   updateStudent,
   updateTeacher,
 } from "../../store/slices/userSlice";
+import { ClassData } from "../../model/classModels/classModels.model";
 
 interface UseDataTableHookProps {
-  tableMainData: Data[] | UserData[];
+  tableMainData: Data[] | UserData[] | ClassData[] | AttendanceLog[];
 }
 function useDataTableHook(props: UseDataTableHookProps) {
   const { tableMainData } = props;
   const editClassDefaul: editClassForm = {
     className: "",
     teacherId: "",
-    batch: "",
+    academicYear:"",
+    grade:"10"
   };
+  const editAttendanceDefault: EditAttendanceFormProps = {
+    attendanceId: 0,
+    scheduleId: 0,
+    userId: 0,
+    fullName: "",
+    face: null,
+    checkin: "",
+    status: "Present",
+    note: "",
+    checkinFace: "",
+  }
   const editUserDefault: EditUserForm = {
     classId: [],
     firstName: "",
@@ -47,7 +62,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
   const rows = React.useMemo(() => [...tableMainData], [tableMainData]);
   const [isCreateUser, setIsCreateUser] = useState<boolean>(false);
   const [order, setOrder] = React.useState<Order>("asc");
-  const [orderBy, setOrderBy] = React.useState<keyof Data | keyof UserData>(
+  const [orderBy, setOrderBy] = React.useState<keyof Data | keyof UserData | keyof ClassData | keyof AttendanceLog>(
     "id"
   );
   const [selected, setSelected] = React.useState<readonly number[]>([]);
@@ -56,11 +71,13 @@ function useDataTableHook(props: UseDataTableHookProps) {
     React.useState<EditUserForm>(editUserDefault);
   const [editingClass, setEditingClass] =
     React.useState<editClassForm>(editClassDefaul);
+  const [editingAttendance, setEditingAttendance] =
+    React.useState<EditAttendanceFormProps>(editAttendanceDefault);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUserToDelete, setSelectedUserToDelete] = useState<
-    Data | UserData | null
+    Data | UserData | ClassData | null
   >(null);
   const [editingUserId, setEditingUserId] = useState<string | undefined>(
     undefined
@@ -68,7 +85,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
   const allUsers = useSelector((state: RootState) => state.users.user);
   const handleRequestSort = (
     event: React.MouseEvent<unknown>,
-    property: keyof Data | keyof UserData
+    property: keyof Data | keyof UserData | keyof ClassData | keyof AttendanceLog
   ) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
@@ -143,15 +160,24 @@ function useDataTableHook(props: UseDataTableHookProps) {
     setEditingClass(classData);
     setIsEditOpen(true);
   };
-  const handleDeleteClick = (user: Data | UserData) => {
+  const handleEditAttendanceClick = (attendanceStatus: EditAttendanceFormProps) => {
+    setEditingAttendance(attendanceStatus);
+    setIsEditOpen(true);
+  };
+  const handleDeleteClick = (user: Data | UserData | ClassData) => {
+    console.log("Deleting user:", user.id);
     setSelectedUserToDelete(user);
     setIsDeleteDialogOpen(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (selectedUserToDelete) {
+  const handleConfirmDelete = (typeDelete: string | undefined) => {
+    if (selectedUserToDelete &&  typeDelete === "userDelete") {
       console.log("Deleting user:", selectedUserToDelete.id);
       dispatch(deleteUser(selectedUserToDelete.id));
+    }
+    if (selectedUserToDelete &&  typeDelete === "classDelete") {
+      console.log("Deleting user:", selectedUserToDelete.id);
+      // dispatch(deleteUser(selectedUserToDelete.id));
     }
     setIsDeleteDialogOpen(false);
     setSelectedUserToDelete(null);
@@ -178,6 +204,10 @@ function useDataTableHook(props: UseDataTableHookProps) {
   };
   const handleEditClassSave = (classFormData: editClassForm) => {
     console.log("Saving edited class:", classFormData);
+    setIsEditOpen(false);
+  };
+  const handleEditAttendanceSave = (attendanceData: EditAttendanceFormProps) => {
+    console.log("Saving edited Attendance:", attendanceData);
     setIsEditOpen(false);
   };
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -244,6 +274,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
     isDeleteDialogOpen,
     selectedUserToDelete,
     editingClass,
+    editingAttendance
   };
   const handler = {
     handleRequestSort,
@@ -260,6 +291,8 @@ function useDataTableHook(props: UseDataTableHookProps) {
     handleDeleteClick,
     handleEditClassSave,
     handleEditClassClick,
+    handleEditAttendanceClick,
+    handleEditAttendanceSave
   };
 
   return { state, handler };

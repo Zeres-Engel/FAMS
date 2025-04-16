@@ -8,13 +8,14 @@ import {
   HeadCell,
 } from "../../model/tableModels/tableDataModels.model";
 
-function useAttendanceManagementPageHook() {
-  const sampleData: AttendanceLog[] = [
+function useAttendancePageHook() {
+  const attendanceLogs: AttendanceLog[] = [
     {
       id: "1",
       attendanceId: 1,
       scheduleId: 101,
       userId: 1001,
+      fullName: "Nguyen Van A",
       face: null,
       checkin: "2025-04-16T07:05:00",
       status: "Present",
@@ -25,6 +26,7 @@ function useAttendanceManagementPageHook() {
       attendanceId: 2,
       scheduleId: 101,
       userId: 1002,
+      fullName: "Tran Thi B",
       face: null,
       checkin: "2025-04-16T07:15:00",
       status: "Late",
@@ -35,6 +37,7 @@ function useAttendanceManagementPageHook() {
       attendanceId: 3,
       scheduleId: 101,
       userId: 1003,
+      fullName: "Le Van C",
       face: null,
       checkin: null,
       status: "Absent",
@@ -45,6 +48,7 @@ function useAttendanceManagementPageHook() {
       attendanceId: 4,
       scheduleId: 102,
       userId: 1001,
+      fullName: "Nguyen Van A",
       face: null,
       checkin: "2025-04-16T13:00:00",
       status: "Present",
@@ -55,13 +59,15 @@ function useAttendanceManagementPageHook() {
       attendanceId: 5,
       scheduleId: 102,
       userId: 1002,
+      fullName: "Tran Thi B",
       face: null,
       checkin: "2025-04-16T13:10:00",
       status: "Late",
       checkinFace: "",
     },
   ];
-  const [userMainData, setUserMainData] = useState<AttendanceLog[]>(sampleData);
+  const [userMainData, setUserMainData] =
+    useState<AttendanceLog[]>(attendanceLogs);
 
   const headCellsData: AttendanceHeadCell[] = [
     {
@@ -95,6 +101,12 @@ function useAttendanceManagementPageHook() {
       label: "User Id",
     },
     {
+      id: "fullName",
+      numeric: false,
+      disablePadding: false,
+      label: "Full Name",
+    },
+    {
       id: "checkin",
       numeric: false,
       disablePadding: false,
@@ -121,4 +133,4 @@ function useAttendanceManagementPageHook() {
   const handler = {};
   return { state, handler };
 }
-export default useAttendanceManagementPageHook;
+export default useAttendancePageHook;

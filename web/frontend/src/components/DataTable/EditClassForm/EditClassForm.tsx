@@ -59,18 +59,35 @@ export default function EditClassForm({
             onChange={handler.handleEditClassChange}
           />
           <FormControl fullWidth>
-            <InputLabel id="batch-select-label">Batch</InputLabel>
+            <InputLabel id="grade-select-label">Grade</InputLabel>
             <Select
-              labelId="batch-select-label"
-              id="batch-select"
-              name="batch"
-              value={state.editingClass?.batch}
+              labelId="grade-select-label"
+              id="grade-select"
+              name="grade"
+              value={state.editingClass?.grade}
               label="Batch"
               onChange={handler.handleSelectChange}
             >
               <MenuItem value="10">10</MenuItem>
               <MenuItem value="11">11</MenuItem>
               <MenuItem value="12">12</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl fullWidth>
+            <InputLabel id="academicYear-select-label">School Year</InputLabel>
+            <Select
+              labelId="academicYear-select-label"
+              id="academicYear-select"
+              name="academicYear"
+              value={state.editingClass?.academicYear}
+              label="academicYear"
+              onChange={handler.handleSelectChange}
+            >
+              {handler.getAcademicYears(3,state.editingClass?.academicYear).map(year => (
+                <MenuItem key={year} value={year}>
+                  {year}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         </Box>

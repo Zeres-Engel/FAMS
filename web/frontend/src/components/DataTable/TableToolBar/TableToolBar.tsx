@@ -25,6 +25,7 @@ import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import { SearchFilters } from "../../../model/userModels/userDataModels.model";
 
 interface EnhancedTableToolbarProps {
+  isTeacher?: boolean;
   numSelected: number;
   tableTitle: string;
   isAdmin?: boolean;
@@ -46,14 +47,15 @@ function TableToolBar(props: EnhancedTableToolbarProps): React.JSX.Element {
     isClassManagement = false,
     isAttendance = false,
     isUserManagement = false,
-    setFiltersUser
+    setFiltersUser,
+    isTeacher = false,
   } = props;
 
   const { state, handler } = useTableToolBarHook({
     isAttendance,
     isClassManagement,
     isUserManagement,
-    setFiltersUser
+    setFiltersUser,
   });
 
   const { filters } = state;
@@ -129,7 +131,7 @@ function TableToolBar(props: EnhancedTableToolbarProps): React.JSX.Element {
       </Box>
 
       {/* Filter Section */}
-      {(isAdmin || isClassManagement || isAttendance) && (
+      {(isAdmin || isClassManagement || isAttendance || isTeacher) && (
         <Box
           sx={{
             width: "100%",
@@ -138,7 +140,26 @@ function TableToolBar(props: EnhancedTableToolbarProps): React.JSX.Element {
             gap: 2,
           }}
         >
-          {isAttendance ? (
+          {isTeacher ? (
+            <>
+              <TextField
+                label="Slot ID"
+                value={filters.slotID}
+                onChange={e => handleFilterChange("slotID", e.target.value)}
+                fullWidth={isMobile}
+                sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+              />
+              <TextField
+                label="Date"
+                type="date"
+                value={filters.date}
+                onChange={e => handleFilterChange("date", e.target.value)}
+                fullWidth={isMobile}
+                InputLabelProps={{ shrink: true }}
+                sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+              />
+            </>
+          ) : isAttendance ? (
             <>
               <TextField
                 label="Class Name"
@@ -233,7 +254,7 @@ function TableToolBar(props: EnhancedTableToolbarProps): React.JSX.Element {
                   label="Grade"
                   onChange={e => handleFilterChange("grade", e.target.value)}
                 >
-                  <MenuItem value="">None</MenuItem> 
+                  <MenuItem value="">None</MenuItem>
                   <MenuItem value="10">10</MenuItem>
                   <MenuItem value="11">11</MenuItem>
                   <MenuItem value="12">12</MenuItem>

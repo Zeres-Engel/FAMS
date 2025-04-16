@@ -1,19 +1,16 @@
 import { SelectChangeEvent } from "@mui/material";
 import { useState } from "react";
+import { editClassForm } from "../../../model/tableModels/tableDataModels.model";
 
-interface AddClassForm {
-  className: string;
-  teacherName: string;
-  batch: string;
-}
 
-type FormErrors = Partial<Record<keyof AddClassForm, string>>;
+type FormErrors = Partial<Record<keyof editClassForm, string>>;
 
 export default function useAddClassFormHook() {
-  const [form, setForm] = useState<AddClassForm>({
+  const [form, setForm] = useState<editClassForm>({
     className: "",
-    teacherName: "",
-    batch: "",
+    teacherId: "",
+    academicYear:"",
+    grade:"10"
   });
 
   const [formErrors, setFormErrors] = useState<FormErrors>({});
@@ -44,7 +41,15 @@ export default function useAddClassFormHook() {
       [name]: "",
     }));
   };
-
+  const getAcademicYears = (range = 3) => {
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear - 1;
+    return Array.from({ length: range }, (_, i) => {
+      const yearStart = startYear + i;
+      const yearEnd = yearStart + 1;
+      return `${yearStart}-${yearEnd}`;
+    });
+  };
   const validateForm = (): boolean => {
     const errors: FormErrors = {};
 
@@ -52,8 +57,14 @@ export default function useAddClassFormHook() {
       errors.className = "Class Name is required";
     }
 
-    if (!form.teacherName.trim()) {
-      errors.teacherName = "Teacher Name is required";
+    if (!form.teacherId.trim()) {
+      errors.teacherId = "Teacher Id is required";
+    }
+    if (!form.grade.trim()) {
+      errors.grade = "Grade is required";
+    }
+    if (!form.academicYear.trim()) {
+      errors.academicYear = "Academic Year is required";
     }
 
     setFormErrors(errors);
@@ -69,6 +80,6 @@ export default function useAddClassFormHook() {
 
   return {
     state: { form, formErrors },
-    handler: { handleInputChange, handleSubmit, handleSelectChange },
+    handler: { handleInputChange, handleSubmit, handleSelectChange,getAcademicYears },
   };
 }

@@ -47,26 +47,43 @@ export default function AddClassForm(): React.JSX.Element {
 
           <TextField
             fullWidth
-            label="Teacher Name"
-            name="teacherName"
-            value={state.form.teacherName}
+            label="Teacher ID"
+            name="teacherId"
+            value={state.form.teacherId}
             onChange={handler.handleInputChange}
-            error={Boolean(state.formErrors.teacherName)}
-            helperText={state.formErrors.teacherName}
+            error={Boolean(state.formErrors.teacherId)}
+            helperText={state.formErrors.teacherId}
           />
           <FormControl fullWidth>
-            <InputLabel id="batch-select-label">Batch</InputLabel>
+            <InputLabel id="grade-select-label">Grade</InputLabel>
             <Select
-              labelId="batch-select-label"
-              id="batch-select"
-              name="batch"
-              value={state.form?.batch}
-              label="Batch"
+              labelId="grade-select-label"
+              id="grade-select"
+              name="grade"
+              value={state.form?.grade}
+              label="grade"
               onChange={handler.handleSelectChange}
             >
               <MenuItem value="10">10</MenuItem>
               <MenuItem value="11">11</MenuItem>
               <MenuItem value="12">12</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl fullWidth>
+            <InputLabel id="academicYear-select-label">School Year</InputLabel>
+            <Select
+              labelId="academicYear-select-label"
+              id="academicYear-select"
+              name="academicYear"
+              value={state.form?.academicYear}
+              label="academicYear"
+              onChange={handler.handleSelectChange}
+            >
+              {handler.getAcademicYears(4).map(year => (
+                <MenuItem key={year} value={year}>
+                  {year}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
           <Button

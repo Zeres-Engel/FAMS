@@ -11,6 +11,7 @@ import ScheduleManagementPage from "../pages/ScheduleManagementPage/ScheduleMana
 import ClassManagementPage from "../pages/ClassManagementPage/ClassManagementPage";
 import AttendanceManagementPage from "../pages/AttendanceManagementPage/AttendanceManagementPage";
 import IdentifyManagementPage from "../pages/IdentifyManagement/IdentifyManagementPage";
+import AttendancePage from "../pages/AttendancePage/AttendancePage";
 
 const router = createBrowserRouter([
   // { path: "/", element: <AuthWrapper mode="admin" element={<HomePageAdmin />} /> },
@@ -47,6 +48,10 @@ const router = createBrowserRouter([
     element: <AuthWrapper mode="admin" element={<AttendanceManagementPage />} />,
   },
   {
+    path: "/AttendanceManagementTest",
+    element: <AttendanceManagementPage />,
+  },
+  {
     path: "/login",
     element: <AuthWrapper mode="guest" element={<LoginPage />} />,
   },
@@ -62,13 +67,21 @@ const router = createBrowserRouter([
     path: "/Schedule",
     element: <AuthWrapper mode="private" element={<SchedulePage />} />,
   },
+  // {
+  //   path: "/Schedule",
+  //   element: <SchedulePage />,
+  // },
   {
     path: "/Class",
     element: <AuthWrapper mode="private" element={<ClassPage />} />,
   },
+  {
+    path: "/Attendence",
+    element: <AuthWrapper mode="private" element={<AttendancePage />} />,
+  },
   // {
   //   path: "/Attendence",
-  //   element: <AuthWrapper mode="private" element={<AttendancePage />} />,
+  //   element: <AttendancePage />,
   // },
   {
     path: "*",
