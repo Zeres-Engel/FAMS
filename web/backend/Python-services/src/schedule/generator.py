@@ -147,7 +147,7 @@ def generate_schedule_entries(db, schedule_data, total_weeks, start_date, end_da
                         "classroomId": classroom_id,
                         "roomName": room_name,
                         "semesterId": schedule["semesterId"],
-                        "sessionWeek": f"Week {week_num}"
+                        "sessionWeek": f"Tuần {week_num}"
                     }
                     
                     schedule_entries.append(entry)

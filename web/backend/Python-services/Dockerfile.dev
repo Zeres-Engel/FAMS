@@ -31,7 +31,12 @@ RUN adduser --disabled-password --gecos "" appuser
 
 # Copy mã nguồn và thiết lập quyền
 COPY . .
-RUN chown -R appuser:appuser /app
+
+# Tạo cấu trúc thư mục upload và đảm bảo quyền ghi
+RUN mkdir -p /app/src/data/xlsx/upload && \
+    mkdir -p /app/src/data/csv/upload && \
+    chown -R appuser:appuser /app && \
+    chmod -R 777 /app/src/data
 
 # Chuyển sang người dùng không đặc quyền
 USER appuser

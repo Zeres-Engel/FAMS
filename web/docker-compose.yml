@@ -42,7 +42,6 @@ services:
       - REFRESH_TOKEN_SECRET=your_refresh_token_secret_key_change_this_in_production
     volumes:
       - ./backend/Python-services:/app
-      - /app/data
     command: python -m uvicorn src.api.app:app --host 0.0.0.0 --port 3000 --reload
     networks:
       - app-network

@@ -53,6 +53,9 @@ const TeacherSchema = new mongoose.Schema({
   weeklyCapacity: {
     type: Number,
     default: 10
+  },
+  degree: {
+    type: String
   }
 }, {
   timestamps: true,

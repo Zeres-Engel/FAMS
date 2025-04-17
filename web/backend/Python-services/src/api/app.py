@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 
 from .base import router as base_router
 from .database import router as db_router
+from .user_management import router as user_management_router
 from .schedule import router as schedule_router
 
 # Load environment variables
@@ -44,7 +45,8 @@ def create_application() -> FastAPI:
     # Include routers
     application.include_router(base_router)
     application.include_router(db_router, prefix="/api/db", tags=["database"])
-    application.include_router(schedule_router, prefix="/api/db", tags=["scheduling"])
+    application.include_router(user_management_router, prefix="/api/users", tags=["users"])
+    application.include_router(schedule_router, prefix="/api/schedules", tags=["schedules"])
 
     return application
 

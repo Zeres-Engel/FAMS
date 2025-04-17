@@ -20,6 +20,7 @@ CREATE TABLE AttendanceLog
   CreatedAt    DATETIME                  NULL     DEFAULT CURRENT_TIMESTAMP,
   UpdatedAt    DATETIME                  NULL     DEFAULT CURRENT_TIMESTAMP,
   IsActive     BOOLEAN                   NULL     DEFAULT TRUE,
+  Note         VARCHAR(100)              NULL    ,
   PRIMARY KEY (AttendanceID)
 );
 
@@ -290,6 +291,7 @@ CREATE TABLE Teacher
   CreatedAt      DATETIME     NULL     DEFAULT CURRENT_TIMESTAMP,
   UpdatedAt      DATETIME     NULL     DEFAULT CURRENT_TIMESTAMP,
   IsActive       BOOLEAN      NULL     DEFAULT TRUE,
+  Degree         VARCHAR(100) NULL    ,
   PRIMARY KEY (TeacherID)
 );
 
@@ -331,11 +333,6 @@ ALTER TABLE Class
   ADD CONSTRAINT FK_Teacher_TO_Class
     FOREIGN KEY (HomeroomTeacherID)
     REFERENCES Teacher (TeacherID);
-
-ALTER TABLE Class
-  ADD CONSTRAINT FK_Batch_TO_Class
-    FOREIGN KEY ()
-    REFERENCES Batch (BatchID);
 
 ALTER TABLE ClassSchedule
   ADD CONSTRAINT FK_Semester_TO_ClassSchedule
