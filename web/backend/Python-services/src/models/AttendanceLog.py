@@ -11,10 +11,11 @@ class AttendanceLog(BaseModel):
     """AttendanceLog model representing attendance records"""
     attendanceId: int = Field(..., description="Unique identifier for the attendance record")
     scheduleId: int = Field(..., description="Reference to ClassSchedule")
-    userId: int = Field(..., description="Reference to UserAccount")
+    userId: str = Field(..., description="Reference to UserAccount")
     checkInFace: Optional[bytes] = Field(None, description="Face image used for check-in")
     checkIn: Optional[datetime] = Field(None, description="Time of check-in")
-    status: str = Field(default="Absent", description="Attendance status (Present, Late, Absent)")
+    note: Optional[str] = Field("", description="Additional notes for this attendance")
+    status: str = Field(default="Absent", description="Attendance status (Present, Late, Absent, Not Now)")
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     updatedAt: datetime = Field(default_factory=datetime.utcnow)
     isActive: bool = Field(default=True)

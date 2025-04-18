@@ -51,12 +51,13 @@ async def generate_class_schedules(request: ScheduleRequest, background_tasks: B
     """
     Generate class schedules for a specific semester
     
-    This API takes semester number (1 or 2), start and end dates, and generates 
-    class schedules using an improved algorithm that considers:
-    - Teacher specialties (major)
-    - Teacher weekly capacity
-    - Classroom availability
-    - Class subject requirements
+    This API takes semester number (1 or 2), start and end dates, and generates:
+    1. Class schedules using an improved algorithm that considers:
+       - Teacher specialties (major)
+       - Teacher weekly capacity
+       - Classroom availability
+       - Class subject requirements
+    2. Attendance logs for each student in each class for every schedule entry with status "Not Now"
     
     Returns schedule generation status and starts a background task for generation
     """
@@ -123,11 +124,12 @@ async def generate_class_schedules(request: ScheduleRequest, background_tasks: B
         
         return ScheduleResponse(
             success=True,
-            message=f"Bắt đầu sắp xếp thời khóa biểu cho {semester_name}",
+            message=f"Bắt đầu sắp xếp thời khóa biểu và tạo attendance logs cho {semester_name}",
             totalEntries=0,
             details={
                 "status": "processing", 
-                "updatedSemesters": len(existing_semesters)
+                "updatedSemesters": len(existing_semesters),
+                "note": "Hệ thống sẽ tự động tạo attendance logs với trạng thái 'Not Now' cho mỗi học sinh trong lịch học"
             }
         )
         
@@ -161,6 +163,10 @@ async def _generate_improved_schedules_task(semester_info: Dict[str, Any]):
         result = db.ClassSchedule.delete_many({"semesterNumber": semester_number})
         print(f"[INFO] Đã xóa {result.deleted_count} lịch học cũ")
         
+        # Clean existing attendance logs related to this semester
+        attendance_delete_result = db.AttendanceLog.delete_many({"semesterNumber": semester_number})
+        print(f"[INFO] Đã xóa {attendance_delete_result.deleted_count} attendance logs cũ")
+        
         # Generate schedules using improved algorithm
         schedules, warnings = generate_improved_schedule(
             db=db,
@@ -193,8 +199,10 @@ async def _generate_improved_schedules_task(semester_info: Dict[str, Any]):
             cleaned_schedules.append(clean_schedule)
             
         # Save generated schedules to database
+        schedule_ids = []
         if cleaned_schedules:
             result = db.ClassSchedule.insert_many(cleaned_schedules)
+            schedule_ids = result.inserted_ids
             print(f"[INFO] Đã lưu {len(result.inserted_ids)} lịch học vào cơ sở dữ liệu")
             
         # Log any warnings
@@ -203,7 +211,59 @@ async def _generate_improved_schedules_task(semester_info: Dict[str, Any]):
             for warning in warnings:
                 print(f"  - {warning}")
         
+        # Tạo attendance logs cho từng lịch học đã tạo
+        print(f"[INFO] Bắt đầu tạo attendance logs cho {len(cleaned_schedules)} lịch học")
+        attendance_logs = []
+        attendance_count = 0
+        
+        # Tạo một bộ đếm cho attendanceId
+        last_attendance = db.AttendanceLog.find_one(sort=[("attendanceId", -1)])
+        next_attendance_id = 1 if not last_attendance else (last_attendance.get("attendanceId", 0) + 1)
+        
+        # Lặp qua từng lịch học đã tạo
+        for schedule in cleaned_schedules:
+            class_id = schedule["classId"]
+            schedule_id = schedule["scheduleId"]
+            
+            # Lấy danh sách học sinh trong lớp
+            students = list(db.Student.find({"classId": class_id, "isActive": True}))
+            
+            # Tạo attendance log cho từng học sinh
+            for student in students:
+                user_id = student.get("userId")  # userId là string
+                
+                if user_id:
+                    attendance_log = {
+                        "attendanceId": next_attendance_id,
+                        "scheduleId": schedule_id,
+                        "userId": user_id,  # userId là string
+                        "checkIn": None,
+                        "note": "",
+                        "status": "Not Now",  # Đặt tất cả là Not Now như yêu cầu
+                        "semesterNumber": schedule["semesterNumber"],  # Thêm để dễ quản lý
+                        "createdAt": datetime.utcnow(),
+                        "updatedAt": datetime.utcnow(),
+                        "isActive": True
+                    }
+                    
+                    attendance_logs.append(attendance_log)
+                    next_attendance_id += 1
+                    attendance_count += 1
+                    
+                    # Insert batch cứ mỗi 1000 records để tránh quá tải memory
+                    if len(attendance_logs) >= 1000:
+                        db.AttendanceLog.insert_many(attendance_logs)
+                        print(f"[INFO] Đã lưu batch {len(attendance_logs)} attendance logs")
+                        attendance_logs = []
+        
+        # Insert nốt các attendance logs còn lại
+        if attendance_logs:
+            db.AttendanceLog.insert_many(attendance_logs)
+            print(f"[INFO] Đã lưu batch cuối cùng {len(attendance_logs)} attendance logs")
+        
+        print(f"[INFO] Hoàn thành: Đã tạo tổng cộng {attendance_count} attendance logs")
+        
     except Exception as e:
         import traceback
-        print(f"[ERROR] Lỗi khi tạo lịch học: {str(e)}")
+        print(f"[ERROR] Lỗi khi tạo lịch học hoặc attendance logs: {str(e)}")
         print(f"[ERROR] Chi tiết: {traceback.format_exc()}")
