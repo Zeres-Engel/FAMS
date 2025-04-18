@@ -19,7 +19,6 @@ from model.MiDaS.DepthModel import DepthPredictor
 from model.RFID.rfid import RFID
 from model.FaceAnti.face_anti import FaceAntiSpoofing
 from model.utils import face_align
-from src.api_client import APIClient
 
 class ZenSys:
     def __init__(self):
@@ -49,10 +48,6 @@ class ZenSys:
         self.face_anti = FaceAntiSpoofing()
         self.depth_face_crop = None
         self.anti_spoofing_result = None
-        
-        # Initialize API client
-        self.api_client = APIClient()
-        self.current_room = "room101A"  # Default room
         
     def process_gallery(self):
         """Convert all gallery images to face embeddings and store in FAISS"""
@@ -228,7 +223,6 @@ class ZenSys:
         3. Lưu khuôn mặt đã crop và align
         4. Xác thực danh tính với ID từ RFID
         5. Thực hiện kiểm tra anti-spoofing nếu có depth map
-        6. Send access record to API server
         """
         if self.current_rfid and face:
             # Lấy embedding đã được tạo từ ZenFace.get()
@@ -254,26 +248,8 @@ class ZenSys:
                         self.current_face_crop = None
             
             # Xác thực danh tính
-            rfid_verification = self.rfid_system.verify_identity(self.current_rfid, face_name)
-            self.verification_result = rfid_verification
-            
-            # Send access record to API server
-            try:
-                if self.anti_spoofing_result == "LIVE" or self.face_anti.enable is False:
-                    # Only send access record if face is live or anti-spoofing is disabled
-                    self.api_client.record_access(
-                        rfid=self.current_rfid,
-                        room=self.current_room,
-                        person_name=face_name,
-                        verification_result=rfid_verification.get("match", False),
-                        confidence_score=score
-                    )
-            except Exception as e:
-                print(f"Error sending access record to API server: {e}")
+            self.verification_result = self.rfid_system.verify_identity(
+                self.current_rfid, face_name)
             
             return self.verification_result
         return None
-    
-    def set_room(self, room_id):
-        """Set the current room ID"""
-        self.current_room = room_id
