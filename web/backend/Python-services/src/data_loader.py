@@ -326,8 +326,10 @@ class DataLoader:
                     # Create curriculum subject
                     try:
                         sessions = int(row.get("Sessions", "2").strip())
+                        print(f"DEBUG: Sessions for {subject['subjectName']}: {sessions}")
                     except ValueError:
                         sessions = 2
+                        print(f"DEBUG: Error converting sessions for {subject['subjectName']}, using default: 2")
                         
                     curriculum_subject = CurriculumSubject(
                         curriculumId=curriculum.curriculumId,

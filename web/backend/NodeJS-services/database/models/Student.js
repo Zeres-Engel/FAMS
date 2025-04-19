@@ -13,14 +13,28 @@ const StudentSchema = new mongoose.Schema({
     auto: true
   },
   userId: {
-    type: Number,
+    type: String,
     required: true,
     unique: true,
     ref: 'UserAccount'
   },
+  firstName: {
+    type: String,
+    required: false
+  },
+  lastName: {
+    type: String,
+    required: false
+  },
   fullName: {
     type: String,
-    required: true
+    required: true,
+    default: function() {
+      if (this.lastName && this.firstName) {
+        return `${this.lastName} ${this.firstName}`;
+      }
+      return this.fullName;
+    }
   },
   dateOfBirth: {
     type: Date
@@ -46,6 +60,24 @@ const StudentSchema = new mongoose.Schema({
   },
   phone: {
     type: String
+  },
+  parentIds: {
+    type: [String]
+  },
+  parentNames: {
+    type: [String]
+  },
+  parentCareers: {
+    type: [String]
+  },
+  parentPhones: {
+    type: [String]
+  },
+  parentGenders: {
+    type: [Boolean]
+  },
+  parentEmails: {
+    type: [String]
   }
 }, {
   timestamps: true,
@@ -77,5 +109,24 @@ StudentSchema.virtual('parents', {
   foreignField: 'studentId',
   justOne: false
 });
+
+// Static method to generate a userId for a student
+StudentSchema.statics.generateUserId = function(firstName, lastName, batchId, studentId) {
+  if (!firstName || !lastName || !batchId || !studentId) {
+    throw new Error('First name, last name, batch ID, and student ID are required to generate userId');
+  }
+  
+  // Lấy firstName ở dạng lowercase
+  const firstNameLower = firstName.toLowerCase();
+  
+  // Get initials of last name (all words)
+  const lastNameInitials = lastName
+    .split(' ')
+    .map(part => part.charAt(0).toLowerCase())
+    .join('');
+  
+  // Combine with 'st' prefix, batchId and studentId
+  return `${firstNameLower}${lastNameInitials}st${batchId}${studentId}`;
+};
 
 module.exports = mongoose.model('Student', StudentSchema, COLLECTIONS.STUDENT); 

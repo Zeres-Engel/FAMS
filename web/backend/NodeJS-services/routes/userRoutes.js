@@ -28,6 +28,9 @@ router.post('/', protect, authorize('Admin', 'admin'), createUser);
 // Create new user with /create endpoint (Admin only)
 router.post('/create', protect, authorize('Admin', 'admin'), createUser);
 
+// Unified update API route - accepts any role by userId
+router.put('/update/:userId', protect, require('../controllers/unifiedUpdateController'));
+
 // Manage single user
 router.route('/:id')
   .get(protect, authorize('Admin', 'admin'), getUser)

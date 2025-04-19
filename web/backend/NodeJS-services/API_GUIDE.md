@@ -122,206 +122,32 @@ Base path: `/auth`
   3. Khi nhận lỗi `TOKEN_EXPIRED`, gọi API refresh token để lấy cặp token mới
   4. Nếu refresh token cũng hết hạn, yêu cầu người dùng đăng nhập lại
 
-### Student API
+### Student API (Deprecated)
 Base path: `/students`
 
-#### Get All Students
-- **URL**: `http://fams.io.vn/api-nodejs/students`
-- **Method**: `GET`
-- **Auth Required**: Yes
-- **Query Parameters**:
-  - `page`: Page number (default: 1)
-  - `limit`: Items per page (default: 10)
-  - `search`: Search term (tìm kiếm theo ID, tên, email, etc.)
-  - `classId`: Lọc theo ID của lớp
-  - `className`: Lọc theo tên lớp (ví dụ: "10A1")
-  - `batchId`: Lọc theo ID của khóa học
-  - `batchYear`: Lọc theo năm của khóa (ví dụ: "2023-2026" tương ứng với batchId=3)
-  - **Chú ý**: Bạn có thể filter theo bất kỳ trường nào trong model Student (firstName, lastName, email, v.v.)
-- **Response**: Danh sách học sinh với thông tin bổ sung:
-  ```json
-  {
-    "success": true,
-    "data": [
-      {
-        "studentId": "1",
-        "firstName": "Nam",
-        "lastName": "Ngô Ngọc",
-        // ... other student fields
-        "classId": 2,
-        "className": "10A2", // Thông tin về lớp
-        "batchId": 3,
-        "batchName": "Khóa 2023-2026 (Lớp 10)", // Tên khóa
-        "batchYear": "2023-2026" // Năm học
-      }
-    ],
-    "count": 1,
-    "pagination": {
-      "total": 10,
-      "page": 1,
-      "limit": 10,
-      "pages": 1
-    }
-  }
-  ```
+**⚠️ DEPRECATED ⚠️:** The Student API has been deprecated and will be removed in future versions. Please use the User API instead.
 
-#### Filter Students by Class and Batch
-Hệ thống hỗ trợ hai cách để lọc học sinh theo lớp:
-1. Sử dụng `classId`: Truy vấn trực tiếp theo ID của lớp
-   ```
-   http://fams.io.vn/api-nodejs/students?classId=1
-   ```
+All requests to `/api/students` will return a 301 status code with instructions to use the User API.
 
-2. Sử dụng `className`: Hệ thống sẽ tự động tìm kiếm classId tương ứng với tên lớp
-   ```
-   http://fams.io.vn/api-nodejs/students?className=10A1
-   ```
+**Migration Guide:**
+- Use `/api/users?roles=student` instead of `/api/students`
+- Use `/api/users/create` with `role: "student"` instead of `/api/students` (POST)
+- Use `/api/users/:id` instead of `/api/students/:id`
+- Use `/api/users/details/:id` to get detailed student information
 
-Tương tự, để lọc theo khóa học, có hai cách:
-1. Sử dụng `batchId`: Truy vấn trực tiếp theo ID của khóa
-   ```
-   http://fams.io.vn/api-nodejs/students?batchId=3
-   ```
+### Teacher API (Deprecated)
+Base path: `/teachers`
 
-2. Sử dụng `batchYear`: Cung cấp năm bắt đầu và kết thúc, hệ thống sẽ tự động chuyển đổi thành batchId
-   ```
-   http://fams.io.vn/api-nodejs/students?batchYear=2023-2026
-   ```
+**⚠️ DEPRECATED ⚠️:** The Teacher API has been deprecated and will be removed in future versions. Please use the User API instead.
 
-Các quy tắc áp dụng cho batchYear:
-- "2021-2024" tương ứng với batchId=1
-- "2022-2025" tương ứng với batchId=2
-- "2023-2026" tương ứng với batchId=3
-- v.v.
+All requests to `/api/teachers` will return a 301 status code with instructions to use the User API.
 
-#### Advanced Filtering
-1. **Filter theo bất kỳ trường nào**: Thêm tên trường và giá trị vào query string
-   ```
-   http://fams.io.vn/api-nodejs/students?firstName=Nam&gender=Male
-   ```
-
-2. **Bỏ qua filter với giá trị "none"**: Nếu một tham số có giá trị là "none", hệ thống sẽ bỏ qua filter này
-   ```
-   http://fams.io.vn/api-nodejs/students?classId=1&batchId=none
-   ```
-   Ví dụ này sẽ chỉ lọc theo classId mà không lọc theo batchId.
-
-3. **Kết hợp nhiều filter**: Các filter có thể kết hợp với nhau
-   ```
-   http://fams.io.vn/api-nodejs/students?className=10A1&batchYear=2023-2026&isActive=true&page=1&limit=20
-   ```
-
-#### Get Student by ID
-- **URL**: `http://fams.io.vn/api-nodejs/students/:id`
-- **Method**: `GET`
-- **Auth Required**: Yes
-
-#### Create Student
-- **URL**: `http://fams.io.vn/api-nodejs/students`
-- **Method**: `POST`
-- **Auth Required**: Yes
-- **Body**: Student information (name, email, etc.)
-
-#### Update Student
-- **URL**: `http://fams.io.vn/api-nodejs/students/:id`
-- **Method**: `PUT`
-- **Auth Required**: Yes (Admin only)
-- **Description**: Cập nhật thông tin học sinh. Có thể cập nhật một hoặc nhiều trường cùng lúc.
-- **Body**:
-```json
-{
-  // Thông tin cơ bản
-  "firstName": "Thành",
-  "lastName": "Nguyễn Văn",
-  "email": "thanhnvst@fams.edu.vn",
-  "phone": "0987654321",
-  "address": "456 Đường XYZ, Quận 2, TP.HCM",
-  "dateOfBirth": "2005-05-15",
-  "gender": "Male", // Chấp nhận cả "Male"/"Female" và true/false
-  "isActive": true,
-
-  // Thông tin lớp và khóa
-  "classId": 2,
-  "batchId": 3,
-  "parentNames": ["Nguyễn Văn A", "Trần Thị B"],
-  "parentCareers": ["Kỹ sư", "Giáo viên"],
-  "parentPhones": ["0123456789", "0987123456"],
-  "parentGenders": [true, false], // true = Male, false = Female
-
-  "rfid": {
-    "RFID_ID": "RFID12345",  // ID của thẻ RFID
-    "ExpiryDate": "2y"       // Thời hạn 2 năm
-  }
-}
-```
-
-- **Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "studentId": "7",
-    "userId": "thanhnvst",
-    "firstName": "Thành",
-    "lastName": "Nguyễn Văn",
-    "fullName": "Thành Nguyễn Văn",
-    "email": "thanhnvst@fams.edu.vn",
-    "phone": "0987654321",
-    "address": "456 Đường XYZ, Quận 2, TP.HCM",
-    "dateOfBirth": "2005-05-15T00:00:00.000Z",
-    "classId": 2,
-    "batchId": 3,
-    "gender": "Male",
-    "isActive": true,
-    "parentIds": ["1", "2"],
-    "parentNames": ["Nguyễn Văn A", "Trần Thị B"],
-    "parentCareers": ["Kỹ sư", "Giáo viên"],
-    "parentPhones": ["0123456789", "0987123456"],
-    "parentGenders": [true, false],
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-02T00:00:00.000Z"
-  },
-  "parentUpdates": [
-    "Updated parent: 1",
-    "Updated parent: 2"
-  ],
-  "rfid": {
-    "RFID_ID": "RFID12345",
-    "UserID": "thanhnvst",
-    "IssueDate": "2024-05-25T12:34:56.789Z",
-    "ExpiryDate": "2026-05-25T12:34:56.789Z"
-  }
-}
-```
-
-**Lưu ý quan trọng về cập nhật phụ huynh:**
-1. Khi cập nhật thông tin phụ huynh:
-   - Nếu tên phụ huynh thay đổi, hệ thống sẽ tự động:
-     - Tạo `userId` mới theo định dạng: `{firstName}{lastNameInitials}pr{parentId}`
-     - Tạo email mới: `{newUserId}@fams.edu.vn`
-     - Xóa tài khoản User cũ và tạo tài khoản mới
-     - Cập nhật thông tin phụ huynh với `userId` và email mới
-   - Ví dụ: Nếu phụ huynh "Nguyễn Văn A" (parentId=1) đổi tên thành "Nguyễn Văn B":
-     - `userId` cũ: `angvpr1`
-     - `userId` mới: `bngvpr1`
-     - Email mới: `bngvpr1@fams.edu.vn`
-
-2. Các trường phụ huynh:
-   - `parentNames`: Tên đầy đủ của phụ huynh
-   - `parentCareers`: Nghề nghiệp của phụ huynh
-   - `parentPhones`: Số điện thoại của phụ huynh
-   - `parentGenders`: Giới tính phụ huynh (true = Male, false = Female)
-   - Không cần cung cấp `parentIds` khi cập nhật, hệ thống sẽ tự động quản lý
-
-3. Khi xóa phụ huynh:
-   - Xóa bản ghi phụ huynh
-   - Xóa tài khoản User tương ứng
-   - Cập nhật danh sách phụ huynh trong bản ghi học sinh
-
-#### Delete Student
-- **URL**: `http://fams.io.vn/api-nodejs/students/:id`
-- **Method**: `DELETE`
-- **Auth Required**: Yes
+**Migration Guide:**
+- Use `/api/users?roles=teacher` instead of `/api/teachers`
+- Use `/api/users/create` with `role: "teacher"` instead of `/api/teachers` (POST)
+- Use `/api/users/:id` instead of `/api/teachers/:id`
+- Use `/api/users/details/:id` to get detailed teacher information
+- Use `/api/users/teachers/:id/schedule` to get teacher schedule
 
 ### User API
 Base path: `/users`
@@ -446,61 +272,291 @@ Base path: `/users`
   "role": "student",
   "firstName": "Thành",
   "lastName": "Nguyễn Phước",
-  "email": "thanhnpst@fams.edu.vn",
+  "email": "thanhnp@gmail.com",
   "backup_email": "thanhnp@gmail.com",
   "phone": "0987654321",
   "gender": "Male",
   "dateOfBirth": "2005-05-15",
   "address": "123 Đường ABC, Thành phố XYZ",
-  "batchYear": "2022-2025",
   "parentNames": ["Nguyễn Phước Hải", "Trần Thị Mai"],
   "parentCareers": ["Kỹ sư", "Giáo viên"],
   "parentPhones": ["0123456789", "0987123456"],
-  "parentGenders": [true, false]
+  "parentGenders": [true, false],
+  "parentEmails": ["nph@gmail.com", "ttm@gmail.com"]
 }
 ```
 
-##### Tạo Giáo Viên (Teacher)
-```json
-{
-  "role": "teacher",
-  "firstName": "Tuấn",
-  "lastName": "Hoàng Đức",
-  "email": "tuanhd@fams.edu.vn",
-  "backup_email": "tuanhoang@gmail.com",
-  "phone": "0987950527",
-  "gender": "Male",
-  "dateOfBirth": "1985-03-22",
-  "address": "456 Đường DEF, Quận GHI",
-  "major": "Bóng Chuyền, Hóa học",
-  "weeklyCapacity": 16
-}
-```
+**Lưu ý về cách xử lý Batch mới:**
+- Không cần nhập batchYear nữa, hệ thống sẽ tự lấy năm hiện tại (currentYear)
+- Nếu batch của năm hiện tại đã tồn tại, sẽ sử dụng batch đó
+- Nếu chưa tồn tại, hệ thống sẽ tự động tạo batch mới với:
+  - startYear = năm hiện tại
+  - startDate = 1 tháng 9 năm hiện tại
+  - endDate = 30 tháng 6 năm hiện tại + 3 năm
 
-##### Tạo Phụ Huynh (Parent)
-```json
-{
-  "role": "parent",
-  "firstName": "Dũng",
-  "lastName": "Phạm Anh",
-  "email": "dungpa@fams.edu.vn",
-  "backup_email": "dungpham@gmail.com",
-  "phone": "0919796269",
-  "gender": "Male",
-  "career": "Phát thanh viên"
-}
-```
+**Lưu ý về cách sinh userId:**
+- Student: `{firstName}{lastName initials}st{batchId}{studentId}`
+  - Ví dụ: "Thành Nguyễn Phước" với batchId=2, studentId=5 sẽ có userId="thanhnpst25"
+  
+- Teacher: `{firstName[0]}{lastName initials}{teacherId}`
+  - Ví dụ: "Hoa Trần Thị" có teacherId=5 sẽ có userId="htt5"
+  
+- Parent: `{firstName}{lastName initials}pr{parentId}`
+  - Ví dụ: "Hải Nguyễn Phước" có parentId=196 sẽ có userId="hainppr196"
 
-**Lưu ý:**
+**Lưu ý về các trường mới:**
+- `parentEmails`: Mảng email riêng của từng phụ huynh (khi tạo học sinh có nhiều phụ huynh)
+- `parentEmail`: Email riêng của phụ huynh (khi tạo phụ huynh trực tiếp)
+- `degree`: Bằng cấp/học vị của giáo viên
+
+**Chú ý:**
 - Password mặc định: FAMS@2023
 - Email mặc định: {userId}@fams.edu.vn
+- Email cá nhân của phụ huynh và giáo viên sẽ được lưu trữ riêng
 - API tự động tạo phụ huynh khi tạo học sinh (nếu có thông tin)
 - Batch tự động được tạo nếu chưa tồn tại
 
-#### Update User
-- **URL**: `http://fams.io.vn/api-nodejs/users/:id`
+#### Unified Update User (Supports All Roles)
+- **URL**: `http://fams.io.vn/api-nodejs/users/update/:userId`
 - **Method**: `PUT`
 - **Auth Required**: Yes
+- **Description**: Thống nhất API cập nhật thông tin người dùng cho cả 3 vai trò (Student, Teacher, Parent) dựa vào userId
+- **Body**: Tùy thuộc vào vai trò của người dùng, chỉ cần gửi các trường cần cập nhật
+
+**Ví dụ cập nhật Student:**
+```json
+{
+  "firstName": "Đặng Thanh",
+  "lastName": "Khoa",
+  "email": "khoadt@gmail.com",
+  "phone": "0890658326",
+  "address": "Hải Phòng City", 
+  "dateOfBirth": "2008-10-07",
+  "gender": true,
+  "classId": 2,
+  "parentNames": ["Nguyễn Văn An"],
+  "parentCareers": ["Bác sĩ"],
+  "parentPhones": ["0987654321"],
+  "parentGenders": [true],
+  "rfid": {
+    "RFID_ID": "STUD12345",
+    "ExpiryDate": "2y"
+  }
+}
+```
+
+**Ví dụ cập nhật Teacher:**
+```json
+{
+  "firstName": "Đức",
+  "lastName": "Hoàng",
+  "fullName": "Hoàng Đức Hùng",
+  "phone": "0377538640",
+  "major": "Tin học, Lịch sử, Địa lý",
+  "degree": "Tiến sĩ Giáo dục học",
+  "weeklyCapacity": 12,
+  "rfid": {
+    "RFID_ID": "TEACH67890",
+    "ExpiryDate": "3y"
+  }
+}
+```
+
+**Ví dụ cập nhật Parent:**
+```json
+{
+  "fullName": "Bùi Ngọc Dũng", 
+  "career": "Doanh nhân",
+  "phone": "0973557557",
+  "gender": true,
+  "studentIds": [1, 2, 3]
+}
+```
+
+**Response Student:**
+```json
+{
+  "success": true,
+  "message": "User khoaatst1 updated successfully",
+  "data": {
+    "user": {
+      "userId": "khoaatst1", 
+      "email": "khoaatst1@fams.edu.vn",
+      "role": "Student"
+    },
+    "role": {
+      "type": "student",
+      "student": {
+        "studentId": 1,
+        "fullName": "Đặng Thanh Khoa",
+        "dateOfBirth": "2008-10-07T00:00:00.000Z",
+        "gender": true,
+        "address": "Hải Phòng City",
+        "phone": "890658326",
+        "classId": 2,
+        "batchId": 1
+      },
+      "batch": {
+        "batchId": 1,
+        "batchName": "K2023"
+      },
+      "class": {
+        "classId": 2,
+        "className": "10A2",
+        "grade": "10"
+      },
+      "parents": [
+        {
+          "parentId": 3,
+          "fullName": "Nguyễn Văn An",
+          "phone": "0987654321",
+          "career": "Bác sĩ",
+          "relationship": "Father"
+        }
+      ],
+      "rfid": {
+        "RFID_ID": "STUD12345",
+        "UserID": "khoaatst1",
+        "IssueDate": "2024-05-15T10:13:45.000Z",
+        "ExpiryDate": "2026-05-15T10:13:45.000Z"
+      }
+    }
+  }
+}
+```
+
+**Response Teacher:**
+```json
+{
+  "success": true,
+  "message": "User hunghu123 updated successfully",
+  "data": {
+    "user": {
+      "userId": "hunghu123", 
+      "email": "hoangduchung9796@gmail.com",
+      "role": "Teacher"
+    },
+    "role": {
+      "type": "teacher",
+      "teacher": {
+        "teacherId": 3,
+        "fullName": "Hoàng Đức Hùng",
+        "dateOfBirth": "1981-07-26T00:00:00.000Z",
+        "gender": true,
+        "address": "Bà Rịa - Vũng Tàu",
+        "phone": "0377538640",
+        "major": "Tin học, Lịch sử",
+        "degree": "Tiến sĩ Giáo dục học",
+        "weeklyCapacity": 10
+      },
+      "classes": [
+        {
+          "classId": 2,
+          "className": "10A2",
+          "grade": "10"
+        }
+      ],
+      "rfid": {
+        "RFID_ID": "TEACH67890",
+        "UserID": "hunghu123",
+        "IssueDate": "2024-05-15T10:15:22.000Z",
+        "ExpiryDate": "2027-05-15T10:15:22.000Z"
+      }
+    }
+  }
+}
+```
+
+**Response Parent:**
+```json
+{
+  "success": true,
+  "message": "User dungbnpr0 updated successfully",
+  "data": {
+    "user": {
+      "userId": "dungbnpr0", 
+      "email": "buingocdung4439@gmail.com",
+      "role": "Parent"
+    },
+    "role": {
+      "type": "parent",
+      "parent": {
+        "parentId": 1,
+        "fullName": "Bùi Ngọc Dũng",
+        "career": "Doanh nhân",
+        "phone": "973557557",
+        "gender": true
+      },
+      "children": [
+        {
+          "studentId": 1,
+          "fullName": "Đặng Thanh Khoa",
+          "className": "10A1",
+          "relationship": "Other"
+        },
+        {
+          "studentId": 2,
+          "fullName": "Nguyễn Văn Bình",
+          "className": "11A2",
+          "relationship": "Other"
+        },
+        {
+          "studentId": 3,
+          "fullName": "Trần Thị Hương",
+          "className": "12A1",
+          "relationship": "Other"
+        }
+      ],
+      "rfid": {
+        "RFID_ID": "PARENT12345",
+        "UserID": "dungbnpr0",
+        "IssueDate": "2024-05-01T00:00:00Z",
+        "ExpiryDate": "2026-05-01T00:00:00Z"
+      }
+    }
+  }
+}
+```
+
+**Error Responses:**
+- `404` - User not found:
+  ```json
+  {
+    "success": false,
+    "message": "User with ID khoaatst1 not found",
+    "code": "USER_NOT_FOUND"
+  }
+  ```
+- `404` - Student/Teacher/Parent record not found:
+  ```json
+  {
+    "success": false,
+    "message": "Student record for user khoaatst1 not found",
+    "code": "STUDENT_RECORD_NOT_FOUND"
+  }
+  ```
+- `500` - Server error:
+  ```json
+  {
+    "success": false,
+    "message": "Error message",
+    "code": "UPDATE_FAILED"
+  }
+  ```
+
+**Lưu ý về Parent:**
+- Khi cập nhật Student, nếu cung cấp thông tin phụ huynh mới, hệ thống sẽ tự động tạo tài khoản mới cho phụ huynh
+- Khi cung cấp thông tin số điện thoại đã tồn tại, hệ thống sẽ liên kết với phụ huynh có sẵn thay vì tạo mới
+- Trong một lần cập nhật có thể thêm nhiều phụ huynh cho một học sinh
+
+**Lưu ý về RFID:**
+- Có thể cập nhật hoặc tạo mới thẻ RFID đồng thời với cập nhật thông tin người dùng
+- ExpiryDate có thể là ngày cụ thể (YYYY-MM-DD) hoặc định dạng ngắn gọn ("1y", "2y", "3y")
+
+#### Update User (Admin Only)
+- **URL**: `http://fams.io.vn/api-nodejs/users/:id`
+- **Method**: `PUT`
+- **Auth Required**: Yes (Admin only)
 - **Body**: Updated user information
 
 #### Delete User
@@ -561,10 +617,49 @@ Base path: `/users`
 {
   "success": true,
   "data": {
-    "user": { /* Thông tin từ bảng User */ },
-    "student": { /* Thông tin từ bảng Student */ },
-    "batch": { /* Thông tin về khóa học */ },
-    "class": { /* Thông tin về lớp học (nếu có) */ }
+    "user": {
+      "userId": "khoaatst1",
+      "email": "khoaatst1@fams.edu.vn",
+      "role": "Student",
+    },
+    "role": {
+      "type": "student",
+      "student": {
+        "studentId": 1,
+        "fullName": "Đặng Thanh Khoa",
+        "dateOfBirth": "2008-10-07T00:00:00.000Z",
+        "gender": true,
+        "address": "Hải Phòng",
+        "phone": "890658326",
+        "classId": 1,
+        "batchId": 1
+      },
+      "batch": {
+        "batchId": 1,
+        "batchName": "K2023",
+        "startYear": 2023
+      },
+      "class": {
+        "classId": 1,
+        "className": "10A1",
+        "grade": "10"
+      },
+      "parents": [
+        {
+          "parentId": 1,
+          "fullName": "Nguyễn Văn A",
+          "phone": "0987654321",
+          "career": "Kỹ sư",
+          "relationship": "Father"
+        },
+      ],
+      "rfid": {
+        "RFID_ID": "STUD12345",
+        "UserID": "khoaatst1",
+        "IssueDate": "2024-05-01T00:00:00Z",
+        "ExpiryDate": "2026-05-01T00:00:00Z"
+      }
+    }
   }
 }
 ```
@@ -574,9 +669,38 @@ Base path: `/users`
 {
   "success": true,
   "data": {
-    "user": { /* Thông tin từ bảng User */ },
-    "teacher": { /* Thông tin từ bảng Teacher */ },
-    "classes": [ /* Danh sách các lớp giáo viên dạy */ ]
+    "user": {
+      "userId": "hunghu123",
+      "email": "hoangduchung9796@gmail.com",
+      "role": "Teacher"
+    },
+    "role": {
+      "type": "teacher",
+      "teacher": {
+        "teacherId": 3,
+        "fullName": "Hoàng Đức Hùng",
+        "dateOfBirth": "1981-07-26T00:00:00.000Z",
+        "gender": true,
+        "address": "Bà Rịa - Vũng Tàu",
+        "phone": "0377538640",
+        "major": "Tin học, Lịch sử",
+        "degree": "Tiến sĩ Giáo dục học",
+        "weeklyCapacity": 10
+      },
+      "classes": [
+        {
+          "classId": 2,
+          "className": "10A2",
+          "grade": "10"
+        }
+      ],
+      "rfid": {
+        "RFID_ID": "TEACH67890",
+        "UserID": "hunghu123",
+        "IssueDate": "2024-05-15T10:15:22.000Z",
+        "ExpiryDate": "2027-05-15T10:15:22.000Z"
+      }
+    }
   }
 }
 ```
@@ -586,231 +710,50 @@ Base path: `/users`
 {
   "success": true,
   "data": {
-    "user": { /* Thông tin từ bảng User */ },
-    "parent": { /* Thông tin từ bảng Parent */ },
-    "students": [ /* Danh sách học sinh là con của phụ huynh */ ],
-    "relations": [ /* Thông tin quan hệ giữa phụ huynh và học sinh */ ]
-  }
-}
-```
-
-### Teacher API
-Base path: `/teachers`
-
-#### Get All Teachers
-- **URL**: `http://fams.io.vn/api-nodejs/teachers`
-- **Method**: `GET`
-- **Auth Required**: Yes
-- **Query Parameters**:
-  - `page`: Page number (default: 1)
-  - `limit`: Items per page (default: 10)
-  - `search`: Search term (tìm kiếm theo ID, tên, email, major, etc.)
-  - `className`: Lọc theo tên lớp mà giáo viên dạy (ví dụ: "10A1")
-  - **Chú ý**: Bạn có thể filter theo bất kỳ trường nào trong model Teacher (firstName, lastName, email, v.v.)
-
-#### Filter Teachers by Class
-- Lọc giáo viên dạy một lớp cụ thể:
-  ```
-  http://fams.io.vn/api-nodejs/teachers?className=10A1
-  ```
-
-- Response sẽ bao gồm danh sách các lớp mà giáo viên đang dạy:
-  ```json
-  {
-    "success": true,
-    "data": [
-      {
-        "teacherId": "1",
-        "firstName": "Dũng",
-        "lastName": "Phạm Văn",
-        "email": "dungpv1@fams.edu.vn",
-        // ... other teacher fields
-        "classes": [
-          {
-            "classId": 1,
-            "className": "10A1",
-            "batchId": 3
-          },
-          {
-            "classId": 2,
-            "className": "10A2",
-            "batchId": 3
-          }
-        ],
-        "classesName": ["10A1", "10A2"], // Mảng chứa tên các lớp
-        "classesId": [1, 2] // Mảng chứa ID các lớp
+    "user": {
+      "userId": "dungbnpr0",
+      "email": "buingocdung4439@gmail.com",
+      "role": "Parent"
+    },
+    "role": {
+      "type": "parent",
+      "parent": {
+        "parentId": 1,
+        "fullName": "Bùi Ngọc Dũng",
+        "career": "Doanh nhân",
+        "phone": "973557557",
+        "gender": true
+      },
+      "children": [
+        {
+          "studentId": 1,
+          "fullName": "Đặng Thanh Khoa",
+          "className": "10A1",
+          "relationship": "Other"
+        },
+        {
+          "studentId": 2,
+          "fullName": "Nguyễn Văn Bình",
+          "className": "11A2",
+          "relationship": "Other"
+        },
+        {
+          "studentId": 3,
+          "fullName": "Trần Thị Hương",
+          "className": "12A1",
+          "relationship": "Other"
+        }
+      ],
+      "rfid": {
+        "RFID_ID": "PARENT12345",
+        "UserID": "dungbnpr0",
+        "IssueDate": "2024-05-01T00:00:00Z",
+        "ExpiryDate": "2026-05-01T00:00:00Z"
       }
-    ],
-    "count": 1,
-    "pagination": {
-      "total": 1,
-      "page": 1,
-      "limit": 10,
-      "pages": 1
     }
   }
-  ```
-
-#### Advanced Filtering for Teachers
-1. **Filter theo bất kỳ trường nào**: Thêm tên trường và giá trị vào query string
-   ```
-   http://fams.io.vn/api-nodejs/teachers?firstName=Dũng&gender=true
-   ```
-
-2. **Bỏ qua filter với giá trị "none"**: Nếu một tham số có giá trị là "none", hệ thống sẽ bỏ qua filter này
-   ```
-   http://fams.io.vn/api-nodejs/teachers?firstName=Dũng&className=none
-   ```
-
-3. **Kết hợp tìm kiếm và filter**: Các filter có thể kết hợp với nhau
-   ```
-   http://fams.io.vn/api-nodejs/teachers?search=toán&className=10A1&isActive=true
-   ```
-
-#### Get Teacher by ID
-- **URL**: `http://fams.io.vn/api-nodejs/teachers/:id`
-- **Method**: `GET`
-- **Auth Required**: Yes
-- **Response**: Thông tin chi tiết giáo viên bao gồm danh sách các lớp đang dạy
-
-#### Get Teacher Schedule
-- **URL**: `http://fams.io.vn/api-nodejs/teachers/:id/schedule`
-- **Method**: `GET`
-- **Auth Required**: Yes
-- **Response**: Lịch dạy của giáo viên theo học kỳ hiện tại
-
-#### Create Teacher
-- **URL**: `http://fams.io.vn/api-nodejs/teachers`
-- **Method**: `POST`
-- **Auth Required**: Yes (Admin only)
-- **Body**: Thông tin giáo viên cần tạo
-
-#### Update Teacher
-- **URL**: `http://fams.io.vn/api-nodejs/teachers/:id`
-- **Method**: `PUT`
-- **Auth Required**: Yes (Admin only)
-- **Body**: 
-```json
-{
-  "firstName": "Tấn",
-  "lastName": "Hoàng Đức",
-  "phone": "0987654321",
-  "address": "123 Đường ABC, Quận 1, TP.HCM",
-  "major": "Toán học, Lý học",
-  "weeklyCapacity": 20,
-  "backup_email": "personal-email@example.com",  // Optional - Updates the backup email in User account
-
-  "rfid": {
-    "RFID_ID": "RFID67890",
-    "ExpiryDate": "3y"       // Thời hạn 3 năm
-  }
 }
 ```
-- **Response**:
-```json
-{
-  "success": true,
-  "message": "Teacher updated successfully",
-  "data": {
-    "teacherId": "5",
-    "firstName": "Tấn",
-    "lastName": "Hoàng Đức",
-    "fullName": "Tấn Hoàng Đức",
-    "email": "tanhd@fams.edu.vn",
-    "phone": "0987654321",
-    "userId": "tanhd",
-    "major": "Toán học, Lý học",
-    "weeklyCapacity": 20,
-    // Other teacher fields
-  },
-  "deletedScheduleIds": ["67fbf6003539fdaeaa0881f3", "67fbf6003539fdaeaa0881f4"],  // IDs of deleted schedules (if any)
-  "rfid": {
-    "RFID_ID": "RFID67890",
-    "UserID": "tanhd",
-    "IssueDate": "2024-05-25T12:34:56.789Z",
-    "ExpiryDate": "2027-05-25T12:34:56.789Z"
-  }
-}
-```
-
-**Đặc biệt**: Khi cập nhật `firstName` hoặc `lastName`:
-- Hệ thống tự động tạo `userId` mới theo định dạng: `{firstName}{lastName}{teacherId}` (không dấu, viết thường)
-- Email được cập nhật thành `{userId}@fams.edu.vn`
-- Tài khoản User cũ sẽ bị xóa và tạo lại với thông tin mới
-- Mật khẩu và backup_email được giữ nguyên từ tài khoản cũ
-
-**Đặc biệt**: Khi cập nhật `major`:
-- Nếu một môn học bị loại bỏ khỏi danh sách major, tất cả lịch dạy liên quan đến môn học đó của giáo viên sẽ bị xóa
-- `deletedScheduleIds` trong response sẽ chứa ID của các lịch dạy bị xóa
-- Nếu không có lịch dạy nào bị xóa, `deletedScheduleIds` sẽ là `null`
-
-- **Error Responses**:
-  - `404` - Teacher not found:
-    ```json
-    {
-      "success": false,
-      "error": "Teacher not found or update failed",
-      "code": "UPDATE_FAILED"
-    }
-    ```
-
-#### Delete Teacher
-- **URL**: `http://fams.io.vn/api-nodejs/teachers/:id`
-- **Method**: `DELETE`
-- **Auth Required**: Yes (Admin only)
-- **Response**:
-```json
-{
-  "success": true,
-  "message": "Teacher and related data deleted successfully",
-  "teacherDeleted": true,
-  "deletedScheduleIds": ["67fbf6003539fdaeaa0881f3", "67fbf6003539fdaeaa0881f4"]  // IDs of deleted schedules (if any)
-}
-```
-
-**Đặc biệt**: Khi xóa giáo viên:
-- Tài khoản User liên quan cũng bị xóa
-- Tất cả lịch dạy của giáo viên sẽ bị xóa
-- `deletedScheduleIds` trong response sẽ chứa ID của các lịch dạy bị xóa
-
-### Sử dụng Form Chung để Cập Nhật Teacher và Student
-API hỗ trợ việc sử dụng cùng một form để gửi dữ liệu cập nhật cho cả giáo viên và học sinh. Mỗi API sẽ tự động bỏ qua các trường không liên quan và chỉ xử lý các trường phù hợp với entity.
-
-#### Form Chung
-```json
-{
-  // Các trường chung
-  "firstName": "Hoa",
-  "lastName": "Nguyễn Thị",
-  "phone": "0987654321",
-  "address": "123 Đường XYZ, Quận ABC",
-  "gender": "Female",
-  "dateOfBirth": "1990-01-15",
-  "backup_email": "hoa.nguyen@gmail.com",
-  
-  // Các trường dành cho teacher
-  "major": "Toán, Lý",
-  "weeklyCapacity": 20,
-  
-  // Các trường dành cho student
-  "className": "10A2",
-  "parentNames": ["Nguyễn Văn A"],
-  "parentCareers": ["Kỹ sư"],
-  "parentPhones": ["0123456789"],
-  "parentGenders": [true]
-}
-```
-
-#### Xử lý Form
-1. Khi gửi đến `/api/teachers/:id`:
-   - Các trường dành cho teacher (major, weeklyCapacity) và các trường chung sẽ được xử lý
-   - Các trường dành cho student (className, parentNames, v.v.) sẽ bị bỏ qua
-
-2. Khi gửi đến `/api/students/:id`:
-   - Các trường dành cho student (className, parentNames, v.v.) và các trường chung sẽ được xử lý
-   - Các trường dành cho teacher (major, weeklyCapacity) sẽ bị bỏ qua
-
-Điều này cho phép sử dụng cùng một form frontend để quản lý cả giáo viên và học sinh mà không cần phải tách biệt dữ liệu gửi đi.
 
 ### Parent API
 Base path: `/parents`

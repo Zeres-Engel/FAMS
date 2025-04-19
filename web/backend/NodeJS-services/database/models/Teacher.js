@@ -13,18 +13,28 @@ const TeacherSchema = new mongoose.Schema({
     auto: true
   },
   userId: {
-    type: Number,
+    type: String,
     required: true,
     unique: true,
     ref: 'UserAccount'
   },
-  fullName: {
+  firstName: {
     type: String,
     required: true
   },
-  email: {
+  lastName: {
     type: String,
     required: true
+  },
+  fullName: {
+    type: String,
+    required: true,
+    default: function() {
+      return `${this.lastName} ${this.firstName}`;
+    }
+  },
+  email: {
+    type: String
   },
   dateOfBirth: {
     type: Date

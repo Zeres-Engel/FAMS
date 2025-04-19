@@ -112,6 +112,7 @@ exports.createUser = async (req, res) => {
       parentCareers,
       parentPhones,
       parentGenders,
+      parentEmails,
       career
     } = req.body;
 
@@ -127,7 +128,7 @@ exports.createUser = async (req, res) => {
     // Set default password (can be changed later)
     const defaultPassword = 'FAMS@2023';
 
-    // Different logic based on role
+    // Different logic based on role (ensure first letter capitalized)
     if (role.toLowerCase() === 'student') {
       return await createStudent(req, res, defaultPassword);
     } else if (role.toLowerCase() === 'teacher') {
@@ -198,11 +199,11 @@ const createStudent = async (req, res, defaultPassword) => {
       gender, 
       dateOfBirth, 
       address,
-      batchYear,
       parentNames,
       parentCareers,
       parentPhones,
-      parentGenders
+      parentGenders,
+      parentEmails
     } = req.body;
 
     // Normalize firstName and lastName by removing accents
@@ -215,81 +216,63 @@ const createStudent = async (req, res, defaultPassword) => {
     const ParentStudent = require('../database/models/ParentStudent');
     const Batch = require('../database/models/Batch');
 
-    // 1. Check or create batch
-    let batch;
-    if (batchYear) {
-      const [startYear, endYear] = batchYear.split('-').map(year => year.trim());
-      
-      // Tính batchId theo quy tắc:
-      // 2021-2024 -> batchId = 1
-      // 2022-2025 -> batchId = 2
-      // 2023-2026 -> batchId = 3
-      // 2024-2027 -> batchId = 4
-      // Công thức: batchId = startYear - 2020
-      const batchId = parseInt(startYear) - 2020;
-      
-      // Check if batch exists with this ID
-      batch = await Batch.findOne({ batchId: batchId.toString() });
-
-      // Create batch if it doesn't exist
-      if (!batch) {
-        const startDate = new Date(`${startYear}-09-01`);
-        const endDate = new Date(`${endYear}-06-30`);
-        
-        const gradeName = getGradeNameFromBatchYear(startYear, endYear);
-        
-        batch = await Batch.create({
-          batchId: batchId.toString(),
-          batchName: `Khóa ${startYear}-${endYear} ${gradeName}`,
-          startDate,
-          endDate,
-          isActive: true
-        });
-      }
-    } else {
+    // 1. Get current year for batch
+    const currentYear = new Date().getFullYear();
+    
+    // 2. Find or create batch based on current year
+    const batch = await Batch.findOrCreateByStartYear(currentYear);
+    
+    // 3. First create a temporary student object to get a student ID
+    const tempStudent = new Student({
+      firstName,
+      lastName,
+      fullName: `${lastName} ${firstName}`,
+      gender: typeof gender === 'string' ? gender : (gender === true || gender === 'true' ? 'Male' : 'Female'),
+      batchId: batch.batchId
+    });
+    
+    // Get the next available studentId without saving yet
+    let newStudentId;
+    
+    // Get highest studentId
+    const maxStudent = await Student.findOne().sort('-studentId');
+    newStudentId = maxStudent ? parseInt(maxStudent.studentId) + 1 : 1;
+    
+    // 4. Now create the userId based on the new format: {firstName}{lastName initials}st{batchId}{studentId}
+    const lastNameInitials = normalizedLastName.split(' ')
+      .map(part => part.charAt(0).toLowerCase())
+      .join('');
+    
+    const userId = `${normalizedFirstName.toLowerCase()}${lastNameInitials}st${batch.batchId}${newStudentId}`;
+    
+    // 5. Check if userId already exists
+    const existingUser = await UserAccount.findOne({ userId });
+    if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: 'Batch year is required for student creation'
-      });
-    }
-
-    // 2. Cải tiến cách tạo student ID để đảm bảo luôn lấy giá trị lớn nhất
-    // Lấy tất cả student ID và tìm giá trị lớn nhất
-    const students = await Student.find({}, 'studentId');
-    let maxStudentId = 0;
-    
-    if (students && students.length > 0) {
-      // Chuyển đổi tất cả studentId sang số và tìm giá trị lớn nhất
-      students.forEach(student => {
-        const studentIdAsNum = parseInt(student.studentId);
-        if (!isNaN(studentIdAsNum) && studentIdAsNum > maxStudentId) {
-          maxStudentId = studentIdAsNum;
-        }
+        message: `User ID ${userId} already exists. Please try with a different name or contact administrator.`,
+        code: 'DUPLICATE_USERID'
       });
     }
     
-    const newStudentId = maxStudentId + 1;
-    
-    // 3. Generate userId for student - now using normalized names
-    const userId = Student.generateUserId(normalizedFirstName, normalizedLastName, batch.batchId, newStudentId);
-    
-    // 4. Create user account - Email luôn được tạo từ userId (không dấu)
+    // 6. Create user account - Email luôn được tạo từ userId (không dấu)
     const user = await UserAccount.create({
       userId,
       username: userId,
       password: defaultPassword,
       email: `${userId}@fams.edu.vn`, // Luôn tạo email từ userId không dấu
       backup_email: email || backup_email, // Sử dụng email nhập vào làm backup_email
-      role: 'student',
+      role: 'Student', // Viết hoa chữ cái đầu để phù hợp với enum
       isActive: true
     });
 
-    // 5. Create student record
+    // 7. Create student record with the ID we determined
     const student = await Student.create({
-      studentId: newStudentId.toString(),
+      studentId: newStudentId,
       userId,
       firstName,
       lastName,
+      fullName: `${lastName} ${firstName}`, // Tạo fullName theo định dạng lastName firstName
       email: `${userId}@fams.edu.vn`, // Email luôn khớp với email trong tài khoản
       dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
       gender: typeof gender === 'string' ? gender : (gender === true || gender === 'true' ? 'Male' : 'Female'),
@@ -302,92 +285,126 @@ const createStudent = async (req, res, defaultPassword) => {
       parentNames: [],
       parentCareers: [],
       parentPhones: [],
-      parentGenders: []
+      parentGenders: [],
+      parentEmails: []
     });
 
-    // 6. Create parents if provided
+    // 8. Create parents if provided
     const createdParents = [];
     if (parentNames && parentNames.length > 0) {
-      for (let i = 0; i < parentNames.length; i++) {
-        const parentName = parentNames[i];
-        if (!parentName) continue;
+      // Ensure all arrays have same length by filling with undefined/null values
+      const maxLength = Math.max(
+        parentNames.length,
+        (parentCareers || []).length,
+        (parentPhones || []).length,
+        (parentGenders || []).length,
+        (parentEmails || []).length
+      );
+      
+      const normalizedParentNames = [...parentNames];
+      const normalizedParentCareers = [...(parentCareers || [])];
+      const normalizedParentPhones = [...(parentPhones || [])];
+      const normalizedParentGenders = [...(parentGenders || [])];
+      const normalizedParentEmails = [...(parentEmails || [])];
+      
+      // Normalize all arrays to the same length
+      while (normalizedParentNames.length < maxLength) normalizedParentNames.push(null);
+      while (normalizedParentCareers.length < maxLength) normalizedParentCareers.push(null);
+      while (normalizedParentPhones.length < maxLength) normalizedParentPhones.push(null);
+      while (normalizedParentGenders.length < maxLength) normalizedParentGenders.push(null);
+      while (normalizedParentEmails.length < maxLength) normalizedParentEmails.push(null);
+      
+      // Create each parent
+      for (let i = 0; i < maxLength; i++) {
+        if (!normalizedParentNames[i]) continue;
         
-        // Split parent name into first and last name
-        const nameParts = parentName.split(' ');
-        const parentFirstName = nameParts.pop();
-        const parentLastName = nameParts.join(' ');
+        // Parse parent name into first name and last name
+        // For Vietnamese names like "Nguyễn Văn A", last name is "Nguyễn Văn", first name is "A"
+        const nameParts = normalizedParentNames[i].split(' ');
+        const parentFirstName = nameParts.pop() || ''; // Last part is first name
+        const parentLastName = nameParts.join(' '); // Rest is last name
         
-        // Normalize parent name components
+        // Normalize parent names
         const normalizedParentFirstName = removeVietnameseAccents(parentFirstName);
         const normalizedParentLastName = removeVietnameseAccents(parentLastName);
         
-        // Cải tiến cách tạo parent ID để đảm bảo luôn lấy giá trị lớn nhất
-        const parents = await Parent.find({}, 'parentId');
-        let maxParentId = 0;
+        // Get next available parent ID
+        const maxParent = await Parent.findOne().sort('-parentId');
+        const newParentId = maxParent ? parseInt(maxParent.parentId) + 1 : 1;
         
-        if (parents && parents.length > 0) {
-          // Chuyển đổi tất cả parentId sang số và tìm giá trị lớn nhất
-          parents.forEach(parent => {
-            const parentIdAsNum = parseInt(parent.parentId);
-            if (!isNaN(parentIdAsNum) && parentIdAsNum > maxParentId) {
-              maxParentId = parentIdAsNum;
-            }
-          });
+        // Generate unique parent userId - new format: {firstName}{lastName-initials}pr{parentId}
+        const lastNameInitials = normalizedParentLastName.split(' ')
+          .map(part => part.charAt(0).toLowerCase())
+          .join('');
+        const parentUserId = `${normalizedParentFirstName.toLowerCase()}${lastNameInitials}pr${newParentId}`;
+        
+        // Check if parentUserId already exists
+        const existingParentUser = await UserAccount.findOne({ userId: parentUserId });
+        if (existingParentUser) {
+          console.warn(`Parent user ID ${parentUserId} already exists. Skipping parent creation.`);
+          continue;
         }
         
-        const newParentId = maxParentId + 1;
-        
-        // Generate parent userId using normalized names
-        const parentUserId = Parent.generateUserId(normalizedParentFirstName, normalizedParentLastName, newParentId);
-        
         // Create parent user account
-        await UserAccount.create({
+        const parentUser = await UserAccount.create({
           userId: parentUserId,
           username: parentUserId,
           password: defaultPassword,
-          email: `${parentUserId}@fams.edu.vn`, // Luôn tạo email từ userId không dấu
-          role: 'parent',
+          email: `${parentUserId}@fams.edu.vn`,
+          backup_email: normalizedParentEmails[i] || null,
+          role: 'Parent', // Viết hoa chữ cái đầu để phù hợp với enum
           isActive: true
         });
+        
+        // Determine parent gender
+        let parentGender = normalizedParentGenders[i];
+        if (parentGender === undefined || parentGender === null) {
+          // Default parent gender if not provided
+          parentGender = parentFirstName === 'Thị' ? false : true;
+        } else if (typeof parentGender === 'string') {
+          parentGender = parentGender.toLowerCase() === 'male' || parentGender === 'true';
+        }
         
         // Create parent record
         const parent = await Parent.create({
-          parentId: newParentId.toString(),
+          parentId: newParentId,
           userId: parentUserId,
           firstName: parentFirstName,
           lastName: parentLastName,
-          email: `${parentUserId}@fams.edu.vn`, // Luôn sử dụng email được tạo từ userId không dấu
-          career: parentCareers && parentCareers[i] ? parentCareers[i] : null,
-          phone: parentPhones && parentPhones[i] ? parentPhones[i] : null,
-          gender: parentGenders && parentGenders[i] !== undefined 
-                  ? (typeof parentGenders[i] === 'string'
-                     ? (parentGenders[i].toLowerCase() === 'male' || parentGenders[i].toLowerCase() === 'true')
-                     : Boolean(parentGenders[i]))
-                  : null,
-          isActive: true
+          fullName: `${parentLastName} ${parentFirstName}`, // Tạo fullName theo định dạng lastName firstName
+          email: normalizedParentEmails[i] || `${parentUserId}@fams.edu.vn`, // Sử dụng email riêng nếu có hoặc email mặc định
+          career: normalizedParentCareers[i] || '',
+          phone: normalizedParentPhones[i] || '',
+          gender: parentGender
         });
         
-        // Create parent-student relationship
+        // Create parent-student relation
         await ParentStudent.create({
-          parentId: parent.parentId,
-          studentId: student.studentId,
-          relationship: i === 0 ? 'Father' : i === 1 ? 'Mother' : 'Guardian'
+          parentId: newParentId,
+          studentId: newStudentId,
+          relationship: 'Other'
         });
         
-        // Update student's parent arrays
-        student.parentIds.push(parent.parentId);
-        student.parentNames.push(parentName);
-        student.parentCareers.push(parent.career);
-        student.parentPhones.push(parent.phone);
-        student.parentGenders.push(parent.gender);
+        // Update student record with parent info
+        student.parentIds.push(newParentId.toString());
+        student.parentNames.push(normalizedParentNames[i]);
+        student.parentCareers.push(normalizedParentCareers[i] || '');
+        student.parentPhones.push(normalizedParentPhones[i] || '');
+        student.parentGenders.push(parentGender);
+        student.parentEmails.push(normalizedParentEmails[i] || `${parentUserId}@fams.edu.vn`);
         
-        createdParents.push(parent);
+        createdParents.push({
+          parentId: newParentId.toString(),
+          name: normalizedParentNames[i],
+          userId: parentUserId,
+          email: normalizedParentEmails[i] || `${parentUserId}@fams.edu.vn`
+        });
       }
       
-      // Save updated student record
+      // Save updated student with parent info
       await student.save();
     }
-
+    
     res.status(201).json({
       success: true,
       message: 'Student created successfully',
@@ -420,7 +437,8 @@ const createTeacher = async (req, res, defaultPassword) => {
       dateOfBirth, 
       address,
       major,
-      weeklyCapacity
+      weeklyCapacity,
+      degree
     } = req.body;
 
     // Normalize firstName and lastName by removing accents
@@ -430,53 +448,49 @@ const createTeacher = async (req, res, defaultPassword) => {
     const UserAccount = require('../database/models/UserAccount');
     const Teacher = require('../database/models/Teacher');
 
-    // 1. Cải tiến cách tạo teacher ID để đảm bảo luôn lấy giá trị lớn nhất
-    // Lấy tất cả teacher ID và tìm giá trị lớn nhất
-    const teachers = await Teacher.find({}, 'teacherId');
-    let maxTeacherId = 0;
+    // 1. Get highest teacherId
+    const maxTeacher = await Teacher.findOne().sort('-teacherId');
+    const newTeacherId = maxTeacher ? parseInt(maxTeacher.teacherId) + 1 : 1;
     
-    if (teachers && teachers.length > 0) {
-      // Chuyển đổi tất cả teacherId sang số và tìm giá trị lớn nhất
-      teachers.forEach(teacher => {
-        const teacherIdAsNum = parseInt(teacher.teacherId);
-        if (!isNaN(teacherIdAsNum) && teacherIdAsNum > maxTeacherId) {
-          maxTeacherId = teacherIdAsNum;
-        }
+    // 2. Generate userId based on name and teacherId
+    const userId = `${normalizedFirstName.charAt(0).toLowerCase()}${normalizedLastName.split(' ').map(part => part.charAt(0).toLowerCase()).join('')}${newTeacherId}`;
+    
+    // 3. Check if userId already exists
+    const existingUser = await UserAccount.findOne({ userId });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: `User ID ${userId} already exists. Please try with a different name or contact administrator.`,
+        code: 'DUPLICATE_USERID'
       });
     }
     
-    const newTeacherId = maxTeacherId + 1;
-    
-    // 2. Generate userId for teacher - now using normalized names
-    const userId = Teacher.generateUserId(normalizedFirstName, normalizedLastName, newTeacherId);
-    
-    // 3. Create user account
+    // 4. Create user account
     const user = await UserAccount.create({
       userId,
       username: userId,
       password: defaultPassword,
       email: `${userId}@fams.edu.vn`, // Luôn tạo email từ userId không dấu
       backup_email: email || backup_email, // Sử dụng email nhập vào làm backup_email
-      role: 'teacher',
+      role: 'Teacher', // Viết hoa chữ cái đầu để phù hợp với enum
       isActive: true
     });
 
-    // 4. Create teacher record
+    // 5. Create teacher record
     const teacher = await Teacher.create({
-      teacherId: newTeacherId.toString(),
+      teacherId: newTeacherId,
       userId,
       firstName,
       lastName,
+      fullName: `${lastName} ${firstName}`,
       email: `${userId}@fams.edu.vn`, // Email luôn khớp với email trong tài khoản
       dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-      gender: typeof gender === 'string' 
-              ? (gender.toLowerCase() === 'male' || gender.toLowerCase() === 'true') 
-              : Boolean(gender),
+      gender: typeof gender === 'string' ? gender : (gender === true || gender === 'true' ? 'Male' : 'Female'),
       address,
       phone,
       major,
-      WeeklyCapacity: weeklyCapacity || 16,
-      isActive: true
+      weeklyCapacity: weeklyCapacity || 10,
+      degree: degree || null
     });
 
     res.status(201).json({
@@ -503,6 +517,7 @@ const createParent = async (req, res, defaultPassword) => {
       firstName, 
       lastName, 
       email, // Email nhập vào sẽ được sử dụng làm backup_email
+      parentEmail, // Email riêng cho phụ huynh
       backup_email,
       phone, 
       gender,
@@ -516,44 +531,45 @@ const createParent = async (req, res, defaultPassword) => {
     const UserAccount = require('../database/models/UserAccount');
     const Parent = require('../database/models/Parent');
 
-    // 1. Cải tiến cách tạo parent ID để đảm bảo luôn lấy giá trị lớn nhất
-    // Lấy tất cả parent ID và tìm giá trị lớn nhất
-    const parents = await Parent.find({}, 'parentId');
-    let maxParentId = 0;
+    // 1. Get highest parentId
+    const maxParent = await Parent.findOne().sort('-parentId');
+    const newParentId = maxParent ? parseInt(maxParent.parentId) + 1 : 1;
     
-    if (parents && parents.length > 0) {
-      // Chuyển đổi tất cả parentId sang số và tìm giá trị lớn nhất
-      parents.forEach(parent => {
-        const parentIdAsNum = parseInt(parent.parentId);
-        if (!isNaN(parentIdAsNum) && parentIdAsNum > maxParentId) {
-          maxParentId = parentIdAsNum;
-        }
+    // 2. Generate userId based on name and parentId - new format: {firstName}{lastName-initials}pr{parentId}
+    const lastNameInitials = normalizedLastName.split(' ')
+      .map(part => part.charAt(0).toLowerCase())
+      .join('');
+    const userId = `${normalizedFirstName.toLowerCase()}${lastNameInitials}pr${newParentId}`;
+    
+    // 3. Check if userId already exists
+    const existingUser = await UserAccount.findOne({ userId });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: `User ID ${userId} already exists. Please try with a different name or contact administrator.`,
+        code: 'DUPLICATE_USERID'
       });
     }
     
-    const newParentId = maxParentId + 1;
-    
-    // 2. Generate userId for parent - now using normalized names
-    const userId = Parent.generateUserId(normalizedFirstName, normalizedLastName, newParentId);
-    
-    // 3. Create user account
+    // 4. Create user account
     const user = await UserAccount.create({
       userId,
       username: userId,
       password: defaultPassword,
       email: `${userId}@fams.edu.vn`, // Luôn tạo email từ userId không dấu
       backup_email: email || backup_email, // Sử dụng email nhập vào làm backup_email
-      role: 'parent',
+      role: 'Parent', // Viết hoa chữ cái đầu để phù hợp với enum
       isActive: true
     });
 
-    // 4. Create parent record
+    // 5. Create parent record
     const parent = await Parent.create({
-      parentId: newParentId.toString(),
+      parentId: newParentId,
       userId,
       firstName: firstName,
       lastName: lastName,
-      email: `${userId}@fams.edu.vn`, // Email luôn khớp với email trong tài khoản
+      fullName: `${lastName} ${firstName}`, // Tạo fullName theo định dạng lastName firstName
+      email: parentEmail || `${userId}@fams.edu.vn`, // Sử dụng email riêng nếu có hoặc email mặc định
       career,
       phone,
       gender: typeof gender === 'string' 
@@ -723,12 +739,15 @@ exports.getUserDetails = async (req, res) => {
     
     // Get additional details based on role
     const role = user.role.toLowerCase();
-    let additionalData = null;
+    let additionalData = {};
     
     if (role === 'student') {
       const Student = require('../database/models/Student');
       const Batch = require('../database/models/Batch');
       const Class = require('../database/models/Class');
+      const Parent = require('../database/models/Parent');
+      const ParentStudent = require('../database/models/ParentStudent');
+      const RFID = require('../database/models/RFID');
       
       // Get student details
       const student = await Student.findOne({ userId });
@@ -743,62 +762,95 @@ exports.getUserDetails = async (req, res) => {
           classInfo = await Class.findOne({ classId: student.classId.toString() });
         }
         
+        // Get parents
+        const parentStudentRelations = await ParentStudent.find({ studentId: student.studentId });
+        const parentIds = parentStudentRelations.map(rel => rel.parentId);
+        const parents = await Parent.find({ parentId: { $in: parentIds } });
+        
+        // Get RFID info
+        const rfid = await RFID.findOne({ UserID: userId });
+        
         additionalData = {
           student,
           batch: batch || null,
-          class: classInfo || null
+          class: classInfo || null,
+          parents: parents || [],
+          rfid: rfid || null
         };
       }
-    } 
-    else if (role === 'teacher') {
+    } else if (role === 'teacher') {
       const Teacher = require('../database/models/Teacher');
-      const ClassSchedule = require('../database/models/ClassSchedule');
+      const Class = require('../database/models/Class');
+      const RFID = require('../database/models/RFID');
       
       // Get teacher details
       const teacher = await Teacher.findOne({ userId });
       
       if (teacher) {
-        // Get classes taught
-        const classes = await ClassSchedule.find({ teacherId: teacher.teacherId })
-          .populate('class')
-          .distinct('class')
-          .lean();
-          
+        // Get classes where teacher is homeroom teacher
+        const classes = await Class.find({ homeroomTeacherId: teacher.teacherId.toString() });
+        
+        // Get RFID info
+        const rfid = await RFID.findOne({ UserID: userId });
+        
         additionalData = {
           teacher,
-          classes: classes || []
+          classes: classes || [],
+          rfid: rfid || null
         };
       }
-    } 
-    else if (role === 'parent') {
+    } else if (role === 'parent') {
       const Parent = require('../database/models/Parent');
-      const ParentStudent = require('../database/models/ParentStudent');
       const Student = require('../database/models/Student');
+      const ParentStudent = require('../database/models/ParentStudent');
+      const Class = require('../database/models/Class');
+      const RFID = require('../database/models/RFID');
       
       // Get parent details
       const parent = await Parent.findOne({ userId });
       
       if (parent) {
-        // Get associated students
-        const studentRelations = await ParentStudent.find({ parentId: parent.parentId });
-        const studentIds = studentRelations.map(relation => relation.studentId);
+        // Get parent-student relations
+        const relations = await ParentStudent.find({ parentId: parent.parentId });
         
-        // Fetch student details
+        // Get students
+        const studentIds = relations.map(rel => rel.studentId);
         const students = await Student.find({ studentId: { $in: studentIds } });
+        
+        // Get class info for each student
+        const enhancedStudents = await Promise.all(students.map(async (student) => {
+          let classInfo = null;
+          if (student.classId) {
+            classInfo = await Class.findOne({ classId: student.classId.toString() });
+          }
+          
+          return {
+            ...student.toObject(),
+            className: classInfo ? classInfo.className : null,
+            relationship: relations.find(r => r.studentId.toString() === student.studentId.toString())?.relationship || 'Other'
+          };
+        }));
+        
+        // Get RFID info
+        const rfid = await RFID.findOne({ UserID: userId });
         
         additionalData = {
           parent,
-          students: students || [],
-          relations: studentRelations || []
+          students: enhancedStudents || [],
+          relations,
+          rfid: rfid || null
         };
       }
     }
     
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: {
         user,
-        ...additionalData
+        role: {
+          type: role,
+          ...additionalData
+        }
       }
     });
   } catch (error) {

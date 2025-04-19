@@ -3,6 +3,12 @@ const router = express.Router();
 const { models } = require('../database');
 const { protect } = require('../middleware/authMiddleware');
 
+/**
+ * Deprecated Routes - Being phased out in favor of User API
+ * These routes will be removed in future versions.
+ * Please use the User API instead.
+ */
+
 // Get all parents
 router.get('/', async (req, res) => {
   try {
@@ -60,8 +66,20 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Update parent information
+// Update parent information - DEPRECATED
 router.put('/:id', protect, async (req, res) => {
+  // First, check if the request should be redirected
+  if (!req.query.bypass_redirect) {
+    return res.status(301).json({
+      success: false,
+      message: 'This API endpoint is deprecated. Please use /api/users/update/:userId instead.',
+      code: 'DEPRECATED_API',
+      suggestion: 'Use /api/users/update/:userId with PUT method for unified updates across all roles',
+      userId: req.parent ? req.parent.userId : null
+    });
+  }
+  
+  // If bypass_redirect is set, continue with legacy implementation
   try {
     const parent = await models.Parent.findOne({ parentId: req.params.id });
     

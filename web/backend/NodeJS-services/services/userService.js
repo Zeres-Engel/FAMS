@@ -33,7 +33,11 @@ exports.getUsers = async (options = {}) => {
     // Xử lý lọc theo nhiều roles
     let selectedRoles = [];
     if (roles && (typeof roles === 'string' || Array.isArray(roles))) {
-      const rolesArray = Array.isArray(roles) ? roles : roles.split(',');
+      // Chuyển sang mảng, tách bằng dấu phẩy và loại bỏ khoảng trắng
+      const rolesArray = Array.isArray(roles) 
+        ? roles 
+        : roles.split(',').map(role => role.trim());
+      
       selectedRoles = rolesArray.filter(r => r && r !== 'none');
       
       if (selectedRoles.length > 0) {

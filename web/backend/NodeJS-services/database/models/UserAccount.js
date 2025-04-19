@@ -12,10 +12,19 @@ const UserAccountSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  username: {
+    type: String,
+    required: true,
+    unique: true
+  },
   email: {
     type: String,
     required: true,
     unique: true
+  },
+  backup_email: {
+    type: String,
+    default: null
   },
   password: {
     type: String,

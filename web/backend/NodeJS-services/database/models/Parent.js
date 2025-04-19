@@ -13,14 +13,31 @@ const ParentSchema = new mongoose.Schema({
     auto: true
   },
   userId: {
-    type: Number,
+    type: String,
     required: true,
     unique: true,
     ref: 'UserAccount'
   },
+  firstName: {
+    type: String,
+    required: false
+  },
+  lastName: {
+    type: String,
+    required: false
+  },
   fullName: {
     type: String,
-    required: true
+    required: true,
+    default: function() {
+      if (this.lastName && this.firstName) {
+        return `${this.lastName} ${this.firstName}`;
+      }
+      return this.fullName;
+    }
+  },
+  email: {
+    type: String
   },
   career: {
     type: String
