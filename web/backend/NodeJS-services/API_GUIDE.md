@@ -122,33 +122,6 @@ Base path: `/auth`
   3. Khi nhận lỗi `TOKEN_EXPIRED`, gọi API refresh token để lấy cặp token mới
   4. Nếu refresh token cũng hết hạn, yêu cầu người dùng đăng nhập lại
 
-### Student API (Deprecated)
-Base path: `/students`
-
-**⚠️ DEPRECATED ⚠️:** The Student API has been deprecated and will be removed in future versions. Please use the User API instead.
-
-All requests to `/api/students` will return a 301 status code with instructions to use the User API.
-
-**Migration Guide:**
-- Use `/api/users?roles=student` instead of `/api/students`
-- Use `/api/users/create` with `role: "student"` instead of `/api/students` (POST)
-- Use `/api/users/:id` instead of `/api/students/:id`
-- Use `/api/users/details/:id` to get detailed student information
-
-### Teacher API (Deprecated)
-Base path: `/teachers`
-
-**⚠️ DEPRECATED ⚠️:** The Teacher API has been deprecated and will be removed in future versions. Please use the User API instead.
-
-All requests to `/api/teachers` will return a 301 status code with instructions to use the User API.
-
-**Migration Guide:**
-- Use `/api/users?roles=teacher` instead of `/api/teachers`
-- Use `/api/users/create` with `role: "teacher"` instead of `/api/teachers` (POST)
-- Use `/api/users/:id` instead of `/api/teachers/:id`
-- Use `/api/users/details/:id` to get detailed teacher information
-- Use `/api/users/teachers/:id/schedule` to get teacher schedule
-
 ### User API
 Base path: `/users`
 
@@ -215,6 +188,12 @@ Base path: `/users`
       "username": "tuanpv5",
       "email": "tuanpv5@fams.edu.vn",
       "role": "teacher",
+      "rfid": {
+        "RFID_ID": "TEACH12345",
+        "IssueDate": "2024-05-01T00:00:00Z",
+        "ExpiryDate": "2026-05-01T00:00:00Z",
+        "Status": "Active"
+      },
       "details": {
         "teacherId": "5",
         "firstName": "Tuấn",
@@ -222,7 +201,19 @@ Base path: `/users`
         "fullName": "Tuấn Phạm Văn",
         "phone": "0987950528",
         "major": "Toán học",
-        "grades": ["10", "11"]
+        "degree": "Tiến sĩ Giáo dục học",
+        "classes": [
+          {
+            "classId": 2,
+            "className": "10A1",
+            "grade": "10"
+          },
+          {
+            "classId": 3,
+            "className": "10A2",
+            "grade": "10"
+          }
+        ]
       }
     },
     {
@@ -230,6 +221,12 @@ Base path: `/users`
       "username": "anhdmst37",
       "email": "anhdmst37@fams.edu.vn",
       "role": "student",
+      "rfid": {
+        "RFID_ID": "STUD67890",
+        "IssueDate": "2024-03-15T00:00:00Z",
+        "ExpiryDate": "2025-03-15T00:00:00Z",
+        "Status": "Active"
+      },
       "details": {
         "studentId": "7",
         "firstName": "Ánh",
@@ -255,10 +252,32 @@ Base path: `/users`
 }
 ```
 
+**Lưu ý về RFID**: Nếu người dùng có thẻ RFID, thông tin thẻ sẽ được trả về trong trường `rfid` với các thuộc tính `RFID_ID`, `IssueDate`, `ExpiryDate` và `Status`.
+
 #### Get User by ID
 - **URL**: `http://fams.io.vn/api-nodejs/users/:id`
 - **Method**: `GET`
 - **Auth Required**: Yes
+- **Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "userId": "tuanpv5",
+    "email": "tuanpv5@fams.edu.vn",
+    "role": "teacher",
+    "rfid": {
+      "RFID_ID": "TEACH12345",
+      "IssueDate": "2024-05-01T00:00:00Z",
+      "ExpiryDate": "2026-05-01T00:00:00Z",
+      "Status": "Active"
+    },
+    // Other user information
+  }
+}
+```
+
+**Lưu ý về RFID**: Nếu người dùng có thẻ RFID, thông tin thẻ sẽ được trả về trong trường `rfid`.
 
 #### Create User
 - **URL**: `http://fams.io.vn/api-nodejs/users/create`
@@ -323,7 +342,9 @@ Base path: `/users`
 - **Description**: Thống nhất API cập nhật thông tin người dùng cho cả 3 vai trò (Student, Teacher, Parent) dựa vào userId
 - **Body**: Tùy thuộc vào vai trò của người dùng, chỉ cần gửi các trường cần cập nhật
 
-**Ví dụ cập nhật Student:**
+**Cập nhật với RFID**: Bạn có thể cập nhật hoặc tạo thẻ RFID cho bất kỳ người dùng nào bằng cách thêm trường `rfid` vào request body.
+
+**Ví dụ cập nhật Student với RFID:**
 ```json
 {
   "firstName": "Đặng Thanh",
@@ -334,10 +355,6 @@ Base path: `/users`
   "dateOfBirth": "2008-10-07",
   "gender": true,
   "classId": 2,
-  "parentNames": ["Nguyễn Văn An"],
-  "parentCareers": ["Bác sĩ"],
-  "parentPhones": ["0987654321"],
-  "parentGenders": [true],
   "rfid": {
     "RFID_ID": "STUD12345",
     "ExpiryDate": "2y"
@@ -345,7 +362,7 @@ Base path: `/users`
 }
 ```
 
-**Ví dụ cập nhật Teacher:**
+**Ví dụ cập nhật Teacher với RFID:**
 ```json
 {
   "firstName": "Đức",
@@ -362,18 +379,17 @@ Base path: `/users`
 }
 ```
 
-**Ví dụ cập nhật Parent:**
+**Ví dụ chỉ cập nhật RFID:** Bạn có thể chỉ cập nhật thẻ RFID mà không thay đổi thông tin người dùng
 ```json
 {
-  "fullName": "Bùi Ngọc Dũng", 
-  "career": "Doanh nhân",
-  "phone": "0973557557",
-  "gender": true,
-  "studentIds": [1, 2, 3]
+  "rfid": {
+    "RFID_ID": "RFID98765",
+    "ExpiryDate": "2026-12-31"
+  }
 }
 ```
 
-**Response Student:**
+**Response với RFID:**
 ```json
 {
   "success": true,
@@ -396,162 +412,22 @@ Base path: `/users`
         "classId": 2,
         "batchId": 1
       },
-      "batch": {
-        "batchId": 1,
-        "batchName": "K2023"
-      },
-      "class": {
-        "classId": 2,
-        "className": "10A2",
-        "grade": "10"
-      },
-      "parents": [
-        {
-          "parentId": 3,
-          "fullName": "Nguyễn Văn An",
-          "phone": "0987654321",
-          "career": "Bác sĩ",
-          "relationship": "Father"
-        }
-      ],
       "rfid": {
         "RFID_ID": "STUD12345",
         "UserID": "khoaatst1",
         "IssueDate": "2024-05-15T10:13:45.000Z",
-        "ExpiryDate": "2026-05-15T10:13:45.000Z"
+        "ExpiryDate": "2026-05-15T10:13:45.000Z",
+        "Status": "Active"
       }
     }
   }
 }
 ```
 
-**Response Teacher:**
-```json
-{
-  "success": true,
-  "message": "User hunghu123 updated successfully",
-  "data": {
-    "user": {
-      "userId": "hunghu123", 
-      "email": "hoangduchung9796@gmail.com",
-      "role": "Teacher"
-    },
-    "role": {
-      "type": "teacher",
-      "teacher": {
-        "teacherId": 3,
-        "fullName": "Hoàng Đức Hùng",
-        "dateOfBirth": "1981-07-26T00:00:00.000Z",
-        "gender": true,
-        "address": "Bà Rịa - Vũng Tàu",
-        "phone": "0377538640",
-        "major": "Tin học, Lịch sử",
-        "degree": "Tiến sĩ Giáo dục học",
-        "weeklyCapacity": 10
-      },
-      "classes": [
-        {
-          "classId": 2,
-          "className": "10A2",
-          "grade": "10"
-        }
-      ],
-      "rfid": {
-        "RFID_ID": "TEACH67890",
-        "UserID": "hunghu123",
-        "IssueDate": "2024-05-15T10:15:22.000Z",
-        "ExpiryDate": "2027-05-15T10:15:22.000Z"
-      }
-    }
-  }
-}
-```
-
-**Response Parent:**
-```json
-{
-  "success": true,
-  "message": "User dungbnpr0 updated successfully",
-  "data": {
-    "user": {
-      "userId": "dungbnpr0", 
-      "email": "buingocdung4439@gmail.com",
-      "role": "Parent"
-    },
-    "role": {
-      "type": "parent",
-      "parent": {
-        "parentId": 1,
-        "fullName": "Bùi Ngọc Dũng",
-        "career": "Doanh nhân",
-        "phone": "973557557",
-        "gender": true
-      },
-      "children": [
-        {
-          "studentId": 1,
-          "fullName": "Đặng Thanh Khoa",
-          "className": "10A1",
-          "relationship": "Other"
-        },
-        {
-          "studentId": 2,
-          "fullName": "Nguyễn Văn Bình",
-          "className": "11A2",
-          "relationship": "Other"
-        },
-        {
-          "studentId": 3,
-          "fullName": "Trần Thị Hương",
-          "className": "12A1",
-          "relationship": "Other"
-        }
-      ],
-      "rfid": {
-        "RFID_ID": "PARENT12345",
-        "UserID": "dungbnpr0",
-        "IssueDate": "2024-05-01T00:00:00Z",
-        "ExpiryDate": "2026-05-01T00:00:00Z"
-      }
-    }
-  }
-}
-```
-
-**Error Responses:**
-- `404` - User not found:
-  ```json
-  {
-    "success": false,
-    "message": "User with ID khoaatst1 not found",
-    "code": "USER_NOT_FOUND"
-  }
-  ```
-- `404` - Student/Teacher/Parent record not found:
-  ```json
-  {
-    "success": false,
-    "message": "Student record for user khoaatst1 not found",
-    "code": "STUDENT_RECORD_NOT_FOUND"
-  }
-  ```
-- `500` - Server error:
-  ```json
-  {
-    "success": false,
-    "message": "Error message",
-    "code": "UPDATE_FAILED"
-  }
-  ```
-
-**Lưu ý về Parent:**
-- Khi cập nhật Student, nếu cung cấp thông tin phụ huynh mới, hệ thống sẽ tự động tạo tài khoản mới cho phụ huynh
-- Khi cung cấp thông tin số điện thoại đã tồn tại, hệ thống sẽ liên kết với phụ huynh có sẵn thay vì tạo mới
-- Trong một lần cập nhật có thể thêm nhiều phụ huynh cho một học sinh
-
-**Lưu ý về RFID:**
-- Có thể cập nhật hoặc tạo mới thẻ RFID đồng thời với cập nhật thông tin người dùng
-- ExpiryDate có thể là ngày cụ thể (YYYY-MM-DD) hoặc định dạng ngắn gọn ("1y", "2y", "3y")
+**Xử lý RFID trong API:**
+- Nếu người dùng đã có thẻ RFID: Thẻ hiện tại sẽ được cập nhật với thông tin mới
+- Nếu người dùng chưa có thẻ RFID: Thẻ mới sẽ được tạo với thông tin được cung cấp
+- Trường `ExpiryDate` có thể là ngày cụ thể hoặc định dạng ngắn gọn như "1y", "2y", "3y"
 
 #### Update User (Admin Only)
 - **URL**: `http://fams.io.vn/api-nodejs/users/:id`
@@ -1111,6 +987,7 @@ Base path: `/classes`
   - `grade`: Lọc theo khối lớp (ví dụ: "10" cho lớp 10, "11" cho lớp 11)
   - `batchId`: Lọc theo ID khóa học
   - `search`: Tìm kiếm theo tên lớp
+  - `className`: Lọc theo tên lớp (exact match hoặc partial match)
   - `homeroomTeacherId`: Lọc theo ID giáo viên chủ nhiệm
 - **Response**:
 ```json
@@ -1131,10 +1008,15 @@ Base path: `/classes`
 }
 ```
 
-#### Get Class by ID
+#### Get Class by ID or className
 - **URL**: `http://fams.io.vn/api-nodejs/classes/:id`
 - **Method**: `GET`
 - **Auth Required**: Yes
+- **URL Parameters**:
+  - `id`: Có thể là ID của lớp (số) hoặc tên lớp (chuỗi)
+- **Examples**:
+  - `http://fams.io.vn/api-nodejs/classes/3` - Tìm lớp theo classId
+  - `http://fams.io.vn/api-nodejs/classes/10A1` - Tìm lớp theo className
 - **Response**:
 ```json
 {
@@ -1200,10 +1082,12 @@ Base path: `/classes`
     }
     ```
 
-#### Update Class
+#### Update Class by ID or className
 - **URL**: `http://fams.io.vn/api-nodejs/classes/:id`
 - **Method**: `PUT`
 - **Auth Required**: Yes
+- **URL Parameters**:
+  - `id`: Có thể là ID của lớp (số) hoặc tên lớp (chuỗi)
 - **Body**:
 ```json
 {
@@ -1252,15 +1136,24 @@ Base path: `/classes`
     }
     ```
 
-#### Delete Class
+#### Delete Class by ID or className with cascade effects
 - **URL**: `http://fams.io.vn/api-nodejs/classes/:id`
 - **Method**: `DELETE`
 - **Auth Required**: Yes
+- **URL Parameters**:
+  - `id`: Có thể là ID của lớp (số) hoặc tên lớp (chuỗi)
 - **Response**:
 ```json
 {
   "success": true,
-  "message": "Class deleted successfully"
+  "message": "Class deleted successfully with cascade effects",
+  "details": {
+    "className": "10A3",
+    "classId": 3,
+    "studentsUpdated": 25,
+    "schedulesDeleted": 15,
+    "classDeleted": true
+  }
 }
 ```
 - **Error Responses**:
@@ -1272,6 +1165,11 @@ Base path: `/classes`
       "code": "CLASS_NOT_FOUND"
     }
     ```
+
+**Lưu ý về cascade delete**: Khi xóa một lớp học, các tác động sau sẽ được thực hiện tự động:
+- Tất cả học sinh trong lớp sẽ được cập nhật `classId` thành `null` (không còn thuộc lớp nào)
+- Tất cả lịch học của lớp đó sẽ bị xóa khỏi ClassSchedule
+- Dữ liệu lớp sẽ bị xóa
 
 ### Database API
 Base path: `/database`
@@ -1292,6 +1190,7 @@ Base path: `/rfid`
   - `page`: Số trang (mặc định: 1)
   - `limit`: Số lượng kết quả mỗi trang (mặc định: 10)
   - `search`: Tìm kiếm theo RFID_ID hoặc UserID
+  - `Status`: Lọc theo trạng thái ('Active', 'Expired', 'Revoked', 'Lost')
   - **Chú ý**: Bạn có thể filter theo bất kỳ trường nào trong model RFID
 - **Response**:
 ```json
@@ -1310,6 +1209,7 @@ Base path: `/rfid`
       "UserID": "tuanpv5",
       "IssueDate": "2024-03-15T00:00:00.000Z",
       "ExpiryDate": "2025-03-15T00:00:00.000Z",
+      "Status": "Active",
       "user": {
         "userId": "tuanpv5",
         "username": "tuanpv5",
@@ -1322,6 +1222,7 @@ Base path: `/rfid`
       "UserID": "anhdmst37",
       "IssueDate": "2024-02-20T00:00:00.000Z",
       "ExpiryDate": "2025-02-20T00:00:00.000Z",
+      "Status": "Active",
       "user": {
         "userId": "anhdmst37",
         "username": "anhdmst37",
@@ -1346,6 +1247,7 @@ Base path: `/rfid`
     "UserID": "tuanpv5",
     "IssueDate": "2024-03-15T00:00:00.000Z",
     "ExpiryDate": "2025-03-15T00:00:00.000Z",
+    "Status": "Active",
     "user": {
       "userId": "tuanpv5",
       "username": "tuanpv5",
@@ -1368,7 +1270,7 @@ Base path: `/rfid`
 {
   "RFID_ID": "RFID12345",
   "UserID": "tuanpv5",
-  "ExpiryDate": "2025-03-15T00:00:00.000Z"
+  "ExpiryDate": "3y"
 }
 ```
 - **Response**:
@@ -1379,12 +1281,21 @@ Base path: `/rfid`
     "RFID_ID": "RFID12345",
     "UserID": "tuanpv5",
     "IssueDate": "2024-03-15T12:34:56.789Z",
-    "ExpiryDate": "2025-03-15T00:00:00.000Z"
+    "ExpiryDate": "2027-03-15T12:34:56.789Z",
+    "Status": "Active"
   },
   "message": "RFID created successfully"
 }
 ```
 - **Error Responses**:
+  - `400` - Missing required fields:
+    ```json
+    {
+      "success": false,
+      "message": "RFID_ID and UserID are required fields",
+      "code": "MISSING_FIELDS"
+    }
+    ```
   - `400` - User not found:
     ```json
     {
@@ -1401,6 +1312,14 @@ Base path: `/rfid`
       "code": "DUPLICATE_RFID"
     }
     ```
+  - `400` - User already has RFID:
+    ```json
+    {
+      "success": false,
+      "message": "User tuanpv5 already has an RFID card: RFID12345",
+      "code": "USER_HAS_RFID"
+    }
+    ```
 
 #### Update RFID
 - **URL**: `http://fams.io.vn/api-nodejs/rfid/:id`
@@ -1410,7 +1329,8 @@ Base path: `/rfid`
 ```json
 {
   "UserID": "dungpv1",
-  "ExpiryDate": "2026-03-15T00:00:00.000Z"
+  "ExpiryDate": "2y",
+  "Status": "Active"
 }
 ```
 - **Response**:
@@ -1421,7 +1341,8 @@ Base path: `/rfid`
     "RFID_ID": "RFID12345",
     "UserID": "dungpv1",
     "IssueDate": "2024-03-15T12:34:56.789Z",
-    "ExpiryDate": "2026-03-15T00:00:00.000Z"
+    "ExpiryDate": "2026-03-15T12:34:56.789Z",
+    "Status": "Active"
   },
   "message": "RFID updated successfully"
 }
@@ -1441,6 +1362,14 @@ Base path: `/rfid`
       "success": false,
       "message": "User with ID dungpv1 not found",
       "code": "INVALID_USER_ID"
+    }
+    ```
+  - `400` - User already has RFID:
+    ```json
+    {
+      "success": false,
+      "message": "User dungpv1 already has an RFID card: RFID67890",
+      "code": "USER_HAS_RFID"
     }
     ```
 
@@ -1464,6 +1393,28 @@ Base path: `/rfid`
       "code": "RFID_NOT_FOUND"
     }
     ```
+
+#### Get RFID By User ID
+- **URL**: `http://fams.io.vn/api-nodejs/rfid/user/:userId`
+- **Method**: `GET`
+- **Auth Required**: Yes
+- **Description**: Lấy thông tin thẻ RFID của người dùng cụ thể dựa trên userId
+- **Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "RFID_ID": "RFID12345",
+    "UserID": "tuanpv5",
+    "IssueDate": "2024-03-15T00:00:00.000Z",
+    "ExpiryDate": "2027-03-15T00:00:00.000Z",
+    "Status": "Active",
+    "user": {
+      // Thông tin người dùng
+    }
+  }
+}
+```
 
 #### Các tùy chọn ExpiryDate cho RFID
 Khi tạo hoặc cập nhật thẻ RFID, trường `ExpiryDate` hỗ trợ các định dạng sau:
@@ -1547,6 +1498,7 @@ Tương tự, bạn có thể cập nhật hoặc tạo mới thẻ RFID cho gi�
     "UserID": "tuanpv5",
     "IssueDate": "2024-03-15T00:00:00.000Z",
     "ExpiryDate": "2027-03-15T00:00:00.000Z",
+    "Status": "Active",
     "user": {
       // Thông tin người dùng
     }

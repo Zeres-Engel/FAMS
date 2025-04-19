@@ -278,6 +278,18 @@ exports.getUsers = async (options = {}) => {
       // Không trả về mật khẩu
       delete userObj.password;
       
+      // Get RFID information for this user if exists
+      const RFID = require('../database/models/RFID');
+      const rfidCard = await RFID.findOne({ UserID: user.userId });
+      if (rfidCard) {
+        userObj.rfid = {
+          RFID_ID: rfidCard.RFID_ID,
+          IssueDate: rfidCard.IssueDate,
+          ExpiryDate: rfidCard.ExpiryDate,
+          Status: rfidCard.Status
+        };
+      }
+      
       // Lấy thông tin chi tiết dựa theo role
       const role = user.role.toLowerCase();
       
@@ -354,50 +366,38 @@ exports.getUsers = async (options = {}) => {
         if (teacher) {
           // Copy teacher data directly to userObj (flatter structure)
           userObj.teacherId = teacher.teacherId;
-          userObj.firstName = teacher.firstName;
-          userObj.lastName = teacher.lastName;
+          userObj.firstName = teacher.firstName || null;
+          userObj.lastName = teacher.lastName || null;
           userObj.fullName = teacher.fullName;
           userObj.phone = teacher.phone;
           userObj.dateOfBirth = teacher.dateOfBirth;
           userObj.gender = teacher.gender;
           userObj.major = teacher.major;
+          userObj.degree = teacher.degree;
           userObj.WeeklyCapacity = teacher.WeeklyCapacity;
           
-          // Tìm các lớp dạy
+          // Remove backup_email for teacher role
+          delete userObj.backup_email;
+          
+          // Get classes taught
           // Use direct collection access to bypass schema issues
           const ClassScheduleCollection = mongoose.connection.db.collection('ClassSchedule');
-          const schedules = await ClassScheduleCollection.find({ teacherId: String(teacher.teacherId) }).toArray();
+          const schedules = await ClassScheduleCollection.find({ teacherId: Number(teacher.teacherId) }).toArray();
           
           // Lấy danh sách unique classIds - ensure they're numbers for querying
           const classIds = [...new Set(schedules.map(s => Number(s.classId)))];
           
-          if (classIds.length > 0) {
-            const classes = await models.Class.find({ classId: { $in: classIds } });
-            
-            // Get unique grades from classes
-            const grades = [...new Set(classes
-              .map(c => c.className ? c.className.match(/^(\d+)/)?.[1] : null)
-              .filter(Boolean))];
-              
-            // Add arrays to userObj
-            userObj.classes = classes.map(c => ({
-              classId: c.classId,
-              className: c.className,
-              batchId: c.batchId,
-              grade: c.className ? c.className.match(/^(\d+)/)?.[1] : null
-            }));
-            userObj.classesName = classes.map(c => c.className);
-            userObj.classesId = classes.map(c => c.classId);
-            
-            if (grades.length > 0) {
-              userObj.grades = grades;
-            }
-          } else {
-            // Initialize empty arrays
-            userObj.classes = [];
-            userObj.classesName = [];
-            userObj.classesId = [];
-          }
+          // Get class information
+          const classes = classIds.length > 0 
+            ? await models.Class.find({ classId: { $in: classIds } })
+            : [];
+          
+          // Format classes array consistently with getUsers
+          userObj.classes = classes.map(c => ({
+            classId: c.classId,
+            className: c.className,
+            grade: c.className ? c.className.match(/^(\d+)/)?.[1] : null
+          }));
         }
       }
       else if (role === 'parent') {
@@ -513,6 +513,18 @@ exports.getUserById = async (userId, includeDetails = true) => {
     // Không trả về mật khẩu
     delete userObj.password;
     
+    // Get RFID information for this user if exists
+    const RFID = require('../database/models/RFID');
+    const rfidCard = await RFID.findOne({ UserID: userId });
+    if (rfidCard) {
+      userObj.rfid = {
+        RFID_ID: rfidCard.RFID_ID,
+        IssueDate: rfidCard.IssueDate,
+        ExpiryDate: rfidCard.ExpiryDate,
+        Status: rfidCard.Status
+      };
+    }
+    
     if (!includeDetails) {
       return { success: true, data: userObj };
     }
@@ -576,27 +588,40 @@ exports.getUserById = async (userId, includeDetails = true) => {
     else if (role === 'teacher') {
       const teacher = await models.Teacher.findOne({ userId: user.userId });
       if (teacher) {
+        // Copy teacher data directly to userObj (flatter structure)
+        userObj.teacherId = teacher.teacherId;
+        userObj.firstName = teacher.firstName || null;
+        userObj.lastName = teacher.lastName || null;
+        userObj.fullName = teacher.fullName;
+        userObj.phone = teacher.phone;
+        userObj.dateOfBirth = teacher.dateOfBirth;
+        userObj.gender = teacher.gender;
+        userObj.major = teacher.major;
+        userObj.degree = teacher.degree;
+        userObj.WeeklyCapacity = teacher.WeeklyCapacity;
+        
+        // Remove backup_email for teacher role
+        delete userObj.backup_email;
+        
         // Get classes taught
         // Use direct collection access to bypass schema issues
         const ClassScheduleCollection = mongoose.connection.db.collection('ClassSchedule');
-        const schedules = await ClassScheduleCollection.find({ teacherId: String(teacher.teacherId) }).toArray();
-        console.log(`Found ${schedules.length} schedules for teacher ${teacher.teacherId} using direct collection access`);
+        const schedules = await ClassScheduleCollection.find({ teacherId: Number(teacher.teacherId) }).toArray();
         
         // Lấy danh sách unique classIds - ensure they're numbers for querying
         const classIds = [...new Set(schedules.map(s => Number(s.classId)))];
         
+        // Get class information
         const classes = classIds.length > 0 
           ? await models.Class.find({ classId: { $in: classIds } })
           : [];
         
-        userObj.details = {
-          teacher,
-          classes
-        };
-        
-        // Thêm mảng classesName và classesId để dễ sử dụng - giống như API teacher
-        userObj.details.classesName = classes.map(c => c.className);
-        userObj.details.classesId = classes.map(c => c.classId);
+        // Format classes array consistently with getUsers
+        userObj.classes = classes.map(c => ({
+          classId: c.classId,
+          className: c.className,
+          grade: c.className ? c.className.match(/^(\d+)/)?.[1] : null
+        }));
       }
     }
     else if (role === 'parent') {
@@ -649,6 +674,7 @@ exports.deleteUser = async (userId) => {
       studentData: false,
       teacherData: false,
       parentData: false,
+      parentStudentRelations: false,
       schedules: []
     };
     
@@ -663,24 +689,17 @@ exports.deleteUser = async (userId) => {
       if (student) {
         const studentId = student.studentId;
         
+        console.log(`Deleting student ${studentId} with userId ${userId}`);
+        
         // Xóa quan hệ phụ huynh-học sinh
-        if (student.parentIds && student.parentIds.length > 0) {
-          for (const parentId of student.parentIds) {
-            await models.ParentStudent.deleteOne({ parentId, studentId });
-            
-            // Kiểm tra nếu phụ huynh không còn liên kết với học sinh nào khác
-            const otherRelations = await models.ParentStudent.find({ parentId });
-            if (otherRelations.length === 0) {
-              // Phụ huynh không còn liên kết với học sinh nào, có thể xóa
-              // Tuy nhiên, chúng ta không xóa phụ huynh trong trường hợp này
-              console.log(`Parent ${parentId} no longer has any students, but not deleting`);
-            }
-          }
-        }
+        const deletedRelations = await models.ParentStudent.deleteMany({ studentId });
+        deletedData.parentStudentRelations = deletedRelations.deletedCount > 0;
+        console.log(`Deleted ${deletedRelations.deletedCount} parent-student relations`);
         
         // Xóa học sinh
         await models.Student.deleteOne({ studentId });
         deletedData.studentData = true;
+        console.log(`Deleted student record with ID ${studentId}`);
       }
     }
     // Xử lý teacher
@@ -691,13 +710,15 @@ exports.deleteUser = async (userId) => {
       if (teacher) {
         const teacherId = teacher.teacherId;
         
+        console.log(`Deleting teacher ${teacherId} with userId ${userId}`);
+        
         // Xóa lịch dạy của giáo viên
         // Truy cập trực tiếp collection
         const ClassScheduleCollection = mongoose.connection.db.collection('ClassSchedule');
         
         // Tìm tất cả lịch dạy cần xóa
         const teacherSchedules = await ClassScheduleCollection.find({ 
-          teacherId: String(teacherId) 
+          teacherId: Number(teacherId) 
         }).toArray();
         
         // Lưu ID của lịch
@@ -706,17 +727,20 @@ exports.deleteUser = async (userId) => {
         ).filter(id => id);
         
         // Xóa lịch dạy
-        await ClassScheduleCollection.deleteMany({ teacherId: String(teacherId) });
+        const deletedSchedules = await ClassScheduleCollection.deleteMany({ teacherId: Number(teacherId) });
+        console.log(`Deleted ${deletedSchedules.deletedCount} class schedules for teacher ${teacherId}`);
         
         // Bỏ chủ nhiệm lớp nếu có
-        await models.Class.updateMany(
+        const updatedClasses = await models.Class.updateMany(
           { homeroomTeacherId: userId },
-          { $set: { homeroomTeacherId: null } }
+          { $unset: { homeroomTeacherId: "" } }
         );
+        console.log(`Updated ${updatedClasses.modifiedCount} classes to remove homeroom teacher reference`);
         
         // Xóa giáo viên
         await models.Teacher.deleteOne({ teacherId });
         deletedData.teacherData = true;
+        console.log(`Deleted teacher record with ID ${teacherId}`);
       }
     }
     // Xử lý parent
@@ -727,18 +751,24 @@ exports.deleteUser = async (userId) => {
       if (parent) {
         const parentId = parent.parentId;
         
+        console.log(`Deleting parent ${parentId} with userId ${userId}`);
+        
         // Xóa quan hệ phụ huynh-học sinh
-        await models.ParentStudent.deleteMany({ parentId });
+        const deletedRelations = await models.ParentStudent.deleteMany({ parentId });
+        deletedData.parentStudentRelations = deletedRelations.deletedCount > 0;
+        console.log(`Deleted ${deletedRelations.deletedCount} parent-student relations`);
         
         // Xóa phụ huynh
         await models.Parent.deleteOne({ parentId });
         deletedData.parentData = true;
+        console.log(`Deleted parent record with ID ${parentId}`);
       }
     }
     
     // Xóa tài khoản người dùng
     await models.User.deleteOne({ userId });
     deletedData.user = true;
+    console.log(`Deleted user account with userId ${userId}`);
     
     return {
       success: true,

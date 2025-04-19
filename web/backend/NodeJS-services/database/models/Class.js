@@ -13,15 +13,19 @@ const ClassSchema = new mongoose.Schema({
     auto: true
   },
   homeroomTeacherId: {
-    type: Number,
-    ref: 'Teacher'
+    type: String,
+    ref: 'UserAccount'
   },
   className: {
     type: String,
     required: true
   },
   grade: {
-    type: Number
+    type: Number,
+    required: true
+  },
+  academicYear: {
+    type: String
   }
 }, {
   timestamps: true,
@@ -34,7 +38,7 @@ const ClassSchema = new mongoose.Schema({
 ClassSchema.virtual('homeroomTeacher', {
   ref: 'Teacher',
   localField: 'homeroomTeacherId',
-  foreignField: 'teacherId',
+  foreignField: 'userId',
   justOne: true
 });
 

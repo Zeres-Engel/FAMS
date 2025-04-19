@@ -29,6 +29,8 @@ router.post('/', protect, authorize('Admin', 'admin'), createUser);
 router.post('/create', protect, authorize('Admin', 'admin'), createUser);
 
 // Unified update API route - accepts any role by userId
+// Can also update RFID information with the 'rfid' property
+// Example: { rfid: { RFID_ID: "RFID12345", ExpiryDate: "3y" } }
 router.put('/update/:userId', protect, require('../controllers/unifiedUpdateController'));
 
 // Manage single user
