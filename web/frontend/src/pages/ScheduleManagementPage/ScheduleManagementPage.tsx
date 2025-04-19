@@ -29,6 +29,7 @@ const ScheduleManagementPage: React.FC = () => {
   const isMobile = useMediaQuery("(max-width:600px)");
   const role = useSelector((state: RootState) => state.authUser.role);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  const [openArrangementDialog, setOpenArrangementDialog] = useState(false);
   const [newEvent, setNewEvent] = useState({
     id: 0,
     subject: "",
@@ -38,9 +39,15 @@ const ScheduleManagementPage: React.FC = () => {
     teacher: "",
     classroomNumber: "",
   });
+  const [semester, setSemester] = useState("Semester 1");
+  const [semesterDateFrom, setSemesterDateFrom] = useState("");
+  const [semesterDateTo, setSemesterDateTo] = useState("");
+  const [semesterError, setSemesterError] = useState(false);
+  const [dateFromError, setDateFromError] = useState(false);
+  const [dateToError, setDateToError] = useState(false);
 
   return (
-    <LayoutComponent pageHeader="Schedule Management">
+    <LayoutComponent pageHeader={role === "admin" ? "Schedule Management" : "Schedule Page"}>
       <Container maxWidth="xl" style={{ padding: "16px" }}>
         <Box className={state?.eventShow?.id !== 0 ? "schedule-Display" : ""}>
           <Paper elevation={3} sx={{ padding: "16px" }}>
@@ -133,6 +140,8 @@ const ScheduleManagementPage: React.FC = () => {
               date={state.currentDate}
               startAccessor="start"
               endAccessor="end"
+              min={new Date(0, 0, 0, 7, 0)} // 7:00 AM
+              max={new Date(0, 0, 0, 17, 0)} // 5:00 PM
               views={["month", "week", "day"]}
               style={{ height: 600, width: "100%" }}
               onSelectEvent={handler.handleSelectEvent}
@@ -149,6 +158,19 @@ const ScheduleManagementPage: React.FC = () => {
                 >
                   Add new Schedule
                 </Button>
+                <Box sx={{ mt: 4 }}>
+                  <Typography variant="h6" gutterBottom textAlign="center">
+                    New Schedule Arrangement
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    sx={{ mt: 4 }}
+                    onClick={() => setOpenArrangementDialog(true)}
+                  >
+                    Arrange Semester Schedule
+                  </Button>
+                </Box>
               </Box>
             )}
           </Paper>
@@ -292,10 +314,7 @@ const ScheduleManagementPage: React.FC = () => {
 
               {/* Nếu là giáo viên thì có nút Check Attendance */}
               {role === "teacher" && (
-                <Button
-                  variant="contained"
-                  color="secondary"
-                >
+                <Button variant="contained" color="secondary">
                   Check Attendance
                 </Button>
               )}
@@ -390,6 +409,102 @@ const ScheduleManagementPage: React.FC = () => {
               <Button
                 variant="outlined"
                 onClick={() => setOpenCreateDialog(false)}
+              >
+                Cancel
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog
+            open={openArrangementDialog}
+            onClose={() => setOpenArrangementDialog(false)}
+            fullWidth
+            maxWidth="sm"
+          >
+            <DialogTitle>Arrange Semester Schedule</DialogTitle>
+            <DialogContent dividers>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2,
+                  mt: 1,
+                }}
+              >
+                <TextField
+                  select
+                  label="Semester"
+                  value={semester}
+                  onChange={e => {
+                    setSemester(e.target.value);
+                    setSemesterError(false);
+                  }}
+                  SelectProps={{ native: true }}
+                  required
+                  error={semesterError}
+                  helperText={semesterError ? "Please select a semester" : ""}
+                  sx={{ width: "100%" }}
+                >
+                  <option value="">-- Select --</option>
+                  <option value="Semester 1">Semester 1</option>
+                  <option value="Semester 2">Semester 2</option>
+                </TextField>
+
+                <TextField
+                  label="From Date"
+                  type="date"
+                  value={semesterDateFrom}
+                  onChange={e => {
+                    setSemesterDateFrom(e.target.value);
+                    setDateFromError(false);
+                  }}
+                  required
+                  InputLabelProps={{ shrink: true }}
+                  error={dateFromError}
+                  helperText={dateFromError ? "Please select a from date" : ""}
+                />
+
+                <TextField
+                  label="To Date"
+                  type="date"
+                  value={semesterDateTo}
+                  onChange={e => {
+                    setSemesterDateTo(e.target.value);
+                    setDateToError(false);
+                  }}
+                  required
+                  InputLabelProps={{ shrink: true }}
+                  error={dateToError}
+                  helperText={dateToError ? "Please select a to date" : ""}
+                />
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  const hasError =
+                    !semester || !semesterDateFrom || !semesterDateTo;
+                  setSemesterError(!semester);
+                  setDateFromError(!semesterDateFrom);
+                  setDateToError(!semesterDateTo);
+
+                  if (hasError) return;
+
+                  console.log("Submitted arrangement:", {
+                    semester,
+                    from: semesterDateFrom,
+                    to: semesterDateTo,
+                  });
+
+                  setOpenArrangementDialog(false);
+                }}
+              >
+                Submit
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => setOpenArrangementDialog(false)}
               >
                 Cancel
               </Button>

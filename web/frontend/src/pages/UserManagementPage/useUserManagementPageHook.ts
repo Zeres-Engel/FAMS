@@ -19,7 +19,23 @@ function useClassPageHook() {
   const dispatch = useAppDispatch();
   const userState = useAppSelector(state => state.users);
   const [userMainData, setUserMainData] = useState<UserData[]>([]);
+  const [initUserFile, setInitUserFile] = useState<File | null>(null);
+  // 👇 NEW: Handle file upload
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setInitUserFile(file);
+      console.log('filesent');
+      
+      // dispatch(uploadInitUserFile(file)); // gọi API gửi file lên
+    }
+  };
 
+  // 👇 NEW: Gửi file đã upload để xử lý
+  const handleSubmitInitUserData = () => {
+    console.log('fileaccept');
+    // dispatch(submitInitUserData()); // không truyền file vì file đã được gửi ở bước trước
+  };
   const headCellsData: UserHeadCell[] = [
     {
       id: "id",
@@ -98,7 +114,7 @@ function useClassPageHook() {
   }, [userState.user]);
   useEffect(() => {
     if (filters) {
-      dispatch(searchUsers(filters))
+      dispatch(searchUsers(filters));
     }
   }, [filters, dispatch]);
 
@@ -110,8 +126,19 @@ function useClassPageHook() {
     }
   }, [dispatch, userState.user]);
 
-  const state = { headCellsData, userMainData, tableTitle, isCheckBox };
-  const handler = { handleFilterSubmit, setFiltersUser };
+  const state = {
+    headCellsData,
+    userMainData,
+    tableTitle,
+    isCheckBox,
+    initUserFile,
+  };
+  const handler = {
+    handleFilterSubmit,
+    setFiltersUser,
+    handleFileChange,
+    handleSubmitInitUserData,
+  };
 
   return { state, handler };
 }

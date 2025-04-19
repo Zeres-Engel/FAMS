@@ -59,6 +59,7 @@ function IdentifyManagementPage(): React.JSX.Element {
         gap={4}
         p={2}
         flexWrap="wrap"
+        marginTop={2}
       >
         {/* Left Side */}
         <Box
@@ -68,6 +69,9 @@ function IdentifyManagementPage(): React.JSX.Element {
           gap={2}
           minWidth={300}
         >
+          <Typography variant="h6" sx={{ mt: 2 }}>
+            RFID Scanning
+          </Typography>
           <Box
             display="flex"
             flexDirection={{ xs: "column", sm: "row" }}
@@ -181,7 +185,7 @@ function IdentifyManagementPage(): React.JSX.Element {
             </Box>
           </Box>
           {/* Init New User Data section */}
-          <Box mt={4}>
+          {/* <Box mt={4}>
             <Typography variant="h6" sx={{ mb: 1 }}>
               Init New User Data
             </Typography>
@@ -238,17 +242,18 @@ function IdentifyManagementPage(): React.JSX.Element {
                 Submit
               </Button>
             </Box>
-          </Box>
+          </Box> */}
         </Box>
 
         {/* Right Side */}
-        <Box
+        {/* <Box
           flex={1}
           display="flex"
           flexDirection="column"
           gap={2}
           minWidth={300}
         >
+          <Typography variant="h6">Live Video Preview</Typography>
           <Box
             sx={{
               width: "100%",
@@ -313,9 +318,9 @@ function IdentifyManagementPage(): React.JSX.Element {
               ❌ Video is not valid. Please try again.
             </Typography>
           )}
-        </Box>
+        </Box> */}
       </Box>
-      <Box
+      {/* <Box
         display="flex"
         justifyContent="center"
         alignItems="center"
@@ -327,9 +332,9 @@ function IdentifyManagementPage(): React.JSX.Element {
         <Typography variant="h5" fontWeight="bold" textAlign="center">
           Semester Transition Management Section
         </Typography>
-      </Box>
+      </Box> */}
 
-      <NewSemesterManagement />
+      {/* <NewSemesterManagement /> */}
     </LayoutComponent>
   );
 }

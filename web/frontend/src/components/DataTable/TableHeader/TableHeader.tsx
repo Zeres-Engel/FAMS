@@ -11,9 +11,13 @@ import {
 import {
   AttendanceHeadCell,
   AttendanceLog,
+  ClassArrangementData,
+  ClassArrangementHeadCellProps,
   ClassHeadCell,
   Data,
   HeadCell,
+  NotifyHeadCell,
+  NotifyProps,
   Order,
   UserHeadCell,
 } from "../../../model/tableModels/tableDataModels.model";
@@ -21,22 +25,23 @@ import useTableHeaderHook from "./useTableHeaderHook";
 import { visuallyHidden } from "@mui/utils";
 import { UserData } from "../../../model/userModels/userDataModels.model";
 import { ClassData } from "../../../model/classModels/classModels.model";
-import { A } from "react-router/dist/development/route-data-BL8ToWby";
 
 interface EnhancedTableProps {
   numSelected: number;
   onRequestSort: (
     event: React.MouseEvent<unknown>,
-    property: keyof Data | keyof UserData |keyof ClassData | keyof AttendanceLog
+    property: keyof Data | keyof UserData |keyof ClassData | keyof AttendanceLog | keyof ClassArrangementData | keyof NotifyProps
   ) => void;
   onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
   order: Order;
   orderBy: string;
   rowCount: number;
-  headCellsData: HeadCell[] | UserHeadCell[] | ClassHeadCell[] | AttendanceHeadCell[];
+  headCellsData: HeadCell[] | UserHeadCell[] | ClassHeadCell[] | AttendanceHeadCell[] | ClassArrangementHeadCellProps[] | NotifyHeadCell[];
   isCheckBox: boolean;
   isAdmin?: boolean;
   isTeacher?: boolean;
+  isClassArrangement?: boolean;
+  isNewSemester?: boolean;
 }
 
 function TableHeader(props: EnhancedTableProps): React.JSX.Element {
@@ -51,6 +56,8 @@ function TableHeader(props: EnhancedTableProps): React.JSX.Element {
     isCheckBox,
     isAdmin,
     isTeacher,
+    isClassArrangement,
+    isNewSemester
   } = props;
 
   const { state, handler } = useTableHeaderHook({
@@ -96,8 +103,7 @@ function TableHeader(props: EnhancedTableProps): React.JSX.Element {
           </TableCell>
         ))}
 
-        {/* 👇 Thêm cột Action nếu là admin */}
-        {isAdmin &&  <TableCell align="left">Action</TableCell>}
+        {isAdmin && !isClassArrangement && !isNewSemester && <TableCell align="left">Action</TableCell>}
         {isTeacher &&  <TableCell align="left">Action</TableCell>}
       </TableRow>
     </TableHead>

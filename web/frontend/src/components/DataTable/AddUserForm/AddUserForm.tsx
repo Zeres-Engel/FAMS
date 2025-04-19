@@ -145,7 +145,7 @@ const AddUserForm: React.FC = () => {
       )}
 
       {/* Batch Year */}
-      <FormControl sx={{ maxWidth: 300 }} error={!!errors.batchYear}>
+      {/* <FormControl sx={{ maxWidth: 300 }} error={!!errors.batchYear}>
         <FormLabel>Batch Year</FormLabel>
         <Controller
           name="batchYear"
@@ -162,7 +162,7 @@ const AddUserForm: React.FC = () => {
           )}
         />
         <FormHelperText>{errors.batchYear?.message}</FormHelperText>
-      </FormControl>
+      </FormControl> */}
 
       {/* Parent Section */}
       {userType === "student" && (
@@ -203,6 +203,15 @@ const AddUserForm: React.FC = () => {
                   const copy = [...form.parentCareers];
                   copy[index] = e.target.value;
                   setValue("parentCareers", copy);
+                }}
+              />
+              <TextField
+                label={`Parent Email ${index + 1}`}
+                value={form.parentEmails[index]}
+                onChange={e => {
+                  const copy = [...form.parentEmails];
+                  copy[index] = e.target.value;
+                  setValue("parentEmails", copy);
                 }}
               />
               <FormControl>

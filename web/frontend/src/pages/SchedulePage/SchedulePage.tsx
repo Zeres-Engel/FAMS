@@ -47,7 +47,7 @@ const SchedulePage: React.FC = () => {
                 startAccessor="start"
                 endAccessor="end"
                 views={["month", "week", "day"]}
-                style={{ height: 500, minWidth: "100%" }}
+                style={{ height: 600, width: "100%" }}
                 onSelectEvent={handler.handleSelectEvent}
                 onView={(newView) => {
                   handler.handleSetNewView(newView)

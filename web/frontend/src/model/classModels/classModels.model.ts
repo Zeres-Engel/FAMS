@@ -13,6 +13,7 @@ interface ClassData {
   classId?:number;
   batchId?:number;
   name?:string;
+  studentNumber?:string;
   // Thêm các field khác nếu API trả về thêm
 }
 

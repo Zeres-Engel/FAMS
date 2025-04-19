@@ -25,10 +25,46 @@ interface AttendanceLog {
   checkinFace:string;
   role?: string;
   fullName?: string;
+  note?: string;
 }
 interface HeadCell {
   disablePadding: boolean;
   id: keyof Data;
+  label: string;
+  numeric: boolean;
+}
+interface NotifyProps {
+  id: string;
+  message: string;
+  sender: string;
+  receiver: string;
+  sendDate:string;
+  role?: string;
+}
+interface NotifyHeadCell {
+  disablePadding: boolean;
+  id: keyof NotifyProps;
+  label: string;
+  numeric: boolean;
+}
+interface ClassArrangementData {
+  id: string;
+  username: string;
+  className?: string;
+  grade?: string;
+  avatar: string;
+  email: string;
+  phone: string;
+  name: string;
+  action?: string;
+  role?: string;
+}
+interface SystemRole{
+  role: "student" | "teacher" | "admin" | "parent" | "supervisor";
+}
+interface ClassArrangementHeadCellProps {
+  disablePadding: boolean;
+  id: keyof ClassArrangementData;
   label: string;
   numeric: boolean;
 }
@@ -124,4 +160,9 @@ export type {
   AttendanceLog,
   EditAttendanceFormProps,
   AttendanceStatus,
+  ClassArrangementHeadCellProps,
+  ClassArrangementData,
+  NotifyHeadCell,
+  NotifyProps,
+  SystemRole,
 };

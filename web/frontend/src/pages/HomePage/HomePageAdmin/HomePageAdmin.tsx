@@ -1,21 +1,50 @@
 import React from "react";
 import { Box, Typography, Divider, Paper } from "@mui/material";
-import "./HomePageAdmin.scss";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Legend,
+} from "recharts";
 import LayoutComponent from "../../../components/Layout/Layout";
 
+const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7f50"];
+
 function HomePageAdmin(): React.JSX.Element {
-  // Fake stats (you can replace with actual API data via useEffect later)
+  // Fake data (thay bằng API sau này nếu cần)
   const stats = {
     totalUsers: 120,
     students: 80,
     teachers: 25,
-    classes: 10,
     parents: 10,
-    notifications: 5,
+    others: 5,
   };
 
+  const roleData = [
+    { name: "Students", value: stats.students },
+    { name: "Teachers", value: stats.teachers },
+    { name: "Parents", value: stats.parents },
+    { name: "Others", value: stats.others },
+  ];
+
+  // Dữ liệu biến thiên người dùng theo năm
+  const userTrendData = [
+    { year: "2020", students: 40, teachers: 10 },
+    { year: "2021", students: 55, teachers: 15 },
+    { year: "2022", students: 65, teachers: 18 },
+    { year: "2023", students: 72, teachers: 22 },
+    { year: "2024", students: 80, teachers: 25 },
+  ];
+
   return (
-    <LayoutComponent pageHeader="Home Page Admin">
+    <LayoutComponent pageHeader="Admin Dashboard">
       <Box
         sx={{
           p: 3,
@@ -27,21 +56,9 @@ function HomePageAdmin(): React.JSX.Element {
         }}
       >
         {/* Title */}
-        <Typography variant="h4" fontWeight="bold" color="primary">
-          School Management System Dashboard
-        </Typography>
-
-        {/* System Overview */}
-        <Typography variant="body1" maxWidth={900}>
-          Welcome to the central hub for school administrators. Our system is designed to streamline and simplify 
-          day-to-day school operations, offering powerful tools to manage classes, schedules, attendance, 
-          users, notifications, and more — all in one place, accessible anytime, anywhere.
-        </Typography>
-
-        <Divider sx={{ width: "100%", my: 2 }} />
-
-        {/* System Statistics */}
-        <Box
+        <Divider sx={{ width: "100%", my: 3 }} />
+        {/* Summary Stats */}
+        {/* <Box
           sx={{
             display: "flex",
             flexWrap: "wrap",
@@ -56,8 +73,7 @@ function HomePageAdmin(): React.JSX.Element {
             { label: "Students", value: stats.students, emoji: "🎓" },
             { label: "Teachers", value: stats.teachers, emoji: "👨‍🏫" },
             { label: "Parents", value: stats.parents, emoji: "👪" },
-            { label: "Classes", value: stats.classes, emoji: "🏫" },
-            { label: "Notifications", value: stats.notifications, emoji: "📢" },
+            { label: "Others", value: stats.others, emoji: "🧑‍💼" },
           ].map((item, index) => (
             <Paper
               key={index}
@@ -78,84 +94,65 @@ function HomePageAdmin(): React.JSX.Element {
               </Typography>
             </Paper>
           ))}
+        </Box> */}
+        {/* Pie Chart: User Roles */}
+        <Box sx={{ width: "100%", maxWidth: 800 }}>
+          <Typography variant="h6" gutterBottom color="primary">
+            📊 User Distribution by Role
+          </Typography>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={roleData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={100}
+                label
+              >
+                {roleData.map((entry, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </Box>
+
+        {/* Line Chart: User Growth */}
+        <Box sx={{ width: "100%", maxWidth: 800, mt: 4 }}>
+          <Typography variant="h6" gutterBottom color="primary">
+            📈 User Population Over the Years
+          </Typography>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={userTrendData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="year" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="students"
+                stroke="#8884d8"
+                name="Students"
+                activeDot={{ r: 8 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="teachers"
+                stroke="#82ca9d"
+                name="Teachers"
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </Box>
 
         <Divider sx={{ width: "100%", my: 3 }} />
-        {/* Key Benefits */}
-        <Box sx={{ maxWidth: 900, textAlign: "left" }}>
-          <Typography variant="h5" color="primary" gutterBottom>
-            🌟 Key Benefits
-          </Typography>
-          <ul>
-            <li><Typography variant="body1">User-friendly interface optimized for desktops and mobile devices.</Typography></li>
-            <li><Typography variant="body1">Centralized management of all school operations.</Typography></li>
-            <li><Typography variant="body1">Real-time attendance tracking and reporting.</Typography></li>
-            <li><Typography variant="body1">Secure and role-based access control.</Typography></li>
-            <li><Typography variant="body1">Quick setup and easy maintenance.</Typography></li>
-          </ul>
-        </Box>
-
-        {/* Feature Highlights */}
-        <Box sx={{ maxWidth: 900, textAlign: "left" }}>
-          <Typography variant="h5" color="primary" gutterBottom>
-            🧩 Feature Highlights
-          </Typography>
-
-          {[
-            {
-              title: "Profile Management",
-              desc: "Update your personal profile and manage staff information."
-            },
-            {
-              title: "System Configuration",
-              desc: "Control system-wide settings and customize workflows."
-            },
-            {
-              title: "User Management",
-              desc: "Handle accounts of teachers, students, and staff efficiently."
-            },
-            {
-              title: "Schedule Management",
-              desc: "Design and update class schedules, assign subjects and rooms."
-            },
-            {
-              title: "Class Management",
-              desc: "Oversee class lists, student enrollments, and more."
-            },
-            {
-              title: "Attendance Management",
-              desc: "Monitor and export attendance reports with flexible filters."
-            },
-            {
-              title: "Notification System",
-              desc: "Send timely updates and alerts to staff and students."
-            },
-          ].map((item, index) => (
-            <Box key={index} sx={{ my: 1 }}>
-              <Typography variant="subtitle1" fontWeight="medium" color="secondary">
-                🔹 {item.title}
-              </Typography>
-              <Typography variant="body2" sx={{ pl: 2 }}>{item.desc}</Typography>
-            </Box>
-          ))}
-        </Box>
-
-        {/* Quick Start Guide */}
-        <Box sx={{ maxWidth: 900, textAlign: "left", mt: 3 }}>
-          <Typography variant="h5" color="primary" gutterBottom>
-            🚀 Quick Start Guide
-          </Typography>
-          <Typography variant="body1">
-            New here? Follow these simple steps:
-          </Typography>
-          <ol>
-            <li><Typography variant="body1">Go to <strong>Profile</strong> and complete your personal information.</Typography></li>
-            <li><Typography variant="body1">Visit <strong>User Management</strong> to add or update users.</Typography></li>
-            <li><Typography variant="body1">Create schedules via <strong>Schedule Management</strong>.</Typography></li>
-            <li><Typography variant="body1">Check and export reports under <strong>Attendance Management</strong>.</Typography></li>
-            <li><Typography variant="body1">Use <strong>Notify Management</strong> to share announcements.</Typography></li>
-          </ol>
-        </Box>
       </Box>
     </LayoutComponent>
   );

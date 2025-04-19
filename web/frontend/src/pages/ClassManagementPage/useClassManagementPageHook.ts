@@ -1,11 +1,18 @@
 import { useEffect, useState } from "react";
-import {  useAppSelector } from "../../store/useStoreHook";
+import { useAppSelector } from "../../store/useStoreHook";
 import { fetchUser } from "../../store/slices/userSlice";
-import { ClassHeadCell, Data, HeadCell } from "../../model/tableModels/tableDataModels.model";
+import {
+  ClassArrangementData,
+  ClassArrangementHeadCellProps,
+  ClassHeadCell,
+  Data,
+  HeadCell,
+} from "../../model/tableModels/tableDataModels.model";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../store/store";
 import { fetchClasses } from "../../store/slices/classSlice";
 import { ClassData } from "../../model/classModels/classModels.model";
+import { generateFakeClassArrangementData } from "./ClassArrangementFakeData";
 
 function useClassManagementPageHook() {
   const fakeClassData: ClassData[] = [
@@ -16,6 +23,7 @@ function useClassManagementPageHook() {
       className: "10A1",
       grade: "10",
       homeroomTeacherd: "Nguyen Van A",
+      studentNumber: "30",
       createdAt: "2024-08-01T08:00:00Z",
       updatedAt: "2025-04-10T10:30:00Z",
       academicYear: "2024–2025",
@@ -28,6 +36,7 @@ function useClassManagementPageHook() {
       classId: 102,
       className: "10A2",
       grade: "10",
+      studentNumber: "30",
       homeroomTeacherd: "Tran Thi B",
       createdAt: "2024-08-02T08:00:00Z",
       updatedAt: "2025-04-11T10:30:00Z",
@@ -41,6 +50,7 @@ function useClassManagementPageHook() {
       classId: 103,
       className: "10B1",
       grade: "10",
+      studentNumber: "30",
       homeroomTeacherd: "Le Van C",
       createdAt: "2024-08-03T08:00:00Z",
       updatedAt: "2025-04-12T10:30:00Z",
@@ -54,6 +64,7 @@ function useClassManagementPageHook() {
       classId: 104,
       className: "11A1",
       grade: "11",
+      studentNumber: "30",
       homeroomTeacherd: "Pham Thi D",
       createdAt: "2023-08-01T08:00:00Z",
       updatedAt: "2024-04-10T10:30:00Z",
@@ -66,6 +77,7 @@ function useClassManagementPageHook() {
       id: "105",
       classId: 105,
       className: "11A2",
+      studentNumber: "30",
       grade: "11",
       homeroomTeacherd: "Vo Van E",
       createdAt: "2023-08-02T08:00:00Z",
@@ -79,6 +91,7 @@ function useClassManagementPageHook() {
       id: "106",
       classId: 106,
       className: "11B1",
+      studentNumber: "30",
       grade: "11",
       homeroomTeacherd: "Dang Thi F",
       createdAt: "2023-08-03T08:00:00Z",
@@ -92,6 +105,7 @@ function useClassManagementPageHook() {
       id: "107",
       classId: 107,
       className: "12A1",
+      studentNumber: "30",
       grade: "12",
       homeroomTeacherd: "Bui Van G",
       createdAt: "2022-08-01T08:00:00Z",
@@ -105,6 +119,7 @@ function useClassManagementPageHook() {
       id: "108",
       classId: 108,
       className: "12A2",
+      studentNumber: "30",
       grade: "12",
       homeroomTeacherd: "Nguyen Thi H",
       createdAt: "2022-08-02T08:00:00Z",
@@ -118,6 +133,7 @@ function useClassManagementPageHook() {
       id: "109",
       classId: 109,
       className: "12B1",
+      studentNumber: "30",
       grade: "12",
       homeroomTeacherd: "Tran Van I",
       createdAt: "2022-08-03T08:00:00Z",
@@ -130,6 +146,7 @@ function useClassManagementPageHook() {
       _id: "cls010",
       id: "110",
       classId: 110,
+      studentNumber: "30",
       className: "10C1",
       grade: "10",
       homeroomTeacherd: "Do Thi J",
@@ -140,10 +157,18 @@ function useClassManagementPageHook() {
       name: "Class 10C1",
     },
   ];
-  
+  const [mode, setMode] = useState<"ClassManagement" | "ClassArrangement" | "NewSemester">("ClassManagement");
+
+  const handleModeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setMode(event.target.value as "ClassManagement" | "ClassArrangement" | "NewSemester");
+  };
+
   const dispatch = useDispatch<AppDispatch>();
   const classState = useAppSelector(state => state.class);
-  const [classMainData, setClassMainData] = useState<ClassData[]>(fakeClassData);
+  const [classMainData, setClassMainData] =
+    useState<ClassData[]>(fakeClassData);
+  const [classArrangementMainData, setClassArrangementMainData] =
+    useState<ClassArrangementData[]>(generateFakeClassArrangementData(50));
   // useEffect(() => {
   //   if (!classState.classes) {
   //     dispatch(fetchClasses());
@@ -178,6 +203,12 @@ function useClassManagementPageHook() {
       label: "Teacher Id",
     },
     {
+      id: "studentNumber",
+      numeric: false,
+      disablePadding: false,
+      label: "Student Number",
+    },
+    {
       id: "batchId",
       numeric: false,
       disablePadding: false,
@@ -196,17 +227,105 @@ function useClassManagementPageHook() {
       label: "Created At",
     },
   ];
+  const classArrangementHeadCell: ClassArrangementHeadCellProps[] = [
+    {
+      id: "id",
+      numeric: false,
+      disablePadding: true,
+      label: "ID",
+    },
+    {
+      id: "username",
+      numeric: false,
+      disablePadding: true,
+      label: "User Name",
+    },
+    // {
+    //   id: "avatar",
+    //   numeric: false,
+    //   disablePadding: false,
+    //   label: "Avatar",
+    // },
+    {
+      id: "name",
+      numeric: false,
+      disablePadding: false,
+      label: "name",
+    },
+    {
+      id: "email",
+      numeric: false,
+      disablePadding: false,
+      label: "Email",
+    },
+    {
+      id: "phone",
+      numeric: false,
+      disablePadding: false,
+      label: "Phone",
+    },
+  ]
+  const newSemesterHeadCell: ClassArrangementHeadCellProps[] = [
+    {
+      id: "id",
+      numeric: false,
+      disablePadding: true,
+      label: "ID",
+    },
+    // {
+    //   id: "avatar",
+    //   numeric: false,
+    //   disablePadding: false,
+    //   label: "Avatar",
+    // },
+    {
+      id: "username",
+      numeric: false,
+      disablePadding: true,
+      label: "User Name",
+    },
+    {
+      id: "name",
+      numeric: false,
+      disablePadding: false,
+      label: "name",
+    },
+    {
+      id: "email",
+      numeric: false,
+      disablePadding: false,
+      label: "Email",
+    },
+    {
+      id: "phone",
+      numeric: false,
+      disablePadding: false,
+      label: "Phone",
+    },
+    {
+      id: "grade",
+      numeric: false,
+      disablePadding: false,
+      label: "Grade",
+    },
+    {
+      id: "className",
+      numeric: false,
+      disablePadding: false,
+      label: "Class Name",
+    },
+  ]
   const isCheckBox = false;
   const tableTitle = "Class Data";
-  // useEffect(() => {  
+  // useEffect(() => {
   //   if (!userState.user) {
   //     dispatch(fetchUser());
   //   } else {
   //     // setUserMainData(userState?.user);
   //   }
   // }, [dispatch, userState.user]);
-  const state = { headCellsData, classMainData, tableTitle, isCheckBox };
-  const handler = {};
+  const state = { headCellsData, classMainData, tableTitle, isCheckBox, mode,classArrangementHeadCell,classArrangementMainData,newSemesterHeadCell };
+  const handler = { handleModeChange };
 
   return { state, handler };
 }
