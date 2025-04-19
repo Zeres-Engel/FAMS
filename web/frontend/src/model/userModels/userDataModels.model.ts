@@ -19,6 +19,12 @@ interface UserData {
   teacherLastName?: string;
   TeacherMajor?:string;
   TeacherWeeklyCapacity?:number;
+  TeacherDOB?:string;
+  TeacherAddress?:string;
+  parentCareer? : string;
+  parentEmail?: string;
+  parentAddr?: string;
+  parentDob?: string;
 }
 interface UserDataDetails {
   studentId: string;
@@ -111,6 +117,7 @@ interface EditUserFormValues {
   parentPhones: string[];
   parentCareers: string[];
   parentGenders: boolean[];
+  parentEmails: string[];
   major: string;
   weeklyCapacity: string;
   role: Role;

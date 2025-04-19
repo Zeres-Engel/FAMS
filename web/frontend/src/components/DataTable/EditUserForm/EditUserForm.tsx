@@ -47,10 +47,6 @@ export default function EditUserModal({
   } = useForm<EditUserForm>({
     defaultValues: {
       ...formData,
-      parentGenders:
-        formData.parentGenders?.length === 2
-          ? formData.parentGenders
-          : [true, true],
       gender: formData.gender ?? true,
     },
   });
@@ -60,14 +56,11 @@ export default function EditUserModal({
       ? formData.classId
       : [formData.classId || ""]
   );
-
+  console.log(userType);
+  
   useEffect(() => {
     reset({
       ...formData,
-      parentGenders:
-        formData.parentGenders?.length === 2
-          ? formData.parentGenders
-          : [true, true],
       gender: formData.gender ?? true,
     });
 
@@ -98,12 +91,13 @@ export default function EditUserModal({
               : (data.classId as any),
           ];
     console.log(idUser);
-    
+
     onSave({ ...data, classId: finalClassID }, idUser);
   };
 
   return (
     <Dialog
+      key={idUser}
       open={open}
       onClose={onClose}
       maxWidth="md"
@@ -111,35 +105,35 @@ export default function EditUserModal({
       BackdropProps={{ sx: { backgroundColor: "rgba(0, 0, 0, 0.2)" } }}
     >
       <DialogTitle>
-        Edit {userType === "student" ? "Student" : "Teacher"}
+        Edit{" "}
+        {userType === "student"
+          ? "Student"
+          : userType === "teacher"
+          ? "Teacher"
+          : "Parent"}
       </DialogTitle>
       <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent dividers>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
             <TextField
               fullWidth
-              label="First Name"
-              {...register("firstName", { required: "First name is required" })}
-              error={!!errors.firstName}
-              helperText={errors.firstName?.message}
-            />
-            <TextField
-              fullWidth
-              label="Last Name"
-              {...register("lastName", { required: "Last name is required" })}
-              error={!!errors.lastName}
-              helperText={errors.lastName?.message}
-            />
-            <TextField
-              fullWidth
-              type="date"
-              label="Date of Birth"
-              InputLabelProps={{ shrink: true }}
-              {...register("dob", { required: "Date of birth is required" })}
-              error={!!errors.dob}
-              helperText={errors.dob?.message}
+              label="Full Name"
+              {...register("fullName", { required: "Full name is required" })}
+              error={!!errors.fullName}
+              helperText={errors.fullName?.message}
             />
 
+            {userType !== "parent" && (
+              <TextField
+                fullWidth
+                type="date"
+                label="Date of Birth"
+                InputLabelProps={{ shrink: true }}
+                {...register("dob", { required: "Date of birth is required" })}
+                error={!!errors.dob}
+                helperText={errors.dob?.message}
+              />
+            )}
             <Box sx={{ width: "100%" }}>
               <FormLabel component="legend">Gender</FormLabel>
               <Controller
@@ -197,14 +191,15 @@ export default function EditUserModal({
               helperText={errors.phone?.message}
             />
 
-            <TextField
-              fullWidth
-              label="Address"
-              {...register("address", { required: "Address is required" })}
-              error={!!errors.address}
-              helperText={errors.address?.message}
-            />
-
+            {userType !== "parent" && (
+              <TextField
+                fullWidth
+                label="Address"
+                {...register("address", { required: "Address is required" })}
+                error={!!errors.address}
+                helperText={errors.address?.message}
+              />
+            )}
             {userType === "student" && (
               <TextField
                 fullWidth
@@ -307,6 +302,18 @@ export default function EditUserModal({
                     />
                     <TextField
                       fullWidth
+                      label={`Parent ${index + 1} Email`}
+                      {...register(`parentEmails.${index}` as const, {
+                        pattern: {
+                          value: /^\S+@\S+\.\S+$/,
+                          message: "Invalid email format",
+                        },
+                      })}
+                      error={!!errors.parentEmails?.[index]}
+                      helperText={errors.parentEmails?.[index]?.message}
+                    />
+                    <TextField
+                      fullWidth
                       label={`Parent ${index + 1} Career`}
                       {...register(`parentCareers.${index}` as const)}
                     />
@@ -318,18 +325,16 @@ export default function EditUserModal({
                         render={({ field }) => (
                           <RadioGroup
                             row
-                            value={field.value === true ? "true" : "false"}
-                            onChange={e =>
-                              field.onChange(e.target.value === "true")
-                            }
+                            value={field.value}
+                            onChange={e => field.onChange(e.target.value)}
                           >
                             <FormControlLabel
-                              value="true"
+                              value="Male"
                               control={<Radio />}
                               label="Male"
                             />
                             <FormControlLabel
-                              value="false"
+                              value="Female"
                               control={<Radio />}
                               label="Female"
                             />
@@ -339,6 +344,31 @@ export default function EditUserModal({
                     </Box>
                   </Box>
                 ))}
+              </>
+            )}
+            {userType === "parent" && (
+              <>
+                <TextField
+                  fullWidth
+                  label="Career"
+                  {...register("career", { required: "Career is required" })}
+                  error={!!errors.career}
+                  helperText={errors.career?.message}
+                />
+
+                <TextField
+                  fullWidth
+                  label="Email"
+                  {...register("email", {
+                    required: "Email is required",
+                    pattern: {
+                      value: /^\S+@\S+\.\S+$/,
+                      message: "Invalid email format",
+                    },
+                  })}
+                  error={!!errors.email}
+                  helperText={errors.email?.message}
+                />
               </>
             )}
           </Box>

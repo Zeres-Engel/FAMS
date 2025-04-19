@@ -138,38 +138,6 @@ export default function DataTable({
         {isNotifyPage ? "View" : "Edit"}
       </Button>
 
-      {state.isEditOpen && isUserManagement && state.editingUser && (
-        <EditUserModal
-          open={state.isEditOpen}
-          onClose={() => handler.setIsEditOpen(false)}
-          onSave={handler.handleEditSave}
-          userType={row?.role || state.editingUser.role}
-          formData={state.editingUser}
-          idUser={row?.id}
-        />
-      )}
-
-      {state.isEditOpen && isClassManagement && state.editingClass && (
-        <EditClassForm
-          open={state.isEditOpen}
-          onClose={() => handler.setIsEditOpen(false)}
-          onSave={handler.handleEditClassSave}
-          formData={state.editingClass}
-        />
-      )}
-
-      {state.isEditOpen &&
-        isAttendance &&
-        state.editingClass &&
-        isRoleTeacher && (
-          <EditAttendanceForm
-            open={state.isEditOpen}
-            onClose={() => handler.setIsEditOpen(false)}
-            onSave={handler.handleEditAttendanceSave}
-            formData={state.editingAttendance}
-          />
-        )}
-
       {!isRoleTeacher && !isNotifyPage && (
         <Button
           variant="outlined"
@@ -182,32 +150,6 @@ export default function DataTable({
         >
           Delete
         </Button>
-      )}
-
-      {state.isDeleteDialogOpen && state.selectedUserToDelete && (
-        <DeleteUserDialog
-          open={state.isDeleteDialogOpen}
-          onClose={() => handler.setIsDeleteDialogOpen(false)}
-          onConfirm={() =>
-            handler.handleConfirmDelete(
-              isUserManagement
-                ? "userDelete"
-                : isClassManagement
-                ? "classDelete"
-                : "nothing"
-            )
-          }
-          userName={state.selectedUserToDelete.name}
-        />
-      )}
-
-      {/* ShowNotify Dialog */}
-      {isNotifyPage && state.isShowNotifyOpen && state.selectedNotify && (
-        <ShowNotify
-          open={state.isShowNotifyOpen}
-          onClose={() => handler.setIsShowNotifyOpen(false)}
-          notifyData={state.selectedNotify}
-        />
       )}
     </TableCell>
   );
@@ -237,7 +179,7 @@ export default function DataTable({
   const renderUserManagementCells = (row: any) => (
     <>
       {/* <TableCell align="left">{row.id}</TableCell> */}
-      <TableCell align="left">{row.username}</TableCell>
+      {/* <TableCell align="left">{row.username}</TableCell> */}
       <TableCell align="left">{row.email}</TableCell>
       {/* <TableCell align="left">{row.backup_email}</TableCell> */}
       <TableCell align="left">{row.name}</TableCell>
@@ -501,6 +443,59 @@ export default function DataTable({
           onRowsPerPageChange={handler.handleChangeRowsPerPage}
         />
       </Paper>
+      {state.isEditOpen && isUserManagement && state.editingUser && (
+        <EditUserModal
+          open={state.isEditOpen}
+          onClose={() => handler.setIsEditOpen(false)}
+          onSave={handler.handleEditSave}
+          userType={state.editingUser.role}
+          formData={state.editingUser}
+          idUser={state?.editingUserId || ""}
+        />
+      )}
+      {state.isEditOpen && isClassManagement && state.editingClass && (
+        <EditClassForm
+          open={state.isEditOpen}
+          onClose={() => handler.setIsEditOpen(false)}
+          onSave={handler.handleEditClassSave}
+          formData={state.editingClass}
+        />
+      )}
+
+      {state.isEditOpen &&
+        isAttendance &&
+        state.editingClass &&
+        isRoleTeacher && (
+          <EditAttendanceForm
+            open={state.isEditOpen}
+            onClose={() => handler.setIsEditOpen(false)}
+            onSave={handler.handleEditAttendanceSave}
+            formData={state.editingAttendance}
+          />
+        )}
+      {state.isDeleteDialogOpen && state.selectedUserToDelete && (
+        <DeleteUserDialog
+          open={state.isDeleteDialogOpen}
+          onClose={() => handler.setIsDeleteDialogOpen(false)}
+          onConfirm={() =>
+            handler.handleConfirmDelete(
+              isUserManagement
+                ? "userDelete"
+                : isClassManagement
+                ? "classDelete"
+                : "nothing"
+            )
+          }
+          userName={state.selectedUserToDelete.name}
+        />
+      )}
+      {isNotifyPage && state.isShowNotifyOpen && state.selectedNotify && (
+        <ShowNotify
+          open={state.isShowNotifyOpen}
+          onClose={() => handler.setIsShowNotifyOpen(false)}
+          notifyData={state.selectedNotify}
+        />
+      )}
     </Box>
   );
 }
