@@ -215,6 +215,7 @@ const createStudent = async (req, res, defaultPassword) => {
     const Parent = require('../database/models/Parent');
     const ParentStudent = require('../database/models/ParentStudent');
     const Batch = require('../database/models/Batch');
+    const Class = require('../database/models/Class');
 
     // 1. Get current year for batch
     const currentYear = new Date().getFullYear();
@@ -278,7 +279,7 @@ const createStudent = async (req, res, defaultPassword) => {
       gender: typeof gender === 'string' ? gender : (gender === true || gender === 'true' ? 'Male' : 'Female'),
       address,
       phone,
-      batchId: parseInt(batch.batchId),
+      batchId: batch.batchId,
       isActive: true,
       // Initialize empty arrays for parent data
       parentIds: [],
@@ -447,6 +448,10 @@ const createTeacher = async (req, res, defaultPassword) => {
 
     const UserAccount = require('../database/models/UserAccount');
     const Teacher = require('../database/models/Teacher');
+    const Class = require('../database/models/Class');
+    const RFID = require('../database/models/RFID');
+    const ClassSchedule = require('../database/models/ClassSchedule');
+    const Subject = require('../database/models/Subject');
 
     // 1. Get highest teacherId
     const maxTeacher = await Teacher.findOne().sort('-teacherId');
@@ -493,12 +498,52 @@ const createTeacher = async (req, res, defaultPassword) => {
       degree: degree || null
     });
 
+    // Get classes where teacher is homeroom teacher
+    const homeroomClasses = await Class.find({ homeroomTeacherId: teacher.teacherId.toString() });
+    
+    // Get all classes that the teacher teaches (từ bảng ClassSchedule)
+    const teachingSchedules = await ClassSchedule.find({ 
+      teacherId: teacher.teacherId 
+    }).populate('class').populate('subject');
+    
+    // Lấy danh sách unique các lớp mà giáo viên dạy
+    const teachingClassIds = [...new Set(teachingSchedules.map(schedule => schedule.classId))];
+    const teachingClasses = await Class.find({ classId: { $in: teachingClassIds } });
+    
+    // Tạo danh sách môn học mà giáo viên dạy cho mỗi lớp
+    const classSubjects = {};
+    teachingSchedules.forEach(schedule => {
+      const classId = schedule.classId;
+      if (!classSubjects[classId]) {
+        classSubjects[classId] = new Set();
+      }
+      if (schedule.subjectId) {
+        classSubjects[classId].add(schedule.subjectId);
+      }
+    });
+    
+    // Lấy thông tin chi tiết về các môn học
+    const allSubjectIds = [...new Set(teachingSchedules.map(s => s.subjectId))];
+    const subjects = await Subject.find({ subjectId: { $in: allSubjectIds } });
+    
+    // Format classes theo định dạng yêu cầu (không bao gồm subjects)
+    const classes = teachingClasses.map(cls => ({
+      classId: cls.classId,
+      className: cls.className,
+      grade: cls.className ? cls.className.match(/^(\d+)/)?.[1] || '' : ''
+    }));
+    
+    // Get RFID info
+    const rfid = await RFID.findOne({ UserID: userId });
+    
     res.status(201).json({
       success: true,
       message: 'Teacher created successfully',
       data: {
         user,
-        teacher
+        teacher,
+        classes,
+        rfid: rfid || null
       }
     });
   } catch (error) {
@@ -753,9 +798,6 @@ exports.getUserDetails = async (req, res) => {
       const student = await Student.findOne({ userId });
       
       if (student) {
-        // Get batch info
-        const batch = await Batch.findOne({ batchId: student.batchId.toString() });
-        
         // Get class info if available
         let classInfo = null;
         if (student.classId) {
@@ -763,16 +805,26 @@ exports.getUserDetails = async (req, res) => {
         }
         
         // Get parents
-        const parentStudentRelations = await ParentStudent.find({ studentId: student.studentId });
+        const parentStudentRelations = await ParentStudent.find({ 
+          studentId: student.studentId ? student.studentId.toString() : ""
+        });
         const parentIds = parentStudentRelations.map(rel => rel.parentId);
         const parents = await Parent.find({ parentId: { $in: parentIds } });
         
         // Get RFID info
         const rfid = await RFID.findOne({ UserID: userId });
         
+        // Tạo bản sao student mà không có các trường dư thừa
+        const studentCopy = student.toObject();
+        delete studentCopy.parentIds;
+        delete studentCopy.parentNames;
+        delete studentCopy.parentCareers;
+        delete studentCopy.parentPhones;
+        delete studentCopy.parentGenders;
+        delete studentCopy.parentEmails;
+        
         additionalData = {
-          student,
-          batch: batch || null,
+          student: studentCopy,
           class: classInfo || null,
           parents: parents || [],
           rfid: rfid || null
@@ -782,22 +834,67 @@ exports.getUserDetails = async (req, res) => {
       const Teacher = require('../database/models/Teacher');
       const Class = require('../database/models/Class');
       const RFID = require('../database/models/RFID');
+      const ClassSchedule = require('../database/models/ClassSchedule');
+      const Subject = require('../database/models/Subject');
       
       // Get teacher details
       const teacher = await Teacher.findOne({ userId });
       
       if (teacher) {
-        // Get classes where teacher is homeroom teacher
-        const classes = await Class.find({ homeroomTeacherId: teacher.teacherId.toString() });
+        // Ensure teacherId is available
+        const teacherId = teacher.teacherId ? teacher.teacherId : null;
         
-        // Get RFID info
-        const rfid = await RFID.findOne({ UserID: userId });
-        
-        additionalData = {
-          teacher,
-          classes: classes || [],
-          rfid: rfid || null
-        };
+        if (!teacherId) {
+          additionalData = {
+            teacher,
+            classes: [],
+            rfid: null
+          };
+        } else {
+          // Get classes where teacher is homeroom teacher
+          const homeroomClasses = await Class.find({ homeroomTeacherId: teacherId.toString() });
+          
+          // Get all classes that the teacher teaches (từ bảng ClassSchedule)
+          const teachingSchedules = await ClassSchedule.find({ 
+            teacherId: teacherId 
+          }).populate('class').populate('subject');
+          
+          // Lấy danh sách unique các lớp mà giáo viên dạy
+          const teachingClassIds = [...new Set(teachingSchedules.map(schedule => schedule.classId))];
+          const teachingClasses = await Class.find({ classId: { $in: teachingClassIds } });
+          
+          // Tạo danh sách môn học mà giáo viên dạy cho mỗi lớp
+          const classSubjects = {};
+          teachingSchedules.forEach(schedule => {
+            const classId = schedule.classId;
+            if (!classSubjects[classId]) {
+              classSubjects[classId] = new Set();
+            }
+            if (schedule.subjectId) {
+              classSubjects[classId].add(schedule.subjectId);
+            }
+          });
+          
+          // Lấy thông tin chi tiết về các môn học
+          const allSubjectIds = [...new Set(teachingSchedules.map(s => s.subjectId))];
+          const subjects = await Subject.find({ subjectId: { $in: allSubjectIds } });
+          
+          // Format classes theo định dạng yêu cầu (không bao gồm subjects)
+          const classes = teachingClasses.map(cls => ({
+            classId: cls.classId,
+            className: cls.className,
+            grade: cls.className ? cls.className.match(/^(\d+)/)?.[1] || '' : ''
+          }));
+          
+          // Get RFID info
+          const rfid = await RFID.findOne({ UserID: userId });
+          
+          additionalData = {
+            teacher,
+            classes,
+            rfid: rfid || null
+          };
+        }
       }
     } else if (role === 'parent') {
       const Parent = require('../database/models/Parent');
@@ -811,7 +908,7 @@ exports.getUserDetails = async (req, res) => {
       
       if (parent) {
         // Get parent-student relations
-        const relations = await ParentStudent.find({ parentId: parent.parentId });
+        const relations = await ParentStudent.find({ parentId: parent.parentId ? parent.parentId.toString() : "" });
         
         // Get students
         const studentIds = relations.map(rel => rel.studentId);
@@ -827,7 +924,8 @@ exports.getUserDetails = async (req, res) => {
           return {
             ...student.toObject(),
             className: classInfo ? classInfo.className : null,
-            relationship: relations.find(r => r.studentId.toString() === student.studentId.toString())?.relationship || 'Other'
+            relationship: relations.find(r => r.studentId && student.studentId && 
+                                          r.studentId.toString() === student.studentId.toString())?.relationship || 'Other'
           };
         }));
         

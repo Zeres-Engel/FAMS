@@ -77,12 +77,18 @@ export default function NavBar(props: Props) {
             // color="#1B78EC"
             sx={{ flexGrow: 1, display: { xs: "none", sm: "block" } }}
           >
-            HungDN
-            <img
-              src="https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"
-              alt="User Avatar"
-              className="nav-User-Avatar"
-            />
+            {state.userFullName || "FAMS"}
+            <Box 
+              component="span" 
+              onClick={() => handler.handleOnNavigate("Profile")} 
+              sx={{ cursor: 'pointer', display: 'inline-block', marginLeft: 2 }}
+            >
+              <img
+                src={state.userAvatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"}
+                alt="User Avatar"
+                className="nav-User-Avatar"
+              />
+            </Box>
           </Typography>
           <Box
             sx={{

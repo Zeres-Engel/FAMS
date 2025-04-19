@@ -16,7 +16,7 @@ const router = express.Router();
 // Get teacher schedule
 router.get('/teachers/:id/schedule', protect, getTeacherSchedule);
 
-// Get user details based on role
+// Get user details based on role - Cho phép tất cả các role truy cập
 router.get('/details/:id', protect, getUserDetails);
 
 // GET all users with filtering (Admin only)

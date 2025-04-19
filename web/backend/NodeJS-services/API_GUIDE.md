@@ -335,6 +335,12 @@ Base path: `/users`
 - API tự động tạo phụ huynh khi tạo học sinh (nếu có thông tin)
 - Batch tự động được tạo nếu chưa tồn tại
 
+#### Update User (Admin Only)
+- **URL**: `http://fams.io.vn/api-nodejs/users/:id`
+- **Method**: `PUT`
+- **Auth Required**: Yes (Admin only)
+- **Body**: Updated user information
+
 #### Unified Update User (Supports All Roles)
 - **URL**: `http://fams.io.vn/api-nodejs/users/update/:userId`
 - **Method**: `PUT`
@@ -379,6 +385,16 @@ Base path: `/users`
 }
 ```
 
+**Ví dụ cập nhật Parent:**
+```json
+{
+  "fullName": "Lê Thị Lan",
+  "phone": "0987654321",
+  "career": "Giáo viên",
+  "studentIds": [1, 2]
+}
+```
+
 **Ví dụ chỉ cập nhật RFID:** Bạn có thể chỉ cập nhật thẻ RFID mà không thay đổi thông tin người dùng
 ```json
 {
@@ -388,6 +404,19 @@ Base path: `/users`
   }
 }
 ```
+
+**Xử lý đặc biệt:**
+
+1. **Cập nhật Tên**: API hỗ trợ cập nhật qua `fullName` hoặc `firstName`/`lastName`:
+   - Khi cập nhật `fullName`, hệ thống tự động tách thành `firstName` và `lastName`
+   - Khi cập nhật `firstName`/`lastName`, hệ thống tự động tạo `fullName`
+
+2. **Cập nhật RFID**: 
+   - Nếu người dùng đã có thẻ RFID: Thẻ hiện tại sẽ được cập nhật
+   - Nếu người dùng chưa có thẻ RFID: Thẻ mới sẽ được tạo
+   - Trường `ExpiryDate` có thể là định dạng ngắn gọn ("2y", "3y") hoặc ngày cụ thể
+
+3. **Cập nhật quan hệ Phụ huynh-Học sinh**: Khi cập nhật phụ huynh với `studentIds`, API tự động tạo quan hệ với các học sinh hiện có
 
 **Response với RFID:**
 ```json
@@ -424,16 +453,12 @@ Base path: `/users`
 }
 ```
 
-**Xử lý RFID trong API:**
-- Nếu người dùng đã có thẻ RFID: Thẻ hiện tại sẽ được cập nhật với thông tin mới
-- Nếu người dùng chưa có thẻ RFID: Thẻ mới sẽ được tạo với thông tin được cung cấp
-- Trường `ExpiryDate` có thể là ngày cụ thể hoặc định dạng ngắn gọn như "1y", "2y", "3y"
-
-#### Update User (Admin Only)
-- **URL**: `http://fams.io.vn/api-nodejs/users/:id`
-- **Method**: `PUT`
-- **Auth Required**: Yes (Admin only)
-- **Body**: Updated user information
+**Mã lỗi:**
+- `USER_NOT_FOUND`: Không tìm thấy người dùng
+- `STUDENT_RECORD_NOT_FOUND`: Không tìm thấy bản ghi học sinh
+- `TEACHER_RECORD_NOT_FOUND`: Không tìm thấy bản ghi giáo viên
+- `PARENT_RECORD_NOT_FOUND`: Không tìm thấy bản ghi phụ huynh
+- `UPDATE_FAILED`: Cập nhật thất bại vì lỗi khác
 
 #### Delete User
 - **URL**: `http://fams.io.vn/api-nodejs/users/:id`
@@ -1448,8 +1473,9 @@ Khi cập nhật thông tin học sinh, bạn có thể đồng thời cập nh�
 ```
 
 - Nếu học sinh đã có thẻ RFID: Hệ thống sẽ cập nhật thẻ hiện có
-- Nếu học sinh chưa có thẻ RFID: Hệ thống sẽ tạo thẻ mới (nếu RFID_ID được cung cấp)
-- Response sẽ bao gồm cả thông tin học sinh và thẻ RFID:
+- Nếu học sinh chưa có thẻ RFID: Hệ thống sẽ tạo thẻ mới
+
+Response sẽ bao gồm cả thông tin học sinh và thẻ RFID:
 
 ```json
 {
@@ -1548,3 +1574,252 @@ You can run an entire collection or folder to test multiple endpoints at once:
 2. Click "Run"
 3. Select the requests you want to run
 4. Click "Run FAMS API"
+
+# Hướng dẫn Sử dụng API Cập nhật Thống Nhất Người Dùng trong FAMS
+
+API này được thiết kế để cung cấp một điểm cuối duy nhất cho việc cập nhật thông tin người dùng thuộc bất kỳ vai trò nào (Student, Teacher, Parent). API sẽ tự động phát hiện vai trò của userId và cập nhật thông tin tương ứng.
+
+## Thông tin cơ bản
+
+- **URL**: `http://fams.io.vn/api-nodejs/users/update/:userId`
+- **Method**: `PUT`
+- **Auth Required**: Yes
+- **Description**: Cập nhật thông tin người dùng dựa vào userId, tự động xác định và cập nhật theo vai trò tương ứng
+- **Parameters**:
+  - `userId`: ID của người dùng cần cập nhật (truyền vào URL)
+
+## Cấu trúc Dữ liệu Request
+
+Request body có thể chứa bất kỳ trường dữ liệu nào dựa trên vai trò của người dùng. API sẽ tự động xác định vai trò và cập nhật các trường tương ứng.
+
+### Các trường cơ bản (áp dụng cho mọi vai trò)
+
+```json
+{
+  "email": "example@gmail.com",
+  "backup_email": "backup@gmail.com",
+  "name": "Họ và tên mới",
+  "password": "newpassword",
+  "rfid": {
+    "RFID_ID": "RFID12345",
+    "ExpiryDate": "2y"
+  }
+}
+```
+
+### Trường `rfid`
+
+Tất cả các vai trò đều có thể cập nhật thông tin thẻ RFID bằng cách thêm trường `rfid`:
+
+```json
+"rfid": {
+  "RFID_ID": "RFID12345",  // ID của thẻ RFID (bắt buộc nếu muốn cập nhật RFID)
+  "ExpiryDate": "2y"        // Thời hạn (có thể là "1y", "2y", "3y" hoặc ngày cụ thể)
+}
+```
+
+### Trường dành cho Student
+
+```json
+{
+  "firstName": "Văn",           // Tên
+  "lastName": "Nguyễn",         // Họ
+  "fullName": "Nguyễn Văn A",   // Họ và tên đầy đủ
+  "dateOfBirth": "2005-05-15",  // Ngày sinh
+  "gender": true,               // Giới tính (true: Nam, false: Nữ) hoặc "Male"/"Female"
+  "address": "123 ABC Street",  // Địa chỉ
+  "phone": "0987654321",        // Số điện thoại
+  "classId": 2,                 // ID lớp học
+  "batchId": 1,                 // ID khóa học
+  "isActive": true              // Trạng thái hoạt động
+}
+```
+
+### Trường dành cho Teacher
+
+```json
+{
+  "firstName": "Thị",             // Tên
+  "lastName": "Trần",             // Họ
+  "fullName": "Trần Thị B",       // Họ và tên đầy đủ
+  "dateOfBirth": "1980-01-01",    // Ngày sinh
+  "gender": false,                // Giới tính (true: Nam, false: Nữ) hoặc "Male"/"Female"
+  "address": "456 XYZ Street",    // Địa chỉ
+  "phone": "0123456789",          // Số điện thoại
+  "major": "Toán, Lý, Hóa",       // Chuyên ngành
+  "degree": "Tiến sĩ",            // Học vị
+  "weeklyCapacity": 15,           // Số giờ dạy mỗi tuần
+  "isActive": true                // Trạng thái hoạt động
+}
+```
+
+### Trường dành cho Parent
+
+```json
+{
+  "firstName": "Văn",           // Tên
+  "lastName": "Lê",             // Họ
+  "fullName": "Lê Văn C",       // Họ và tên đầy đủ
+  "career": "Kỹ sư",            // Nghề nghiệp
+  "phone": "0912345678",        // Số điện thoại
+  "gender": true,               // Giới tính (true: Nam, false: Nữ) hoặc "Male"/"Female"
+  "isActive": true,             // Trạng thái hoạt động
+  "studentIds": [1, 2, 3]       // Danh sách ID học sinh là con của phụ huynh này
+}
+```
+
+## Xử lý Đặc biệt
+
+### Cập nhật Tên
+
+Hệ thống hỗ trợ nhiều cách cập nhật tên:
+
+1. **Cập nhật fullName**: API sẽ tự động tách và cập nhật `firstName` và `lastName`
+2. **Cập nhật firstName/lastName**: API sẽ tự động tạo `fullName` từ `firstName` và `lastName`
+
+Ví dụ, nếu gửi:
+```json
+{
+  "fullName": "Nguyễn Văn A"
+}
+```
+
+Hệ thống sẽ tự động tách thành:
+- `firstName`: "A"
+- `lastName`: "Nguyễn Văn"
+
+### Cập nhật RFID
+
+- Nếu người dùng đã có thẻ RFID: Hệ thống sẽ cập nhật thẻ hiện có
+- Nếu người dùng chưa có thẻ RFID: Hệ thống sẽ tạo thẻ mới
+
+Trường `ExpiryDate` có thể có các định dạng:
+- "1y", "2y", "3y": Thời hạn 1, 2, 3 năm từ ngày hiện tại
+- "2025-12-31": Ngày hết hạn cụ thể
+- Nếu không cung cấp: Mặc định là 3 năm
+
+### Cập nhật Quan hệ Phụ huynh-Học sinh
+
+Khi cập nhật phụ huynh, bạn có thể thêm học sinh mới vào danh sách con của họ bằng cách cung cấp `studentIds`. API sẽ tự động tạo các quan hệ phụ huynh-học sinh cần thiết.
+
+**Lưu ý**: API hiện chỉ hỗ trợ thêm quan hệ với các học sinh đã tồn tại, không tạo học sinh mới.
+
+## Ví dụ Sử Dụng
+
+### Cập nhật Thông tin Student
+
+```json
+// PUT http://fams.io.vn/api-nodejs/users/update/dungahst1
+{
+  "fullName": "Đặng Hữu Dũng",
+  "phone": "0763037404",
+  "address": "Điện Biên",
+  "dateOfBirth": "2010-10-07",
+  "classId": 2,
+  "rfid": {
+    "RFID_ID": "STUD12345",
+    "ExpiryDate": "2y"
+  }
+}
+```
+
+### Cập nhật Thông tin Teacher
+
+```json
+// PUT http://fams.io.vn/api-nodejs/users/update/dunglv121
+{
+  "firstName": "Lê Việt",
+  "lastName": "Dũng",
+  "phone": "0764543211",
+  "major": "Hóa học, Sinh học",
+  "degree": "Thạc sĩ Giáo dục",
+  "weeklyCapacity": 12,
+  "address": "Hà Nội",
+  "rfid": {
+    "RFID_ID": "TEACH67890",
+    "ExpiryDate": "3y"
+  }
+}
+```
+
+### Cập nhật Thông tin Parent
+
+```json
+// PUT http://fams.io.vn/api-nodejs/users/update/lanhpr1
+{
+  "fullName": "Lê Thị Lan",
+  "phone": "0987654321",
+  "career": "Giáo viên",
+  "studentIds": [1, 2]
+}
+```
+
+### Chỉ Cập nhật RFID
+
+```json
+// PUT http://fams.io.vn/api-nodejs/users/update/dungahst1
+{
+  "rfid": {
+    "RFID_ID": "STUD98765",
+    "ExpiryDate": "2026-12-31"
+  }
+}
+```
+
+## Phản hồi API
+
+### Phản hồi Thành công
+
+```json
+{
+  "success": true,
+  "message": "User dungahst1 updated successfully",
+  "data": {
+    "user": {
+      "userId": "dungahst1",
+      "email": "dungahst1@fams.edu.vn",
+      "role": "Student"
+    },
+    "role": {
+      "type": "student",
+      "student": {
+        // Thông tin student đã cập nhật
+      },
+      "class": {
+        // Thông tin lớp
+      },
+      "parents": [
+        // Danh sách phụ huynh
+      ],
+      "rfid": {
+        // Thông tin RFID (nếu có)
+      }
+    }
+  }
+}
+```
+
+### Phản hồi Lỗi
+
+```json
+{
+  "success": false,
+  "message": "User with ID invalid_user not found",
+  "code": "USER_NOT_FOUND"
+}
+```
+
+## Mã Lỗi
+
+- `USER_NOT_FOUND`: Không tìm thấy người dùng
+- `STUDENT_RECORD_NOT_FOUND`: Không tìm thấy bản ghi học sinh
+- `TEACHER_RECORD_NOT_FOUND`: Không tìm thấy bản ghi giáo viên
+- `PARENT_RECORD_NOT_FOUND`: Không tìm thấy bản ghi phụ huynh
+- `UPDATE_FAILED`: Cập nhật thất bại vì lỗi khác
+
+## Lưu ý
+
+1. API này tuân thủ nguyên tắc cập nhật từng phần (partial update), chỉ cập nhật các trường được cung cấp trong request
+2. Đối với các trường đặc biệt như `fullName`, API sẽ tự động xử lý tách và kết hợp với `firstName` và `lastName`
+3. Khi cung cấp trường `gender`, bạn có thể sử dụng `true`/`false`, `"Male"`/`"Female"` hoặc `"true"`/`"false"`
+4. Thông tin RFID sẽ được tự động cập nhật hoặc tạo mới tùy thuộc vào trạng thái hiện tại

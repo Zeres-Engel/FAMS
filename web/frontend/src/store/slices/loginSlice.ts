@@ -40,6 +40,19 @@ export const loginRequest = createAsyncThunk(
       const sampleRole = response?.data.data?.role || "user" 
       saveTokens(formatLoginData.accessToken, formatLoginData.refreshToken)
       thunkAPI.dispatch(setRole(sampleRole))
+      
+      // Store user info in localStorage
+      if (response.data.data) {
+        const userData = {
+          userId: response.data.data.userId || loginData.userId,
+          fullName: response.data.data.fullName || response.data.data.name || loginData.userId,
+          email: response.data.data.email || "",
+          role: sampleRole
+        };
+        localStorage.setItem('user', JSON.stringify(userData));
+        console.log('User data saved to localStorage:', userData);
+      }
+      
       thunkAPI.dispatch(
         addNotify({
           type: "success",

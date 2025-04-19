@@ -6,6 +6,14 @@ import { handleLogout } from "../../store/slices/loginSlice";
 import { useEffect, useState } from "react";
 import { logout } from "../../store/slices/authSlice";
 
+interface UserData {
+  userId: string;
+  name?: string;
+  fullName?: string;
+  email?: string;
+  role?: string;
+}
+
 function useNavBarHook() {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
@@ -18,7 +26,30 @@ function useNavBarHook() {
     "Notify",
     "Logout",
   ]);
+  const [userFullName, setUserFullName] = useState<string>("");
+  const [userAvatar, setUserAvatar] = useState<string>("");
+  
   const role = useSelector((state: RootState) => state.authUser.role);
+  
+  // Get user info from localStorage
+  useEffect(() => {
+    try {
+      const userString = localStorage.getItem('user');
+      if (userString) {
+        const userData: UserData = JSON.parse(userString);
+        setUserFullName(userData.fullName || userData.name || userData.userId || "User");
+        
+        // Check if we have avatar stored somewhere
+        const avatarUrl = localStorage.getItem('userAvatar');
+        if (avatarUrl) {
+          setUserAvatar(avatarUrl);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to get user info from localStorage:", error);
+    }
+  }, []);
+  
   useEffect(() => {
     if (role === "admin") {
       setNavItems([
@@ -44,21 +75,41 @@ function useNavBarHook() {
       ]);
     }
   }, [role]);
+  
   const handleLogoutRequest = () => {
-    removeTokens();
+    // Make sure to clear all storage
+    removeTokens(); // This now also removes 'user' from localStorage
+    
+    // Clear user info from memory
+    setUserFullName("");
+    setUserAvatar("");
+    
+    // Clear from Redux stores
     dispatch(handleLogout());
     dispatch(logout());
-    navigate("/login", {
-      state: { message: "Đăng xuất thành công!" },
-    });
+    
+    // Clear any other related storage items
+    localStorage.removeItem('user');
+    sessionStorage.removeItem('user');
+    localStorage.removeItem('userAvatar');
+    sessionStorage.removeItem('userAvatar');
+    
+    // Force reload after timeout to ensure clean state
+    const reloadTimeout = setTimeout(() => {
+      navigate("/login", {
+        state: { message: "Đăng xuất thành công!" },
+      });
+      clearTimeout(reloadTimeout);
+    }, 100);
   };
+  
   const handleOnNavigate = (onNav: string) => {
     switch (onNav) {
       case "HomePage":
       case "HomePage Admin":
         return navigate("/");
       case "Profile":
-        return navigate("/Profile");
+        return navigate("/profile");
       case "User Management":
         return navigate("/UserManagement");
       case "System Management":
@@ -83,8 +134,10 @@ function useNavBarHook() {
         return handleLogoutRequest();
     }
   };
-  const state = { navItems };
+  
+  const state = { navItems, userFullName, userAvatar };
   const handler = { handleOnNavigate };
   return { state, handler };
 }
+
 export default useNavBarHook;

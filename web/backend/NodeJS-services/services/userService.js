@@ -373,31 +373,39 @@ exports.getUsers = async (options = {}) => {
           userObj.dateOfBirth = teacher.dateOfBirth;
           userObj.gender = teacher.gender;
           userObj.major = teacher.major;
-          userObj.degree = teacher.degree;
-          userObj.WeeklyCapacity = teacher.WeeklyCapacity;
+          userObj.address = teacher.address;
+          userObj.weeklyCapacity = teacher.weeklyCapacity;
           
           // Remove backup_email for teacher role
-          delete userObj.backup_email;
+          if ('backup_email' in userObj) {
+            delete userObj.backup_email;
+          }
           
-          // Get classes taught
-          // Use direct collection access to bypass schema issues
-          const ClassScheduleCollection = mongoose.connection.db.collection('ClassSchedule');
-          const schedules = await ClassScheduleCollection.find({ teacherId: Number(teacher.teacherId) }).toArray();
+          // Get classes where this teacher is homeroom teacher
+          const Class = require('../database/models/Class');
+          const homeroomClasses = await Class.find({ homeroomTeacherId: teacher.teacherId.toString() });
           
-          // Lấy danh sách unique classIds - ensure they're numbers for querying
-          const classIds = [...new Set(schedules.map(s => Number(s.classId)))];
+          // Get all classes that this teacher teaches
+          const ClassSchedule = require('../database/models/ClassSchedule');
+          const teachingSchedules = await ClassSchedule.find({ teacherId: teacher.teacherId });
+          const teachingClassIds = [...new Set(teachingSchedules.map(s => s.classId))];
+          const teachingClasses = await Class.find({ classId: { $in: teachingClassIds } });
           
-          // Get class information
-          const classes = classIds.length > 0 
-            ? await models.Class.find({ classId: { $in: classIds } })
-            : [];
-          
-          // Format classes array consistently with getUsers
-          userObj.classes = classes.map(c => ({
-            classId: c.classId,
-            className: c.className,
-            grade: c.className ? c.className.match(/^(\d+)/)?.[1] : null
+          // Format classes theo định dạng yêu cầu
+          userObj.classes = teachingClasses.map(cls => ({
+            classId: cls.classId,
+            className: cls.className,
+            grade: cls.className ? cls.className.match(/^(\d+)/)?.[1] || '' : ''
           }));
+          
+          userObj.details = {
+            teacherId: teacher.teacherId,
+            major: teacher.major,
+            degree: teacher.degree,
+            // Include original classes data for backward compatibility
+            classes: homeroomClasses || [],
+            weeklyhours: teacher.WeeklyCapacity
+          };
         }
       }
       else if (role === 'parent') {
@@ -601,27 +609,35 @@ exports.getUserById = async (userId, includeDetails = true) => {
         userObj.WeeklyCapacity = teacher.WeeklyCapacity;
         
         // Remove backup_email for teacher role
-        delete userObj.backup_email;
+        if ('backup_email' in userObj) {
+          delete userObj.backup_email;
+        }
         
-        // Get classes taught
-        // Use direct collection access to bypass schema issues
-        const ClassScheduleCollection = mongoose.connection.db.collection('ClassSchedule');
-        const schedules = await ClassScheduleCollection.find({ teacherId: Number(teacher.teacherId) }).toArray();
+        // Get classes where this teacher is homeroom teacher
+        const Class = require('../database/models/Class');
+        const homeroomClasses = await Class.find({ homeroomTeacherId: teacher.teacherId.toString() });
         
-        // Lấy danh sách unique classIds - ensure they're numbers for querying
-        const classIds = [...new Set(schedules.map(s => Number(s.classId)))];
+        // Get all classes that this teacher teaches
+        const ClassSchedule = require('../database/models/ClassSchedule');
+        const teachingSchedules = await ClassSchedule.find({ teacherId: teacher.teacherId });
+        const teachingClassIds = [...new Set(teachingSchedules.map(s => s.classId))];
+        const teachingClasses = await Class.find({ classId: { $in: teachingClassIds } });
         
-        // Get class information
-        const classes = classIds.length > 0 
-          ? await models.Class.find({ classId: { $in: classIds } })
-          : [];
-        
-        // Format classes array consistently with getUsers
-        userObj.classes = classes.map(c => ({
-          classId: c.classId,
-          className: c.className,
-          grade: c.className ? c.className.match(/^(\d+)/)?.[1] : null
+        // Format classes theo định dạng yêu cầu
+        userObj.classes = teachingClasses.map(cls => ({
+          classId: cls.classId,
+          className: cls.className,
+          grade: cls.className ? cls.className.match(/^(\d+)/)?.[1] || '' : ''
         }));
+        
+        userObj.details = {
+          teacherId: teacher.teacherId,
+          major: teacher.major,
+          degree: teacher.degree,
+          // Include original classes data for backward compatibility
+          classes: homeroomClasses || [],
+          weeklyhours: teacher.WeeklyCapacity
+        };
       }
     }
     else if (role === 'parent') {
