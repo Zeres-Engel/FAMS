@@ -9,6 +9,7 @@ import {
 } from "../../model/tableModels/tableDataModels.model";
 
 function useAttendancePageHook() {
+  const role = useAppSelector((state) => state.authUser.role);
   const attendanceLogs: AttendanceLog[] = [
     {
       id: "1",
@@ -20,6 +21,7 @@ function useAttendancePageHook() {
       checkin: "2025-04-16T07:05:00",
       status: "Present",
       checkinFace: "",
+      note: "Đến đúng giờ.",
     },
     {
       id: "2",
@@ -31,6 +33,7 @@ function useAttendancePageHook() {
       checkin: "2025-04-16T07:15:00",
       status: "Late",
       checkinFace: "",
+      note: "Đến trễ 15 phút do kẹt xe.",
     },
     {
       id: "3",
@@ -42,6 +45,7 @@ function useAttendancePageHook() {
       checkin: null,
       status: "Absent",
       checkinFace: "",
+      note: "Vắng không phép.",
     },
     {
       id: "4",
@@ -53,6 +57,7 @@ function useAttendancePageHook() {
       checkin: "2025-04-16T13:00:00",
       status: "Present",
       checkinFace: "",
+      note: "Có mặt đầy đủ.",
     },
     {
       id: "5",
@@ -64,8 +69,10 @@ function useAttendancePageHook() {
       checkin: "2025-04-16T13:10:00",
       status: "Late",
       checkinFace: "",
+      note: "Đến trễ do lý do cá nhân.",
     },
   ];
+  
   const [userMainData, setUserMainData] =
     useState<AttendanceLog[]>(attendanceLogs);
 
@@ -113,6 +120,12 @@ function useAttendancePageHook() {
       label: "Checkin",
     },
     {
+      id: "note",
+      numeric: false,
+      disablePadding: false,
+      label: "Note",
+    },
+    {
       id: "status",
       numeric: false,
       disablePadding: false,
@@ -129,7 +142,7 @@ function useAttendancePageHook() {
   //   }
   // }, [dispatch, userState.user]);
 
-  const state = { headCellsData, userMainData, tableTitle, isCheckBox };
+  const state = { headCellsData, userMainData, tableTitle, isCheckBox,role };
   const handler = {};
   return { state, handler };
 }

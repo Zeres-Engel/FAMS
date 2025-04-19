@@ -20,7 +20,8 @@ function AttendanceManagementPage(): React.JSX.Element {
               tableTitle={state.tableTitle}
               isCheckBox={state.isCheckBox}
               isAttendance={true}
-              isRoleTeacher={true}
+              isRoleTeacher={state.role === "teacher"}
+              isRoleStudent={state.role === "student"}
             ></DataTable>
           </Grid>
         </Grid>

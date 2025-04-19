@@ -5,6 +5,7 @@ import { Data, HeadCell } from "../../model/tableModels/tableDataModels.model";
 
 function useClassPageHook() {
   const dispatch = useAppDispatch();
+  const role = useAppSelector(state => state.authUser.role);
   const userState = useAppSelector(state => state.users);
   const [userMainData, setUserMainData] = useState<Data[]>([]);
   const headCellsData: HeadCell[] = [
@@ -60,7 +61,7 @@ function useClassPageHook() {
       // setUserMainData(userState?.user);
     }
   }, [dispatch, userState.user]);
-  const state = { headCellsData, userMainData, tableTitle, isCheckBox };
+  const state = { headCellsData, userMainData, tableTitle, isCheckBox,role };
   const handler = {};
 
   return { state, handler };

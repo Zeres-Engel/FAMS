@@ -101,6 +101,12 @@ function useAttendanceManagementPageHook() {
       label: "Checkin",
     },
     {
+      id: "note",
+      numeric: false,
+      disablePadding: false,
+      label: "Note",
+    },
+    {
       id: "status",
       numeric: false,
       disablePadding: false,
