@@ -11,6 +11,10 @@ import {
   TableRow,
   Checkbox,
   Button,
+  MenuItem,
+  InputLabel,
+  FormControl,
+  Select,
 } from "@mui/material";
 import "./DataTable.scss";
 import TableToolBar from "./TableToolBar/TableToolBar";
@@ -19,9 +23,14 @@ import TableHeader from "./TableHeader/TableHeader";
 import {
   AttendanceHeadCell,
   AttendanceLog,
+  ClassArrangementData,
+  ClassArrangementHeadCellProps,
   ClassHeadCell,
   Data,
   HeadCell,
+  NotifyHeadCell,
+  NotifyProps,
+  SystemRole,
   UserHeadCell,
 } from "../../model/tableModels/tableDataModels.model";
 import AddUserForm from "./AddUserForm/AddUserForm";
@@ -36,14 +45,24 @@ import {
 import useState from "react";
 import { ClassData } from "../../model/classModels/classModels.model";
 import EditAttendanceForm from "./EditAttendanceForm/EditAttendanceForm";
+import CreateNotifyForm from "./CreateNotifyForm/CreateNotifyForm";
+import ShowNotify from "./ShowNotify/ShowNotify";
 
 interface DataTableProps {
   headCellsData:
     | HeadCell[]
     | UserHeadCell[]
     | ClassHeadCell[]
-    | AttendanceHeadCell[];
-  tableMainData: UserData[] | Data[] | ClassData[] | AttendanceLog[];
+    | AttendanceHeadCell[]
+    | ClassArrangementHeadCellProps[]
+    | NotifyHeadCell[];
+  tableMainData:
+    | UserData[]
+    | Data[]
+    | ClassData[]
+    | AttendanceLog[]
+    | ClassArrangementData[]
+    | NotifyProps[];
   tableTitle: string;
   isCheckBox: boolean;
   isAdmin?: boolean;
@@ -52,6 +71,12 @@ interface DataTableProps {
   isUserManagement?: boolean;
   setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
   isRoleTeacher?: boolean;
+  isClassArrangement?: boolean;
+  isNewSemester?: boolean;
+  isTeacherView?: boolean;
+  isRoleStudent?: boolean;
+  isNotifyPage?: boolean;
+  isNotifyRole?: string;
 }
 
 export default function DataTable({
@@ -65,6 +90,12 @@ export default function DataTable({
   isUserManagement,
   isRoleTeacher,
   setFiltersUser,
+  isClassArrangement,
+  isNewSemester,
+  isTeacherView,
+  isRoleStudent,
+  isNotifyPage,
+  isNotifyRole,
 }: DataTableProps) {
   const { state, handler } = useDataTableHook({ tableMainData });
 
@@ -77,30 +108,34 @@ export default function DataTable({
         onClick={e => {
           e.stopPropagation();
           e.preventDefault();
-          isClassManagement
-            ? handler.handleEditClassClick({
-                className: row.className,
-                grade: row.grade,
-                teacherId: row.homeroomTeacherd,
-                academicYear: row.academicYear,
-              })
-            : isAttendance && isRoleTeacher
-            ? handler.handleEditAttendanceClick({
-                attendanceId: row.attendanceId,
-                scheduleId: row.scheduleId,
-                userId: row.userId,
-                fullName: row.fullName,
-                face: row.face,
-                checkin: row.checkin,
-                status: row.status,
-                note: row.note || "",
-                checkinFace: row.checkinFace || "",
-              })
-            : handler.handleEditClick(row, row?.id);
+          if (isClassManagement) {
+            handler.handleEditClassClick({
+              className: row.className,
+              grade: row.grade,
+              teacherId: row.homeroomTeacherd,
+              academicYear: row.academicYear,
+            });
+          } else if (isAttendance && isRoleTeacher) {
+            handler.handleEditAttendanceClick({
+              attendanceId: row.attendanceId,
+              scheduleId: row.scheduleId,
+              userId: row.userId,
+              fullName: row.fullName,
+              face: row.face,
+              checkin: row.checkin,
+              status: row.status,
+              note: row.note || "",
+              checkinFace: row.checkinFace || "",
+            });
+          } else if (isNotifyPage) {
+            handler.handleShowNotify(row); // Gọi handler mở notify
+          } else {
+            handler.handleEditClick(row, row?.id);
+          }
         }}
         sx={{ mr: 1 }}
       >
-        Edit
+        {isNotifyPage ? "View" : "Edit"}
       </Button>
 
       {state.isEditOpen && isUserManagement && state.editingUser && (
@@ -122,6 +157,7 @@ export default function DataTable({
           formData={state.editingClass}
         />
       )}
+
       {state.isEditOpen &&
         isAttendance &&
         state.editingClass &&
@@ -133,7 +169,8 @@ export default function DataTable({
             formData={state.editingAttendance}
           />
         )}
-      {!isRoleTeacher && (
+
+      {!isRoleTeacher && !isNotifyPage && (
         <Button
           variant="outlined"
           color="error"
@@ -146,6 +183,7 @@ export default function DataTable({
           Delete
         </Button>
       )}
+
       {state.isDeleteDialogOpen && state.selectedUserToDelete && (
         <DeleteUserDialog
           open={state.isDeleteDialogOpen}
@@ -162,14 +200,28 @@ export default function DataTable({
           userName={state.selectedUserToDelete.name}
         />
       )}
+
+      {/* ShowNotify Dialog */}
+      {isNotifyPage && state.isShowNotifyOpen && state.selectedNotify && (
+        <ShowNotify
+          open={state.isShowNotifyOpen}
+          onClose={() => handler.setIsShowNotifyOpen(false)}
+          notifyData={state.selectedNotify}
+        />
+      )}
     </TableCell>
   );
 
-  const renderCommonCells = (row: any, labelId: string) => (
+  const renderCommonCells = (
+    row: any,
+    labelId: string,
+    isItemSelected: boolean
+  ) => (
     <>
       <TableCell padding="checkbox">
         {isCheckBox && (
           <Checkbox
+            checked={isItemSelected}
             color="primary"
             inputProps={{ "aria-labelledby": labelId }}
           />
@@ -202,9 +254,36 @@ export default function DataTable({
       <TableCell align="left">{row.className}</TableCell>
       <TableCell align="left">{row.grade}</TableCell>
       <TableCell align="left">{row.homeroomTeacherd || "none"}</TableCell>
+      <TableCell align="left">{row.studentNumber || 0}</TableCell>
       <TableCell align="left">{row.batchId}</TableCell>
       <TableCell align="left">{row.academicYear}</TableCell>
       <TableCell align="left">{row.createdAt}</TableCell>
+    </>
+  );
+  const renderClassArrangementNewCells = (row: any) => (
+    <>
+      <TableCell align="left">{row.username}</TableCell>
+      <TableCell align="left">{row.name}</TableCell>
+      <TableCell align="left">{row.email}</TableCell>
+      <TableCell align="left">{row.phone}</TableCell>
+    </>
+  );
+  const renderNewSemesterArrangementNewCells = (row: any) => (
+    <>
+      <TableCell align="left">{row.username}</TableCell>
+      <TableCell align="left">{row.name}</TableCell>
+      <TableCell align="left">{row.email}</TableCell>
+      <TableCell align="left">{row.phone}</TableCell>
+      <TableCell align="left">{row.grade}</TableCell>
+      <TableCell align="left">{row.className}</TableCell>
+    </>
+  );
+  const renderNotifyNewCells = (row: any) => (
+    <>
+      <TableCell align="left">{row.sendDate}</TableCell>
+      <TableCell align="left">{row.message}</TableCell>
+      <TableCell align="left">{row.sender}</TableCell>
+      <TableCell align="left">{row.receiver}</TableCell>
     </>
   );
   const renderAttendanceManagementCells = (row: any) => (
@@ -247,6 +326,7 @@ export default function DataTable({
         <TableCell align="left">{row?.fullName || "none"}</TableCell>
       )}
       <TableCell align="left">{row.checkin || "none"}</TableCell>
+      <TableCell align="left">{row?.note || "none"}</TableCell>
       <TableCell align="left">{row.status}</TableCell>
     </>
   );
@@ -263,6 +343,11 @@ export default function DataTable({
           isAttendance={isAttendance}
           setFiltersUser={setFiltersUser}
           isTeacher={isRoleTeacher}
+          isClassArrangement={isClassArrangement}
+          isNewSemester={isNewSemester}
+          isTeacherView={isTeacherView}
+          isRoleStudent={isRoleStudent}
+          isNotifyPage={isNotifyPage}
         />
         <TableContainer>
           <Table sx={{ minWidth: 850 }} aria-labelledby="tableTitle">
@@ -277,18 +362,29 @@ export default function DataTable({
               isCheckBox={isCheckBox}
               isAdmin={isAdmin}
               isTeacher={isRoleTeacher}
+              isNewSemester={isNewSemester}
+              isClassArrangement={isClassArrangement}
             />
             <TableBody>
               {state.visibleRows.map((row, index) => {
                 const labelId = `enhanced-table-checkbox-${index}`;
+                const isItemSelected = state.selected.includes(
+                  String(row.id || "")
+                );
                 return (
                   <TableRow
                     hover
                     tabIndex={-1}
                     key={row?.id}
                     sx={{ cursor: "pointer" }}
+                    onClick={event =>
+                      isCheckBox &&
+                      handler.handleClick(event, String(row.id || ""))
+                    }
+                    aria-checked={isItemSelected}
+                    selected={isItemSelected}
                   >
-                    {renderCommonCells(row, labelId)}
+                    {renderCommonCells(row, labelId, isItemSelected)}
                     {isUserManagement && renderUserManagementCells(row)}
                     {isAdmin &&
                       !isAttendance &&
@@ -299,6 +395,10 @@ export default function DataTable({
                     {isClassManagement && renderActionCell(row)}
                     {isAttendance && renderAttendanceManagementCells(row)}
                     {isAttendance && isRoleTeacher && renderActionCell(row)}
+                    {isClassArrangement && renderClassArrangementNewCells(row)}
+                    {isNewSemester && renderNewSemesterArrangementNewCells(row)}
+                    {isNotifyPage && renderNotifyNewCells(row)}
+                    {isNotifyPage && renderActionCell(row)}
                   </TableRow>
                 );
               })}
@@ -317,19 +417,62 @@ export default function DataTable({
             display: "flex",
             justifyContent: "flex-end",
             alignItems: "center",
+            gap: 2,
             px: 2,
             pt: 2,
           }}
         >
+          {isClassArrangement && state.selected.length > 0 && (
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel id="grade-select-label">Grade</InputLabel>
+              <Select
+                labelId="grade-select-label"
+                value={state.selectedGrade}
+                label="Grade"
+                onChange={e => handler.setSelectedGrade(e.target.value)}
+              >
+                <MenuItem value="10">10</MenuItem>
+                <MenuItem value="11">11</MenuItem>
+                <MenuItem value="12">12</MenuItem>
+              </Select>
+              {state.gradeError && (
+                <Box sx={{ color: "error.main", fontSize: "0.75rem", mt: 0.5 }}>
+                  Please select a grade.
+                </Box>
+              )}
+            </FormControl>
+          )}
+
+          {isAdmin && isClassManagement && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => handler.handlerClassDistribution()}
+            >
+              class distribution
+            </Button>
+          )}
           {isAdmin && !isAttendance && (
             <Button
               variant="contained"
               color="primary"
-              onClick={() => handler.setIsCreateUser(!state.isCreateUser)}
+              onClick={() => {
+                if (isClassArrangement) {
+                  handler.handleSubmitClassArrangement(isClassArrangement);
+                } else if (isNewSemester) {
+                  handler.handleSubmitNewSemesterArrangement(isNewSemester);
+                } else {
+                  handler.setIsCreateUser(!state.isCreateUser);
+                }
+              }}
             >
               {!state.isCreateUser
-                ? isClassManagement
+                ? isClassManagement || isClassArrangement
                   ? "Create Class"
+                  : isNewSemester
+                  ? "Submit"
+                  : isNotifyPage
+                  ? "Create Notify"
                   : "Create User"
                 : "Close"}
             </Button>
@@ -342,6 +485,9 @@ export default function DataTable({
         )}
         {state.isCreateUser && !isAttendance && isClassManagement && (
           <AddClassForm />
+        )}
+        {state.isCreateUser && !isAttendance && isNotifyPage && (
+          <CreateNotifyForm role={isNotifyRole || ""} />
         )}
 
         {/* Pagination */}

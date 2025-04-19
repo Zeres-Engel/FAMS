@@ -83,7 +83,7 @@ function useNavBarHook() {
         return handleLogoutRequest();
     }
   };
-  const state = { navItems };
+  const state = { navItems,role };
   const handler = { handleOnNavigate };
   return { state, handler };
 }
