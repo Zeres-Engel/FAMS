@@ -135,8 +135,7 @@ function useNavBarHook() {
     }
   };
   
-  const state = { navItems, userFullName, userAvatar };
-  const state = { navItems,role };
+  const state = { navItems, userFullName, userAvatar, role };
   const handler = { handleOnNavigate };
   return { state, handler };
 }

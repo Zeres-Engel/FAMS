@@ -138,7 +138,7 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
             },
           }}
         >
-          {drawer}
+          {drawerContent}
         </Drawer>
       </nav>
       <Box component="main" sx={{ p: 3 }}>

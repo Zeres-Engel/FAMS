@@ -160,8 +160,6 @@ function useProfilePageHook() {
   };
 
   const [profileData, setProfileData] = useState<ProfileData>(profileDefault);
-
-  const [profileData, setProfileData] = useState<ProfileData>(profileDefault);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
