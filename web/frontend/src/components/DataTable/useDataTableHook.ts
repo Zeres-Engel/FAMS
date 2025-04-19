@@ -54,6 +54,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
     classId: [],
     firstName: "",
     lastName: "",
+    fullName: "",
     dob: "",
     gender: true,
     address: "",
@@ -61,7 +62,8 @@ function useDataTableHook(props: UseDataTableHookProps) {
     parentNames: ["", ""],
     parentCareers: ["", ""],
     parentPhones: ["", ""],
-    parentGenders: [false, false],
+    parentGenders: ["Male", "Female"],
+    parentEmails: ["", ""],
     major: "",
     weeklyCapacity: "",
     role: "",
@@ -121,16 +123,18 @@ function useDataTableHook(props: UseDataTableHookProps) {
         classId: user?.classTeacher || [],
         firstName: user?.teacherFirstName || "",
         lastName: user?.teacherLastName || "",
-        dob: user.details?.dateOfBirth
-          ? new Date(user.details.dateOfBirth).toISOString().split("T")[0] // format yyyy-mm-dd
+        fullName: user?.name || '',
+        dob: user?.TeacherDOB
+          ? new Date(user?.TeacherDOB).toISOString().split("T")[0] // format yyyy-mm-dd
           : "",
         gender: user.gender === "Male" ? true : false,
-        address: user.details?.address || "",
+        address: user.TeacherAddress || "",
         phone: user?.phoneSub || "",
 
         parentNames: user.Parent?.map((p: any) => p.fullName) || ["", ""],
         parentCareers: user.Parent?.map((p: any) => p.career) || ["", ""],
         parentPhones: user.Parent?.map((p: any) => p.phone) || ["", ""],
+        parentEmails: user.Parent?.map((p: any) => p.email) || ["", ""],
         parentGenders: user.Parent?.map((p: any) => p.gender) || [false, false],
 
         major: user?.TeacherMajor, // không có dữ liệu trong object gốc, gán rỗng hoặc thêm logic nếu cần
@@ -142,16 +146,19 @@ function useDataTableHook(props: UseDataTableHookProps) {
       classId: [user?.details?.classId],
       firstName: user.details?.firstName || "",
       lastName: user.details?.lastName || "",
+      fullName: user.name || "",
       dob: user.details?.dateOfBirth
         ? new Date(user.details.dateOfBirth).toISOString().split("T")[0] // format yyyy-mm-dd
         : "",
       gender: user.gender === "Male" ? true : false,
       address: user.details?.address || "",
-      phone: user.details?.phone || "",
-
+      phone: user.details?.phone || user.phoneSub,
+      career: user.parentCareer || "", 
+      email: user.parentEmail || "",
       parentNames: user.Parent?.map((p: any) => p.fullName) || ["", ""],
       parentCareers: user.Parent?.map((p: any) => p.career) || ["", ""],
       parentPhones: user.Parent?.map((p: any) => p.phone) || ["", ""],
+      parentEmails: user.Parent?.map((p: any) => p.email) || ["", ""],
       parentGenders: user.Parent?.map((p: any) => p.gender) || [false, false],
 
       major: "", // không có dữ liệu trong object gốc, gán rỗng hoặc thêm logic nếu cần
@@ -177,6 +184,11 @@ function useDataTableHook(props: UseDataTableHookProps) {
   const handleEditClick = (user: EditUserForm, userId?: string) => {
     const userEdit = allUsers?.find(u => u.id === userId);
     // Lọc tại đây nếu cần'
+    console.log("Editing user:", userEdit);
+    
+    console.log(formatUserToEditUserForm(userEdit));
+    console.log(userEdit?.id);
+    
     setEditingUserId(userEdit?.id);
     setEditingUser(formatUserToEditUserForm(userEdit));
     setIsEditOpen(true);
@@ -333,6 +345,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
     gradeError,
     isShowNotifyOpen,
     selectedNotify,
+    editingUserId
   };
   const handler = {
     handleRequestSort,

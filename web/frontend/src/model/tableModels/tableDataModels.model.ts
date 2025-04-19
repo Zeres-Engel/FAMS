@@ -121,6 +121,7 @@ interface EditUserForm {
   classId: string[];
   firstName: string;
   lastName: string;
+  fullName: string;
   dob: string;
   gender?: boolean;
   address: string;
@@ -128,10 +129,13 @@ interface EditUserForm {
   parentNames: string[];
   parentCareers: string[];
   parentPhones: string[];
-  parentGenders: boolean[];
+  parentGenders: string[];
+  parentEmails: string[];
   major: string;
   weeklyCapacity: string;
   role: string;
+  career?: string; // <-- add this
+  email?: string;  // <-- and this
 }
 interface EditTeacherForm {
   classId: number[];

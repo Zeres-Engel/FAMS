@@ -43,12 +43,12 @@ function useClassPageHook() {
       disablePadding: true,
       label: "ID",
     },
-    {
-      id: "username",
-      numeric: false,
-      disablePadding: true,
-      label: "UserName",
-    },
+    // {
+    //   id: "username",
+    //   numeric: false,
+    //   disablePadding: true,
+    //   label: "UserName",
+    // },
     {
       id: "email",
       numeric: false,

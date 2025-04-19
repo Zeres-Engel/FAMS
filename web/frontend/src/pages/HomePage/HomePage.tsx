@@ -44,7 +44,7 @@ function HomePage(): React.JSX.Element {
   ];
 
   return (
-    <LayoutComponent pageHeader="Student Home Page">
+    <LayoutComponent pageHeader="Home Page">
       <Box
         sx={{
           p: 3,
