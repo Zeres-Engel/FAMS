@@ -2156,3 +2156,165 @@ Khi cập nhật phụ huynh, bạn có thể thêm học sinh mới vào danh s
 2. Đối với các trường đặc biệt như `fullName`, API sẽ tự động xử lý tách và kết hợp với `firstName` và `lastName`
 3. Khi cung cấp trường `gender`, bạn có thể sử dụng `true`/`false`, `"Male"`/`"Female"` hoặc `"true"`/`"false"`
 4. Thông tin RFID sẽ được tự động cập nhật hoặc tạo mới tùy thuộc vào trạng thái hiện tại
+
+## User Creation API with Avatar Upload
+
+The FAMS system provides a unified API endpoint for creating users of different roles (student, teacher, parent) with the ability to upload avatars.
+
+### Endpoint
+
+```
+POST http://fams.io.vn/api-nodejs/users/create
+```
+
+### Authentication
+
+This endpoint requires admin authentication. Include the authorization token in the header:
+
+```
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+### Request Format
+
+Use **multipart/form-data** format to support file upload.
+
+### Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| role | string | User role: "student", "teacher", or "parent" |
+| firstName | string | User's first name |
+| lastName | string | User's last name |
+| phone | string | Contact phone number |
+| avatar | file | User's profile picture (optional) |
+
+### Common Optional Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| email | string | Primary email address |
+| backup_email | string | Backup email address |
+| gender | string | "Male" or "Female" |
+| dateOfBirth | string | Date in YYYY-MM-DD format |
+| address | string | Physical address |
+
+### Role-Specific Fields
+
+#### Student Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| parentNames | array | Array of parent names |
+| parentCareers | array | Array of parent careers |
+| parentPhones | array | Array of parent phone numbers |
+| parentGenders | array | Array of parent genders (true for Male, false for Female) |
+| parentEmails | array | Array of parent email addresses |
+
+#### Teacher Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| major | string | Teacher's specialization |
+| weeklyCapacity | number | Weekly teaching hours capacity |
+| degree | string | Academic degree |
+
+#### Parent Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| career | string | Parent's career |
+| childrenIds | array | Array of existing student IDs to link with this parent |
+
+### Example Request
+
+Here's an example of a unified form that includes fields for all user types:
+
+```json
+{
+  "role": "student",
+  "firstName": "Thành",
+  "lastName": "Nguyễn Phước",
+  "email": "thanhnp@gmail.com",
+  "backup_email": "thanhnp@gmail.com",
+  "phone": "0987654321",
+  "gender": "Male",
+  "dateOfBirth": "2005-05-15",
+  "address": "123 Đường ABC, Thành phố XYZ",
+  "parentNames": ["Nguyễn Phước Hải", "Trần Thị Mai"],
+  "parentCareers": ["Kỹ sư", "Giáo viên"],
+  "parentPhones": ["0123456789", "0987654321"],
+  "parentGenders": [true, false],
+  "parentEmails": ["nph@gmail.com", "ttm@gmail.com"],
+  "major": "Công nghệ",
+  "degree": "Cử nhân Sư phạm",
+  "weeklyCapacity": 10
+}
+```
+
+> **Note**: When submitting the form, only fields relevant to the specified role will be processed. You can include all fields in a single form, making it easier to use the same form for different user types.
+
+### Avatar Upload
+
+To upload an avatar:
+1. Use `multipart/form-data` encoding
+2. Include the avatar file in the `avatar` field
+3. Only image files (jpg, jpeg, png, gif) are accepted
+4. Maximum file size: 5MB
+
+### Response Format
+
+On successful creation:
+
+```json
+{
+  "success": true,
+  "message": "User created successfully",
+  "data": {
+    "user": {
+      "userId": "thanhngst12345",
+      "email": "thanhnp@gmail.com",
+      "role": "student",
+      "avatar": "http://fams.io.vn/avatars/student/thanhngst12345.jpg"
+      // Additional user details
+    },
+    "student": {
+      // Student-specific information
+    },
+    // Additional role-specific data
+  }
+}
+```
+
+### Error Responses
+
+| Status | Description |
+|--------|-------------|
+| 400 | Bad Request - Missing required fields or invalid data |
+| 401 | Unauthorized - Invalid or missing authentication token |
+| 403 | Forbidden - User doesn't have admin privileges |
+| 500 | Server Error - Internal processing error |
+
+### JavaScript Fetch Example
+
+```javascript
+const formData = new FormData();
+formData.append('role', 'student');
+formData.append('firstName', 'Thành');
+formData.append('lastName', 'Nguyễn Phước');
+formData.append('phone', '0987654321');
+formData.append('email', 'thanhnp@gmail.com');
+// Add more fields as needed
+formData.append('avatar', fileInputElement.files[0]); // From input[type='file']
+
+fetch('http://fams.io.vn/api-nodejs/users/create', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  },
+  body: formData
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Error:', error));
+```

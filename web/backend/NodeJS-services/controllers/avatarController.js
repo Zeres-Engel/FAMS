@@ -5,24 +5,34 @@ const sharp = require('sharp');
 const { UserAccount } = require('../database/models');
 const asyncHandler = require('../middleware/asyncHandler');
 
-// Ensure avatars directory exists
-const uploadDir = path.join(__dirname, '../public/avatars');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+// Ensure root avatars directory exists
+const rootUploadDir = path.join(__dirname, '../public/avatars');
+if (!fs.existsSync(rootUploadDir)) {
+  fs.mkdirSync(rootUploadDir, { recursive: true });
 }
+
+// Ensure role-based directories exist
+const roles = ['student', 'teacher', 'parent', 'admin'];
+roles.forEach(role => {
+  const roleDir = path.join(rootUploadDir, role);
+  if (!fs.existsSync(roleDir)) {
+    fs.mkdirSync(roleDir, { recursive: true });
+  }
+});
 
 // Configure multer storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, uploadDir);
+    // Get user role (default to student if not found)
+    const role = (req.user?.role || 'student').toLowerCase();
+    // Use role-specific directory
+    const roleDir = path.join(rootUploadDir, roles.includes(role) ? role : 'student');
+    cb(null, roleDir);
   },
   filename: function (req, file, cb) {
-    // Use userId as filename + timestamp to avoid overwriting
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    // Use fixed userId as filename for consistent path
     const userId = req.user.userId;
-    const fileExt = path.extname(file.originalname);
-    
-    cb(null, `${userId}-${uniqueSuffix}${fileExt}`);
+    cb(null, `${userId}.jpg`);
   }
 });
 
@@ -91,40 +101,32 @@ exports.uploadAvatar = [
         role: user.role
       });
       
-      // Process image with sharp
+      // Process image with sharp directly over the uploaded file - no need for processed version
       const originalFilePath = req.file.path;
-      const processedFilePath = originalFilePath.replace(/\.[^/.]+$/, '') + '_processed.jpg';
       
-      // Optimize and resize image to 400x400
+      // Optimize and resize image to 400x400, overwrite the original file
       await sharp(originalFilePath)
         .resize(400, 400, { fit: 'cover' })
         .jpeg({ quality: 80 })
-        .toFile(processedFilePath);
+        .toFile(`${originalFilePath}.temp`);
       
-      // Delete original file after processing
-      if (fs.existsSync(originalFilePath)) {
-        fs.unlinkSync(originalFilePath);
-      }
+      // Replace original with optimized version
+      fs.unlinkSync(originalFilePath);
+      fs.renameSync(`${originalFilePath}.temp`, originalFilePath);
       
-      // Delete old avatar if exists
-      if (user.avatar) {
-        const oldAvatarPath = path.join(__dirname, '../public', user.avatar.replace(/^\//, ''));
-        
-        if (fs.existsSync(oldAvatarPath)) {
-          fs.unlinkSync(oldAvatarPath);
-        }
-      }
+      // Get user role for path construction
+      const userRole = (user.role || 'student').toLowerCase();
+      const validRole = roles.includes(userRole) ? userRole : 'student';
       
-      // Update user with new avatar path
-      // Tạo cả đường dẫn tương đối và URL đầy đủ
-      const relativePath = '/avatars/' + path.basename(processedFilePath);
+      // Create role-based relative path
+      const relativePath = `/avatars/${validRole}/${user.userId}.jpg`;
       
-      // Lấy domain từ request hoặc domain mặc định
+      // Get domain from request or default domain
       const protocol = req.headers['x-forwarded-proto'] || 'http';
       const host = req.headers.host || 'fams.io.vn';
       const fullAvatarUrl = `${protocol}://${host}${relativePath}`;
       
-      // Lưu URL đầy đủ vào database thay vì chỉ đường dẫn tương đối
+      // Save full URL to database
       user.avatar = fullAvatarUrl;
       
       try {
@@ -132,12 +134,6 @@ exports.uploadAvatar = [
         if (!user.username) {
           // If username is missing, set it to userId as a fallback
           user.username = user.userId;
-        }
-        
-        // Ensure role is capitalized to match enum values
-        if (user.role && typeof user.role === 'string') {
-          const correctRole = user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase();
-          user.role = correctRole;
         }
         
         await user.save();
@@ -160,21 +156,22 @@ exports.uploadAvatar = [
           // Fix role enum
           if (saveError.errors && saveError.errors.role) {
             console.log("Fixing role validation error");
-            // Map any role value to valid enum values
+            // Map any role value to valid enum values but KEEP LOWERCASE
             const roleMap = {
-              'admin': 'Admin',
-              'teacher': 'Teacher',
-              'parent': 'Parent',
-              'student': 'Student'
+              'admin': 'admin',
+              'teacher': 'teacher',
+              'parent': 'parent',
+              'student': 'student'
             };
             
             if (user.role && roleMap[user.role.toLowerCase()]) {
+              // Keep it lowercase but ensure it's a valid value
               user.role = roleMap[user.role.toLowerCase()];
-              console.log(`Converting role to "${user.role}"`);
+              console.log(`Setting role to "${user.role}"`);
               needToSaveAgain = true;
             } else {
-              // Default to Student if role is invalid
-              user.role = 'Student';
+              // Default to student (lowercase) if role is invalid
+              user.role = 'student';
               needToSaveAgain = true;
             }
           }
@@ -236,22 +233,55 @@ exports.getAvatar = asyncHandler(async (req, res) => {
     });
   }
   
-  if (!user.avatar) {
-    return res.status(404).json({
-      success: false,
-      message: 'Người dùng chưa có avatar',
-      code: 'NO_AVATAR'
-    });
-  }
+  // Get user role for path construction
+  const userRole = (user.role || 'student').toLowerCase();
+  const validRole = roles.includes(userRole) ? userRole : 'student';
+  const avatarPath = path.join(rootUploadDir, validRole, `${user.userId}.jpg`);
   
-  // Kiểm tra nếu avatar là URL đầy đủ hoặc đường dẫn tương đối
-  let avatarUrl = user.avatar;
+  // Kiểm tra xem avatar có tồn tại trong filesystem không
+  const fileExists = fs.existsSync(avatarPath);
   
-  // Nếu chỉ là đường dẫn tương đối (bắt đầu bằng /), thêm domain vào
-  if (user.avatar.startsWith('/')) {
+  // Check if we need to create a default avatar
+  if (!user.avatar || !fileExists) {
+    // Create URL based on role directory structure even if file doesn't exist yet
+    const relativePath = `/avatars/${validRole}/${user.userId}.jpg`;
     const protocol = req.headers['x-forwarded-proto'] || 'http';
     const host = req.headers.host || 'fams.io.vn';
-    avatarUrl = `${protocol}://${host}${user.avatar}`;
+    const avatarUrl = `${protocol}://${host}${relativePath}`;
+    
+    // Update user's avatar URL in database
+    if (!user.avatar) {
+      user.avatar = avatarUrl;
+      await user.save();
+    }
+    
+    // If avatar doesn't exist in database or file doesn't exist on disk
+    if (!fileExists) {
+      return res.status(404).json({
+        success: false,
+        message: 'Người dùng chưa có avatar',
+        avatarUrl: avatarUrl, // Return URL even if file doesn't exist yet
+        code: 'NO_AVATAR_FILE'
+      });
+    }
+  }
+  
+  // Get user role for path construction if needed
+  let avatarUrl = user.avatar;
+  
+  // Kiểm tra nếu avatar là URL đầy đủ hoặc đường dẫn tương đối
+  if (!avatarUrl.startsWith('http')) {
+    // Nếu chỉ là đường dẫn tương đối hoặc không có avatar URL hợp lệ
+    // tạo URL dựa trên cấu trúc thư mục role
+    const relativePath = `/avatars/${validRole}/${user.userId}.jpg`;
+    
+    const protocol = req.headers['x-forwarded-proto'] || 'http';
+    const host = req.headers.host || 'fams.io.vn';
+    avatarUrl = `${protocol}://${host}${relativePath}`;
+    
+    // Cập nhật lại URL trong database
+    user.avatar = avatarUrl;
+    await user.save();
   }
   
   res.json({
@@ -282,38 +312,34 @@ exports.deleteAvatar = asyncHandler(async (req, res) => {
     });
   }
   
-  if (!user.avatar) {
-    return res.status(404).json({
-      success: false,
-      message: 'Người dùng chưa có avatar',
-      code: 'NO_AVATAR'
-    });
-  }
-  
   try {
-    // Trích xuất tên tệp từ URL đầy đủ hoặc đường dẫn tương đối
-    let avatarRelativePath = user.avatar;
+    // Get user role for path construction
+    const userRole = (user.role || 'student').toLowerCase();
+    const validRole = roles.includes(userRole) ? userRole : 'student';
     
-    // Nếu là URL đầy đủ (bắt đầu bằng http:// hoặc https://), trích xuất đường dẫn tương đối
-    if (user.avatar.startsWith('http')) {
-      const url = new URL(user.avatar);
-      avatarRelativePath = url.pathname; // Lấy phần path từ URL
-    }
-    
-    // Xóa dấu / đầu tiên nếu có
-    avatarRelativePath = avatarRelativePath.replace(/^\//, '');
-    
-    // Delete avatar file
-    const avatarPath = path.join(__dirname, '../public', avatarRelativePath);
+    // Direct path to user's avatar using userId and role
+    const avatarPath = path.join(rootUploadDir, validRole, `${user.userId}.jpg`);
     console.log('Deleting avatar file:', avatarPath);
     
+    // Check if avatar file exists before attempting to delete
     if (fs.existsSync(avatarPath)) {
-      fs.unlinkSync(avatarPath);
+      try {
+        fs.unlinkSync(avatarPath);
+        console.log(`Successfully deleted avatar file: ${avatarPath}`);
+      } catch (unlinkError) {
+        console.error(`Error deleting file: ${unlinkError.message}`);
+        // Continue processing even if file deletion fails
+      }
+    } else {
+      console.log(`Avatar file does not exist at path: ${avatarPath}`);
+      // No need to fail if file doesn't exist, just update database
     }
     
-    // Update user
-    user.avatar = null;
-    await user.save();
+    // Update user in database regardless of whether file existed
+    if (user.avatar) {
+      user.avatar = null;
+      await user.save();
+    }
     
     res.json({
       success: true,

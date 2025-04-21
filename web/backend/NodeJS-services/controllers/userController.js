@@ -129,21 +129,48 @@ exports.createUser = async (req, res) => {
     // Set default password (can be changed later)
     const defaultPassword = 'FAMS@2023';
 
+    // Store avatar file if provided
+    const avatarFile = req.file;
+    let avatarData = null;
+    
+    if (avatarFile) {
+      // We'll process the avatar after user creation
+      avatarData = {
+        path: avatarFile.path,
+        mimetype: avatarFile.mimetype
+      };
+    }
+
     // Different logic based on role (ensure first letter capitalized)
+    let result;
+    
     if (role.toLowerCase() === 'student') {
-      return await createStudent(req, res, defaultPassword);
+      result = await createStudent(req, res, defaultPassword, avatarData);
     } else if (role.toLowerCase() === 'teacher') {
-      return await createTeacher(req, res, defaultPassword);
+      result = await createTeacher(req, res, defaultPassword, avatarData);
     } else if (role.toLowerCase() === 'parent') {
-      return await createParent(req, res, defaultPassword);
+      result = await createParent(req, res, defaultPassword, avatarData);
     } else {
       return res.status(400).json({
         success: false,
         message: 'Invalid role specified. Must be student, teacher, or parent.'
       });
     }
+    
+    return result;
   } catch (error) {
     console.error('Error creating user:', error);
+    
+    // Clean up avatar file if there was an error
+    if (req.file && req.file.path) {
+      const fs = require('fs');
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (unlinkError) {
+        console.error('Error cleaning up avatar file:', unlinkError);
+      }
+    }
+    
     res.status(500).json({
       success: false,
       message: error.message
@@ -189,7 +216,7 @@ const removeVietnameseAccents = (str) => {
 };
 
 // Helper function to create student
-const createStudent = async (req, res, defaultPassword) => {
+const createStudent = async (req, res, defaultPassword, avatarData) => {
   try {
     const { 
       firstName, 
@@ -248,163 +275,157 @@ const createStudent = async (req, res, defaultPassword) => {
     const userId = `${normalizedFirstName.toLowerCase()}${lastNameInitials}st${batch.batchId}${newStudentId}`;
     
     // 5. Check if userId already exists
-    const existingUser = await UserAccount.findOne({ userId });
-    if (existingUser) {
+    const userExists = await UserAccount.findOne({ userId });
+    if (userExists) {
       return res.status(400).json({
         success: false,
-        message: `User ID ${userId} already exists. Please try with a different name or contact administrator.`,
-        code: 'DUPLICATE_USERID'
+        message: 'User ID already exists',
+        userId
       });
     }
     
-    // 6. Create user account - Email luôn được tạo từ userId (không dấu)
+    // 6. Create new UserAccount
+    const studentUsername = userId;
     const user = await UserAccount.create({
       userId,
-      username: userId,
+      username: studentUsername,
+      email: email || `${userId}@fams.edu.vn`, // Default email if not provided
+      backup_email: backup_email || null,
       password: defaultPassword,
-      email: `${userId}@fams.edu.vn`, // Luôn tạo email từ userId không dấu
-      backup_email: email || backup_email, // Sử dụng email nhập vào làm backup_email
-      role: 'Student', // Viết hoa chữ cái đầu để phù hợp với enum
-      isActive: true
+      role: 'student'
     });
-
-    // 7. Create student record with the ID we determined
+    
+    // 7. Now create the actual student with the user ID
     const student = await Student.create({
-      studentId: newStudentId,
       userId,
+      studentId: newStudentId,
       firstName,
       lastName,
-      fullName: `${lastName} ${firstName}`, // Tạo fullName theo định dạng lastName firstName
-      email: `${userId}@fams.edu.vn`, // Email luôn khớp với email trong tài khoản
-      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+      fullName: `${lastName} ${firstName}`, // Vietnamese format: lastName first
       gender: typeof gender === 'string' ? gender : (gender === true || gender === 'true' ? 'Male' : 'Female'),
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
       address,
-      phone,
+      phone: phone ? phone.toString() : '',
       batchId: batch.batchId,
-      isActive: true,
-      // Initialize empty arrays for parent data
-      parentIds: [],
-      parentNames: [],
-      parentCareers: [],
-      parentPhones: [],
-      parentGenders: [],
-      parentEmails: []
+      batchYear: batch.startYear,
+      enrollmentDate: new Date()
     });
-
-    // 8. Create parents if provided
-    const createdParents = [];
-    if (parentNames && parentNames.length > 0) {
-      // Ensure all arrays have same length by filling with undefined/null values
-      const maxLength = Math.max(
-        parentNames.length,
-        (parentCareers || []).length,
-        (parentPhones || []).length,
-        (parentGenders || []).length,
-        (parentEmails || []).length
-      );
-      
-      const normalizedParentNames = [...parentNames];
-      const normalizedParentCareers = [...(parentCareers || [])];
-      const normalizedParentPhones = [...(parentPhones || [])];
-      const normalizedParentGenders = [...(parentGenders || [])];
-      const normalizedParentEmails = [...(parentEmails || [])];
-      
-      // Normalize all arrays to the same length
-      while (normalizedParentNames.length < maxLength) normalizedParentNames.push(null);
-      while (normalizedParentCareers.length < maxLength) normalizedParentCareers.push(null);
-      while (normalizedParentPhones.length < maxLength) normalizedParentPhones.push(null);
-      while (normalizedParentGenders.length < maxLength) normalizedParentGenders.push(null);
-      while (normalizedParentEmails.length < maxLength) normalizedParentEmails.push(null);
-      
-      // Create each parent
-      for (let i = 0; i < maxLength; i++) {
-        if (!normalizedParentNames[i]) continue;
+    
+    // 8. Process parents if provided
+    let createdParents = [];
+    if (parentNames && parentNames.length > 0 && Array.isArray(parentNames)) {
+      // Process each parent
+      for (let i = 0; i < parentNames.length; i++) {
+        if (!parentNames[i]) continue; // Skip if name not provided
         
-        // Parse parent name into first name and last name
-        // For Vietnamese names like "Nguyễn Văn A", last name is "Nguyễn Văn", first name is "A"
-        const nameParts = normalizedParentNames[i].split(' ');
-        const parentFirstName = nameParts.pop() || ''; // Last part is first name
-        const parentLastName = nameParts.join(' '); // Rest is last name
+        const parentName = parentNames[i];
+        const nameParts = parentName.split(' ');
+        
+        // Extract first and last name
+        const parentFirstName = nameParts.length > 1 ? nameParts.pop() : parentName;
+        const parentLastName = nameParts.length > 0 ? nameParts.join(' ') : '';
         
         // Normalize parent names
         const normalizedParentFirstName = removeVietnameseAccents(parentFirstName);
-        const normalizedParentLastName = removeVietnameseAccents(parentLastName);
+        const normalizedParentLastName = removeVietnameseAccents(parentLastName || '');
         
-        // Get next available parent ID
-        const maxParent = await Parent.findOne().sort('-parentId');
-        const newParentId = maxParent ? parseInt(maxParent.parentId) + 1 : 1;
-        
-        // Generate unique parent userId - new format: {firstName}{lastName-initials}pr{parentId}
-        const lastNameInitials = normalizedParentLastName.split(' ')
+        // Create parent userId: {firstName}{lastNameInitials}p{childStudentId}
+        const parentLastNameInitials = normalizedParentLastName.split(' ')
           .map(part => part.charAt(0).toLowerCase())
           .join('');
-        const parentUserId = `${normalizedParentFirstName.toLowerCase()}${lastNameInitials}pr${newParentId}`;
         
-        // Check if parentUserId already exists
-        const existingParentUser = await UserAccount.findOne({ userId: parentUserId });
-        if (existingParentUser) {
-          console.warn(`Parent user ID ${parentUserId} already exists. Skipping parent creation.`);
-          continue;
+        const parentUserId = `${normalizedParentFirstName.toLowerCase()}${parentLastNameInitials}p${newStudentId}${i+1}`;
+        
+        // Check if parent user already exists
+        const parentUserExists = await UserAccount.findOne({ userId: parentUserId });
+        
+        if (!parentUserExists) {
+          // Create parent user account
+          const parentUser = await UserAccount.create({
+            userId: parentUserId,
+            username: parentUserId,
+            email: (parentEmails && parentEmails[i]) || `${parentUserId}@fams.edu.vn`,
+            password: defaultPassword,
+            role: 'parent'
+          });
+          
+          // Create parent record
+          const parent = await Parent.create({
+            userId: parentUserId,
+            firstName: parentFirstName,
+            lastName: parentLastName || '',
+            fullName: parentName,
+            gender: (parentGenders && parentGenders[i]) || 'Unknown',
+            phone: (parentPhones && parentPhones[i]) || '',
+            career: (parentCareers && parentCareers[i]) || ''
+          });
+          
+          // Link parent to student
+          await ParentStudent.create({
+            parentId: parentUserId,
+            studentId: student.userId,
+            relationship: i === 0 ? 'Father' : (i === 1 ? 'Mother' : 'Guardian')
+          });
+          
+          // Add to student's parentIds
+          if (!student.parentIds) student.parentIds = [];
+          student.parentIds.push(parentUserId);
+          
+          createdParents.push({
+            userId: parentUserId,
+            name: parentName,
+            email: (parentEmails && parentEmails[i]) || `${parentUserId}@fams.edu.vn`,
+            phone: (parentPhones && parentPhones[i]) || ''
+          });
         }
-        
-        // Create parent user account
-        const parentUser = await UserAccount.create({
-          userId: parentUserId,
-          username: parentUserId,
-          password: defaultPassword,
-          email: `${parentUserId}@fams.edu.vn`,
-          backup_email: normalizedParentEmails[i] || null,
-          role: 'Parent', // Viết hoa chữ cái đầu để phù hợp với enum
-          isActive: true
-        });
-        
-        // Determine parent gender
-        let parentGender = normalizedParentGenders[i];
-        if (parentGender === undefined || parentGender === null) {
-          // Default parent gender if not provided
-          parentGender = parentFirstName === 'Thị' ? false : true;
-        } else if (typeof parentGender === 'string') {
-          parentGender = parentGender.toLowerCase() === 'male' || parentGender === 'true';
-        }
-        
-        // Create parent record
-        const parent = await Parent.create({
-          parentId: newParentId,
-          userId: parentUserId,
-          firstName: parentFirstName,
-          lastName: parentLastName,
-          fullName: `${parentLastName} ${parentFirstName}`, // Tạo fullName theo định dạng lastName firstName
-          email: normalizedParentEmails[i] || `${parentUserId}@fams.edu.vn`, // Sử dụng email riêng nếu có hoặc email mặc định
-          career: normalizedParentCareers[i] || '',
-          phone: normalizedParentPhones[i] || '',
-          gender: parentGender
-        });
-        
-        // Create parent-student relation
-        await ParentStudent.create({
-          parentId: newParentId,
-          studentId: newStudentId,
-          relationship: 'Other'
-        });
-        
-        // Update student record with parent info
-        student.parentIds.push(newParentId.toString());
-        student.parentNames.push(normalizedParentNames[i]);
-        student.parentCareers.push(normalizedParentCareers[i] || '');
-        student.parentPhones.push(normalizedParentPhones[i] || '');
-        student.parentGenders.push(parentGender);
-        student.parentEmails.push(normalizedParentEmails[i] || `${parentUserId}@fams.edu.vn`);
-        
-        createdParents.push({
-          parentId: newParentId.toString(),
-          name: normalizedParentNames[i],
-          userId: parentUserId,
-          email: normalizedParentEmails[i] || `${parentUserId}@fams.edu.vn`
-        });
       }
       
-      // Save updated student with parent info
-      await student.save();
+      // Save updated student with parentIds
+      if (student.parentIds && student.parentIds.length > 0) {
+        await student.save();
+      }
+    }
+    
+    // 9. Process avatar if provided
+    if (avatarData) {
+      const fs = require('fs');
+      const path = require('path');
+      const sharp = require('sharp');
+      
+      try {
+        // Define the avatar directory based on role
+        const rootUploadDir = path.join(__dirname, '../public/avatars');
+        const roleDir = path.join(rootUploadDir, 'student');
+        
+        // Ensure directory exists
+        if (!fs.existsSync(roleDir)) {
+          fs.mkdirSync(roleDir, { recursive: true });
+        }
+        
+        // Process image with sharp
+        const targetPath = path.join(roleDir, `${userId}.jpg`);
+        
+        // Optimize and resize image to 400x400
+        await sharp(avatarData.path)
+          .resize(400, 400, { fit: 'cover' })
+          .jpeg({ quality: 80 })
+          .toFile(targetPath);
+        
+        // Clean up the temp file
+        fs.unlinkSync(avatarData.path);
+        
+        // Get domain from request for URL
+        const protocol = req.headers['x-forwarded-proto'] || 'http';
+        const host = req.headers.host || 'fams.io.vn';
+        const avatarUrl = `${protocol}://${host}/avatars/student/${userId}.jpg`;
+        
+        // Update user with avatar URL
+        user.avatar = avatarUrl;
+        await user.save();
+      } catch (avatarError) {
+        console.error('Error processing avatar:', avatarError);
+        // Continue with user creation even if avatar processing fails
+      }
     }
     
     res.status(201).json({
@@ -427,16 +448,16 @@ const createStudent = async (req, res, defaultPassword) => {
 };
 
 // Helper function to create teacher
-const createTeacher = async (req, res, defaultPassword) => {
+const createTeacher = async (req, res, defaultPassword, avatarData) => {
   try {
-    const { 
-      firstName, 
-      lastName, 
-      email, // Email nhập vào sẽ được sử dụng làm backup_email
+    const {
+      firstName,
+      lastName,
+      email,
       backup_email,
-      phone, 
-      gender, 
-      dateOfBirth, 
+      phone,
+      gender,
+      dateOfBirth,
       address,
       major,
       weeklyCapacity,
@@ -449,102 +470,105 @@ const createTeacher = async (req, res, defaultPassword) => {
 
     const UserAccount = require('../database/models/UserAccount');
     const Teacher = require('../database/models/Teacher');
-    const Class = require('../database/models/Class');
-    const RFID = require('../database/models/RFID');
-    const ClassSchedule = require('../database/models/ClassSchedule');
-    const Subject = require('../database/models/Subject');
 
-    // 1. Get highest teacherId
+    // Get the next available teacherId
+    let newTeacherId;
     const maxTeacher = await Teacher.findOne().sort('-teacherId');
-    const newTeacherId = maxTeacher ? parseInt(maxTeacher.teacherId) + 1 : 1;
-    
-    // 2. Generate userId based on name and teacherId
-    const userId = `${normalizedFirstName.charAt(0).toLowerCase()}${normalizedLastName.split(' ').map(part => part.charAt(0).toLowerCase()).join('')}${newTeacherId}`;
-    
-    // 3. Check if userId already exists
-    const existingUser = await UserAccount.findOne({ userId });
-    if (existingUser) {
+    newTeacherId = maxTeacher ? parseInt(maxTeacher.teacherId) + 1 : 1;
+
+    // Create the userId based on the format: {firstName}{lastName initials}tc{teacherId}
+    const lastNameInitials = normalizedLastName.split(' ')
+      .map(part => part.charAt(0).toLowerCase())
+      .join('');
+
+    const userId = `${normalizedFirstName.toLowerCase()}${lastNameInitials}tc${newTeacherId}`;
+
+    // Check if userId already exists
+    const userExists = await UserAccount.findOne({ userId });
+    if (userExists) {
       return res.status(400).json({
         success: false,
-        message: `User ID ${userId} already exists. Please try with a different name or contact administrator.`,
-        code: 'DUPLICATE_USERID'
+        message: 'User ID already exists',
+        userId
       });
     }
-    
-    // 4. Create user account
+
+    // Create user account
+    const teacherUsername = userId;
     const user = await UserAccount.create({
       userId,
-      username: userId,
+      username: teacherUsername,
+      email: email || `${userId}@fams.edu.vn`, // Default email if not provided
+      backup_email: backup_email || null,
       password: defaultPassword,
-      email: `${userId}@fams.edu.vn`, // Luôn tạo email từ userId không dấu
-      backup_email: email || backup_email, // Sử dụng email nhập vào làm backup_email
-      role: 'Teacher', // Viết hoa chữ cái đầu để phù hợp với enum
-      isActive: true
+      role: 'teacher'
     });
 
-    // 5. Create teacher record
+    // Create teacher record
     const teacher = await Teacher.create({
-      teacherId: newTeacherId,
       userId,
+      teacherId: newTeacherId,
       firstName,
       lastName,
-      fullName: `${lastName} ${firstName}`,
-      email: `${userId}@fams.edu.vn`, // Email luôn khớp với email trong tài khoản
-      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+      fullName: `${lastName} ${firstName}`, // Vietnamese format: lastName first
       gender: typeof gender === 'string' ? gender : (gender === true || gender === 'true' ? 'Male' : 'Female'),
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
       address,
-      phone,
-      major,
-      weeklyCapacity: weeklyCapacity || 10,
-      degree: degree || null
+      phone: phone ? phone.toString() : '',
+      major: major || '',
+      weeklyCapacity: weeklyCapacity || 40,
+      degree: degree || null,
+      joinDate: new Date()
     });
 
-    // Get classes where teacher is homeroom teacher
-    const homeroomClasses = await Class.find({ homeroomTeacherId: teacher.teacherId.toString() });
-    
-    // Get all classes that the teacher teaches (từ bảng ClassSchedule)
-    const teachingSchedules = await ClassSchedule.find({ 
-      teacherId: teacher.teacherId 
-    }).populate('class').populate('subject');
-    
-    // Lấy danh sách unique các lớp mà giáo viên dạy
-    const teachingClassIds = [...new Set(teachingSchedules.map(schedule => schedule.classId))];
-    const teachingClasses = await Class.find({ classId: { $in: teachingClassIds } });
-    
-    // Tạo danh sách môn học mà giáo viên dạy cho mỗi lớp
-    const classSubjects = {};
-    teachingSchedules.forEach(schedule => {
-      const classId = schedule.classId;
-      if (!classSubjects[classId]) {
-        classSubjects[classId] = new Set();
+    // Process avatar if provided
+    if (avatarData) {
+      const fs = require('fs');
+      const path = require('path');
+      const sharp = require('sharp');
+      
+      try {
+        // Define the avatar directory based on role
+        const rootUploadDir = path.join(__dirname, '../public/avatars');
+        const roleDir = path.join(rootUploadDir, 'teacher');
+        
+        // Ensure directory exists
+        if (!fs.existsSync(roleDir)) {
+          fs.mkdirSync(roleDir, { recursive: true });
+        }
+        
+        // Process image with sharp
+        const targetPath = path.join(roleDir, `${userId}.jpg`);
+        
+        // Optimize and resize image to 400x400
+        await sharp(avatarData.path)
+          .resize(400, 400, { fit: 'cover' })
+          .jpeg({ quality: 80 })
+          .toFile(targetPath);
+        
+        // Clean up the temp file
+        fs.unlinkSync(avatarData.path);
+        
+        // Get domain from request for URL
+        const protocol = req.headers['x-forwarded-proto'] || 'http';
+        const host = req.headers.host || 'fams.io.vn';
+        const avatarUrl = `${protocol}://${host}/avatars/teacher/${userId}.jpg`;
+        
+        // Update user with avatar URL
+        user.avatar = avatarUrl;
+        await user.save();
+      } catch (avatarError) {
+        console.error('Error processing avatar:', avatarError);
+        // Continue with user creation even if avatar processing fails
       }
-      if (schedule.subjectId) {
-        classSubjects[classId].add(schedule.subjectId);
-      }
-    });
-    
-    // Lấy thông tin chi tiết về các môn học
-    const allSubjectIds = [...new Set(teachingSchedules.map(s => s.subjectId))];
-    const subjects = await Subject.find({ subjectId: { $in: allSubjectIds } });
-    
-    // Format classes theo định dạng yêu cầu (không bao gồm subjects)
-    const classes = teachingClasses.map(cls => ({
-      classId: cls.classId,
-      className: cls.className,
-      grade: cls.className ? cls.className.match(/^(\d+)/)?.[1] || '' : ''
-    }));
-    
-    // Get RFID info
-    const rfid = await RFID.findOne({ UserID: userId });
-    
+    }
+
     res.status(201).json({
       success: true,
       message: 'Teacher created successfully',
       data: {
         user,
-        teacher,
-        classes,
-        rfid: rfid || null
+        teacher
       }
     });
   } catch (error) {
@@ -557,17 +581,19 @@ const createTeacher = async (req, res, defaultPassword) => {
 };
 
 // Helper function to create parent
-const createParent = async (req, res, defaultPassword) => {
+const createParent = async (req, res, defaultPassword, avatarData) => {
   try {
-    const { 
-      firstName, 
-      lastName, 
-      email, // Email nhập vào sẽ được sử dụng làm backup_email
-      parentEmail, // Email riêng cho phụ huynh
+    const {
+      firstName,
+      lastName,
+      email,
       backup_email,
-      phone, 
+      phone,
       gender,
-      career
+      dateOfBirth,
+      address,
+      career,
+      childrenIds
     } = req.body;
 
     // Normalize firstName and lastName by removing accents
@@ -576,60 +602,141 @@ const createParent = async (req, res, defaultPassword) => {
 
     const UserAccount = require('../database/models/UserAccount');
     const Parent = require('../database/models/Parent');
+    const Student = require('../database/models/Student');
+    const ParentStudent = require('../database/models/ParentStudent');
 
-    // 1. Get highest parentId
+    // Get the next available parentId (used for ID generation)
+    let newParentId;
     const maxParent = await Parent.findOne().sort('-parentId');
-    const newParentId = maxParent ? parseInt(maxParent.parentId) + 1 : 1;
-    
-    // 2. Generate userId based on name and parentId - new format: {firstName}{lastName-initials}pr{parentId}
+    newParentId = maxParent ? parseInt(maxParent.parentId) + 1 : 1;
+
+    // Create the userId based on the format: {firstName}{lastName initials}pt{parentId}
     const lastNameInitials = normalizedLastName.split(' ')
       .map(part => part.charAt(0).toLowerCase())
       .join('');
-    const userId = `${normalizedFirstName.toLowerCase()}${lastNameInitials}pr${newParentId}`;
-    
-    // 3. Check if userId already exists
-    const existingUser = await UserAccount.findOne({ userId });
-    if (existingUser) {
+
+    const userId = `${normalizedFirstName.toLowerCase()}${lastNameInitials}pt${newParentId}`;
+
+    // Check if userId already exists
+    const userExists = await UserAccount.findOne({ userId });
+    if (userExists) {
       return res.status(400).json({
         success: false,
-        message: `User ID ${userId} already exists. Please try with a different name or contact administrator.`,
-        code: 'DUPLICATE_USERID'
+        message: 'User ID already exists',
+        userId
       });
     }
-    
-    // 4. Create user account
+
+    // Create user account
+    const parentUsername = userId;
     const user = await UserAccount.create({
       userId,
-      username: userId,
+      username: parentUsername,
+      email: email || `${userId}@fams.edu.vn`, // Default email if not provided
+      backup_email: backup_email || null,
       password: defaultPassword,
-      email: `${userId}@fams.edu.vn`, // Luôn tạo email từ userId không dấu
-      backup_email: email || backup_email, // Sử dụng email nhập vào làm backup_email
-      role: 'Parent', // Viết hoa chữ cái đầu để phù hợp với enum
-      isActive: true
+      role: 'parent'
     });
 
-    // 5. Create parent record
+    // Create parent record
     const parent = await Parent.create({
-      parentId: newParentId,
       userId,
-      firstName: firstName,
-      lastName: lastName,
-      fullName: `${lastName} ${firstName}`, // Tạo fullName theo định dạng lastName firstName
-      email: parentEmail || `${userId}@fams.edu.vn`, // Sử dụng email riêng nếu có hoặc email mặc định
-      career,
-      phone,
-      gender: typeof gender === 'string' 
-              ? (gender.toLowerCase() === 'male' || gender.toLowerCase() === 'true') 
-              : Boolean(gender),
-      isActive: true
+      parentId: newParentId,
+      firstName,
+      lastName,
+      fullName: `${lastName} ${firstName}`,
+      gender: typeof gender === 'string' ? gender : (gender === true || gender === 'true' ? 'Male' : 'Female'),
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+      address,
+      phone: phone ? phone.toString() : '',
+      career: career || ''
     });
+
+    // Link to children if provided
+    const linkedChildren = [];
+    if (childrenIds && Array.isArray(childrenIds) && childrenIds.length > 0) {
+      for (const childId of childrenIds) {
+        // Check if student exists
+        const student = await Student.findOne({ 
+          $or: [
+            { studentId: childId },
+            { userId: childId }
+          ]
+        });
+
+        if (student) {
+          // Create parent-student relationship
+          await ParentStudent.create({
+            parentId: parent.userId,
+            studentId: student.userId,
+            relationship: 'Parent' // Default relationship
+          });
+
+          // Add parent to student's parentIds if needed
+          if (!student.parentIds) student.parentIds = [];
+          if (!student.parentIds.includes(parent.userId)) {
+            student.parentIds.push(parent.userId);
+            await student.save();
+          }
+
+          linkedChildren.push({
+            studentId: student.studentId,
+            userId: student.userId,
+            name: student.fullName
+          });
+        }
+      }
+    }
+
+    // Process avatar if provided
+    if (avatarData) {
+      const fs = require('fs');
+      const path = require('path');
+      const sharp = require('sharp');
+      
+      try {
+        // Define the avatar directory based on role
+        const rootUploadDir = path.join(__dirname, '../public/avatars');
+        const roleDir = path.join(rootUploadDir, 'parent');
+        
+        // Ensure directory exists
+        if (!fs.existsSync(roleDir)) {
+          fs.mkdirSync(roleDir, { recursive: true });
+        }
+        
+        // Process image with sharp
+        const targetPath = path.join(roleDir, `${userId}.jpg`);
+        
+        // Optimize and resize image to 400x400
+        await sharp(avatarData.path)
+          .resize(400, 400, { fit: 'cover' })
+          .jpeg({ quality: 80 })
+          .toFile(targetPath);
+        
+        // Clean up the temp file
+        fs.unlinkSync(avatarData.path);
+        
+        // Get domain from request for URL
+        const protocol = req.headers['x-forwarded-proto'] || 'http';
+        const host = req.headers.host || 'fams.io.vn';
+        const avatarUrl = `${protocol}://${host}/avatars/parent/${userId}.jpg`;
+        
+        // Update user with avatar URL
+        user.avatar = avatarUrl;
+        await user.save();
+      } catch (avatarError) {
+        console.error('Error processing avatar:', avatarError);
+        // Continue with user creation even if avatar processing fails
+      }
+    }
 
     res.status(201).json({
       success: true,
       message: 'Parent created successfully',
       data: {
         user,
-        parent
+        parent,
+        children: linkedChildren
       }
     });
   } catch (error) {
