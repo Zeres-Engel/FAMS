@@ -1,1 +1,0 @@
-from . py_vision import ModelFunction
