@@ -9,7 +9,7 @@ const { asyncHandler } = require('../utils/routeUtils');
 exports.getUsers = async (req, res) => {
   try {
     // Tách riêng các tham số đặc biệt
-    const { page, limit, sortBy, sortDir, search, className, roles, phone, grade, ...otherFilters } = req.query;
+    const { page, limit, sortBy, sortDir, search, className, roles, phone, grade, academicYear, ...otherFilters } = req.query;
     
     // Build sort object
     const sort = {};
@@ -29,7 +29,8 @@ exports.getUsers = async (req, res) => {
       className,
       roles,
       phone,
-      grade
+      grade,
+      academicYear
     };
     
     console.log("User request query:", req.query);

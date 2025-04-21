@@ -11,16 +11,16 @@ CREATE TABLE Announcement
 
 CREATE TABLE AttendanceLog
 (
-  AttendanceID INT                       NULL     AUTO_INCREMENT,
-  ScheduleID   INT                       NOT NULL,
-  UserID       VARCHAR(100)              NOT NULL,
-  CheckInFace  BLOB                      NULL    ,
-  CheckIn      DATETIME                  NULL    ,
-  Status       ENUM(Present,Late,Absent) NULL     DEFAULT Absent,
-  CreatedAt    DATETIME                  NULL     DEFAULT CURRENT_TIMESTAMP,
-  UpdatedAt    DATETIME                  NULL     DEFAULT CURRENT_TIMESTAMP,
-  IsActive     BOOLEAN                   NULL     DEFAULT TRUE,
-  Note         VARCHAR(100)              NULL    ,
+  AttendanceID INT                                NULL     AUTO_INCREMENT,
+  ScheduleID   INT                                NOT NULL,
+  UserID       VARCHAR(100)                       NOT NULL,
+  CheckInFace  BLOB                               NULL    ,
+  CheckIn      DATETIME                           NULL    ,
+  Note         VARCHAR(100)                       NULL    ,
+  Status       ENUM(Present,Late,Absent, Not Now) NULL     DEFAULT Absent,
+  CreatedAt    DATETIME                           NULL     DEFAULT CURRENT_TIMESTAMP,
+  UpdatedAt    DATETIME                           NULL     DEFAULT CURRENT_TIMESTAMP,
+  IsActive     BOOLEAN                            NULL     DEFAULT TRUE,
   PRIMARY KEY (AttendanceID)
 );
 

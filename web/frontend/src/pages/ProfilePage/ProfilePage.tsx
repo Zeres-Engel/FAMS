@@ -10,25 +10,109 @@ import {
   Chip,
   Divider,
   Alert,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
-import React from "react";
+import React, { useRef, useState } from "react";
 import useProfilePageHook from "./useProfilePageHook";
 import LayoutComponent from "../../components/Layout/Layout";
 import "./ProfilePage.scss";
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 
 function ProfilePage(): React.JSX.Element {
   const {
     state: { profileData, isEditing, loading, error },
-    handler: { toggleEdit, setProfileData, updateProfile },
+    handler: { toggleEdit, setProfileData, updateProfile, uploadAvatar },
   } = useProfilePageHook();
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadStatus, setUploadStatus] = useState<{ success: boolean; message: string } | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!profileData) return;
     const { name, value } = e.target;
     setProfileData({ ...profileData, [name]: value });
+  };
+
+  // Handle avatar change
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    const file = e.target.files[0];
+    console.log("Selected file:", file.name, file.type, file.size);
+    
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadStatus({
+        success: false,
+        message: "File size is too large. Maximum size is 5MB."
+      });
+      return;
+    }
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      setUploadStatus({
+        success: false,
+        message: "Only image files are allowed."
+      });
+      return;
+    }
+    
+    try {
+      // Set loading status
+      setUploadStatus({
+        success: true,
+        message: "Uploading your avatar..."
+      });
+      
+      console.log("Starting avatar upload");
+      
+      // Upload avatar
+      const result = await uploadAvatar(file);
+      console.log("Upload result:", result);
+      
+      // Update status - ensure message property exists
+      setUploadStatus({
+        success: result.success,
+        message: result.message || (result.success ? "Avatar uploaded successfully" : "Failed to upload avatar")
+      });
+      
+      // Refresh profile data if successful
+      if (result.success) {
+        console.log("Avatar uploaded successfully", result.data?.avatarUrl ? `- URL: ${result.data.avatarUrl}` : '');
+        
+        // If the response includes a new avatar URL, update the profile data
+        if (result.data?.avatarUrl) {
+          setProfileData({
+            ...profileData,
+            avatarUrl: result.data.avatarUrl
+          });
+        }
+      } else {
+        console.error("Avatar upload failed:", result.message);
+      }
+    } catch (error: any) {
+      console.error("Avatar upload error:", error);
+      setUploadStatus({
+        success: false,
+        message: error.message || "Failed to upload avatar"
+      });
+    } finally {
+      // Clear the input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // Click avatar to trigger file input
+  const handleAvatarClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
   // Helper function to safely render field values
@@ -130,6 +214,7 @@ function ProfilePage(): React.JSX.Element {
               textAlign: "center",
             }}
           >
+            {/* Avatar with upload button overlay */}
             <Box
               sx={{
                 width: isMobile ? 120 : 160,
@@ -138,19 +223,78 @@ function ProfilePage(): React.JSX.Element {
                 overflow: "hidden",
                 mx: "auto",
                 mb: 2,
+                position: "relative",
+                "&:hover .avatar-overlay": {
+                  opacity: 1,
+                },
+                cursor: "pointer",
               }}
+              onClick={handleAvatarClick}
             >
               <img
                 src={profileData.avatarUrl}
                 alt="User Avatar"
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
+              <Box
+                className="avatar-overlay"
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "rgba(0, 0, 0, 0.5)",
+                  opacity: 0,
+                  transition: "opacity 0.3s",
+                }}
+              >
+                <Tooltip title="Upload new avatar">
+                  <IconButton color="primary" aria-label="upload picture" component="span" sx={{ color: "white" }}>
+                    <PhotoCameraIcon />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: "none" }}
+                onChange={handleAvatarChange}
+              />
             </Box>
+            
+            {/* Small instruction */}
+            <Typography 
+              variant="caption" 
+              color="textSecondary" 
+              sx={{ display: 'block', mb: 2 }}
+            >
+              Click on the avatar to upload a new photo
+            </Typography>
+            
+            {/* Display upload status message if any */}
+            {uploadStatus && (
+              <Alert 
+                severity={uploadStatus.success ? "success" : "error"} 
+                sx={{ mb: 2 }}
+                onClose={() => setUploadStatus(null)}
+              >
+                {uploadStatus.message}
+              </Alert>
+            )}
+            
             <Typography variant="h6">{profileData.fullName}</Typography>
             <Typography color="textSecondary">ID: {profileData.userId}</Typography>
-            <Typography color="textSecondary">
-              Role: <Chip size="small" color="primary" label={profileData.role} />
-            </Typography>
+            
+            {/* Display role separately from the role chip to avoid nesting issues */}
+            <Box display="flex" alignItems="center" gap={1} my={1}>
+              <Typography color="textSecondary">Role:</Typography>
+              <Chip size="small" color="primary" label={profileData.role} />
+            </Box>
             
             {/* Class display for teachers */}
             {profileData.role === "teacher" && profileData.classesList && profileData.classesList.length > 0 && (

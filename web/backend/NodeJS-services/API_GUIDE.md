@@ -137,6 +137,7 @@ Base path: `/users`
   - `roles`: Lọc theo nhiều vai trò, phân cách bằng dấu phẩy (VD: teacher,admin)
   - `phone`: Lọc theo số điện thoại
   - `grade`: Lọc theo khối lớp (10, 11, 12)
+  - `academicYear`: Lọc theo năm học (VD: 2022-2023, 2023-2024)
   - Có thể filter theo bất kỳ trường nào trong model User (userId, email, v.v.)
 
 **Ví dụ Filter:**
@@ -173,10 +174,20 @@ Base path: `/users`
    http://fams.io.vn/api-nodejs/users?search=nguyen
    ```
 
-7. **Kết hợp nhiều điều kiện lọc**:
+7. **Lọc theo năm học**:
    ```
-   http://fams.io.vn/api-nodejs/users?roles=teacher&grade=11&phone=0987
+   http://fams.io.vn/api-nodejs/users?academicYear=2022-2023
    ```
+   Lọc này sẽ trả về:
+   - Học sinh có tham gia lớp học trong năm học 2022-2023
+   - Giáo viên đã dạy trong năm học 2022-2023
+   - Phụ huynh có con học trong năm học 2022-2023
+
+8. **Kết hợp nhiều điều kiện lọc**:
+   ```
+   http://fams.io.vn/api-nodejs/users?roles=teacher&grade=11&academicYear=2023-2024
+   ```
+   Lọc này sẽ trả về tất cả giáo viên dạy khối 11 trong năm học 2023-2024.
 
 **Response:**
 ```json
@@ -194,6 +205,7 @@ Base path: `/users`
         "ExpiryDate": "2026-05-01T00:00:00Z",
         "Status": "Active"
       },
+      "academicYears": ["2022-2023", "2023-2024", "2024-2025"],
       "details": {
         "teacherId": "5",
         "firstName": "Tuấn",
@@ -213,7 +225,8 @@ Base path: `/users`
             "className": "10A2",
             "grade": "10"
           }
-        ]
+        ],
+        "academicYears": ["2022-2023", "2023-2024", "2024-2025"]
       }
     },
     {
@@ -221,6 +234,7 @@ Base path: `/users`
       "username": "anhdmst37",
       "email": "anhdmst37@fams.edu.vn",
       "role": "student",
+      "academicYears": ["2022-2023", "2023-2024"],
       "rfid": {
         "RFID_ID": "STUD67890",
         "IssueDate": "2024-03-15T00:00:00Z",
@@ -253,6 +267,8 @@ Base path: `/users`
 ```
 
 **Lưu ý về RFID**: Nếu người dùng có thẻ RFID, thông tin thẻ sẽ được trả về trong trường `rfid` với các thuộc tính `RFID_ID`, `IssueDate`, `ExpiryDate` và `Status`.
+
+**Lưu ý về academicYears**: Trường `academicYears` chứa danh sách các năm học mà người dùng đã tham gia, dựa trên dữ liệu lịch học (ClassSchedule) và điểm danh (AttendanceLog).
 
 #### Get User by ID
 - **URL**: `http://fams.io.vn/api-nodejs/users/:id`
@@ -1014,6 +1030,7 @@ Base path: `/classes`
   - `search`: Tìm kiếm theo tên lớp
   - `className`: Lọc theo tên lớp (exact match hoặc partial match)
   - `homeroomTeacherId`: Lọc theo ID giáo viên chủ nhiệm
+  - `academicYear`: Lọc theo năm học (ví dụ: "2022-2023", "2023-2024", "2024-2025")
 - **Response**:
 ```json
 {
@@ -1026,12 +1043,32 @@ Base path: `/classes`
       "classId": 3,
       "homeroomTeacherId": "tuanpv5",
       "batchId": 3,
-      "grade": "10"
+      "grade": "10",
+      "academicYear": "2023-2024"
     },
     // More classes...
   ]
 }
 ```
+
+**Ví dụ Filter:**
+1. **Lọc theo khối lớp**:
+   ```
+   http://fams.io.vn/api-nodejs/classes?grade=10
+   ```
+   Lọc này sẽ trả về tất cả các lớp 10 (10A1, 10A2, 10A3, etc.).
+
+2. **Lọc theo năm học**:
+   ```
+   http://fams.io.vn/api-nodejs/classes?academicYear=2023-2024
+   ```
+   Lọc này sẽ trả về tất cả các lớp trong năm học 2023-2024.
+
+3. **Kết hợp điều kiện lọc**:
+   ```
+   http://fams.io.vn/api-nodejs/classes?grade=11&academicYear=2024-2025
+   ```
+   Lọc này sẽ trả về các lớp 11 trong năm học 2024-2025.
 
 #### Get Class by ID or className
 - **URL**: `http://fams.io.vn/api-nodejs/classes/:id`
@@ -1531,6 +1568,302 @@ Tương tự, bạn có thể cập nhật hoặc tạo mới thẻ RFID cho gi�
   }
 }
 ```
+
+## Avatar API
+Base path: `/api/avatar`
+
+Avatar API cho phép tải lên và lấy avatar của người dùng.
+
+### Upload Avatar
+- **URL**: `http://fams.io.vn/api-nodejs/avatar/upload`
+- **Method**: `POST`
+- **Auth Required**: Yes
+- **Content-Type**: `multipart/form-data`
+- **Body**:
+  - `avatar`: File ảnh (định dạng JPG, JPEG, PNG, GIF)
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Avatar đã được tải lên thành công",
+  "data": {
+    "userId": "tuanpv5",
+    "avatar": "http://fams.io.vn/avatars/tuanpv5-1720123456789-123456789_processed.jpg",
+    "avatarUrl": "http://fams.io.vn/avatars/tuanpv5-1720123456789-123456789_processed.jpg"
+  },
+  "code": "AVATAR_UPLOADED"
+}
+```
+- **Error Responses**:
+  - `400` - No file uploaded:
+    ```json
+    {
+      "success": false,
+      "message": "Vui lòng upload một file hình ảnh",
+      "code": "NO_FILE_UPLOADED"
+    }
+    ```
+  - `400` - Invalid file type:
+    ```json
+    {
+      "success": false,
+      "message": "Chỉ chấp nhận file hình ảnh!",
+      "code": "INVALID_FILE_TYPE"
+    }
+    ```
+  - `404` - User not found:
+    ```json
+    {
+      "success": false,
+      "message": "Không tìm thấy người dùng",
+      "code": "USER_NOT_FOUND"
+    }
+    ```
+
+### Get User Avatar
+- **URL**: `http://fams.io.vn/api-nodejs/avatar/:userId`
+- **Method**: `GET`
+- **Auth Required**: No
+- **URL Parameters**:
+  - `userId`: ID của người dùng cần lấy avatar
+- **Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "userId": "tuanpv5",
+    "avatar": "http://fams.io.vn/avatars/tuanpv5-1720123456789-123456789_processed.jpg",
+    "avatarUrl": "http://fams.io.vn/avatars/tuanpv5-1720123456789-123456789_processed.jpg"
+  },
+  "code": "AVATAR_FOUND"
+}
+```
+- **Error Responses**:
+  - `404` - User not found:
+    ```json
+    {
+      "success": false,
+      "message": "Không tìm thấy người dùng",
+      "code": "USER_NOT_FOUND"
+    }
+    ```
+  - `404` - No avatar:
+    ```json
+    {
+      "success": false,
+      "message": "Người dùng chưa có avatar",
+      "code": "NO_AVATAR"
+    }
+    ```
+
+### Delete User Avatar
+- **URL**: `http://fams.io.vn/api-nodejs/avatar`
+- **Method**: `DELETE`
+- **Auth Required**: Yes
+- **Description**: Xóa avatar của người dùng hiện tại (dựa vào token)
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Avatar đã được xóa thành công",
+  "code": "AVATAR_DELETED"
+}
+```
+- **Error Responses**:
+  - `404` - User not found:
+    ```json
+    {
+      "success": false,
+      "message": "Không tìm thấy người dùng",
+      "code": "USER_NOT_FOUND"
+    }
+    ```
+  - `404` - No avatar:
+    ```json
+    {
+      "success": false,
+      "message": "Người dùng chưa có avatar",
+      "code": "NO_AVATAR"
+    }
+    ```
+
+### Direct Access Avatar Image
+- **URL**: `http://fams.io.vn/avatars/:filename`
+- **Method**: `GET`
+- **Description**: Truy cập trực tiếp hình ảnh avatar từ URL được trả về trong trường `avatarUrl`
+
+### Cải tiến mới về Avatar
+
+#### URL đầy đủ trong Database
+Hệ thống đã được cải tiến để lưu URL đầy đủ (full URL) của avatar trong database thay vì chỉ lưu đường dẫn tương đối. Điều này giúp:
+- Đảm bảo avatar hiển thị đúng trên mọi trình duyệt và thiết bị
+- Tránh lỗi đường dẫn khi truy cập từ các nguồn khác nhau
+- Frontend có thể sử dụng URL trực tiếp mà không cần xử lý thêm
+
+#### Xử lý hình ảnh tự động
+Khi tải lên, avatar được xử lý tự động:
+- Resize về kích thước 400x400 pixels
+- Tối ưu hóa với định dạng JPEG chất lượng 80%
+- Tệp gốc được xóa sau khi xử lý để tiết kiệm không gian lưu trữ
+
+#### Cấu hình Nginx cho Avatar
+Nginx được cấu hình để phục vụ tệp avatar với location riêng:
+```nginx
+location /avatars/ {
+    proxy_pass http://api-nodejs:3000/avatars/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+#### Xử lý Domain tự động
+Hệ thống tự động phát hiện và sử dụng domain thích hợp:
+- Lấy domain từ headers HTTP request
+- Tự động xác định protocol (http/https)
+- Fallback về domain mặc định nếu không xác định được
+
+### Sử dụng Avatar trong Frontend
+
+#### Upload Avatar
+```javascript
+// Sử dụng FormData để upload file
+const uploadAvatar = async (file) => {
+  const formData = new FormData();
+  formData.append('avatar', file);
+  
+  try {
+    const response = await fetch('http://fams.io.vn/api-nodejs/avatar/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}` // Token xác thực
+      },
+      body: formData
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Hiển thị avatar mới
+      const avatarUrl = data.data.avatarUrl;
+      // Lưu avatarUrl vào state hoặc global store của ứng dụng
+    } else {
+      console.error('Upload error:', data.message);
+    }
+  } catch (error) {
+    console.error('Error uploading avatar:', error);
+  }
+};
+```
+
+#### Hiển thị Avatar trong React
+```jsx
+import React, { useState, useEffect } from 'react';
+
+const UserAvatar = ({ userId }) => {
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      try {
+        const response = await fetch(`http://fams.io.vn/api-nodejs/avatar/${userId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          setAvatarUrl(data.data.avatarUrl);
+        } else {
+          // Sử dụng avatar mặc định nếu người dùng không có avatar
+          setAvatarUrl('/default-avatar.png');
+        }
+      } catch (error) {
+        console.error('Error fetching avatar:', error);
+        setError('Failed to load avatar');
+        // Sử dụng avatar mặc định nếu có lỗi
+        setAvatarUrl('/default-avatar.png');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchAvatar();
+  }, [userId]);
+  
+  if (loading) return <div>Loading...</div>;
+  
+  return (
+    <div className="avatar-container">
+      <img 
+        src={avatarUrl} 
+        alt={`${userId}'s avatar`} 
+        className="user-avatar"
+        onError={(e) => {
+          // Fallback nếu không tải được avatar
+          e.target.src = '/default-avatar.png';
+        }}
+      />
+      {error && <p className="error-text">{error}</p>}
+    </div>
+  );
+};
+
+export default UserAvatar;
+```
+
+#### Xóa Avatar
+```javascript
+const deleteAvatar = async () => {
+  try {
+    const response = await fetch('http://fams.io.vn/api-nodejs/avatar', {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`, // Token xác thực
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Avatar đã được xóa thành công
+      // Cập nhật giao diện người dùng về avatar mặc định
+    } else {
+      console.error('Delete error:', data.message);
+    }
+  } catch (error) {
+    console.error('Error deleting avatar:', error);
+  }
+};
+```
+
+### Lưu ý về Avatar API
+
+1. **Giới hạn kích thước file**:
+   - Kích thước tối đa: 5MB
+   - Định dạng hỗ trợ: JPG, JPEG, PNG, GIF
+
+2. **Xử lý hình ảnh**:
+   - Hình ảnh tải lên sẽ được tự động xử lý để tạo ra phiên bản tối ưu
+   - Kích thước 400x400 pixels, chất lượng JPEG 80%
+   - File gốc sẽ bị xóa sau khi xử lý
+
+3. **Đường dẫn lưu trữ**:
+   - Avatar được lưu trong thư mục `/public/avatars/` trên server
+   - Tên file được tạo tự động theo định dạng: `{userId}-{timestamp}-{random}_processed.jpg`
+
+4. **Cơ chế cache**:
+   - Khách hàng (frontend) nên triển khai cache cho avatar để giảm tải server
+   - Thêm version query string (ví dụ: `?v=1`) khi URL avatar thay đổi để cập nhật cache
+
+5. **Tích hợp với API khác**:
+   - Thông tin avatar sẽ được trả về trong `/api/auth/me` và `/api/users/details/:id`
+   - Khi cập nhật thông tin người dùng, avatar sẽ không bị ảnh hưởng
+
+6. **Docker và triển khai**:
+   - File avatar được lưu trong thư mục `/public/avatars/` nên cần đảm bảo thư mục này tồn tại và có đủ quyền ghi
+   - Khi sử dụng Docker, volume cho thư mục `/public/avatars/` đã được cấu hình trong Dockerfile
 
 ## Testing with Postman
 

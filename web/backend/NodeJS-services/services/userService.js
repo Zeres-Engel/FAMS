@@ -13,7 +13,7 @@ const mongoose = require('mongoose');
  */
 exports.getUsers = async (options = {}) => {
   try {
-    const { page = 1, limit = 10, sort = { userId: 1 }, filter = {}, search, className, roles, phone, grade } = options;
+    const { page = 1, limit = 10, sort = { userId: 1 }, filter = {}, search, className, roles, phone, grade, academicYear } = options;
     
     // Xây dựng query filter
     let query = {};
@@ -107,6 +107,108 @@ exports.getUsers = async (options = {}) => {
     // Tạo danh sách userIds để áp dụng filter
     let filteredUserIds = [];
     let hasClassOrGradeFilter = false;
+    
+    // Xử lý lọc theo academicYear
+    if (academicYear && academicYear !== 'none') {
+      console.log(`Filtering by academic year: ${academicYear}`);
+      
+      // Tìm batchId từ academicYear
+      const academicYears = academicYear.split('-');
+      let startYear, endYear;
+      
+      if (academicYears.length === 2) {
+        startYear = parseInt(academicYears[0]);
+        endYear = parseInt(academicYears[1]);
+      } else {
+        // Nếu chỉ có một năm, giả định rằng đó là năm bắt đầu
+        startYear = parseInt(academicYear);
+        endYear = startYear + 1;
+      }
+      
+      if (!isNaN(startYear)) {
+        // Tìm batch dựa trên startYear
+        const batch = await models.Batch.findOne({ startYear });
+        
+        if (batch) {
+          console.log(`Found batch for year ${startYear}: ${batch.batchName}`);
+          
+          // Lấy tất cả semester trong năm học này
+          const semesters = await models.Semester.find({ batchId: batch.batchId });
+          const semesterIds = semesters.map(s => s.semesterId);
+          
+          if (semesterIds.length > 0) {
+            console.log(`Found ${semesterIds.length} semesters for this academic year`);
+            
+            // Xử lý khác nhau cho từng role
+            if (!selectedRoles.length || selectedRoles.includes('student')) {
+              // Tìm tất cả lịch học trong các semester này
+              const schedules = await models.ClassSchedule.find({ semesterId: { $in: semesterIds } });
+              const scheduleIds = schedules.map(s => s.scheduleId);
+              
+              if (scheduleIds.length > 0) {
+                // Tìm các sinh viên có mặt trong các lịch học này qua AttendanceLog
+                const attendanceLogs = await models.AttendanceLog.find({ scheduleId: { $in: scheduleIds } });
+                const studentUserIds = [...new Set(attendanceLogs.map(log => log.userId))];
+                
+                console.log(`Found ${studentUserIds.length} students in attendance logs for this academic year`);
+                filteredUserIds.push(...studentUserIds);
+              }
+            }
+            
+            if (!selectedRoles.length || selectedRoles.includes('teacher')) {
+              // Tìm giáo viên dạy trong năm học này thông qua ClassSchedule
+              const teacherSchedules = await models.ClassSchedule.find({ semesterId: { $in: semesterIds } });
+              const teacherIds = [...new Set(teacherSchedules.map(s => s.teacherId))];
+              
+              if (teacherIds.length > 0) {
+                // Lấy thông tin giáo viên
+                const teachers = await models.Teacher.find({ teacherId: { $in: teacherIds } });
+                const teacherUserIds = teachers.map(teacher => teacher.userId);
+                
+                console.log(`Found ${teacherUserIds.length} teachers teaching in this academic year`);
+                filteredUserIds.push(...teacherUserIds);
+              }
+            }
+            
+            if (!selectedRoles.length || selectedRoles.includes('parent')) {
+              // Tìm học sinh học trong năm học này
+              const schedules = await models.ClassSchedule.find({ semesterId: { $in: semesterIds } });
+              const scheduleIds = schedules.map(s => s.scheduleId);
+              
+              if (scheduleIds.length > 0) {
+                // Tìm tất cả sinh viên có mặt trong các lịch học này
+                const attendanceLogs = await models.AttendanceLog.find({ scheduleId: { $in: scheduleIds } });
+                const studentUserIds = [...new Set(attendanceLogs.map(log => log.userId))];
+                
+                if (studentUserIds.length > 0) {
+                  // Tìm học sinh từ userId
+                  const students = await models.Student.find({ userId: { $in: studentUserIds } });
+                  const studentIds = students.map(s => s.studentId);
+                  
+                  // Tìm quan hệ phụ huynh-học sinh
+                  const parentStudentRelations = await models.ParentStudent.find({
+                    studentId: { $in: studentIds }
+                  });
+                  const parentIds = [...new Set(parentStudentRelations.map(relation => relation.parentId))];
+                  
+                  // Lấy thông tin phụ huynh
+                  const parents = await models.Parent.find({ parentId: { $in: parentIds } });
+                  const parentUserIds = parents.map(parent => parent.userId);
+                  
+                  console.log(`Found ${parentUserIds.length} parents with children in this academic year`);
+                  filteredUserIds.push(...parentUserIds);
+                }
+              }
+            }
+            
+            // Nếu đã lọc theo academicYear, đánh dấu đã có filter
+            if (filteredUserIds.length > 0) {
+              hasClassOrGradeFilter = true;
+            }
+          }
+        }
+      }
+    }
     
     // Xử lý lọc theo className và grade
     if ((className && className !== 'none') || (grade && grade !== 'none')) {
@@ -235,7 +337,7 @@ exports.getUsers = async (options = {}) => {
     for (const key of filterKeys) {
       if (key !== 'page' && key !== 'limit' && key !== 'sortBy' && key !== 'sortDir' &&
           key !== 'search' && key !== 'className' && key !== 'roles' &&
-          key !== 'phone' && key !== 'grade') {
+          key !== 'phone' && key !== 'grade' && key !== 'academicYear') {
         const value = filter[key];
         
         // Bỏ qua các giá trị là 'none'
@@ -359,6 +461,36 @@ exports.getUsers = async (options = {}) => {
               }
             }
           }
+          
+          // Thêm thông tin về academicYears (các năm học đã tham gia)
+          try {
+            // Tìm lịch sử tham gia lớp học thông qua AttendanceLog
+            const attendanceLogs = await models.AttendanceLog.find({ userId: user.userId });
+            const scheduleIds = [...new Set(attendanceLogs.map(log => log.scheduleId))];
+            
+            if (scheduleIds.length > 0) {
+              // Tìm thông tin lịch học
+              const schedules = await models.ClassSchedule.find({ scheduleId: { $in: scheduleIds } });
+              const semesterIds = [...new Set(schedules.map(schedule => schedule.semesterId))];
+              
+              if (semesterIds.length > 0) {
+                // Tìm thông tin học kỳ
+                const semesters = await models.Semester.find({ semesterId: { $in: semesterIds } });
+                const batchIds = [...new Set(semesters.map(semester => semester.batchId))];
+                
+                if (batchIds.length > 0) {
+                  // Tìm thông tin khóa học
+                  const batches = await models.Batch.find({ batchId: { $in: batchIds } });
+                  
+                  // Format kết quả theo định dạng "startYear-endYear"
+                  userObj.academicYears = batches.map(batch => `${batch.startYear}-${batch.startYear + 3}`);
+                  userObj.academicYears.sort(); // Sắp xếp theo thứ tự năm học
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Error getting student academic years:', error);
+          }
         }
       }
       else if (role === 'teacher') {
@@ -406,6 +538,33 @@ exports.getUsers = async (options = {}) => {
             classes: homeroomClasses || [],
             weeklyhours: teacher.WeeklyCapacity
           };
+          
+          // Thêm thông tin về academicYears (các năm học đã tham gia giảng dạy)
+          try {
+            // Tìm các lịch dạy của giáo viên
+            const teachingSchedules = await models.ClassSchedule.find({ teacherId: teacher.teacherId });
+            const semesterIds = [...new Set(teachingSchedules.map(schedule => schedule.semesterId))];
+            
+            if (semesterIds.length > 0) {
+              // Tìm thông tin học kỳ
+              const semesters = await models.Semester.find({ semesterId: { $in: semesterIds } });
+              const batchIds = [...new Set(semesters.map(semester => semester.batchId))];
+              
+              if (batchIds.length > 0) {
+                // Tìm thông tin khóa học
+                const batches = await models.Batch.find({ batchId: { $in: batchIds } });
+                
+                // Format kết quả theo định dạng "startYear-endYear"
+                userObj.academicYears = batches.map(batch => `${batch.startYear}-${batch.startYear + 3}`);
+                userObj.academicYears.sort(); // Sắp xếp theo thứ tự năm học
+                
+                // Thêm vào details cho backward compatibility
+                userObj.details.academicYears = userObj.academicYears;
+              }
+            }
+          } catch (error) {
+            console.error('Error getting teacher academic years:', error);
+          }
         }
       }
       else if (role === 'parent') {
@@ -478,6 +637,44 @@ exports.getUsers = async (options = {}) => {
             userObj.classesId = [...new Set(allClassIds)];
             userObj.classesName = [...new Set(allClassNames)];
             userObj.grades = [...new Set(allGrades)];
+            
+            // Thêm thông tin về academicYears (các năm học mà con đã tham gia)
+            try {
+              // Tìm lịch sử tham gia lớp học của các con thông qua AttendanceLog
+              const allAcademicYears = [];
+              
+              for (const student of students) {
+                // Tìm lịch sử điểm danh của từng học sinh
+                const attendanceLogs = await models.AttendanceLog.find({ userId: student.userId });
+                const scheduleIds = [...new Set(attendanceLogs.map(log => log.scheduleId))];
+                
+                if (scheduleIds.length > 0) {
+                  // Tìm thông tin lịch học
+                  const schedules = await models.ClassSchedule.find({ scheduleId: { $in: scheduleIds } });
+                  const semesterIds = [...new Set(schedules.map(schedule => schedule.semesterId))];
+                  
+                  if (semesterIds.length > 0) {
+                    // Tìm thông tin học kỳ
+                    const semesters = await models.Semester.find({ semesterId: { $in: semesterIds } });
+                    const batchIds = [...new Set(semesters.map(semester => semester.batchId))];
+                    
+                    if (batchIds.length > 0) {
+                      // Tìm thông tin khóa học
+                      const batches = await models.Batch.find({ batchId: { $in: batchIds } });
+                      
+                      // Format kết quả theo định dạng "startYear-endYear"
+                      const studentAcademicYears = batches.map(batch => `${batch.startYear}-${batch.startYear + 3}`);
+                      allAcademicYears.push(...studentAcademicYears);
+                    }
+                  }
+                }
+              }
+              
+              // Loại bỏ trùng lặp và sắp xếp
+              userObj.academicYears = [...new Set(allAcademicYears)].sort();
+            } catch (error) {
+              console.error('Error getting parent academic years:', error);
+            }
           }
         }
       }

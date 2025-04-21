@@ -17,16 +17,8 @@ from ..constants import COLLECTIONS
 from ..utils import hash_password, generate_username
 from .models import ResponseModel, ErrorResponseModel
 
-# Import other routers
-from .student_management import router as student_router
-from .teacher_management import router as teacher_router
-
 # Create main router
 router = APIRouter()
-
-# Include specialized routers
-router.include_router(student_router)
-router.include_router(teacher_router)
 
 @router.post("/upload/fams")
 async def upload_fams_excel(file: UploadFile = File(...)):

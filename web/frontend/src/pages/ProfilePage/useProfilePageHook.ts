@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "../../services/axiosInstance";
+import userService from "../../services/userService";
 
 // Interfaces for API response
 interface ApiUserDetailsResponse {
@@ -142,6 +143,18 @@ interface ProfileData {
   // Parent specific fields
   career?: string;
   weeklyCapacity?: number;
+}
+
+// Import or re-define the AvatarUploadResponse interface
+interface AvatarUploadResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    userId: string;
+    avatar: string;
+    avatarUrl: string;
+  };
+  code?: string;
 }
 
 function useProfilePageHook() {
@@ -451,6 +464,66 @@ function useProfilePageHook() {
     }
   };
 
+  // Add avatar upload functionality
+  const uploadAvatar = async (file: File): Promise<AvatarUploadResponse> => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const { userId } = profileData;
+      
+      if (!userId) {
+        throw new Error("User ID is missing");
+      }
+      
+      console.log("Uploading avatar for user:", userId);
+      
+      // Use userService to upload avatar
+      const response = await userService.uploadAvatar(file);
+      console.log("Upload response:", response);
+      
+      if (response.success) {
+        // Update the profile data with new avatar URL
+        const avatarUrl = response.data?.avatarUrl;
+        
+        if (!avatarUrl) {
+          console.warn("Avatar URL not found in response:", response);
+        }
+        
+        // Update profile data with new avatar URL
+        setProfileData({
+          ...profileData,
+          avatarUrl: avatarUrl || profileData.avatarUrl // Keep existing URL if new one not available
+        });
+        
+        // Ensure response has a message
+        if (!response.message) {
+          response.message = "Avatar uploaded successfully";
+        }
+        
+        return response;
+      } else {
+        console.error("Avatar upload failed:", response.message);
+        
+        // Create a new response with a guaranteed message
+        const errorResponse: AvatarUploadResponse = {
+          success: false,
+          message: response.message || "Avatar upload failed"
+        };
+        throw new Error(errorResponse.message);
+      }
+    } catch (error: any) {
+      console.error("Failed to upload avatar", error);
+      setError(error.message || "Failed to upload avatar");
+      return {
+        success: false,
+        message: error.message || "Failed to upload avatar"
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchProfile();
     
@@ -482,7 +555,8 @@ function useProfilePageHook() {
       toggleEdit,
       setProfileData,
       fetchProfile,
-      updateProfile
+      updateProfile,
+      uploadAvatar
     },
   };
 }

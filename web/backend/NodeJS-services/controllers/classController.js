@@ -85,7 +85,7 @@ const createClass = async (req, res) => {
 const getAllClasses = async (req, res) => {
   try {
     // Extract query parameters
-    const { grade, batchId, search, homeroomTeacherId, className } = req.query;
+    const { grade, batchId, search, homeroomTeacherId, className, academicYear } = req.query;
     
     // Build query filter
     let query = {};
@@ -137,6 +137,11 @@ const getAllClasses = async (req, res) => {
     // Filter by homeroom teacher ID
     if (homeroomTeacherId && homeroomTeacherId !== 'none') {
       query.homeroomTeacherId = homeroomTeacherId;
+    }
+    
+    // Filter by academicYear
+    if (academicYear && academicYear !== 'none') {
+      query.academicYear = academicYear;
     }
     
     console.log("Query filter:", JSON.stringify(query));
