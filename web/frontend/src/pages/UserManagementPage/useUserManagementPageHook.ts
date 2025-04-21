@@ -6,6 +6,9 @@ import {
   SearchFilters,
   UserData,
 } from "../../model/userModels/userDataModels.model";
+import { RootState } from "../../store/store";
+import { useSelector } from "react-redux";
+import { fetchClasses } from "../../store/slices/classSlice";
 
 function useClassPageHook() {
   const [filters, setFiltersUser] = useState<SearchFilters>({
@@ -14,6 +17,7 @@ function useClassPageHook() {
     grade: "",
     phone: "",
     roles: [] as string[],
+    academicYear: "",
   });
 
   const dispatch = useAppDispatch();
@@ -25,15 +29,15 @@ function useClassPageHook() {
     const file = e.target.files?.[0];
     if (file) {
       setInitUserFile(file);
-      console.log('filesent');
-      
+      console.log("filesent");
+
       // dispatch(uploadInitUserFile(file)); // gọi API gửi file lên
     }
   };
 
   // 👇 NEW: Gửi file đã upload để xử lý
   const handleSubmitInitUserData = () => {
-    console.log('fileaccept');
+    console.log("fileaccept");
     // dispatch(submitInitUserData()); // không truyền file vì file đã được gửi ở bước trước
   };
   const headCellsData: UserHeadCell[] = [
@@ -43,12 +47,6 @@ function useClassPageHook() {
       disablePadding: true,
       label: "ID",
     },
-    // {
-    //   id: "username",
-    //   numeric: false,
-    //   disablePadding: true,
-    //   label: "UserName",
-    // },
     {
       id: "email",
       numeric: false,
@@ -106,7 +104,13 @@ function useClassPageHook() {
     console.log("User Management Filter submitted:", filters);
     dispatch(searchUsers(filters));
   };
-
+  const classes = useSelector((state: RootState) => state.class.classes);
+  const classOptions = classes?.map(c => c.className) || [];
+  useEffect(() => {
+    if (!classes) {
+      dispatch(fetchClasses());
+    }
+  }, [dispatch, classes]);
   useEffect(() => {
     if (userState.user) {
       setUserMainData(userState.user);
@@ -132,6 +136,7 @@ function useClassPageHook() {
     tableTitle,
     isCheckBox,
     initUserFile,
+    classOptions
   };
   const handler = {
     handleFilterSubmit,

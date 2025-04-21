@@ -16,6 +16,7 @@ import {
 import LayoutComponent from "../../components/Layout/Layout";
 import useIdentifyManagementHook from "./useIdentifyManagementHook";
 import NewSemesterManagement from "../../components/NewSemesterManagement/NewSemesterManagement";
+import DataTable from "../../components/DataTable/DataTable";
 
 function IdentifyManagementPage(): React.JSX.Element {
   const {
@@ -23,30 +24,21 @@ function IdentifyManagementPage(): React.JSX.Element {
       users,
       selectedUser,
       role,
-      isVideoLoading,
-      isVideoValid,
       rfid,
-      videoRef,
-      videoMessage,
-      countdown,
       selectedDevice,
       fileToSend,
-      initUserFile,
-      selectedBatchYear,
-      batchYears,
+      headCellsData,
+      userMainData,
+      tableTitle,
     },
     handler: {
       handleRoleChange,
       handleUserChange,
       handleRFIDChange,
-      handleStartVideo,
       handleSearchInputChange,
       handleDeviceChange,
       handleFileChange,
       handleSendToDevice,
-      handleInitFileChange,
-      handleInitUserSubmit,
-      handleBatchYearChange,
     },
     rfidInputRef,
   } = useIdentifyManagementHook();
@@ -55,7 +47,7 @@ function IdentifyManagementPage(): React.JSX.Element {
     <LayoutComponent pageHeader="System Management Page">
       <Box
         display="flex"
-        flexDirection={{ xs: "column", md: "row" }}
+        flexDirection="column"
         gap={4}
         p={2}
         flexWrap="wrap"
@@ -68,6 +60,7 @@ function IdentifyManagementPage(): React.JSX.Element {
           flexDirection="column"
           gap={2}
           minWidth={300}
+          maxWidth={600}
         >
           <Typography variant="h6" sx={{ mt: 2 }}>
             RFID Scanning
@@ -246,95 +239,35 @@ function IdentifyManagementPage(): React.JSX.Element {
         </Box>
 
         {/* Right Side */}
-        {/* <Box
+        <Box
           flex={1}
           display="flex"
           flexDirection="column"
           gap={2}
           minWidth={300}
         >
-          <Typography variant="h6">Live Video Preview</Typography>
           <Box
             sx={{
               width: "100%",
-              aspectRatio: "16/9",
-              border: "1px solid #ccc",
+              height: "100%",
               borderRadius: 2,
-              overflow: "hidden",
               display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
+              flexDirection: "column",
+              justifyContent: "flex-start",
               position: "relative",
             }}
           >
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-            {(isVideoLoading || countdown !== null) && (
-              <Box
-                position="absolute"
-                top={0}
-                left={0}
-                right={0}
-                bottom={0}
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                sx={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-              >
-                {countdown !== null ? (
-                  <Typography variant="h3" color="white" fontWeight="bold">
-                    {countdown === 0 ? "🎥 Bắt đầu quay!" : countdown}
-                  </Typography>
-                ) : (
-                  <CircularProgress color="inherit" />
-                )}
-              </Box>
-            )}
+            <DataTable
+              headCellsData={headCellsData}
+              tableMainData={userMainData}
+              tableTitle={tableTitle}
+              isCheckBox={false}
+              isRFIDPage={true}
+              isAdmin={true}
+            ></DataTable>
           </Box>
-
-          {videoMessage && (
-            <Typography
-              variant="body1"
-              color={videoMessage.includes("❌") ? "error" : "success.main"}
-            >
-              {videoMessage}
-            </Typography>
-          )}
-
-          <Button
-            variant="contained"
-            onClick={handleStartVideo}
-            disabled={!selectedUser || isVideoLoading || countdown !== null}
-          >
-            Start 10s Video
-          </Button>
-
-          {isVideoValid === false && (
-            <Typography color="error">
-              ❌ Video is not valid. Please try again.
-            </Typography>
-          )}
-        </Box> */}
+        </Box>
       </Box>
-      {/* <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        width="100%"
-        mt={{ xs: 2, md: 4 }}
-        mb={{ xs: 2, md: 4 }}
-        px={2}
-      >
-        <Typography variant="h5" fontWeight="bold" textAlign="center">
-          Semester Transition Management Section
-        </Typography>
-      </Box> */}
-
-      {/* <NewSemesterManagement /> */}
     </LayoutComponent>
   );
 }

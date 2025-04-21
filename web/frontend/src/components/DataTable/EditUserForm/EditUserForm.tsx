@@ -50,20 +50,28 @@ export default function EditUserModal({
       gender: formData.gender ?? true,
     },
   });
-
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(
+    formData.avatar || null
+  );
   const [classIDs, setClassIDs] = useState<string[]>(
     Array.isArray(formData.classId)
       ? formData.classId
       : [formData.classId || ""]
   );
   console.log(userType);
-  
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
   useEffect(() => {
     reset({
       ...formData,
       gender: formData.gender ?? true,
     });
-
+    setAvatarPreview(formData.avatar || null);
     setClassIDs(
       Array.isArray(formData.classId)
         ? formData.classId
@@ -122,6 +130,46 @@ export default function EditUserModal({
               error={!!errors.fullName}
               helperText={errors.fullName?.message}
             />
+            {(userType === "teacher" || userType === "student") && (
+              <Box sx={{ width: "100%" }}>
+                <FormLabel>Avatar</FormLabel>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1 }}
+                >
+                  <Button variant="outlined" component="label">
+                    Choose Image
+                    <input
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      onChange={e => {
+                        const file = e.target.files?.[0] || null;
+                        setValue("avatar", file as any); // 'any' nếu avatar là File
+                        if (file) {
+                          const previewURL = URL.createObjectURL(file);
+                          setAvatarPreview(previewURL);
+                        } else {
+                          setAvatarPreview(null);
+                        }
+                      }}
+                    />
+                  </Button>
+
+                  {avatarPreview && (
+                    <img
+                      src={avatarPreview}
+                      alt="Avatar Preview"
+                      style={{
+                        width: 100,
+                        height: 100,
+                        objectFit: "cover",
+                        borderRadius: 8,
+                      }}
+                    />
+                  )}
+                </Box>
+              </Box>
+            )}
 
             {userType !== "parent" && (
               <TextField

@@ -24,6 +24,7 @@ interface UserData {
   parentCareer? : string;
   parentEmail?: string;
   parentAddr?: string;
+  avatar?: string;
   parentDob?: string;
 }
 interface UserDataDetails {
@@ -57,6 +58,7 @@ interface SearchFilters {
   className?: string;
   limit?: number;
   phone?: string;
+  academicYear?: string;
 }
 type Gender = "Male" | "Female";
 type Role = "student" | "teacher";
@@ -103,6 +105,7 @@ interface AddUserFormValues {
   major: string;
   weeklyCapacity: string;
   role: Role;
+  avatar: File | null;
 }
 interface EditUserFormValues {
   firstName: string;

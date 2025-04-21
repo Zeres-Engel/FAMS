@@ -36,7 +36,7 @@ export default function AddClassForm(): React.JSX.Element {
 
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <FormControl fullWidth>
-            <InputLabel id="academicYear-select-label">School Year</InputLabel>
+            <InputLabel id="academicYear-select-label">Academic Year</InputLabel>
             <Select
               labelId="academicYear-select-label"
               id="academicYear-select"
