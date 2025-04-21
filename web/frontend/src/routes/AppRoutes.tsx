@@ -15,11 +15,6 @@ import AttendancePage from "../pages/AttendancePage/AttendancePage";
 import NotifyPage from "../pages/NotifyPage/NotifyPage";
 
 const router = createBrowserRouter([
-  // { path: "/", element: <AuthWrapper mode="admin" element={<HomePageAdmin />} /> },
-  // {
-  //   path: "*",
-  //   element: <AuthWrapper mode="admin" element={<HomePageAdmin />} />,
-  // },
   {
     path: "/",
     element: <AuthWrapper mode="private" element={<></>} />,
@@ -85,7 +80,6 @@ const router = createBrowserRouter([
     element: <AuthWrapper mode="private" element={<HomePage />} />,
   },
 ]);
-
 export default function AppRoutes() {
   return <RouterProvider router={router} />;
 }

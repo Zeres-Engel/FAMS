@@ -15,6 +15,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import moment from "moment";
 import LayoutComponent from "../../components/Layout/Layout";
@@ -27,7 +31,8 @@ const localizer = momentLocalizer(moment);
 const ScheduleManagementPage: React.FC = () => {
   const { state, handler } = useScheduleManagementPageHook();
   const isMobile = useMediaQuery("(max-width:600px)");
-  const role = useSelector((state: RootState) => state.authUser.role);
+  const role =
+    useSelector((state: RootState) => state.authUser.role);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [openArrangementDialog, setOpenArrangementDialog] = useState(false);
   const [newEvent, setNewEvent] = useState({
@@ -47,7 +52,9 @@ const ScheduleManagementPage: React.FC = () => {
   const [dateToError, setDateToError] = useState(false);
 
   return (
-    <LayoutComponent pageHeader={role === "admin" ? "Schedule Management" : "Schedule Page"}>
+    <LayoutComponent
+      pageHeader={role === "admin" ? "Schedule Management" : "Schedule Page"}
+    >
       <Container maxWidth="xl" style={{ padding: "16px" }}>
         <Box className={state?.eventShow?.id !== 0 ? "schedule-Display" : ""}>
           <Paper elevation={3} sx={{ padding: "16px" }}>
@@ -78,6 +85,36 @@ const ScheduleManagementPage: React.FC = () => {
                     fullWidth
                   />
                 </Box>
+                {/* <Box sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}> */}
+                <FormControl
+                  fullWidth={isMobile}
+                  sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+                >
+                  <InputLabel id="academicYear-select-label">
+                    Academic Year
+                  </InputLabel>
+                  <Select
+                    labelId="academicYear-select-label"
+                    id="academicYear-select"
+                    name="academicYear"
+                    value={state.filters.academicYear}
+                    label="academicYear"
+                    onChange={event =>
+                      handler.setFilters({
+                        ...state.filters,
+                        academicYear: event.target.value,
+                      })
+                    }
+                  >
+                    {handler.getAcademicYears(3).map(year => (
+                      <MenuItem key={year} value={year}>
+                        {year}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                {/* </Box> */}
+
                 <Box sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}>
                   <TextField
                     label="Teacher ID"
@@ -124,6 +161,42 @@ const ScheduleManagementPage: React.FC = () => {
                     fullWidth
                   />
                 </Box>
+                {/* <Box sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}> */}
+                <FormControl
+                  fullWidth={isMobile}
+                  sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+                >
+                  <InputLabel id="academicYear-select-label">
+                    Academic Year
+                  </InputLabel>
+                  <Select
+                    labelId="academicYear-select-label"
+                    id="academicYear-select"
+                    name="academicYear"
+                    value={state.filters.academicYear}
+                    label="academicYear"
+                    onChange={event =>
+                      handler.setFilters({
+                        ...state.filters,
+                        academicYear: event.target.value,
+                      })
+                    }
+                  >
+                    {handler.getAcademicYears(3).map(year => (
+                      <MenuItem key={year} value={year}>
+                        {year}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                {/* </Box> */}
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handler.handleSearch}
+                >
+                  Search
+                </Button>
                 <Button
                   variant="contained"
                   onClick={handler.handleShowTeacherSchedule}

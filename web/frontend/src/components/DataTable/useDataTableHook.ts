@@ -10,6 +10,7 @@ import {
   EditUserForm,
   NotifyProps,
   Order,
+  RFIDData,
 } from "../../model/tableModels/tableDataModels.model";
 import getComparator from "../utils/TableDataUtils/useTableDataUtils";
 import { UserData } from "../../model/userModels/userDataModels.model";
@@ -29,7 +30,8 @@ interface UseDataTableHookProps {
     | ClassData[]
     | AttendanceLog[]
     | ClassArrangementData[]
-    | NotifyProps[];
+    | NotifyProps[]
+    | RFIDData[];
 }
 function useDataTableHook(props: UseDataTableHookProps) {
   const { tableMainData } = props;
@@ -79,6 +81,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
     | keyof AttendanceLog
     | keyof ClassArrangementData
     | keyof NotifyProps
+    | keyof RFIDData
   >("id");
   const [gradeError, setGradeError] = React.useState(false);
   const [selected, setSelected] = React.useState<readonly string[]>([]);
@@ -112,6 +115,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
       | keyof AttendanceLog
       | keyof ClassArrangementData
       | keyof NotifyProps
+      | keyof RFIDData
   ) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");

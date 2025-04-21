@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../store/store";
 import { addNotify } from "../../store/slices/notifySlice";
+import { HeadCell, RFIDData, RFIDHeadCell } from "../../model/tableModels/tableDataModels.model";
 
 // Giả lập API call
 const fetchUsers = (
@@ -32,85 +33,101 @@ const fetchUsers = (
 
 function useIdentifyManagementHook() {
   const dispatch = useDispatch<AppDispatch>();
-
+  const sampleRFIDData: RFIDData[] = [
+    {
+      id: "1",
+      userid: "stu_001",
+      rfid: "1234567890",
+      expTime: "2025-12-31T23:59:59Z",
+      faceAttendance: "enabled",
+      role: "student",
+    },
+    {
+      id: "2",
+      userid: "tea_001",
+      rfid: "0987654321",
+      expTime: "2026-06-30T23:59:59Z",
+      faceAttendance: "enabled",
+      role: "teacher",
+    },
+    {
+      id: "3",
+      userid: "stu_002",
+      rfid: "1122334455",
+      expTime: "2025-09-01T00:00:00Z",
+      faceAttendance: "disabled",
+      role: "student",
+    },
+    {
+      id: "4",
+      userid: "tea_002",
+      rfid: "6677889900",
+      expTime: "2026-01-15T12:00:00Z",
+      faceAttendance: "enabled",
+      role: "teacher",
+    },
+    {
+      id: "5",
+      userid: "admin_001",
+      rfid: "5555555555",
+      expTime: "2027-01-01T00:00:00Z",
+      faceAttendance: "enabled",
+      role: "admin",
+    },
+  ];
+  
   const [role, setRole] = useState<"teacher" | "student">("teacher");
   const [users, setUsers] = useState<any[]>([]);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [rfid, setRfid] = useState("");
-  const [isVideoLoading, setIsVideoLoading] = useState(false);
   const [isVideoValid, setIsVideoValid] = useState<boolean | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
   const rfidInputRef = useRef<HTMLInputElement>(null);
-  const [videoMessage, setVideoMessage] = useState<string | null>(null);
-  const [countdown, setCountdown] = useState<number | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState("");
   const [fileToSend, setFileToSend] = useState<File | null>(null);
   const [initUserFile, setInitUserFile] = useState<File | null>(null);
-  const [selectedBatchYear, setSelectedBatchYear] = useState("");
   const batchYears = Array.from({ length: 5 }, (_, i) => {
     const startYear = 2022 + i;
     return `${startYear} - ${startYear + 3}`;
   });
-
-  const handleBatchYearChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setSelectedBatchYear(event.target.value);
-  };
-
-  const handleInitFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setInitUserFile(file);
-    }
-  };
-
-  const handleInitUserSubmit = async () => {
-    if (!initUserFile || !selectedBatchYear) return;
-
-    const formData = new FormData();
-    formData.append("file", initUserFile);
-    formData.append("batchYear", selectedBatchYear);
-
-    try {
-      const res = await fetch("/api/init-users", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (res.ok) {
-        dispatch(
-          addNotify({
-            type: "success",
-            message: "User data initialized successfully!",
-            duration: 3000,
-          })
-        );
-        setInitUserFile(null);
-        setSelectedBatchYear("");
-      } else {
-        dispatch(
-          addNotify({
-            type: "error",
-            message: "Failed to initialize user data.",
-            duration: 3000,
-          })
-        );
+    const [userMainData, setUserMainData] = useState<RFIDData[]>(sampleRFIDData);
+    const headCellsData: RFIDHeadCell[] = [
+      {
+        id: "id",
+        numeric: false,
+        disablePadding: true,
+        label: "ID",
+      },
+      {
+        id: "userid",
+        numeric: false,
+        disablePadding: true,
+        label: "User Id",
+      },
+      {
+        id: "rfid",
+        numeric: false,
+        disablePadding: false,
+        label: "RFID",
+      },
+      {
+        id: "expTime",
+        numeric: false,
+        disablePadding: false,
+        label: "Expired Time",
+      },
+      {
+        id: "faceAttendance",
+        numeric: false,
+        disablePadding: false,
+        label: "Face Attendance",
       }
-    } catch (err) {
-      console.error(err);
-      dispatch(
-        addNotify({
-          type: "error",
-          message: "Error initializing user data.",
-          duration: 3000,
-        })
-      );
-    }
-  };
+    ];
+    const isCheckBox = false;
+    const tableTitle = "RFID Data";
+
+
 
   const handleDeviceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedDevice(event.target.value);
@@ -196,75 +213,6 @@ function useIdentifyManagementHook() {
     setSearchKeyword(value);
   };
 
-  const fakeVerifyVideo = (blob: Blob): Promise<boolean> => {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        const result = Math.random() > 0.3;
-        resolve(result);
-      }, 1500);
-    });
-  };
-
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      mediaStreamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-
-      const mediaRecorder = new MediaRecorder(stream);
-      const chunks: Blob[] = [];
-
-      setIsRecording(true);
-
-      mediaRecorder.ondataavailable = e => {
-        chunks.push(e.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        setIsRecording(false);
-        const videoBlob = new Blob(chunks, { type: "video/webm" });
-        setVideoMessage("🎉 Video quay xong. Đang kiểm tra...");
-
-        const isValid = await fakeVerifyVideo(videoBlob);
-        setVideoMessage(
-          isValid
-            ? "✅ Video hợp lệ!"
-            : "❌ Video không hợp lệ, vui lòng quay lại."
-        );
-        setIsVideoValid(isValid);
-      };
-
-      mediaRecorder.start();
-      setTimeout(() => {
-        mediaRecorder.stop();
-        stream.getTracks().forEach(track => track.stop());
-      }, 10000);
-    } catch (err) {
-      console.error("Error accessing camera", err);
-      setIsVideoLoading(false);
-      setIsVideoValid(false);
-    }
-  };
-
-  const startCountdownAndRecord = async () => {
-    setVideoMessage(null);
-    setCountdown(3);
-
-    const countdownInterval = setInterval(() => {
-      setCountdown(prev => {
-        if (prev === 1) {
-          clearInterval(countdownInterval);
-          setCountdown(null);
-          setVideoMessage("🎥 Bắt đầu quay!");
-          startRecording();
-        }
-        return (prev || 1) - 1;
-      });
-    }, 1000);
-  };
 
   return {
     state: {
@@ -272,30 +220,24 @@ function useIdentifyManagementHook() {
       users,
       selectedUser,
       rfid,
-      isVideoLoading,
       isVideoValid,
       videoRef,
-      videoMessage,
-      countdown,
-      isRecording,
       selectedDevice,
       fileToSend,
       initUserFile,
-      selectedBatchYear,
       batchYears,
+      headCellsData,
+      userMainData,
+      tableTitle
     },
     handler: {
       handleRoleChange,
       handleUserChange,
       handleRFIDChange,
       handleSearchInputChange,
-      handleStartVideo: startCountdownAndRecord,
       handleDeviceChange,
       handleFileChange,
       handleSendToDevice,
-      handleInitFileChange,
-      handleInitUserSubmit,
-      handleBatchYearChange,
     },
     rfidInputRef,
   };

@@ -13,14 +13,22 @@ interface Data {
   updatedAt: string;
   // action?:string
 }
+interface RFIDData {
+  id: string;
+  userid: string;
+  rfid: string;
+  expTime: string;
+  faceAttendance: string;
+  role?: string;
+}
 type AttendanceStatus = "Present" | "Late" | "Absent";
 interface AttendanceLog {
   id: string;
   attendanceId: number;
   scheduleId: number;
   userId: number;
-  face: string | null; // Base64 hoặc binary encoded string
-  checkin: string | null; // ISO datetime string (e.g. "2025-04-16T07:05:00")
+  face: string | null; 
+  checkin: string | null; 
   status: AttendanceStatus;
   checkinFace:string;
   role?: string;
@@ -30,6 +38,12 @@ interface AttendanceLog {
 interface HeadCell {
   disablePadding: boolean;
   id: keyof Data;
+  label: string;
+  numeric: boolean;
+}
+interface RFIDHeadCell {
+  disablePadding: boolean;
+  id: keyof RFIDData;
   label: string;
   numeric: boolean;
 }
@@ -134,8 +148,9 @@ interface EditUserForm {
   major: string;
   weeklyCapacity: string;
   role: string;
-  career?: string; // <-- add this
-  email?: string;  // <-- and this
+  career?: string;
+  email?: string;  
+  avatar?: string; 
 }
 interface EditTeacherForm {
   classId: number[];
@@ -169,4 +184,6 @@ export type {
   NotifyHeadCell,
   NotifyProps,
   SystemRole,
+  RFIDHeadCell,
+  RFIDData,
 };
