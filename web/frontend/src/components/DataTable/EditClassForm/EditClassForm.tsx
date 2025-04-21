@@ -80,6 +80,7 @@ export default function EditClassForm({
               id="academicYear-select"
               name="academicYear"
               value={state.editingClass?.academicYear}
+              disabled={true}
               label="academicYear"
               onChange={handler.handleSelectChange}
             >

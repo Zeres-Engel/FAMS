@@ -25,7 +25,7 @@ function useScheduleManagementPageHook() {
   const [view, setView] = useState<View>("month");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isEditing, setIsEditing] = useState(false);
-  const [filters, setFilters] = useState({ class: "", userId: "" });
+  const [filters, setFilters] = useState({ class: "", userId: "" ,academicYear: ""});
 
   const schedules = useSelector((state: RootState) => state.schedule.schedules);
   const loading = useSelector((state: RootState) => state.schedule.loading);
@@ -38,7 +38,7 @@ function useScheduleManagementPageHook() {
   const classOptions = classes?.map(c => c.className) || [];
   useEffect(() => {
     if (!classes) {
-      // dispatch(fetchClasses());
+      dispatch(fetchClasses());
     }
   }, [dispatch, classes]);
   // 👇 Handler để gọi API
@@ -46,7 +46,8 @@ function useScheduleManagementPageHook() {
     const fromDate = new Date();
     const toDate = new Date();
     toDate.setDate(toDate.getDate() + 14); // ví dụ: lấy 2 tuần tới
-
+    console.log(filters);
+    
     dispatch(
       fetchSchedules({
         className: filters.class,
@@ -61,6 +62,19 @@ function useScheduleManagementPageHook() {
     return new Date(`${datePart}T${timeString}:00`); // ISO string: "2025-04-18T13:50:00"
   }
   // 👇 Log & set lại khi dữ liệu từ API thay đổi
+  const getAcademicYears = (range = 2) => {
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear - range;
+    const endYear = currentYear + range;
+  
+    const years: string[] = [];
+  
+    for (let year = startYear; year <= endYear; year++) {
+      years.push(`${year}-${year + 1}`);
+    }
+  
+    return years;
+  };
   useEffect(() => {
     if (schedules.length) {
       console.log("Fetched schedules: ", schedules);
@@ -130,6 +144,7 @@ function useScheduleManagementPageHook() {
       handleSearch,
       handleShowTeacherSchedule,
       handleSaveEdit,
+      getAcademicYears,
       addEvent: handleAddEvent,
     },
   };

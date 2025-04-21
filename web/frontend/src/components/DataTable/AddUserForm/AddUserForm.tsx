@@ -30,6 +30,8 @@ const AddUserForm: React.FC = () => {
     handleUserTypeChange,
     onSubmit,
     batchOptions,
+    avatarPreview,
+    setAvatarPreview,
   } = useAddUserFormHook();
 
   const form = watch();
@@ -125,7 +127,44 @@ const AddUserForm: React.FC = () => {
         helperText={errors.address?.message}
         fullWidth
       />
-
+      {/* Avatar Upload */}
+      <FormControl>
+        <FormLabel>Upload Avatar</FormLabel>
+        <Button variant="outlined" component="label">
+          Choose Image
+          <input
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={e => {
+              const file = e.target.files?.[0] || null;
+              setValue("avatar", file);
+              if (file) {
+                setAvatarPreview(URL.createObjectURL(file));
+              } else {
+                setAvatarPreview(null);
+              }
+            }}
+          />
+        </Button>
+        {avatarPreview && (
+          <Box mt={1}>
+            <img
+              src={avatarPreview}
+              alt="Avatar Preview"
+              style={{
+                width: 120,
+                height: 120,
+                objectFit: "cover",
+                borderRadius: 8,
+              }}
+            />
+          </Box>
+        )}
+        {form.avatar && (
+          <FormHelperText>Selected: {form.avatar.name}</FormHelperText>
+        )}
+      </FormControl>
       {/* Teacher fields */}
       {userType === "teacher" && (
         <Box sx={{ display: "flex", gap: 2 }}>
@@ -143,26 +182,6 @@ const AddUserForm: React.FC = () => {
           />
         </Box>
       )}
-
-      {/* Batch Year */}
-      {/* <FormControl sx={{ maxWidth: 300 }} error={!!errors.batchYear}>
-        <FormLabel>Batch Year</FormLabel>
-        <Controller
-          name="batchYear"
-          control={control}
-          rules={{ required: "Required" }}
-          render={({ field }) => (
-            <Select {...field}>
-              {batchOptions.map(option => (
-                <MenuItem key={option} value={option}>
-                  {option}
-                </MenuItem>
-              ))}
-            </Select>
-          )}
-        />
-        <FormHelperText>{errors.batchYear?.message}</FormHelperText>
-      </FormControl> */}
 
       {/* Parent Section */}
       {userType === "student" && (

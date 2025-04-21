@@ -262,11 +262,12 @@ export const searchUsers = createAsyncThunk(
 
       const params = {
         page: "1",
+        academicYear: filters.academicYear || "",
         search: filters.search || "",
         grade: filters.grade || "",
         roles: filters.roles?.join(",") || "",
         className: filters.className || "",
-        limit: (filters.limit || 500).toString(),
+        limit: (filters.limit || 100).toString(),
         phone: filters.phone || "",
       };
 

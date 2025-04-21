@@ -54,6 +54,8 @@ function ClassManagementPage(): React.JSX.Element {
                 isCheckBox={state.isCheckBox}
                 isAdmin={true}
                 isClassManagement={true}
+                setFiltersClass={handler.setFiltersClass}
+                classOptions={state.classOptions}
               ></DataTable>
             </Grid>
           </Grid>
