@@ -16,7 +16,7 @@ const router = express.Router();
 // Get teacher schedule
 router.get('/teachers/:id/schedule', protect, getTeacherSchedule);
 
-// Get user details based on role
+// Get user details based on role - Cho phép tất cả các role truy cập
 router.get('/details/:id', protect, getUserDetails);
 
 // GET all users with filtering (Admin only)
@@ -27,6 +27,11 @@ router.post('/', protect, authorize('Admin', 'admin'), createUser);
 
 // Create new user with /create endpoint (Admin only)
 router.post('/create', protect, authorize('Admin', 'admin'), createUser);
+
+// Unified update API route - accepts any role by userId
+// Can also update RFID information with the 'rfid' property
+// Example: { rfid: { RFID_ID: "RFID12345", ExpiryDate: "3y" } }
+router.put('/update/:userId', protect, require('../controllers/unifiedUpdateController'));
 
 // Manage single user
 router.route('/:id')

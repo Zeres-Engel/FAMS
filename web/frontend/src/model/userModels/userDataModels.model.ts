@@ -19,6 +19,12 @@ interface UserData {
   teacherLastName?: string;
   TeacherMajor?:string;
   TeacherWeeklyCapacity?:number;
+  TeacherDOB?:string;
+  TeacherAddress?:string;
+  parentCareer? : string;
+  parentEmail?: string;
+  parentAddr?: string;
+  parentDob?: string;
 }
 interface UserDataDetails {
   studentId: string;
@@ -64,7 +70,6 @@ interface CreateUserPayload {
   gender: Gender;
   dateOfBirth: string; // ISO string format: "YYYY-MM-DD"
   address: string;
-  batchYear: string; // e.g., "2025-2028"
   parentNames: string[];
   parentCareers: string[];
   parentPhones: string[];
@@ -90,11 +95,11 @@ interface AddUserFormValues {
   gender: "Male" | "Female" | "";
   dateOfBirth: string;
   address: string;
-  batchYear: string;
   parentNames: string[];
   parentPhones: string[];
   parentCareers: string[];
   parentGenders: boolean[];
+  parentEmails: string[];
   major: string;
   weeklyCapacity: string;
   role: Role;
@@ -112,6 +117,7 @@ interface EditUserFormValues {
   parentPhones: string[];
   parentCareers: string[];
   parentGenders: boolean[];
+  parentEmails: string[];
   major: string;
   weeklyCapacity: string;
   role: Role;

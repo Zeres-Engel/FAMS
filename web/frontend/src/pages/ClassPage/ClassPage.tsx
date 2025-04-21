@@ -8,16 +8,17 @@ import useClassPageHook from "./useClassPageHook";
 function ClassPage(): React.JSX.Element {
   const { state, handler } = useClassPageHook();
   return (
-    <LayoutComponent pageHeader="Class">
+    <LayoutComponent pageHeader="Class Page">
       <Container maxWidth={false} className="classPage-Container">
         <Grid container size={11} className="classPage-Grid">
           <Grid size={12} className="classPage-Header">
-            {/* <DataTable
+            <DataTable
               headCellsData={state.headCellsData}
               tableMainData={state.userMainData}
               tableTitle={state.tableTitle}
-              isCheckBox={state.isCheckBox}
-            ></DataTable> */}
+              isCheckBox={false}
+              isTeacherView={state.role === "teacher"}
+            ></DataTable>
           </Grid>
         </Grid>
       </Container>

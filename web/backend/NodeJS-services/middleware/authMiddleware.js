@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../database/models/User');
+const UserAccount = require('../database/models/UserAccount');
 
 /**
  * Middleware bảo vệ route yêu cầu xác thực
@@ -55,7 +55,7 @@ exports.protect = async (req, res, next) => {
     }
     
     // 3) Kiểm tra xem user còn tồn tại không
-    const currentUser = await User.findOne({ userId: decoded.id || decoded.userId });
+    const currentUser = await UserAccount.findOne({ userId: decoded.id || decoded.userId });
     
     if (!currentUser) {
       return res.status(401).json({

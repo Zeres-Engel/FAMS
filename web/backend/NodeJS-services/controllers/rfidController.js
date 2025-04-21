@@ -1,5 +1,5 @@
 const RFID = require('../database/models/RFID');
-const User = require('../database/models/User');
+const UserAccount = require('../database/models/UserAccount');
 const asyncHandler = require('../middleware/asyncHandler');
 const ErrorResponse = require('../utils/errorResponse');
 
@@ -119,106 +119,171 @@ exports.getRFIDByUserId = asyncHandler(async (req, res, next) => {
 // @route   POST /api/rfid
 // @access  Private (Admin)
 exports.createRFID = asyncHandler(async (req, res, next) => {
+  // Validate required fields
+  const { RFID_ID, UserID, ExpiryDate } = req.body;
+  
+  if (!RFID_ID || !UserID) {
+    return res.status(400).json({
+      success: false,
+      message: "RFID_ID and UserID are required fields",
+      code: "MISSING_FIELDS"
+    });
+  }
+  
   // Validate the UserID exists
-  const user = await User.findOne({ userId: req.body.UserID });
+  const user = await UserAccount.findOne({ userId: UserID });
   if (!user) {
-    return next(new ErrorResponse(`User with ID ${req.body.UserID} not found`, 400, 'INVALID_USER_ID'));
+    return res.status(400).json({
+      success: false,
+      message: `User with ID ${UserID} not found`,
+      code: "INVALID_USER_ID"
+    });
   }
   
   // Check if RFID already exists
-  const existingRFID = await RFID.findOne({ RFID_ID: req.body.RFID_ID });
+  const existingRFID = await RFID.findOne({ RFID_ID });
   if (existingRFID) {
-    return next(new ErrorResponse(`RFID with ID ${req.body.RFID_ID} already exists`, 400, 'DUPLICATE_RFID'));
+    return res.status(400).json({
+      success: false,
+      message: `RFID with ID ${RFID_ID} already exists`,
+      code: "DUPLICATE_RFID"
+    });
   }
 
   // Check if user already has an RFID card
-  const existingUserRFID = await RFID.findOne({ UserID: req.body.UserID });
+  const existingUserRFID = await RFID.findOne({ UserID });
   if (existingUserRFID) {
-    return next(new ErrorResponse(`User ${req.body.UserID} already has an RFID card: ${existingUserRFID.RFID_ID}`, 400, 'USER_HAS_RFID'));
+    return res.status(400).json({
+      success: false,
+      message: `User ${UserID} already has an RFID card: ${existingUserRFID.RFID_ID}`,
+      code: "USER_HAS_RFID"
+    });
   }
   
-  // Parse expiry date
-  const rfidData = {
-    ...req.body,
-    ExpiryDate: parseExpiryDate(req.body.ExpiryDate)
-  };
-  
-  // Create the RFID
-  const rfid = await RFID.create(rfidData);
-  
-  res.status(201).json({
-    success: true,
-    data: rfid,
-    message: 'RFID created successfully'
-  });
+  try {
+    // Parse expiry date
+    const rfidData = {
+      RFID_ID,
+      UserID,
+      ExpiryDate: parseExpiryDate(ExpiryDate),
+      IssueDate: new Date(),
+      Status: 'Active'
+    };
+    
+    // Create the RFID
+    const rfid = await RFID.create(rfidData);
+    
+    res.status(201).json({
+      success: true,
+      data: rfid,
+      message: 'RFID created successfully'
+    });
+  } catch (error) {
+    console.error('Error creating RFID:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error creating RFID',
+      code: 'CREATE_RFID_ERROR'
+    });
+  }
 });
 
 // @desc    Update RFID 
 // @route   PUT /api/rfid/:id
 // @access  Private (Admin)
 exports.updateRFID = asyncHandler(async (req, res, next) => {
-  let rfid = await RFID.findOne({ RFID_ID: req.params.id });
-  
-  if (!rfid) {
-    return next(new ErrorResponse(`RFID with ID ${req.params.id} not found`, 404, 'RFID_NOT_FOUND'));
-  }
-  
-  // If UserID is being updated, validate it exists
-  if (req.body.UserID) {
-    const user = await User.findOne({ userId: req.body.UserID });
-    if (!user) {
-      return next(new ErrorResponse(`User with ID ${req.body.UserID} not found`, 400, 'INVALID_USER_ID'));
+  try {
+    let rfid = await RFID.findOne({ RFID_ID: req.params.id });
+    
+    if (!rfid) {
+      return res.status(404).json({
+        success: false,
+        message: `RFID with ID ${req.params.id} not found`,
+        code: 'RFID_NOT_FOUND'
+      });
     }
-
-    // Check if the new user already has an RFID card (except the current one)
-    const existingUserRFID = await RFID.findOne({ 
-      UserID: req.body.UserID, 
-      RFID_ID: { $ne: req.params.id } 
+    
+    // If UserID is being updated, validate it exists
+    if (req.body.UserID) {
+      const user = await UserAccount.findOne({ userId: req.body.UserID });
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          message: `User with ID ${req.body.UserID} not found`,
+          code: 'INVALID_USER_ID'
+        });
+      }
+  
+      // Check if the new user already has an RFID card (except the current one)
+      const existingUserRFID = await RFID.findOne({ 
+        UserID: req.body.UserID, 
+        RFID_ID: { $ne: req.params.id } 
+      });
+  
+      if (existingUserRFID) {
+        return res.status(400).json({
+          success: false,
+          message: `User ${req.body.UserID} already has an RFID card: ${existingUserRFID.RFID_ID}`,
+          code: 'USER_HAS_RFID'
+        });
+      }
+    }
+  
+    // Process expiry date if provided
+    const updateData = { ...req.body };
+    if (req.body.ExpiryDate) {
+      updateData.ExpiryDate = parseExpiryDate(req.body.ExpiryDate);
+    }
+    
+    // Update RFID
+    rfid = await RFID.findOneAndUpdate(
+      { RFID_ID: req.params.id },
+      updateData,
+      { new: true, runValidators: true }
+    );
+    
+    res.status(200).json({
+      success: true,
+      data: rfid,
+      message: 'RFID updated successfully'
     });
-
-    if (existingUserRFID) {
-      return next(new ErrorResponse(
-        `User ${req.body.UserID} already has an RFID card: ${existingUserRFID.RFID_ID}`, 
-        400, 
-        'USER_HAS_RFID'
-      ));
-    }
+  } catch (error) {
+    console.error('Error updating RFID:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating RFID',
+      code: 'UPDATE_RFID_ERROR'
+    });
   }
-
-  // Process expiry date if provided
-  const updateData = { ...req.body };
-  if (req.body.ExpiryDate) {
-    updateData.ExpiryDate = parseExpiryDate(req.body.ExpiryDate);
-  }
-  
-  // Update RFID
-  rfid = await RFID.findOneAndUpdate(
-    { RFID_ID: req.params.id },
-    updateData,
-    { new: true, runValidators: true }
-  );
-  
-  res.status(200).json({
-    success: true,
-    data: rfid,
-    message: 'RFID updated successfully'
-  });
 });
 
 // @desc    Delete RFID
 // @route   DELETE /api/rfid/:id
 // @access  Private (Admin)
 exports.deleteRFID = asyncHandler(async (req, res, next) => {
-  const rfid = await RFID.findOne({ RFID_ID: req.params.id });
-  
-  if (!rfid) {
-    return next(new ErrorResponse(`RFID with ID ${req.params.id} not found`, 404, 'RFID_NOT_FOUND'));
+  try {
+    const rfid = await RFID.findOne({ RFID_ID: req.params.id });
+    
+    if (!rfid) {
+      return res.status(404).json({
+        success: false,
+        message: `RFID with ID ${req.params.id} not found`,
+        code: 'RFID_NOT_FOUND'
+      });
+    }
+    
+    await rfid.deleteOne();
+    
+    res.status(200).json({
+      success: true,
+      message: 'RFID deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting RFID:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error deleting RFID',
+      code: 'DELETE_RFID_ERROR'
+    });
   }
-  
-  await rfid.deleteOne();
-  
-  res.status(200).json({
-    success: true,
-    message: 'RFID deleted successfully'
-  });
 }); 

@@ -147,7 +147,7 @@ def generate_schedule_entries(db, schedule_data, total_weeks, start_date, end_da
                         "classroomId": classroom_id,
                         "roomName": room_name,
                         "semesterId": schedule["semesterId"],
-                        "sessionWeek": f"Week {week_num}"
+                        "sessionWeek": f"Tuần {week_num}"
                     }
                     
                     schedule_entries.append(entry)
@@ -195,10 +195,18 @@ def generate_strict_schedule(db, semester_doc, total_weeks=20):
     
     print(f"Generating schedule for semester {semester_id} (batch {batch_id})")
     
-    # Get classes for this batch
-    classes = list(db.Class.find({"batchId": batch_id}))
+    # Map batch to grade (assuming batch 1=12, 2=11, 3=10)
+    grade_map = {"1": 12, "2": 11, "3": 10}
+    grade = grade_map.get(str(batch_id))
+    
+    if not grade:
+        print(f"Warning: Could not map batch {batch_id} to grade, using default grade 10")
+        grade = 10
+    
+    # Get classes for this grade
+    classes = list(db.Class.find({"grade": grade}))
     class_ids = [c["_id"] for c in classes]
-    print(f"Found {len(classes)} classes with batch ID {batch_id}")
+    print(f"Found {len(classes)} classes for grade {grade}")
     
     # Get teachers
     teachers = list(db.Teacher.find({}))
@@ -312,7 +320,7 @@ def generate_semesters(db):
     
     # For each batch, create 6 semesters (3 years x 2 semesters)
     for batch in batches:
-        batch_id = batch.get('BatchID') or batch.get('batchId')
+        batch_id = batch.get('batchId')
         if not batch_id:
             continue
             
@@ -366,10 +374,18 @@ def generate_all_schedules(db, semesters, output_dir="src/data/schedules"):
     """
     total_entries = 0
     
+    # Ensure output directory exists
+    try:
+        os.makedirs(output_dir, exist_ok=True)
+    except PermissionError:
+        print(f"[WARNING] Permission denied when creating {output_dir}. Using /tmp/schedules")
+        output_dir = "/tmp/schedules"
+        os.makedirs(output_dir, exist_ok=True)
+    
     for sem in semesters:
         # Generate schedule for this semester
-        semester_name = sem.get('semesterName') or sem.get('SemesterName', 'Unknown')
-        batch_id = sem.get('batchId') or sem.get('BatchID', 'Unknown')
+        semester_name = sem.get('semesterName', 'Unknown')
+        batch_id = sem.get('batchId', 'Unknown')
         
         print(f"[SCHEDULE] Generating schedule for semester {semester_name} of Batch {batch_id}...")
         scheds, warnings = generate_schedule(db, sem, total_weeks=18)
@@ -383,7 +399,8 @@ def generate_all_schedules(db, semesters, output_dir="src/data/schedules"):
         # Export schedule to CSV if possible
         try:
             from .export import export_semester_schedules
-            export_semester_schedules(db, sem, output_dir)
+            teachers_count, class_count = export_semester_schedules(db, sem, output_dir)
+            print(f"[INFO] Exported {teachers_count} teacher schedules and {class_count} class schedules")
         except Exception as e:
             print(f"[WARNING] Failed to export schedules: {str(e)}")
             print("[WARNING] Schedule export failed, but database initialization continues.")

@@ -158,7 +158,14 @@ class MainWindow(QMainWindow):
                 if anti_spoof_result is not None:
                     result_text = anti_spoof_result["detection_result"].upper()
                     color = (0, 255, 0) if result_text == "LIVE" else (0, 0, 255)
-                    cv2.putText(display_frame, f"Face: {result_text}", (x1, y2+25), 
+                    
+                    # Hiển thị trạng thái của tính năng anti-spoofing
+                    if self.face_system.face_anti.enable:
+                        status_text = f"Face: {result_text}"
+                    else:
+                        status_text = "Face Anti-Spoofing: DISABLED"
+                        
+                    cv2.putText(display_frame, status_text, (x1, y2+25), 
                               cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
                     
                     # Hiển thị giá trị variance và mean_gradient với màu khác

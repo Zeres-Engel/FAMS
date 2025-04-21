@@ -7,8 +7,10 @@ import Typography from "@mui/material/Typography";
 import { Button, TextField } from "@mui/material";
 import NotifyBar from "../../components/NotifyBar/NotifyBar";
 import GlobalLoading from "../../components/ShowLoading/ShowLoading";
+
 function LoginPage(): React.JSX.Element {
   const { state, handler } = useLoginPageHook();
+
   const validateField = {
     isRequired: {
       "& .MuiInputBase-root": {
@@ -21,9 +23,10 @@ function LoginPage(): React.JSX.Element {
       },
     },
   };
+
   return (
     <Container maxWidth={false}>
-      <GlobalLoading/>
+      <GlobalLoading />
       {/* {state?.alertMessage && <NotifyBar notifyID={state?.notifyID}  notifyType='warning' notifyContent={state?.alertMessage}/>} */}
       <div className="login-Page">
         <Grid
@@ -34,7 +37,7 @@ function LoginPage(): React.JSX.Element {
         >
           <Grid size={8} className={state?.isTablet ? 'tabletMode' : ''}>
             <div className="login-Img">
-              <img src="https://www.21kschool.com/vn/wp-content/uploads/sites/5/2022/09/5-Benefits-of-Personalized-Learning.png" alt="Findy Home" />
+              <img src="https://www.21kschool.com/vn/wp-content/uploads/sites/5/2022/09/5-Benefits-of-Personalized-Learning.png" alt="Login Image" />
             </div>
           </Grid>
           <Grid
@@ -48,7 +51,7 @@ function LoginPage(): React.JSX.Element {
               <div className="login-Form">
                 <div className="login-Form-Header">
                   <Typography variant="h4" align="center" fontWeight={700} className="title-1">
-                    Đăng nhập
+                    Login
                   </Typography>
                 </div>
                 <form
@@ -64,7 +67,7 @@ function LoginPage(): React.JSX.Element {
                     }
                     className="login-Input"
                     id="userId"
-                    label="Tên đăng nhập"
+                    label="Username"
                     variant="outlined"
                     name="userId"
                     onBlur={e => {
@@ -75,7 +78,7 @@ function LoginPage(): React.JSX.Element {
                   />
                   {state?.isError?.includes(1) && !state?.watchUserName && (
                     <Typography className="isBlank">
-                      {"Tên đăng nhập không để trống"}
+                      {"Username cannot be empty"}
                     </Typography>
                   )}
                   <TextField
@@ -87,7 +90,7 @@ function LoginPage(): React.JSX.Element {
                     }
                     className="login-Input"
                     id="password"
-                    label="Mật khẩu"
+                    label="Password"
                     variant="outlined"
                     type="password"
                     name="password"
@@ -99,12 +102,12 @@ function LoginPage(): React.JSX.Element {
                   />
                   {state?.isError?.includes(2) && !state?.watchPassword && (
                     <Typography className="isBlank">
-                      {"Mật khẩu không để trống"}
+                      {"Password cannot be empty"}
                     </Typography>
                   )}
                   <div className="forgot-Pass">
                     <Typography variant="body1">
-                      <a href="youtube.com">Quên mật khẩu</a>
+                      <a href="youtube.com">Forgot password?</a>
                     </Typography>
                   </div>
                   <div className="login-Submit">
@@ -113,7 +116,7 @@ function LoginPage(): React.JSX.Element {
                       className="submit-Button"
                       variant="contained"
                     >
-                      <Typography variant="body2">Đăng nhập</Typography>
+                      <Typography variant="body2">Login</Typography>
                     </Button>
                   </div>
                 </form>
@@ -125,4 +128,5 @@ function LoginPage(): React.JSX.Element {
     </Container>
   );
 }
+
 export default LoginPage;

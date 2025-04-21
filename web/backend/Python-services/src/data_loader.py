@@ -7,9 +7,14 @@ import csv
 import random
 from typing import List, Dict, Any
 from datetime import datetime, timedelta
-from src.models.curriculum import Subject, Curriculum, CurriculumSubject, Slot
-from src.models.class_model import Classroom
-from src.models.user import Teacher, Parent
+from .models.Subject import Subject
+from .models.Curriculum import Curriculum
+from .models.CurriculumSubject import CurriculumSubject
+from .models.ScheduleFormat import ScheduleFormat
+from .models.Classroom import Classroom
+from .models.Teacher import Teacher
+from .models.Parent import Parent
+from .constants import COLLECTIONS
 
 
 class DataLoader:
@@ -77,13 +82,23 @@ class DataLoader:
             except ValueError:
                 sessions = 1
                 
+            # Map type values if necessary
+            type_value = row.get("Type", "").strip()
+            # Map Vietnamese display names to enum values
+            type_mapping = {
+                "Môn học chính": "Chinh",
+                "Tự chọn": "TuChon",
+                "Ngoại khóa": "NgoaiKhoa",
+                "": "Chinh"  # Default value
+            }
+            # Use the mapping or the original value, defaulting to "Chinh" if not matched
+            subject_type = type_mapping.get(type_value, type_value or "Chinh")
+            
             subject = Subject(
                 subjectId=str(i + 1),
                 subjectName=subject_name,
-                subjectCode=f"SUB{i+1:03d}",
-                type=row.get("Type", "Môn học chính").strip(),
-                credits=sessions,
-                description=row.get("Description", "").strip()
+                description=row.get("Description", "").strip(),
+                subjectType=subject_type
             )
             subjects.append(subject.dict(exclude={"collection"}))
     
@@ -115,7 +130,7 @@ class DataLoader:
                         room_name = f"{room_number}{building}"
                         
                         classroom = {
-                            "classroomId": str(i + 1),
+                            "classroomId": i + 1,
                             "classroomName": f"Room {room_number}, Building {building}",
                             "roomNumber": room_number,
                             "building": building,
@@ -141,12 +156,12 @@ class DataLoader:
                 room_name = f"{room_number}{building}"
                 
                 classroom = {
-                    "classroomId": str(i),
+                    "classroomId": i,
                     "classroomName": f"Room {room_number}, Building {building}",
                     "roomNumber": room_number,
                     "building": building,
                     "roomName": room_name,
-                    "capacity": 30,
+                    "capacity": 40,
                     "location": f"Building {building}"
                 }
                 classrooms.append(classroom)
@@ -183,7 +198,7 @@ class DataLoader:
                                 day_of_week = "Monday"
                         
                         slot = {
-                            "slotId": str(i + 1),
+                            "slotId": i + 1,
                             "slotName": f"Slot {row.get('SlotNumber', i+1)}",
                             "slotNumber": int(row.get("SlotNumber", i+1)),
                             "dayOfWeek": day_of_week,
@@ -218,7 +233,7 @@ class DataLoader:
             for day in days:
                 for period_num, period_time in periods.items():
                     slot = {
-                        "slotId": str(slot_id),
+                        "slotId": slot_id,
                         "slotName": f"{day} Slot {period_num}",
                         "slotNumber": period_num,
                         "dayOfWeek": day,
@@ -232,9 +247,9 @@ class DataLoader:
         # Insert slots to database
         if slots:
             # Clear existing slots
-            self.db.Slot.delete_many({})
-            self.db.Slot.insert_many(slots)
-            print(f"Imported {len(slots)} slots")
+            self.db[COLLECTIONS['SCHEDULE_FORMAT']].delete_many({})
+            self.db[COLLECTIONS['SCHEDULE_FORMAT']].insert_many(slots)
+            print(f"Imported {len(slots)} time slots")
         else:
             print("WARNING: No slots found!")
             
@@ -248,13 +263,17 @@ class DataLoader:
         if not os.path.exists(curriculum_file):
             print(f"WARNING: Curriculum file for grade {grade} not found!")
             return None
+        
+        # Map grade to sequential curriculum ID
+        grade_to_id = {10: 1, 11: 2, 12: 3}
+        curriculum_id = grade_to_id.get(grade, 1)  # Default to 1 if grade not in map
             
         # Create curriculum record
         curriculum = Curriculum(
-            curriculumId=str(grade),
+            curriculumId=curriculum_id,  # Use sequential ID
+            curriculumName=f"Curriculum for Grade {grade}",
             grade=grade,
-            year=2024,
-            description=f"Curriculum for grade {grade}"
+            description=f"Standard curriculum for grade {grade}"
         )
         
         # Get subjects from database
@@ -307,15 +326,15 @@ class DataLoader:
                     # Create curriculum subject
                     try:
                         sessions = int(row.get("Sessions", "2").strip())
+                        print(f"DEBUG: Sessions for {subject['subjectName']}: {sessions}")
                     except ValueError:
                         sessions = 2
+                        print(f"DEBUG: Error converting sessions for {subject['subjectName']}, using default: 2")
                         
                     curriculum_subject = CurriculumSubject(
-                        curriculumSubjectId=str(curriculum_subject_id),
                         curriculumId=curriculum.curriculumId,
                         subjectId=subject["subjectId"],
-                        sessions=sessions,
-                        semester=1 # Default to first semester
+                        sessions=sessions
                     )
                     
                     curriculum_subjects.append(curriculum_subject.dict(exclude={"collection"}))

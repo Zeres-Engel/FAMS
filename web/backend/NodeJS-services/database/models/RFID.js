@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 const { COLLECTIONS } = require('../constants');
 
+/**
+ * RFID Schema
+ * Represents RFID cards assigned to users
+ */
 const RFIDSchema = new mongoose.Schema({
   RFID_ID: {
     type: String,
@@ -10,24 +14,30 @@ const RFIDSchema = new mongoose.Schema({
   UserID: {
     type: String,
     required: true,
-    ref: 'User'
+    ref: 'UserAccount'
   },
   IssueDate: {
     type: Date,
     default: Date.now
   },
   ExpiryDate: {
-    type: Date,
-    required: true
+    type: Date
+  },
+  Status: {
+    type: String,
+    enum: ['Active', 'Expired', 'Revoked', 'Lost'],
+    default: 'Active'
   }
 }, {
+  timestamps: true,
+  versionKey: false,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
 
 // Virtual for getting user info
 RFIDSchema.virtual('user', {
-  ref: 'User',
+  ref: 'UserAccount',
   localField: 'UserID',
   foreignField: 'userId',
   justOne: true

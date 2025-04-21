@@ -4,8 +4,10 @@ Classroom and class data generation for FAMS
 import csv
 import os
 from src.utils import find_file_path
-from src.models.class_model import Classroom, Class
+from src.models.Classroom import Classroom
+from src.models.Class import Class
 import datetime
+from bson import ObjectId
 
 
 def import_classrooms(db):
@@ -61,7 +63,17 @@ def import_classrooms(db):
 
 
 def distribute_students(db, students, grade, batch_id):
-    """Distribute students into classes"""
+    """Distribute students into classes
+    
+    Args:
+        db: MongoDB database connection
+        students: List of student dictionaries
+        grade: Grade level (e.g. 10)
+        batch_id: Used for logging purposes
+    
+    Returns:
+        List of created class dictionaries
+    """
     # Lấy tên đầy đủ của học sinh
     def get_full_name(student):
         if "fullName" in student:
@@ -77,7 +89,7 @@ def distribute_students(db, students, grade, batch_id):
         print(f"Student sample: {students[0]}")
     
     students_sorted = sorted(students, key=get_full_name)
-    chunk_size = 20  # Number of students per class
+    chunk_size = 40  # Number of students per class (changed from 20 to 40)
     class_index = 1
     created_classes = []
     
@@ -98,10 +110,10 @@ def distribute_students(db, students, grade, batch_id):
         class_index += 1
         
         c_doc = {
+            "_id": ObjectId(),  # Pre-generate an ObjectId
             "className": class_name,
+            "grade": grade,
             "homeroomTeacherId": None,
-            "batchId": batch_id,  # Store as integer
-            "BatchID": batch_id,  # Add BatchID field as integer for compatibility
             "grade": grade,  # Add grade explicitly
             "academicYear": f"{datetime.datetime.now().year}-{datetime.datetime.now().year+1}",  # Add academic year
             "createdAt": datetime.datetime.now(),
@@ -127,7 +139,7 @@ def create_class_if_needed(db, class_name, grade, batch_id, academic_year):
         db: MongoDB database connection
         class_name: Name of the class (e.g. "10A1")
         grade: Grade level (e.g. 10)
-        batch_id: Batch ID
+        batch_id: Used for logging purposes
         academic_year: Academic year string (e.g. "2024-2025")
         
     Returns:
@@ -155,11 +167,10 @@ def create_class_if_needed(db, class_name, grade, batch_id, academic_year):
     
     # Create new class if not exists
     new_class = {
+        "_id": ObjectId(),  # Pre-generate an ObjectId
         "className": class_name,
         "grade": grade,
         "homeroomTeacherId": None,
-        "batchId": batch_id,  # Store as integer
-        "BatchID": batch_id,  # Add BatchID field as integer for compatibility
         "academicYear": academic_year,
         "createdAt": datetime.datetime.now(),
         "isActive": True

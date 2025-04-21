@@ -1,7 +1,7 @@
 const Attendance = require('../database/models/Attendance');
 const ClassSession = require('../database/models/ClassSession');
 const Student = require('../database/models/Student');
-const User = require('../database/models/User');
+const UserAccount = require('../database/models/UserAccount');
 const moment = require('moment');
 const ClassSchedule = require('../database/models/ClassSchedule');
 
@@ -50,7 +50,7 @@ exports.getAttendanceBySession = async (req, res) => {
     const formattedAttendance = [];
     
     for (const student of studentsInClass) {
-      const user = await User.findOne({ userId: student.userId });
+      const user = await UserAccount.findOne({ userId: student.userId });
       const attendance = attendanceList.find(a => a.userId === student.userId) || {
         status: 'Absent',
         checkIn: null

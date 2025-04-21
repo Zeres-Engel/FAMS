@@ -1,16 +1,22 @@
 const mongoose = require('mongoose');
 const { COLLECTIONS } = require('../constants');
 
+/**
+ * Teacher Schema
+ * Represents teachers in the system
+ */
 const TeacherSchema = new mongoose.Schema({
   teacherId: {
-    type: String,
+    type: Number,
     required: true,
-    unique: true
+    unique: true,
+    auto: true
   },
   userId: {
     type: String,
     required: true,
-    unique: true
+    unique: true,
+    ref: 'UserAccount'
   },
   firstName: {
     type: String,
@@ -22,13 +28,13 @@ const TeacherSchema = new mongoose.Schema({
   },
   fullName: {
     type: String,
+    required: true,
     default: function() {
-      return `${this.firstName} ${this.lastName}`.trim();
+      return `${this.lastName} ${this.firstName}`;
     }
   },
   email: {
-    type: String,
-    required: true
+    type: String
   },
   dateOfBirth: {
     type: Date
@@ -40,18 +46,26 @@ const TeacherSchema = new mongoose.Schema({
     type: String
   },
   gender: {
-    type: Boolean
+    type: Boolean,
+    set: function(v) {
+      if (typeof v === 'string') {
+        return v.toLowerCase() === 'male' || v === 'true';
+      }
+      return v;
+    },
+    get: function(v) {
+      return v ? 'Male' : 'Female';
+    }
   },
   major: {
     type: String
   },
-  WeeklyCapacity: {
+  weeklyCapacity: {
     type: Number,
     default: 10
   },
-  isActive: {
-    type: Boolean,
-    default: true
+  degree: {
+    type: String
   }
 }, {
   timestamps: true,
@@ -62,43 +76,18 @@ const TeacherSchema = new mongoose.Schema({
 
 // Virtual for getting user info
 TeacherSchema.virtual('user', {
-  ref: 'User',
+  ref: 'UserAccount',
   localField: 'userId',
   foreignField: 'userId',
   justOne: true
 });
 
-// Virtual for getting assigned classes
-TeacherSchema.virtual('classes', {
+// Virtual for getting classes where teacher is homeroom teacher
+TeacherSchema.virtual('homeroomClasses', {
   ref: 'Class',
   localField: 'teacherId',
-  foreignField: 'homeroomTeacherId'
+  foreignField: 'homeroomTeacherId',
+  justOne: false
 });
-
-// Virtual for getting teaching schedules
-TeacherSchema.virtual('schedules', {
-  ref: 'ClassSchedule',
-  localField: 'teacherId',
-  foreignField: 'teacherId'
-});
-
-// Generate user ID based on name
-TeacherSchema.statics.generateUserId = function(firstName, lastName, teacherId) {
-  if (!firstName || !lastName || !teacherId) {
-    throw new Error('Missing required fields for userId generation');
-  }
-  
-  // In Vietnamese naming, lastName is the family name (Nguyễn Phước), 
-  // firstName is the given name (Thành)
-  
-  // Names should already be normalized (accents removed) in the controller
-  
-  // Extract the first letter of each word in the lastName
-  const lastNameParts = lastName.split(' ');
-  const lastNameInitials = lastNameParts.map(part => part.charAt(0).toLowerCase()).join('');
-  
-  // Combine with firstName and ID
-  return `${firstName.toLowerCase()}${lastNameInitials}${teacherId}`;
-};
 
 module.exports = mongoose.model('Teacher', TeacherSchema, COLLECTIONS.TEACHER); 

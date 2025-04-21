@@ -122,207 +122,6 @@ Base path: `/auth`
   3. Khi nhận lỗi `TOKEN_EXPIRED`, gọi API refresh token để lấy cặp token mới
   4. Nếu refresh token cũng hết hạn, yêu cầu người dùng đăng nhập lại
 
-### Student API
-Base path: `/students`
-
-#### Get All Students
-- **URL**: `http://fams.io.vn/api-nodejs/students`
-- **Method**: `GET`
-- **Auth Required**: Yes
-- **Query Parameters**:
-  - `page`: Page number (default: 1)
-  - `limit`: Items per page (default: 10)
-  - `search`: Search term (tìm kiếm theo ID, tên, email, etc.)
-  - `classId`: Lọc theo ID của lớp
-  - `className`: Lọc theo tên lớp (ví dụ: "10A1")
-  - `batchId`: Lọc theo ID của khóa học
-  - `batchYear`: Lọc theo năm của khóa (ví dụ: "2023-2026" tương ứng với batchId=3)
-  - **Chú ý**: Bạn có thể filter theo bất kỳ trường nào trong model Student (firstName, lastName, email, v.v.)
-- **Response**: Danh sách học sinh với thông tin bổ sung:
-  ```json
-  {
-    "success": true,
-    "data": [
-      {
-        "studentId": "1",
-        "firstName": "Nam",
-        "lastName": "Ngô Ngọc",
-        // ... other student fields
-        "classId": 2,
-        "className": "10A2", // Thông tin về lớp
-        "batchId": 3,
-        "batchName": "Khóa 2023-2026 (Lớp 10)", // Tên khóa
-        "batchYear": "2023-2026" // Năm học
-      }
-    ],
-    "count": 1,
-    "pagination": {
-      "total": 10,
-      "page": 1,
-      "limit": 10,
-      "pages": 1
-    }
-  }
-  ```
-
-#### Filter Students by Class and Batch
-Hệ thống hỗ trợ hai cách để lọc học sinh theo lớp:
-1. Sử dụng `classId`: Truy vấn trực tiếp theo ID của lớp
-   ```
-   http://fams.io.vn/api-nodejs/students?classId=1
-   ```
-
-2. Sử dụng `className`: Hệ thống sẽ tự động tìm kiếm classId tương ứng với tên lớp
-   ```
-   http://fams.io.vn/api-nodejs/students?className=10A1
-   ```
-
-Tương tự, để lọc theo khóa học, có hai cách:
-1. Sử dụng `batchId`: Truy vấn trực tiếp theo ID của khóa
-   ```
-   http://fams.io.vn/api-nodejs/students?batchId=3
-   ```
-
-2. Sử dụng `batchYear`: Cung cấp năm bắt đầu và kết thúc, hệ thống sẽ tự động chuyển đổi thành batchId
-   ```
-   http://fams.io.vn/api-nodejs/students?batchYear=2023-2026
-   ```
-
-Các quy tắc áp dụng cho batchYear:
-- "2021-2024" tương ứng với batchId=1
-- "2022-2025" tương ứng với batchId=2
-- "2023-2026" tương ứng với batchId=3
-- v.v.
-
-#### Advanced Filtering
-1. **Filter theo bất kỳ trường nào**: Thêm tên trường và giá trị vào query string
-   ```
-   http://fams.io.vn/api-nodejs/students?firstName=Nam&gender=Male
-   ```
-
-2. **Bỏ qua filter với giá trị "none"**: Nếu một tham số có giá trị là "none", hệ thống sẽ bỏ qua filter này
-   ```
-   http://fams.io.vn/api-nodejs/students?classId=1&batchId=none
-   ```
-   Ví dụ này sẽ chỉ lọc theo classId mà không lọc theo batchId.
-
-3. **Kết hợp nhiều filter**: Các filter có thể kết hợp với nhau
-   ```
-   http://fams.io.vn/api-nodejs/students?className=10A1&batchYear=2023-2026&isActive=true&page=1&limit=20
-   ```
-
-#### Get Student by ID
-- **URL**: `http://fams.io.vn/api-nodejs/students/:id`
-- **Method**: `GET`
-- **Auth Required**: Yes
-
-#### Create Student
-- **URL**: `http://fams.io.vn/api-nodejs/students`
-- **Method**: `POST`
-- **Auth Required**: Yes
-- **Body**: Student information (name, email, etc.)
-
-#### Update Student
-- **URL**: `http://fams.io.vn/api-nodejs/students/:id`
-- **Method**: `PUT`
-- **Auth Required**: Yes (Admin only)
-- **Description**: Cập nhật thông tin học sinh. Có thể cập nhật một hoặc nhiều trường cùng lúc.
-- **Body**:
-```json
-{
-  // Thông tin cơ bản
-  "firstName": "Thành",
-  "lastName": "Nguyễn Văn",
-  "email": "thanhnvst@fams.edu.vn",
-  "phone": "0987654321",
-  "address": "456 Đường XYZ, Quận 2, TP.HCM",
-  "dateOfBirth": "2005-05-15",
-  "gender": "Male", // Chấp nhận cả "Male"/"Female" và true/false
-  "isActive": true,
-
-  // Thông tin lớp và khóa
-  "classId": 2,
-  "batchId": 3,
-  "parentNames": ["Nguyễn Văn A", "Trần Thị B"],
-  "parentCareers": ["Kỹ sư", "Giáo viên"],
-  "parentPhones": ["0123456789", "0987123456"],
-  "parentGenders": [true, false], // true = Male, false = Female
-
-  "rfid": {
-    "RFID_ID": "RFID12345",  // ID của thẻ RFID
-    "ExpiryDate": "2y"       // Thời hạn 2 năm
-  }
-}
-```
-
-- **Response**:
-```json
-{
-  "success": true,
-  "data": {
-    "studentId": "7",
-    "userId": "thanhnvst",
-    "firstName": "Thành",
-    "lastName": "Nguyễn Văn",
-    "fullName": "Thành Nguyễn Văn",
-    "email": "thanhnvst@fams.edu.vn",
-    "phone": "0987654321",
-    "address": "456 Đường XYZ, Quận 2, TP.HCM",
-    "dateOfBirth": "2005-05-15T00:00:00.000Z",
-    "classId": 2,
-    "batchId": 3,
-    "gender": "Male",
-    "isActive": true,
-    "parentIds": ["1", "2"],
-    "parentNames": ["Nguyễn Văn A", "Trần Thị B"],
-    "parentCareers": ["Kỹ sư", "Giáo viên"],
-    "parentPhones": ["0123456789", "0987123456"],
-    "parentGenders": [true, false],
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "updatedAt": "2024-01-02T00:00:00.000Z"
-  },
-  "parentUpdates": [
-    "Updated parent: 1",
-    "Updated parent: 2"
-  ],
-  "rfid": {
-    "RFID_ID": "RFID12345",
-    "UserID": "thanhnvst",
-    "IssueDate": "2024-05-25T12:34:56.789Z",
-    "ExpiryDate": "2026-05-25T12:34:56.789Z"
-  }
-}
-```
-
-**Lưu ý quan trọng về cập nhật phụ huynh:**
-1. Khi cập nhật thông tin phụ huynh:
-   - Nếu tên phụ huynh thay đổi, hệ thống sẽ tự động:
-     - Tạo `userId` mới theo định dạng: `{firstName}{lastNameInitials}pr{parentId}`
-     - Tạo email mới: `{newUserId}@fams.edu.vn`
-     - Xóa tài khoản User cũ và tạo tài khoản mới
-     - Cập nhật thông tin phụ huynh với `userId` và email mới
-   - Ví dụ: Nếu phụ huynh "Nguyễn Văn A" (parentId=1) đổi tên thành "Nguyễn Văn B":
-     - `userId` cũ: `angvpr1`
-     - `userId` mới: `bngvpr1`
-     - Email mới: `bngvpr1@fams.edu.vn`
-
-2. Các trường phụ huynh:
-   - `parentNames`: Tên đầy đủ của phụ huynh
-   - `parentCareers`: Nghề nghiệp của phụ huynh
-   - `parentPhones`: Số điện thoại của phụ huynh
-   - `parentGenders`: Giới tính phụ huynh (true = Male, false = Female)
-   - Không cần cung cấp `parentIds` khi cập nhật, hệ thống sẽ tự động quản lý
-
-3. Khi xóa phụ huynh:
-   - Xóa bản ghi phụ huynh
-   - Xóa tài khoản User tương ứng
-   - Cập nhật danh sách phụ huynh trong bản ghi học sinh
-
-#### Delete Student
-- **URL**: `http://fams.io.vn/api-nodejs/students/:id`
-- **Method**: `DELETE`
-- **Auth Required**: Yes
-
 ### User API
 Base path: `/users`
 
@@ -389,6 +188,12 @@ Base path: `/users`
       "username": "tuanpv5",
       "email": "tuanpv5@fams.edu.vn",
       "role": "teacher",
+      "rfid": {
+        "RFID_ID": "TEACH12345",
+        "IssueDate": "2024-05-01T00:00:00Z",
+        "ExpiryDate": "2026-05-01T00:00:00Z",
+        "Status": "Active"
+      },
       "details": {
         "teacherId": "5",
         "firstName": "Tuấn",
@@ -396,7 +201,19 @@ Base path: `/users`
         "fullName": "Tuấn Phạm Văn",
         "phone": "0987950528",
         "major": "Toán học",
-        "grades": ["10", "11"]
+        "degree": "Tiến sĩ Giáo dục học",
+        "classes": [
+          {
+            "classId": 2,
+            "className": "10A1",
+            "grade": "10"
+          },
+          {
+            "classId": 3,
+            "className": "10A2",
+            "grade": "10"
+          }
+        ]
       }
     },
     {
@@ -404,6 +221,12 @@ Base path: `/users`
       "username": "anhdmst37",
       "email": "anhdmst37@fams.edu.vn",
       "role": "student",
+      "rfid": {
+        "RFID_ID": "STUD67890",
+        "IssueDate": "2024-03-15T00:00:00Z",
+        "ExpiryDate": "2025-03-15T00:00:00Z",
+        "Status": "Active"
+      },
       "details": {
         "studentId": "7",
         "firstName": "Ánh",
@@ -429,10 +252,32 @@ Base path: `/users`
 }
 ```
 
+**Lưu ý về RFID**: Nếu người dùng có thẻ RFID, thông tin thẻ sẽ được trả về trong trường `rfid` với các thuộc tính `RFID_ID`, `IssueDate`, `ExpiryDate` và `Status`.
+
 #### Get User by ID
 - **URL**: `http://fams.io.vn/api-nodejs/users/:id`
 - **Method**: `GET`
 - **Auth Required**: Yes
+- **Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "userId": "tuanpv5",
+    "email": "tuanpv5@fams.edu.vn",
+    "role": "teacher",
+    "rfid": {
+      "RFID_ID": "TEACH12345",
+      "IssueDate": "2024-05-01T00:00:00Z",
+      "ExpiryDate": "2026-05-01T00:00:00Z",
+      "Status": "Active"
+    },
+    // Other user information
+  }
+}
+```
+
+**Lưu ý về RFID**: Nếu người dùng có thẻ RFID, thông tin thẻ sẽ được trả về trong trường `rfid`.
 
 #### Create User
 - **URL**: `http://fams.io.vn/api-nodejs/users/create`
@@ -446,62 +291,174 @@ Base path: `/users`
   "role": "student",
   "firstName": "Thành",
   "lastName": "Nguyễn Phước",
-  "email": "thanhnpst@fams.edu.vn",
+  "email": "thanhnp@gmail.com",
   "backup_email": "thanhnp@gmail.com",
   "phone": "0987654321",
   "gender": "Male",
   "dateOfBirth": "2005-05-15",
   "address": "123 Đường ABC, Thành phố XYZ",
-  "batchYear": "2022-2025",
   "parentNames": ["Nguyễn Phước Hải", "Trần Thị Mai"],
   "parentCareers": ["Kỹ sư", "Giáo viên"],
   "parentPhones": ["0123456789", "0987123456"],
-  "parentGenders": [true, false]
+  "parentGenders": [true, false],
+  "parentEmails": ["nph@gmail.com", "ttm@gmail.com"]
 }
 ```
 
-##### Tạo Giáo Viên (Teacher)
-```json
-{
-  "role": "teacher",
-  "firstName": "Tuấn",
-  "lastName": "Hoàng Đức",
-  "email": "tuanhd@fams.edu.vn",
-  "backup_email": "tuanhoang@gmail.com",
-  "phone": "0987950527",
-  "gender": "Male",
-  "dateOfBirth": "1985-03-22",
-  "address": "456 Đường DEF, Quận GHI",
-  "major": "Bóng Chuyền, Hóa học",
-  "weeklyCapacity": 16
-}
-```
+**Lưu ý về cách xử lý Batch mới:**
+- Không cần nhập batchYear nữa, hệ thống sẽ tự lấy năm hiện tại (currentYear)
+- Nếu batch của năm hiện tại đã tồn tại, sẽ sử dụng batch đó
+- Nếu chưa tồn tại, hệ thống sẽ tự động tạo batch mới với:
+  - startYear = năm hiện tại
+  - startDate = 1 tháng 9 năm hiện tại
+  - endDate = 30 tháng 6 năm hiện tại + 3 năm
 
-##### Tạo Phụ Huynh (Parent)
-```json
-{
-  "role": "parent",
-  "firstName": "Dũng",
-  "lastName": "Phạm Anh",
-  "email": "dungpa@fams.edu.vn",
-  "backup_email": "dungpham@gmail.com",
-  "phone": "0919796269",
-  "gender": "Male",
-  "career": "Phát thanh viên"
-}
-```
+**Lưu ý về cách sinh userId:**
+- Student: `{firstName}{lastName initials}st{batchId}{studentId}`
+  - Ví dụ: "Thành Nguyễn Phước" với batchId=2, studentId=5 sẽ có userId="thanhnpst25"
+  
+- Teacher: `{firstName[0]}{lastName initials}{teacherId}`
+  - Ví dụ: "Hoa Trần Thị" có teacherId=5 sẽ có userId="htt5"
+  
+- Parent: `{firstName}{lastName initials}pr{parentId}`
+  - Ví dụ: "Hải Nguyễn Phước" có parentId=196 sẽ có userId="hainppr196"
 
-**Lưu ý:**
+**Lưu ý về các trường mới:**
+- `parentEmails`: Mảng email riêng của từng phụ huynh (khi tạo học sinh có nhiều phụ huynh)
+- `parentEmail`: Email riêng của phụ huynh (khi tạo phụ huynh trực tiếp)
+- `degree`: Bằng cấp/học vị của giáo viên
+
+**Chú ý:**
 - Password mặc định: FAMS@2023
 - Email mặc định: {userId}@fams.edu.vn
+- Email cá nhân của phụ huynh và giáo viên sẽ được lưu trữ riêng
 - API tự động tạo phụ huynh khi tạo học sinh (nếu có thông tin)
 - Batch tự động được tạo nếu chưa tồn tại
 
-#### Update User
+#### Update User (Admin Only)
 - **URL**: `http://fams.io.vn/api-nodejs/users/:id`
 - **Method**: `PUT`
-- **Auth Required**: Yes
+- **Auth Required**: Yes (Admin only)
 - **Body**: Updated user information
+
+#### Unified Update User (Supports All Roles)
+- **URL**: `http://fams.io.vn/api-nodejs/users/update/:userId`
+- **Method**: `PUT`
+- **Auth Required**: Yes
+- **Description**: Thống nhất API cập nhật thông tin người dùng cho cả 3 vai trò (Student, Teacher, Parent) dựa vào userId
+- **Body**: Tùy thuộc vào vai trò của người dùng, chỉ cần gửi các trường cần cập nhật
+
+**Cập nhật với RFID**: Bạn có thể cập nhật hoặc tạo thẻ RFID cho bất kỳ người dùng nào bằng cách thêm trường `rfid` vào request body.
+
+**Ví dụ cập nhật Student với RFID:**
+```json
+{
+  "firstName": "Đặng Thanh",
+  "lastName": "Khoa",
+  "email": "khoadt@gmail.com",
+  "phone": "0890658326",
+  "address": "Hải Phòng City", 
+  "dateOfBirth": "2008-10-07",
+  "gender": true,
+  "classId": 2,
+  "rfid": {
+    "RFID_ID": "STUD12345",
+    "ExpiryDate": "2y"
+  }
+}
+```
+
+**Ví dụ cập nhật Teacher với RFID:**
+```json
+{
+  "firstName": "Đức",
+  "lastName": "Hoàng",
+  "fullName": "Hoàng Đức Hùng",
+  "phone": "0377538640",
+  "major": "Tin học, Lịch sử, Địa lý",
+  "degree": "Tiến sĩ Giáo dục học",
+  "weeklyCapacity": 12,
+  "rfid": {
+    "RFID_ID": "TEACH67890",
+    "ExpiryDate": "3y"
+  }
+}
+```
+
+**Ví dụ cập nhật Parent:**
+```json
+{
+  "fullName": "Lê Thị Lan",
+  "phone": "0987654321",
+  "career": "Giáo viên",
+  "studentIds": [1, 2]
+}
+```
+
+**Ví dụ chỉ cập nhật RFID:** Bạn có thể chỉ cập nhật thẻ RFID mà không thay đổi thông tin người dùng
+```json
+{
+  "rfid": {
+    "RFID_ID": "RFID98765",
+    "ExpiryDate": "2026-12-31"
+  }
+}
+```
+
+**Xử lý đặc biệt:**
+
+1. **Cập nhật Tên**: API hỗ trợ cập nhật qua `fullName` hoặc `firstName`/`lastName`:
+   - Khi cập nhật `fullName`, hệ thống tự động tách thành `firstName` và `lastName`
+   - Khi cập nhật `firstName`/`lastName`, hệ thống tự động tạo `fullName`
+
+2. **Cập nhật RFID**: 
+   - Nếu người dùng đã có thẻ RFID: Thẻ hiện tại sẽ được cập nhật
+   - Nếu người dùng chưa có thẻ RFID: Thẻ mới sẽ được tạo
+   - Trường `ExpiryDate` có thể là định dạng ngắn gọn ("2y", "3y") hoặc ngày cụ thể
+
+3. **Cập nhật quan hệ Phụ huynh-Học sinh**: Khi cập nhật phụ huynh với `studentIds`, API tự động tạo quan hệ với các học sinh hiện có
+
+**Response với RFID:**
+```json
+{
+  "success": true,
+  "message": "User khoaatst1 updated successfully",
+  "data": {
+    "user": {
+      "userId": "khoaatst1", 
+      "email": "khoaatst1@fams.edu.vn",
+      "role": "Student"
+    },
+    "role": {
+      "type": "student",
+      "student": {
+        "studentId": 1,
+        "fullName": "Đặng Thanh Khoa",
+        "dateOfBirth": "2008-10-07T00:00:00.000Z",
+        "gender": true,
+        "address": "Hải Phòng City",
+        "phone": "890658326",
+        "classId": 2,
+        "batchId": 1
+      },
+      "rfid": {
+        "RFID_ID": "STUD12345",
+        "UserID": "khoaatst1",
+        "IssueDate": "2024-05-15T10:13:45.000Z",
+        "ExpiryDate": "2026-05-15T10:13:45.000Z",
+        "Status": "Active"
+      }
+    }
+  }
+}
+```
+
+**Mã lỗi:**
+- `USER_NOT_FOUND`: Không tìm thấy người dùng
+- `STUDENT_RECORD_NOT_FOUND`: Không tìm thấy bản ghi học sinh
+- `TEACHER_RECORD_NOT_FOUND`: Không tìm thấy bản ghi giáo viên
+- `PARENT_RECORD_NOT_FOUND`: Không tìm thấy bản ghi phụ huynh
+- `UPDATE_FAILED`: Cập nhật thất bại vì lỗi khác
 
 #### Delete User
 - **URL**: `http://fams.io.vn/api-nodejs/users/:id`
@@ -561,10 +518,49 @@ Base path: `/users`
 {
   "success": true,
   "data": {
-    "user": { /* Thông tin từ bảng User */ },
-    "student": { /* Thông tin từ bảng Student */ },
-    "batch": { /* Thông tin về khóa học */ },
-    "class": { /* Thông tin về lớp học (nếu có) */ }
+    "user": {
+      "userId": "khoaatst1",
+      "email": "khoaatst1@fams.edu.vn",
+      "role": "Student",
+    },
+    "role": {
+      "type": "student",
+      "student": {
+        "studentId": 1,
+        "fullName": "Đặng Thanh Khoa",
+        "dateOfBirth": "2008-10-07T00:00:00.000Z",
+        "gender": true,
+        "address": "Hải Phòng",
+        "phone": "890658326",
+        "classId": 1,
+        "batchId": 1
+      },
+      "batch": {
+        "batchId": 1,
+        "batchName": "K2023",
+        "startYear": 2023
+      },
+      "class": {
+        "classId": 1,
+        "className": "10A1",
+        "grade": "10"
+      },
+      "parents": [
+        {
+          "parentId": 1,
+          "fullName": "Nguyễn Văn A",
+          "phone": "0987654321",
+          "career": "Kỹ sư",
+          "relationship": "Father"
+        },
+      ],
+      "rfid": {
+        "RFID_ID": "STUD12345",
+        "UserID": "khoaatst1",
+        "IssueDate": "2024-05-01T00:00:00Z",
+        "ExpiryDate": "2026-05-01T00:00:00Z"
+      }
+    }
   }
 }
 ```
@@ -574,9 +570,38 @@ Base path: `/users`
 {
   "success": true,
   "data": {
-    "user": { /* Thông tin từ bảng User */ },
-    "teacher": { /* Thông tin từ bảng Teacher */ },
-    "classes": [ /* Danh sách các lớp giáo viên dạy */ ]
+    "user": {
+      "userId": "hunghu123",
+      "email": "hoangduchung9796@gmail.com",
+      "role": "Teacher"
+    },
+    "role": {
+      "type": "teacher",
+      "teacher": {
+        "teacherId": 3,
+        "fullName": "Hoàng Đức Hùng",
+        "dateOfBirth": "1981-07-26T00:00:00.000Z",
+        "gender": true,
+        "address": "Bà Rịa - Vũng Tàu",
+        "phone": "0377538640",
+        "major": "Tin học, Lịch sử",
+        "degree": "Tiến sĩ Giáo dục học",
+        "weeklyCapacity": 10
+      },
+      "classes": [
+        {
+          "classId": 2,
+          "className": "10A2",
+          "grade": "10"
+        }
+      ],
+      "rfid": {
+        "RFID_ID": "TEACH67890",
+        "UserID": "hunghu123",
+        "IssueDate": "2024-05-15T10:15:22.000Z",
+        "ExpiryDate": "2027-05-15T10:15:22.000Z"
+      }
+    }
   }
 }
 ```
@@ -586,231 +611,50 @@ Base path: `/users`
 {
   "success": true,
   "data": {
-    "user": { /* Thông tin từ bảng User */ },
-    "parent": { /* Thông tin từ bảng Parent */ },
-    "students": [ /* Danh sách học sinh là con của phụ huynh */ ],
-    "relations": [ /* Thông tin quan hệ giữa phụ huynh và học sinh */ ]
-  }
-}
-```
-
-### Teacher API
-Base path: `/teachers`
-
-#### Get All Teachers
-- **URL**: `http://fams.io.vn/api-nodejs/teachers`
-- **Method**: `GET`
-- **Auth Required**: Yes
-- **Query Parameters**:
-  - `page`: Page number (default: 1)
-  - `limit`: Items per page (default: 10)
-  - `search`: Search term (tìm kiếm theo ID, tên, email, major, etc.)
-  - `className`: Lọc theo tên lớp mà giáo viên dạy (ví dụ: "10A1")
-  - **Chú ý**: Bạn có thể filter theo bất kỳ trường nào trong model Teacher (firstName, lastName, email, v.v.)
-
-#### Filter Teachers by Class
-- Lọc giáo viên dạy một lớp cụ thể:
-  ```
-  http://fams.io.vn/api-nodejs/teachers?className=10A1
-  ```
-
-- Response sẽ bao gồm danh sách các lớp mà giáo viên đang dạy:
-  ```json
-  {
-    "success": true,
-    "data": [
-      {
-        "teacherId": "1",
-        "firstName": "Dũng",
-        "lastName": "Phạm Văn",
-        "email": "dungpv1@fams.edu.vn",
-        // ... other teacher fields
-        "classes": [
-          {
-            "classId": 1,
-            "className": "10A1",
-            "batchId": 3
-          },
-          {
-            "classId": 2,
-            "className": "10A2",
-            "batchId": 3
-          }
-        ],
-        "classesName": ["10A1", "10A2"], // Mảng chứa tên các lớp
-        "classesId": [1, 2] // Mảng chứa ID các lớp
+    "user": {
+      "userId": "dungbnpr0",
+      "email": "buingocdung4439@gmail.com",
+      "role": "Parent"
+    },
+    "role": {
+      "type": "parent",
+      "parent": {
+        "parentId": 1,
+        "fullName": "Bùi Ngọc Dũng",
+        "career": "Doanh nhân",
+        "phone": "973557557",
+        "gender": true
+      },
+      "children": [
+        {
+          "studentId": 1,
+          "fullName": "Đặng Thanh Khoa",
+          "className": "10A1",
+          "relationship": "Other"
+        },
+        {
+          "studentId": 2,
+          "fullName": "Nguyễn Văn Bình",
+          "className": "11A2",
+          "relationship": "Other"
+        },
+        {
+          "studentId": 3,
+          "fullName": "Trần Thị Hương",
+          "className": "12A1",
+          "relationship": "Other"
+        }
+      ],
+      "rfid": {
+        "RFID_ID": "PARENT12345",
+        "UserID": "dungbnpr0",
+        "IssueDate": "2024-05-01T00:00:00Z",
+        "ExpiryDate": "2026-05-01T00:00:00Z"
       }
-    ],
-    "count": 1,
-    "pagination": {
-      "total": 1,
-      "page": 1,
-      "limit": 10,
-      "pages": 1
     }
   }
-  ```
-
-#### Advanced Filtering for Teachers
-1. **Filter theo bất kỳ trường nào**: Thêm tên trường và giá trị vào query string
-   ```
-   http://fams.io.vn/api-nodejs/teachers?firstName=Dũng&gender=true
-   ```
-
-2. **Bỏ qua filter với giá trị "none"**: Nếu một tham số có giá trị là "none", hệ thống sẽ bỏ qua filter này
-   ```
-   http://fams.io.vn/api-nodejs/teachers?firstName=Dũng&className=none
-   ```
-
-3. **Kết hợp tìm kiếm và filter**: Các filter có thể kết hợp với nhau
-   ```
-   http://fams.io.vn/api-nodejs/teachers?search=toán&className=10A1&isActive=true
-   ```
-
-#### Get Teacher by ID
-- **URL**: `http://fams.io.vn/api-nodejs/teachers/:id`
-- **Method**: `GET`
-- **Auth Required**: Yes
-- **Response**: Thông tin chi tiết giáo viên bao gồm danh sách các lớp đang dạy
-
-#### Get Teacher Schedule
-- **URL**: `http://fams.io.vn/api-nodejs/teachers/:id/schedule`
-- **Method**: `GET`
-- **Auth Required**: Yes
-- **Response**: Lịch dạy của giáo viên theo học kỳ hiện tại
-
-#### Create Teacher
-- **URL**: `http://fams.io.vn/api-nodejs/teachers`
-- **Method**: `POST`
-- **Auth Required**: Yes (Admin only)
-- **Body**: Thông tin giáo viên cần tạo
-
-#### Update Teacher
-- **URL**: `http://fams.io.vn/api-nodejs/teachers/:id`
-- **Method**: `PUT`
-- **Auth Required**: Yes (Admin only)
-- **Body**: 
-```json
-{
-  "firstName": "Tấn",
-  "lastName": "Hoàng Đức",
-  "phone": "0987654321",
-  "address": "123 Đường ABC, Quận 1, TP.HCM",
-  "major": "Toán học, Lý học",
-  "weeklyCapacity": 20,
-  "backup_email": "personal-email@example.com",  // Optional - Updates the backup email in User account
-
-  "rfid": {
-    "RFID_ID": "RFID67890",
-    "ExpiryDate": "3y"       // Thời hạn 3 năm
-  }
 }
 ```
-- **Response**:
-```json
-{
-  "success": true,
-  "message": "Teacher updated successfully",
-  "data": {
-    "teacherId": "5",
-    "firstName": "Tấn",
-    "lastName": "Hoàng Đức",
-    "fullName": "Tấn Hoàng Đức",
-    "email": "tanhd@fams.edu.vn",
-    "phone": "0987654321",
-    "userId": "tanhd",
-    "major": "Toán học, Lý học",
-    "weeklyCapacity": 20,
-    // Other teacher fields
-  },
-  "deletedScheduleIds": ["67fbf6003539fdaeaa0881f3", "67fbf6003539fdaeaa0881f4"],  // IDs of deleted schedules (if any)
-  "rfid": {
-    "RFID_ID": "RFID67890",
-    "UserID": "tanhd",
-    "IssueDate": "2024-05-25T12:34:56.789Z",
-    "ExpiryDate": "2027-05-25T12:34:56.789Z"
-  }
-}
-```
-
-**Đặc biệt**: Khi cập nhật `firstName` hoặc `lastName`:
-- Hệ thống tự động tạo `userId` mới theo định dạng: `{firstName}{lastName}{teacherId}` (không dấu, viết thường)
-- Email được cập nhật thành `{userId}@fams.edu.vn`
-- Tài khoản User cũ sẽ bị xóa và tạo lại với thông tin mới
-- Mật khẩu và backup_email được giữ nguyên từ tài khoản cũ
-
-**Đặc biệt**: Khi cập nhật `major`:
-- Nếu một môn học bị loại bỏ khỏi danh sách major, tất cả lịch dạy liên quan đến môn học đó của giáo viên sẽ bị xóa
-- `deletedScheduleIds` trong response sẽ chứa ID của các lịch dạy bị xóa
-- Nếu không có lịch dạy nào bị xóa, `deletedScheduleIds` sẽ là `null`
-
-- **Error Responses**:
-  - `404` - Teacher not found:
-    ```json
-    {
-      "success": false,
-      "error": "Teacher not found or update failed",
-      "code": "UPDATE_FAILED"
-    }
-    ```
-
-#### Delete Teacher
-- **URL**: `http://fams.io.vn/api-nodejs/teachers/:id`
-- **Method**: `DELETE`
-- **Auth Required**: Yes (Admin only)
-- **Response**:
-```json
-{
-  "success": true,
-  "message": "Teacher and related data deleted successfully",
-  "teacherDeleted": true,
-  "deletedScheduleIds": ["67fbf6003539fdaeaa0881f3", "67fbf6003539fdaeaa0881f4"]  // IDs of deleted schedules (if any)
-}
-```
-
-**Đặc biệt**: Khi xóa giáo viên:
-- Tài khoản User liên quan cũng bị xóa
-- Tất cả lịch dạy của giáo viên sẽ bị xóa
-- `deletedScheduleIds` trong response sẽ chứa ID của các lịch dạy bị xóa
-
-### Sử dụng Form Chung để Cập Nhật Teacher và Student
-API hỗ trợ việc sử dụng cùng một form để gửi dữ liệu cập nhật cho cả giáo viên và học sinh. Mỗi API sẽ tự động bỏ qua các trường không liên quan và chỉ xử lý các trường phù hợp với entity.
-
-#### Form Chung
-```json
-{
-  // Các trường chung
-  "firstName": "Hoa",
-  "lastName": "Nguyễn Thị",
-  "phone": "0987654321",
-  "address": "123 Đường XYZ, Quận ABC",
-  "gender": "Female",
-  "dateOfBirth": "1990-01-15",
-  "backup_email": "hoa.nguyen@gmail.com",
-  
-  // Các trường dành cho teacher
-  "major": "Toán, Lý",
-  "weeklyCapacity": 20,
-  
-  // Các trường dành cho student
-  "className": "10A2",
-  "parentNames": ["Nguyễn Văn A"],
-  "parentCareers": ["Kỹ sư"],
-  "parentPhones": ["0123456789"],
-  "parentGenders": [true]
-}
-```
-
-#### Xử lý Form
-1. Khi gửi đến `/api/teachers/:id`:
-   - Các trường dành cho teacher (major, weeklyCapacity) và các trường chung sẽ được xử lý
-   - Các trường dành cho student (className, parentNames, v.v.) sẽ bị bỏ qua
-
-2. Khi gửi đến `/api/students/:id`:
-   - Các trường dành cho student (className, parentNames, v.v.) và các trường chung sẽ được xử lý
-   - Các trường dành cho teacher (major, weeklyCapacity) sẽ bị bỏ qua
-
-Điều này cho phép sử dụng cùng một form frontend để quản lý cả giáo viên và học sinh mà không cần phải tách biệt dữ liệu gửi đi.
 
 ### Parent API
 Base path: `/parents`
@@ -1168,6 +1012,7 @@ Base path: `/classes`
   - `grade`: Lọc theo khối lớp (ví dụ: "10" cho lớp 10, "11" cho lớp 11)
   - `batchId`: Lọc theo ID khóa học
   - `search`: Tìm kiếm theo tên lớp
+  - `className`: Lọc theo tên lớp (exact match hoặc partial match)
   - `homeroomTeacherId`: Lọc theo ID giáo viên chủ nhiệm
 - **Response**:
 ```json
@@ -1188,10 +1033,15 @@ Base path: `/classes`
 }
 ```
 
-#### Get Class by ID
+#### Get Class by ID or className
 - **URL**: `http://fams.io.vn/api-nodejs/classes/:id`
 - **Method**: `GET`
 - **Auth Required**: Yes
+- **URL Parameters**:
+  - `id`: Có thể là ID của lớp (số) hoặc tên lớp (chuỗi)
+- **Examples**:
+  - `http://fams.io.vn/api-nodejs/classes/3` - Tìm lớp theo classId
+  - `http://fams.io.vn/api-nodejs/classes/10A1` - Tìm lớp theo className
 - **Response**:
 ```json
 {
@@ -1257,10 +1107,12 @@ Base path: `/classes`
     }
     ```
 
-#### Update Class
+#### Update Class by ID or className
 - **URL**: `http://fams.io.vn/api-nodejs/classes/:id`
 - **Method**: `PUT`
 - **Auth Required**: Yes
+- **URL Parameters**:
+  - `id`: Có thể là ID của lớp (số) hoặc tên lớp (chuỗi)
 - **Body**:
 ```json
 {
@@ -1309,15 +1161,24 @@ Base path: `/classes`
     }
     ```
 
-#### Delete Class
+#### Delete Class by ID or className with cascade effects
 - **URL**: `http://fams.io.vn/api-nodejs/classes/:id`
 - **Method**: `DELETE`
 - **Auth Required**: Yes
+- **URL Parameters**:
+  - `id`: Có thể là ID của lớp (số) hoặc tên lớp (chuỗi)
 - **Response**:
 ```json
 {
   "success": true,
-  "message": "Class deleted successfully"
+  "message": "Class deleted successfully with cascade effects",
+  "details": {
+    "className": "10A3",
+    "classId": 3,
+    "studentsUpdated": 25,
+    "schedulesDeleted": 15,
+    "classDeleted": true
+  }
 }
 ```
 - **Error Responses**:
@@ -1329,6 +1190,11 @@ Base path: `/classes`
       "code": "CLASS_NOT_FOUND"
     }
     ```
+
+**Lưu ý về cascade delete**: Khi xóa một lớp học, các tác động sau sẽ được thực hiện tự động:
+- Tất cả học sinh trong lớp sẽ được cập nhật `classId` thành `null` (không còn thuộc lớp nào)
+- Tất cả lịch học của lớp đó sẽ bị xóa khỏi ClassSchedule
+- Dữ liệu lớp sẽ bị xóa
 
 ### Database API
 Base path: `/database`
@@ -1349,6 +1215,7 @@ Base path: `/rfid`
   - `page`: Số trang (mặc định: 1)
   - `limit`: Số lượng kết quả mỗi trang (mặc định: 10)
   - `search`: Tìm kiếm theo RFID_ID hoặc UserID
+  - `Status`: Lọc theo trạng thái ('Active', 'Expired', 'Revoked', 'Lost')
   - **Chú ý**: Bạn có thể filter theo bất kỳ trường nào trong model RFID
 - **Response**:
 ```json
@@ -1367,6 +1234,7 @@ Base path: `/rfid`
       "UserID": "tuanpv5",
       "IssueDate": "2024-03-15T00:00:00.000Z",
       "ExpiryDate": "2025-03-15T00:00:00.000Z",
+      "Status": "Active",
       "user": {
         "userId": "tuanpv5",
         "username": "tuanpv5",
@@ -1379,6 +1247,7 @@ Base path: `/rfid`
       "UserID": "anhdmst37",
       "IssueDate": "2024-02-20T00:00:00.000Z",
       "ExpiryDate": "2025-02-20T00:00:00.000Z",
+      "Status": "Active",
       "user": {
         "userId": "anhdmst37",
         "username": "anhdmst37",
@@ -1403,6 +1272,7 @@ Base path: `/rfid`
     "UserID": "tuanpv5",
     "IssueDate": "2024-03-15T00:00:00.000Z",
     "ExpiryDate": "2025-03-15T00:00:00.000Z",
+    "Status": "Active",
     "user": {
       "userId": "tuanpv5",
       "username": "tuanpv5",
@@ -1425,7 +1295,7 @@ Base path: `/rfid`
 {
   "RFID_ID": "RFID12345",
   "UserID": "tuanpv5",
-  "ExpiryDate": "2025-03-15T00:00:00.000Z"
+  "ExpiryDate": "3y"
 }
 ```
 - **Response**:
@@ -1436,12 +1306,21 @@ Base path: `/rfid`
     "RFID_ID": "RFID12345",
     "UserID": "tuanpv5",
     "IssueDate": "2024-03-15T12:34:56.789Z",
-    "ExpiryDate": "2025-03-15T00:00:00.000Z"
+    "ExpiryDate": "2027-03-15T12:34:56.789Z",
+    "Status": "Active"
   },
   "message": "RFID created successfully"
 }
 ```
 - **Error Responses**:
+  - `400` - Missing required fields:
+    ```json
+    {
+      "success": false,
+      "message": "RFID_ID and UserID are required fields",
+      "code": "MISSING_FIELDS"
+    }
+    ```
   - `400` - User not found:
     ```json
     {
@@ -1458,6 +1337,14 @@ Base path: `/rfid`
       "code": "DUPLICATE_RFID"
     }
     ```
+  - `400` - User already has RFID:
+    ```json
+    {
+      "success": false,
+      "message": "User tuanpv5 already has an RFID card: RFID12345",
+      "code": "USER_HAS_RFID"
+    }
+    ```
 
 #### Update RFID
 - **URL**: `http://fams.io.vn/api-nodejs/rfid/:id`
@@ -1467,7 +1354,8 @@ Base path: `/rfid`
 ```json
 {
   "UserID": "dungpv1",
-  "ExpiryDate": "2026-03-15T00:00:00.000Z"
+  "ExpiryDate": "2y",
+  "Status": "Active"
 }
 ```
 - **Response**:
@@ -1478,7 +1366,8 @@ Base path: `/rfid`
     "RFID_ID": "RFID12345",
     "UserID": "dungpv1",
     "IssueDate": "2024-03-15T12:34:56.789Z",
-    "ExpiryDate": "2026-03-15T00:00:00.000Z"
+    "ExpiryDate": "2026-03-15T12:34:56.789Z",
+    "Status": "Active"
   },
   "message": "RFID updated successfully"
 }
@@ -1498,6 +1387,14 @@ Base path: `/rfid`
       "success": false,
       "message": "User with ID dungpv1 not found",
       "code": "INVALID_USER_ID"
+    }
+    ```
+  - `400` - User already has RFID:
+    ```json
+    {
+      "success": false,
+      "message": "User dungpv1 already has an RFID card: RFID67890",
+      "code": "USER_HAS_RFID"
     }
     ```
 
@@ -1521,6 +1418,28 @@ Base path: `/rfid`
       "code": "RFID_NOT_FOUND"
     }
     ```
+
+#### Get RFID By User ID
+- **URL**: `http://fams.io.vn/api-nodejs/rfid/user/:userId`
+- **Method**: `GET`
+- **Auth Required**: Yes
+- **Description**: Lấy thông tin thẻ RFID của người dùng cụ thể dựa trên userId
+- **Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "RFID_ID": "RFID12345",
+    "UserID": "tuanpv5",
+    "IssueDate": "2024-03-15T00:00:00.000Z",
+    "ExpiryDate": "2027-03-15T00:00:00.000Z",
+    "Status": "Active",
+    "user": {
+      // Thông tin người dùng
+    }
+  }
+}
+```
 
 #### Các tùy chọn ExpiryDate cho RFID
 Khi tạo hoặc cập nhật thẻ RFID, trường `ExpiryDate` hỗ trợ các định dạng sau:
@@ -1554,8 +1473,9 @@ Khi cập nhật thông tin học sinh, bạn có thể đồng thời cập nh�
 ```
 
 - Nếu học sinh đã có thẻ RFID: Hệ thống sẽ cập nhật thẻ hiện có
-- Nếu học sinh chưa có thẻ RFID: Hệ thống sẽ tạo thẻ mới (nếu RFID_ID được cung cấp)
-- Response sẽ bao gồm cả thông tin học sinh và thẻ RFID:
+- Nếu học sinh chưa có thẻ RFID: Hệ thống sẽ tạo thẻ mới
+
+Response sẽ bao gồm cả thông tin học sinh và thẻ RFID:
 
 ```json
 {
@@ -1604,6 +1524,7 @@ Tương tự, bạn có thể cập nhật hoặc tạo mới thẻ RFID cho gi�
     "UserID": "tuanpv5",
     "IssueDate": "2024-03-15T00:00:00.000Z",
     "ExpiryDate": "2027-03-15T00:00:00.000Z",
+    "Status": "Active",
     "user": {
       // Thông tin người dùng
     }
@@ -1653,3 +1574,252 @@ You can run an entire collection or folder to test multiple endpoints at once:
 2. Click "Run"
 3. Select the requests you want to run
 4. Click "Run FAMS API"
+
+# Hướng dẫn Sử dụng API Cập nhật Thống Nhất Người Dùng trong FAMS
+
+API này được thiết kế để cung cấp một điểm cuối duy nhất cho việc cập nhật thông tin người dùng thuộc bất kỳ vai trò nào (Student, Teacher, Parent). API sẽ tự động phát hiện vai trò của userId và cập nhật thông tin tương ứng.
+
+## Thông tin cơ bản
+
+- **URL**: `http://fams.io.vn/api-nodejs/users/update/:userId`
+- **Method**: `PUT`
+- **Auth Required**: Yes
+- **Description**: Cập nhật thông tin người dùng dựa vào userId, tự động xác định và cập nhật theo vai trò tương ứng
+- **Parameters**:
+  - `userId`: ID của người dùng cần cập nhật (truyền vào URL)
+
+## Cấu trúc Dữ liệu Request
+
+Request body có thể chứa bất kỳ trường dữ liệu nào dựa trên vai trò của người dùng. API sẽ tự động xác định vai trò và cập nhật các trường tương ứng.
+
+### Các trường cơ bản (áp dụng cho mọi vai trò)
+
+```json
+{
+  "email": "example@gmail.com",
+  "backup_email": "backup@gmail.com",
+  "name": "Họ và tên mới",
+  "password": "newpassword",
+  "rfid": {
+    "RFID_ID": "RFID12345",
+    "ExpiryDate": "2y"
+  }
+}
+```
+
+### Trường `rfid`
+
+Tất cả các vai trò đều có thể cập nhật thông tin thẻ RFID bằng cách thêm trường `rfid`:
+
+```json
+"rfid": {
+  "RFID_ID": "RFID12345",  // ID của thẻ RFID (bắt buộc nếu muốn cập nhật RFID)
+  "ExpiryDate": "2y"        // Thời hạn (có thể là "1y", "2y", "3y" hoặc ngày cụ thể)
+}
+```
+
+### Trường dành cho Student
+
+```json
+{
+  "firstName": "Văn",           // Tên
+  "lastName": "Nguyễn",         // Họ
+  "fullName": "Nguyễn Văn A",   // Họ và tên đầy đủ
+  "dateOfBirth": "2005-05-15",  // Ngày sinh
+  "gender": true,               // Giới tính (true: Nam, false: Nữ) hoặc "Male"/"Female"
+  "address": "123 ABC Street",  // Địa chỉ
+  "phone": "0987654321",        // Số điện thoại
+  "classId": 2,                 // ID lớp học
+  "batchId": 1,                 // ID khóa học
+  "isActive": true              // Trạng thái hoạt động
+}
+```
+
+### Trường dành cho Teacher
+
+```json
+{
+  "firstName": "Thị",             // Tên
+  "lastName": "Trần",             // Họ
+  "fullName": "Trần Thị B",       // Họ và tên đầy đủ
+  "dateOfBirth": "1980-01-01",    // Ngày sinh
+  "gender": false,                // Giới tính (true: Nam, false: Nữ) hoặc "Male"/"Female"
+  "address": "456 XYZ Street",    // Địa chỉ
+  "phone": "0123456789",          // Số điện thoại
+  "major": "Toán, Lý, Hóa",       // Chuyên ngành
+  "degree": "Tiến sĩ",            // Học vị
+  "weeklyCapacity": 15,           // Số giờ dạy mỗi tuần
+  "isActive": true                // Trạng thái hoạt động
+}
+```
+
+### Trường dành cho Parent
+
+```json
+{
+  "firstName": "Văn",           // Tên
+  "lastName": "Lê",             // Họ
+  "fullName": "Lê Văn C",       // Họ và tên đầy đủ
+  "career": "Kỹ sư",            // Nghề nghiệp
+  "phone": "0912345678",        // Số điện thoại
+  "gender": true,               // Giới tính (true: Nam, false: Nữ) hoặc "Male"/"Female"
+  "isActive": true,             // Trạng thái hoạt động
+  "studentIds": [1, 2, 3]       // Danh sách ID học sinh là con của phụ huynh này
+}
+```
+
+## Xử lý Đặc biệt
+
+### Cập nhật Tên
+
+Hệ thống hỗ trợ nhiều cách cập nhật tên:
+
+1. **Cập nhật fullName**: API sẽ tự động tách và cập nhật `firstName` và `lastName`
+2. **Cập nhật firstName/lastName**: API sẽ tự động tạo `fullName` từ `firstName` và `lastName`
+
+Ví dụ, nếu gửi:
+```json
+{
+  "fullName": "Nguyễn Văn A"
+}
+```
+
+Hệ thống sẽ tự động tách thành:
+- `firstName`: "A"
+- `lastName`: "Nguyễn Văn"
+
+### Cập nhật RFID
+
+- Nếu người dùng đã có thẻ RFID: Hệ thống sẽ cập nhật thẻ hiện có
+- Nếu người dùng chưa có thẻ RFID: Hệ thống sẽ tạo thẻ mới
+
+Trường `ExpiryDate` có thể có các định dạng:
+- "1y", "2y", "3y": Thời hạn 1, 2, 3 năm từ ngày hiện tại
+- "2025-12-31": Ngày hết hạn cụ thể
+- Nếu không cung cấp: Mặc định là 3 năm
+
+### Cập nhật Quan hệ Phụ huynh-Học sinh
+
+Khi cập nhật phụ huynh, bạn có thể thêm học sinh mới vào danh sách con của họ bằng cách cung cấp `studentIds`. API sẽ tự động tạo các quan hệ phụ huynh-học sinh cần thiết.
+
+**Lưu ý**: API hiện chỉ hỗ trợ thêm quan hệ với các học sinh đã tồn tại, không tạo học sinh mới.
+
+## Ví dụ Sử Dụng
+
+### Cập nhật Thông tin Student
+
+```json
+// PUT http://fams.io.vn/api-nodejs/users/update/dungahst1
+{
+  "fullName": "Đặng Hữu Dũng",
+  "phone": "0763037404",
+  "address": "Điện Biên",
+  "dateOfBirth": "2010-10-07",
+  "classId": 2,
+  "rfid": {
+    "RFID_ID": "STUD12345",
+    "ExpiryDate": "2y"
+  }
+}
+```
+
+### Cập nhật Thông tin Teacher
+
+```json
+// PUT http://fams.io.vn/api-nodejs/users/update/dunglv121
+{
+  "firstName": "Lê Việt",
+  "lastName": "Dũng",
+  "phone": "0764543211",
+  "major": "Hóa học, Sinh học",
+  "degree": "Thạc sĩ Giáo dục",
+  "weeklyCapacity": 12,
+  "address": "Hà Nội",
+  "rfid": {
+    "RFID_ID": "TEACH67890",
+    "ExpiryDate": "3y"
+  }
+}
+```
+
+### Cập nhật Thông tin Parent
+
+```json
+// PUT http://fams.io.vn/api-nodejs/users/update/lanhpr1
+{
+  "fullName": "Lê Thị Lan",
+  "phone": "0987654321",
+  "career": "Giáo viên",
+  "studentIds": [1, 2]
+}
+```
+
+### Chỉ Cập nhật RFID
+
+```json
+// PUT http://fams.io.vn/api-nodejs/users/update/dungahst1
+{
+  "rfid": {
+    "RFID_ID": "STUD98765",
+    "ExpiryDate": "2026-12-31"
+  }
+}
+```
+
+## Phản hồi API
+
+### Phản hồi Thành công
+
+```json
+{
+  "success": true,
+  "message": "User dungahst1 updated successfully",
+  "data": {
+    "user": {
+      "userId": "dungahst1",
+      "email": "dungahst1@fams.edu.vn",
+      "role": "Student"
+    },
+    "role": {
+      "type": "student",
+      "student": {
+        // Thông tin student đã cập nhật
+      },
+      "class": {
+        // Thông tin lớp
+      },
+      "parents": [
+        // Danh sách phụ huynh
+      ],
+      "rfid": {
+        // Thông tin RFID (nếu có)
+      }
+    }
+  }
+}
+```
+
+### Phản hồi Lỗi
+
+```json
+{
+  "success": false,
+  "message": "User with ID invalid_user not found",
+  "code": "USER_NOT_FOUND"
+}
+```
+
+## Mã Lỗi
+
+- `USER_NOT_FOUND`: Không tìm thấy người dùng
+- `STUDENT_RECORD_NOT_FOUND`: Không tìm thấy bản ghi học sinh
+- `TEACHER_RECORD_NOT_FOUND`: Không tìm thấy bản ghi giáo viên
+- `PARENT_RECORD_NOT_FOUND`: Không tìm thấy bản ghi phụ huynh
+- `UPDATE_FAILED`: Cập nhật thất bại vì lỗi khác
+
+## Lưu ý
+
+1. API này tuân thủ nguyên tắc cập nhật từng phần (partial update), chỉ cập nhật các trường được cung cấp trong request
+2. Đối với các trường đặc biệt như `fullName`, API sẽ tự động xử lý tách và kết hợp với `firstName` và `lastName`
+3. Khi cung cấp trường `gender`, bạn có thể sử dụng `true`/`false`, `"Male"`/`"Female"` hoặc `"true"`/`"false"`
+4. Thông tin RFID sẽ được tự động cập nhật hoặc tạo mới tùy thuộc vào trạng thái hiện tại

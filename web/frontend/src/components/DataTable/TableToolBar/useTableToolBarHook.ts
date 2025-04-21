@@ -8,16 +8,30 @@ function useTableToolBarHook({
   isAttendance,
   isClassManagement,
   isUserManagement,
-  setFiltersUser
+  isTeacher,
+  setFiltersUser,
+  isClassArrangement,
+  isNewSemester,
+  isTeacherView,
+  defaultClass,
+  isRoleStudent,
+  isNotifyPage
 }: {
   isAttendance: boolean;
   isClassManagement: boolean;
   isUserManagement: boolean;
+  isTeacher?: boolean;
   setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
+  isClassArrangement?: boolean;
+  isNewSemester?: boolean;
+  isTeacherView?: boolean;
+  defaultClass?: string;
+  isRoleStudent?: boolean;
+  isNotifyPage?: boolean;
 }) {
   const dispatch = useDispatch<AppDispatch>();
   const [filters, setFilters] = useState({
-    class: "",
+    class: defaultClass,
     name: "",
     grade: "",
     phone: "",
@@ -27,6 +41,9 @@ function useTableToolBarHook({
     batch: "",
     dateFrom: "",
     dateTo: "",
+    slotID: "",
+    date: "",
+    message: "",
   });
 
   const handleFilterChange = (
@@ -37,7 +54,33 @@ function useTableToolBarHook({
   };
 
   const handleFilterSubmit = () => {
-    if (isAttendance) {
+    if (isNotifyPage) {
+      const notifyFilters = {
+        message: filters.message,
+      };
+      console.log("Notify Filter submitted:", notifyFilters);
+    }
+    if(isRoleStudent) {
+      const studentAttendance = {
+        slotID: filters.slotID,
+        date: filters.date,
+      };
+      console.log("Student Attendance Filter submitted:", studentAttendance);
+    }
+    if (isTeacherView) {
+      const teacherClassFilters = {
+        className: filters.className,
+      };
+      console.log("Teacher Class Filter submitted:", teacherClassFilters);
+    } else
+    if (isTeacher) {
+      const teacherFilters = {
+        slotID: filters.slotID,
+        date: filters.date,
+        className: filters.className,
+      };
+      console.log("Teacher Filter submitted:", teacherFilters);
+    } else if (isAttendance) {
       const attendanceFilters = {
         className: filters.className,
         userID: filters.userID,
@@ -60,10 +103,24 @@ function useTableToolBarHook({
         className: filters.class,
         phone: filters.phone,
       };
+      
       console.log("User Management Filter submitted:", adminFilters);
       if (setFiltersUser) {
         setFiltersUser(adminFilters);
       }
+    }
+    else if (isClassArrangement) {
+      const classArrangementFilters = {
+        name: filters.name,
+      };
+      console.log("Class Arrangement Filter submitted:", classArrangementFilters);
+    }
+    else if (isNewSemester) {
+      const newSemesterFilters = {
+        name: filters.name,
+        className: filters.class,
+      };
+      console.log("New Semester Filter submitted:", newSemesterFilters);
     }
   };
 

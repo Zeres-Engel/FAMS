@@ -178,12 +178,30 @@ const startServer = async () => {
     console.log('======================================');
     console.log('Attempting to connect to MongoDB...');
     console.log('MongoDB URI:', process.env.MONGO_URI ? process.env.MONGO_URI.substring(0, 20) + '...' : 'Not defined');
+    console.log('MongoDB Database Name:', process.env.MONGO_DB_NAME || 'fams (default)');
     
     await connectToFAMS();
     console.log(`MongoDB Connection Status: ${checkConnectionStatus()}`);
     
     const dbInfo = await getDatabaseInfo();
     console.log('Database info:', JSON.stringify(dbInfo, null, 2));
+    
+    // Check and initialize database version information
+    try {
+      const ModelVersion = require('./database/models/ModelVersion');
+      const versionInfo = await ModelVersion.findOne({ active: true }).sort({ version: -1 });
+      
+      if (versionInfo) {
+        console.log(`Database schema version: ${versionInfo.version}`);
+        console.log(`Schema last updated: ${versionInfo.updatedAt}`);
+      } else {
+        console.log('Database schema version information not found');
+        // You might want to initialize version info here if needed
+      }
+    } catch (err) {
+      console.warn('Error checking database version information:', err.message);
+    }
+    
     console.log('======================================');
 
     // Start server

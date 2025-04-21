@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from "react";
 import {
   AddUserForm,
+  AttendanceLog,
+  ClassArrangementData,
   Data,
+  EditAttendanceFormProps,
   editClassForm,
   EditTeacherForm,
   EditUserForm,
+  NotifyProps,
   Order,
 } from "../../model/tableModels/tableDataModels.model";
 import getComparator from "../utils/TableDataUtils/useTableDataUtils";
@@ -16,21 +20,41 @@ import {
   updateStudent,
   updateTeacher,
 } from "../../store/slices/userSlice";
+import { ClassData } from "../../model/classModels/classModels.model";
 
 interface UseDataTableHookProps {
-  tableMainData: Data[] | UserData[];
+  tableMainData:
+    | Data[]
+    | UserData[]
+    | ClassData[]
+    | AttendanceLog[]
+    | ClassArrangementData[]
+    | NotifyProps[];
 }
 function useDataTableHook(props: UseDataTableHookProps) {
   const { tableMainData } = props;
   const editClassDefaul: editClassForm = {
     className: "",
     teacherId: "",
-    batch: "",
+    academicYear: "",
+    grade: "10",
+  };
+  const editAttendanceDefault: EditAttendanceFormProps = {
+    attendanceId: 0,
+    scheduleId: 0,
+    userId: 0,
+    fullName: "",
+    face: null,
+    checkin: "",
+    status: "Present",
+    note: "",
+    checkinFace: "",
   };
   const editUserDefault: EditUserForm = {
     classId: [],
     firstName: "",
     lastName: "",
+    fullName: "",
     dob: "",
     gender: true,
     address: "",
@@ -38,7 +62,8 @@ function useDataTableHook(props: UseDataTableHookProps) {
     parentNames: ["", ""],
     parentCareers: ["", ""],
     parentPhones: ["", ""],
-    parentGenders: [false, false],
+    parentGenders: ["Male", "Female"],
+    parentEmails: ["", ""],
     major: "",
     weeklyCapacity: "",
     role: "",
@@ -47,28 +72,46 @@ function useDataTableHook(props: UseDataTableHookProps) {
   const rows = React.useMemo(() => [...tableMainData], [tableMainData]);
   const [isCreateUser, setIsCreateUser] = useState<boolean>(false);
   const [order, setOrder] = React.useState<Order>("asc");
-  const [orderBy, setOrderBy] = React.useState<keyof Data | keyof UserData>(
-    "id"
-  );
-  const [selected, setSelected] = React.useState<readonly number[]>([]);
+  const [orderBy, setOrderBy] = React.useState<
+    | keyof Data
+    | keyof UserData
+    | keyof ClassData
+    | keyof AttendanceLog
+    | keyof ClassArrangementData
+    | keyof NotifyProps
+  >("id");
+  const [gradeError, setGradeError] = React.useState(false);
+  const [selected, setSelected] = React.useState<readonly string[]>([]);
+  const [selectedGrade, setSelectedGrade] = React.useState<string>("");
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [editingUser, setEditingUser] =
     React.useState<EditUserForm>(editUserDefault);
   const [editingClass, setEditingClass] =
     React.useState<editClassForm>(editClassDefaul);
+  const [editingAttendance, setEditingAttendance] =
+    React.useState<EditAttendanceFormProps>(editAttendanceDefault);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUserToDelete, setSelectedUserToDelete] = useState<
-    Data | UserData | null
+    Data | UserData | ClassData | null
   >(null);
   const [editingUserId, setEditingUserId] = useState<string | undefined>(
     undefined
   );
+  const [isShowNotifyOpen, setIsShowNotifyOpen] = useState(false);
+  const [selectedNotify, setSelectedNotify] = useState<NotifyProps | null>(null);
+
   const allUsers = useSelector((state: RootState) => state.users.user);
   const handleRequestSort = (
     event: React.MouseEvent<unknown>,
-    property: keyof Data | keyof UserData
+    property:
+      | keyof Data
+      | keyof UserData
+      | keyof ClassData
+      | keyof AttendanceLog
+      | keyof ClassArrangementData
+      | keyof NotifyProps
   ) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
@@ -80,16 +123,18 @@ function useDataTableHook(props: UseDataTableHookProps) {
         classId: user?.classTeacher || [],
         firstName: user?.teacherFirstName || "",
         lastName: user?.teacherLastName || "",
-        dob: user.details?.dateOfBirth
-          ? new Date(user.details.dateOfBirth).toISOString().split("T")[0] // format yyyy-mm-dd
+        fullName: user?.name || '',
+        dob: user?.TeacherDOB
+          ? new Date(user?.TeacherDOB).toISOString().split("T")[0] // format yyyy-mm-dd
           : "",
         gender: user.gender === "Male" ? true : false,
-        address: user.details?.address || "",
+        address: user.TeacherAddress || "",
         phone: user?.phoneSub || "",
 
         parentNames: user.Parent?.map((p: any) => p.fullName) || ["", ""],
         parentCareers: user.Parent?.map((p: any) => p.career) || ["", ""],
         parentPhones: user.Parent?.map((p: any) => p.phone) || ["", ""],
+        parentEmails: user.Parent?.map((p: any) => p.email) || ["", ""],
         parentGenders: user.Parent?.map((p: any) => p.gender) || [false, false],
 
         major: user?.TeacherMajor, // không có dữ liệu trong object gốc, gán rỗng hoặc thêm logic nếu cần
@@ -101,16 +146,19 @@ function useDataTableHook(props: UseDataTableHookProps) {
       classId: [user?.details?.classId],
       firstName: user.details?.firstName || "",
       lastName: user.details?.lastName || "",
+      fullName: user.name || "",
       dob: user.details?.dateOfBirth
         ? new Date(user.details.dateOfBirth).toISOString().split("T")[0] // format yyyy-mm-dd
         : "",
       gender: user.gender === "Male" ? true : false,
       address: user.details?.address || "",
-      phone: user.details?.phone || "",
-
+      phone: user.details?.phone || user.phoneSub,
+      career: user.parentCareer || "", 
+      email: user.parentEmail || "",
       parentNames: user.Parent?.map((p: any) => p.fullName) || ["", ""],
       parentCareers: user.Parent?.map((p: any) => p.career) || ["", ""],
       parentPhones: user.Parent?.map((p: any) => p.phone) || ["", ""],
+      parentEmails: user.Parent?.map((p: any) => p.email) || ["", ""],
       parentGenders: user.Parent?.map((p: any) => p.gender) || [false, false],
 
       major: "", // không có dữ liệu trong object gốc, gán rỗng hoặc thêm logic nếu cần
@@ -132,9 +180,15 @@ function useDataTableHook(props: UseDataTableHookProps) {
       role: obj.role,
     };
   };
+  const handlerClassDistribution = () => {};
   const handleEditClick = (user: EditUserForm, userId?: string) => {
     const userEdit = allUsers?.find(u => u.id === userId);
     // Lọc tại đây nếu cần'
+    console.log("Editing user:", userEdit);
+    
+    console.log(formatUserToEditUserForm(userEdit));
+    console.log(userEdit?.id);
+    
     setEditingUserId(userEdit?.id);
     setEditingUser(formatUserToEditUserForm(userEdit));
     setIsEditOpen(true);
@@ -143,15 +197,35 @@ function useDataTableHook(props: UseDataTableHookProps) {
     setEditingClass(classData);
     setIsEditOpen(true);
   };
-  const handleDeleteClick = (user: Data | UserData) => {
+  const handleEditAttendanceClick = (
+    attendanceStatus: EditAttendanceFormProps
+  ) => {
+    setEditingAttendance(attendanceStatus);
+    setIsEditOpen(true);
+  };
+  const handleDeleteClick = (user: Data | UserData | ClassData) => {
+    console.log("Deleting user:", user.id);
     setSelectedUserToDelete(user);
     setIsDeleteDialogOpen(true);
   };
-
-  const handleConfirmDelete = () => {
-    if (selectedUserToDelete) {
+  const handleShowNotify = (row: any) => {
+    setSelectedNotify({
+      id: row.id,
+      sender: row.sender,
+      receiver: row.receiver || '',
+      message: row.message,
+      sendDate: row.sendDate,
+    });
+    setIsShowNotifyOpen(true);
+  };
+  const handleConfirmDelete = (typeDelete: string | undefined) => {
+    if (selectedUserToDelete && typeDelete === "userDelete") {
       console.log("Deleting user:", selectedUserToDelete.id);
       dispatch(deleteUser(selectedUserToDelete.id));
+    }
+    if (selectedUserToDelete && typeDelete === "classDelete") {
+      console.log("Deleting user:", selectedUserToDelete.id);
+      // dispatch(deleteUser(selectedUserToDelete.id));
     }
     setIsDeleteDialogOpen(false);
     setSelectedUserToDelete(null);
@@ -180,21 +254,28 @@ function useDataTableHook(props: UseDataTableHookProps) {
     console.log("Saving edited class:", classFormData);
     setIsEditOpen(false);
   };
+  const handleEditAttendanceSave = (
+    attendanceData: EditAttendanceFormProps
+  ) => {
+    console.log("Saving edited Attendance:", attendanceData);
+    setIsEditOpen(false);
+  };
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
-    // if (event.target.checked) {
-    //   const newSelected = rows.map(n => n.id);
-    //   setSelected(newSelected);
-    //   return;
-    // }
-    // setSelected([]);
+    if (event.target.checked) {
+      const newSelected = rows.map(n => String(n.id));
+      setSelected(newSelected);
+      return;
+    }
+    setSelected([]);
   };
 
-  const handleClick = (event: React.MouseEvent<unknown>, id: number) => {
-    const selectedIndex = selected.indexOf(id);
-    let newSelected: readonly number[] = [];
+  const handleClick = (event: React.MouseEvent<unknown>, id: string) => {
+    const idStr = String(id);
+    const selectedIndex = selected.indexOf(idStr);
+    let newSelected: readonly string[] = [];
 
     if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, id);
+      newSelected = newSelected.concat(selected, idStr);
     } else if (selectedIndex === 0) {
       newSelected = newSelected.concat(selected.slice(1));
     } else if (selectedIndex === selected.length - 1) {
@@ -211,7 +292,22 @@ function useDataTableHook(props: UseDataTableHookProps) {
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
   };
+  const handleSubmitClassArrangement = (isClassArrangement: boolean) => {
+    if (isClassArrangement && state.selected.length > 0 && !selectedGrade) {
+      setGradeError(true);
+      return;
+    }
 
+    console.log("Submitting with grade:", selectedGrade);
+    console.log("Submitting with data:", selected);
+    setGradeError(false);
+  };
+  const handleSubmitNewSemesterArrangement = (isNewSemester: boolean) => {
+    if (isNewSemester && state.selected.length > 0) {
+      console.log("Submitting New Semester with data:", selected);
+      return;
+    }
+  };
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -244,6 +340,12 @@ function useDataTableHook(props: UseDataTableHookProps) {
     isDeleteDialogOpen,
     selectedUserToDelete,
     editingClass,
+    editingAttendance,
+    selectedGrade,
+    gradeError,
+    isShowNotifyOpen,
+    selectedNotify,
+    editingUserId
   };
   const handler = {
     handleRequestSort,
@@ -260,6 +362,14 @@ function useDataTableHook(props: UseDataTableHookProps) {
     handleDeleteClick,
     handleEditClassSave,
     handleEditClassClick,
+    handleEditAttendanceClick,
+    handleEditAttendanceSave,
+    setSelectedGrade,
+    handleSubmitClassArrangement,
+    handleSubmitNewSemesterArrangement,
+    handlerClassDistribution,
+    handleShowNotify,
+    setIsShowNotifyOpen,
   };
 
   return { state, handler };

@@ -2,6 +2,7 @@ const Student = require('../database/models/Student');
 const csv = require('fast-csv');
 const fs = require('fs');
 const ClassSchedule = require('../database/models/ClassSchedule');
+const databaseService = require('../services/databaseService');
 
 // @desc    Get all students
 // @route   GET /api/students
@@ -9,10 +10,15 @@ const ClassSchedule = require('../database/models/ClassSchedule');
 exports.getStudents = async (req, res) => {
   try {
     const students = await Student.find();
+    // Map the results to ensure compatibility with the client
+    const mappedStudents = students.map(student => 
+      databaseService.mapToOldSchema(student, 'Student')
+    );
+    
     res.status(200).json({
       success: true,
-      count: students.length,
-      data: students
+      count: mappedStudents.length,
+      data: mappedStudents
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -30,9 +36,12 @@ exports.getStudent = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Student not found' });
     }
 
+    // Map the result to ensure compatibility with the client
+    const mappedStudent = databaseService.mapToOldSchema(student, 'Student');
+    
     res.status(200).json({
       success: true,
-      data: student
+      data: mappedStudent
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -44,10 +53,17 @@ exports.getStudent = async (req, res) => {
 // @access  Private (Admin only)
 exports.createStudent = async (req, res) => {
   try {
-    const student = await Student.create(req.body);
+    // Map incoming data to the new schema format
+    const newSchemaData = databaseService.mapToNewSchema(req.body, 'Student');
+    
+    const student = await Student.create(newSchemaData);
+    
+    // Map back to old schema for response
+    const responseData = databaseService.mapToOldSchema(student, 'Student');
+    
     res.status(201).json({
       success: true,
-      data: student
+      data: responseData
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -62,7 +78,10 @@ exports.updateStudent = async (req, res) => {
     // Extract RFID data if provided
     const { rfid, ...studentData } = req.body;
     
-    const student = await Student.findByIdAndUpdate(req.params.id, studentData, {
+    // Map incoming data to the new schema format
+    const newSchemaData = databaseService.mapToNewSchema(studentData, 'Student');
+    
+    const student = await Student.findByIdAndUpdate(req.params.id, newSchemaData, {
       new: true,
       runValidators: true
     });
@@ -141,10 +160,13 @@ exports.updateStudent = async (req, res) => {
       }
     }
 
+    // Map back to old schema for response
+    const responseData = databaseService.mapToOldSchema(student, 'Student');
+    
     res.status(200).json({
       success: true,
-      data: student,
-      rfid: rfidResult
+      data: responseData,
+      rfid: rfidResult ? databaseService.mapToOldSchema(rfidResult, 'RFID') : null
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -198,10 +220,11 @@ exports.importStudentsFromCSV = async (req, res) => {
           address: row.address,
           classGroup: row.classGroup,
           major: row.major,
-          enrollmentDate: row.enrollmentDate ? new Date(row.enrollmentDate) : new Date(),
-          status: row.status || 'active'
         };
-        students.push(student);
+        
+        // Transform to new schema
+        const transformedStudent = databaseService.mapToNewSchema(student, 'Student');
+        students.push(transformedStudent);
       })
       .on('end', async () => {
         // Remove temporary file

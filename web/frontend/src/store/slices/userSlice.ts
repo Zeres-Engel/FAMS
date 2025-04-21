@@ -46,11 +46,16 @@ function formatUsersFromResponse(responseData: any[]): UserData[] {
       updatedAt: formatDateTime(user.updatedAt),
       gender: normalizeGender(details?.gender),
       name: details?.fullName || "",
+      TeacherDOB: !isStudent ? user?.dateOfBirth : "",
       teacherId: !isStudent ? user.teacherId : "",
       teacherFirstName: !isStudent ? user.firstName : "",
       teacherLastName: !isStudent ? user.lastName : "",
       TeacherMajor: !isStudent ? user.major : "",
-      TeacherWeeklyCapacity: !isStudent ? user.WeeklyCapacity : "",
+      TeacherWeeklyCapacity: !isStudent ? user.weeklyCapacity : "",
+      parentCareer: !isStudent ? user.career : "",
+      parentEmail: !isStudent ? user.email : "",
+      parentAddr: !isStudent ? user.address : "",
+      parentDob: !isStudent ? user.dateOfBirth : "",
       // Chỉ có học sinh mới có phụ huynh
       Parent: isStudent ? user.details?.parents || [] : [],
 
@@ -69,7 +74,7 @@ function formatUsersFromResponse(responseData: any[]): UserData[] {
         : Array.isArray(user.grades)
         ? user.grades.join(", ")
         : "None",
-
+        TeacherAddress : !isStudent ? user?.address : "",
       // Thông tin chi tiết học sinh
       details: isStudent
         ? {
@@ -89,9 +94,9 @@ function formatUsersFromResponse(responseData: any[]): UserData[] {
 
       // Thêm classTeacher nếu là giáo viên
       classTeacher:
-        user.role === "teacher" && Array.isArray(user.classesName)
-          ? user.classesId
-          : [],
+      user.role === "teacher" && Array.isArray(user.classes)
+        ? user.classes.map((cls: any) => cls.classId)
+        : [],
     };
   });
 }
@@ -127,7 +132,7 @@ export const createUser = createAsyncThunk(
 );
 export const deleteUser = createAsyncThunk(
   "user/deleteUser",
-  async (username: string|number, thunkAPI) => {
+  async (username: string|number|undefined, thunkAPI) => {
     try {
       thunkAPI.dispatch(showLoading());
       const response = await axiosInstance.delete(`/users/${username}`);

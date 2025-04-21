@@ -1,11 +1,12 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
 # Create and set up .npmrc for legacy-peer-deps
 RUN echo "legacy-peer-deps=true" > .npmrc && \
     echo "fund=false" >> .npmrc && \
-    echo "audit=false" >> .npmrc
+    echo "audit=false" >> .npmrc && \
+    echo "strict-peer-dependencies=false" >> .npmrc
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
@@ -14,11 +15,24 @@ COPY package*.json ./
 RUN npm cache clean --force && \
     npm install --legacy-peer-deps
 
+# Install latest stable React
+RUN npm install --save react@latest react-dom@latest --force
+
+# Install modern resize detector compatible with React 18+
+RUN npm install --save react-resize-detector@latest use-resize-observer@latest --force
+
+# Install recharts with compatibility fixes
+RUN npm install --save recharts@latest --force && \
+    npm install --save resize-observer-polyfill@1.5.1 --force
+
 # Explicitly install html-webpack-plugin - this should fix the loader issue
 RUN npm install --legacy-peer-deps html-webpack-plugin
 
 # Install required packages with specific versions
-RUN npm install --save axios@1.6.0 react-router-dom@6.18.0 react-hook-form@7.46.1 @reduxjs/toolkit@1.9.7 react-redux@8.1.3
+RUN npm install --save axios@latest react-router-dom@latest react-hook-form@latest @reduxjs/toolkit@latest react-redux@latest
+
+# Install necessary type declarations for development
+RUN npm install --save-dev @types/react @types/react-dom @types/react-router @types/react-router-dom @types/react-redux
 
 # Install global packages
 RUN npm install -g typescript

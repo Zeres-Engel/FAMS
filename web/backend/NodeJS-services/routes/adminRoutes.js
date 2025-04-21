@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/authMiddleware');
-const User = require('../database/models/User');
+const UserAccount = require('../database/models/UserAccount');
 const Student = require('../database/models/Student');
 const Teacher = require('../database/models/Teacher');
 const Parent = require('../database/models/Parent');
@@ -63,12 +63,12 @@ router.post('/create', protect, authorize('Admin', 'admin'), async (req, res) =>
         // Check if userId already exists and add number if needed
         let finalUserId = userId;
         let counter = 1;
-        let userExists = await User.findOne({ userId: finalUserId });
+        let userExists = await UserAccount.findOne({ userId: finalUserId });
         
         while (userExists) {
           finalUserId = `${userId}${counter}`;
           counter++;
-          userExists = await User.findOne({ userId: finalUserId });
+          userExists = await UserAccount.findOne({ userId: finalUserId });
         }
         
         // Generate email based on userId

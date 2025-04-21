@@ -7,9 +7,12 @@ import pandas as pd
 from datetime import datetime
 from typing import Dict, List, Tuple, Any
 
-from src.utils import hash_password, generate_username, parse_date, remove_accents
-from src.models.user import UserAccount, Teacher, Student, Parent
-from src.models.batch import Batch
+from .utils import hash_password, generate_username, parse_date, remove_accents
+from .models.UserAccount import UserAccount
+from .models.Teacher import Teacher
+from .models.Student import Student
+from .models.Parent import Parent
+from .models.Batch import Batch
 
 
 def read_excel_file(file_path: str) -> Dict[str, pd.DataFrame]:
@@ -83,10 +86,10 @@ def import_teachers_from_excel(db, file_path: str) -> List[Dict[str, Any]]:
             last_name = " ".join(name_parts[:-1]) if len(name_parts) > 1 else ""
             first_name = name_parts[-1] if name_parts else full_name
             
-            # Convert gender from text to boolean if needed
-            gender_value = row.get('Gender', False)
+            # Convert gender
+            gender_value = row.get('Gender', '')
             if isinstance(gender_value, str):
-                gender = gender_value.lower() in ["nam", "true", "1", "yes"]
+                gender = gender_value.lower() in ["nam", "male", "true", "1", "yes"]
             else:
                 gender = bool(gender_value)
             
@@ -134,7 +137,8 @@ def import_teachers_from_excel(db, file_path: str) -> List[Dict[str, Any]]:
                 weekly_capacity = 10
                 
             # Create username
-            username = generate_username(full_name, teacher_id_counter, role="teacher")
+            proper_full_name = f"{last_name} {first_name}".strip()
+            username = generate_username(proper_full_name, teacher_id_counter, role="teacher")
             
             # Create email
             email = f"{username}@fams.edu.vn"
@@ -142,10 +146,8 @@ def import_teachers_from_excel(db, file_path: str) -> List[Dict[str, Any]]:
             # Create user account
             user = UserAccount(
                 userId=username,
-                username=username,
-                password=hash_password("123456"),
                 email=email,
-                backup_email=None,
+                password=hash_password("123456"),
                 role="teacher",
                 isActive=True
             )
@@ -157,12 +159,18 @@ def import_teachers_from_excel(db, file_path: str) -> List[Dict[str, Any]]:
                 userId=username,
                 firstName=first_name,
                 lastName=last_name,
+                fullName=f"{last_name} {first_name}".strip(),
                 email=email,
-                phone=phone
+                phone=phone,
+                gender=gender,
+                dateOfBirth=date_of_birth,
+                address=address,
+                major=major,
+                weeklyCapacity=weekly_capacity
             )
             
             # Add additional fields for database
-            teacher_dict = teacher.dict(exclude={"collection"})
+            teacher_dict = teacher.dict(exclude={"collection", "firstName", "lastName"})
             teacher_dict.update({
                 "dateOfBirth": date_of_birth,
                 "gender": gender,
@@ -195,7 +203,7 @@ def import_teachers_from_excel(db, file_path: str) -> List[Dict[str, Any]]:
     return teachers, teacher_users
 
 
-def import_students_from_excel(db, file_path: str, batch_id: str, student_id_start: int) -> Tuple[List[Dict[str, Any]], int]:
+def import_students_from_excel(db, file_path: str, batch_id: int, student_id_start: int) -> Tuple[List[Dict[str, Any]], int]:
     """Import students from Excel file for a specific batch"""
     students = []
     student_users = []
@@ -226,6 +234,7 @@ def import_students_from_excel(db, file_path: str, batch_id: str, student_id_sta
             'Giới tính': 'Gender',
             'Địa chỉ': 'Address',
             'Số điện thoại': 'Phone',
+            # Enhanced parent columns mapping for up to two parents
             'Tên Phụ huynh 1': 'ParentName1',
             'Nghề nghiệp Phụ huynh 1': 'ParentCareer1',
             'SĐT Phụ huynh 1': 'ParentPhone1',
@@ -262,10 +271,10 @@ def import_students_from_excel(db, file_path: str, batch_id: str, student_id_sta
                 dob_str = str(row.get('DateOfBirth', ''))
                 date_of_birth = parse_date(dob_str)
                 
-            # Convert gender
-            gender_value = row.get('Gender', False)
+            # Set gender
+            gender_value = row.get('Gender', '')
             if isinstance(gender_value, str):
-                gender = gender_value.lower() in ["nam", "true", "1", "yes"]
+                gender = gender_value.lower() in ["nam", "male", "true", "1", "yes"]
             else:
                 gender = bool(gender_value)
                 
@@ -276,19 +285,20 @@ def import_students_from_excel(db, file_path: str, batch_id: str, student_id_sta
             phone = ''.join(c for c in phone if c.isdigit())
             
             # Create username and email
-            username = generate_username(full_name, sid, batch_id, role="student")
+            proper_full_name = f"{last_name} {first_name}".strip()
+            username = generate_username(proper_full_name, sid, batch_id, role="student")
             email = f"{username}@fams.edu.vn"
             
-            # Process parent information
+            # Enhanced parent information processing
             parent_names = []
             parent_careers = []
             parent_phones = []
             parent_genders = []
             
-            # Parent 1
+            # Process parent 1 information
             if not pd.isna(row.get('ParentName1', '')):
-                parent_names.append(str(row.get('ParentName1', '')))
-                parent_careers.append(str(row.get('ParentCareer1', '')))
+                parent_names.append(str(row.get('ParentName1', '')).strip())
+                parent_careers.append(str(row.get('ParentCareer1', '')).strip())
                 
                 # Clean phone number
                 p_phone = str(row.get('ParentPhone1', ''))
@@ -296,16 +306,17 @@ def import_students_from_excel(db, file_path: str, batch_id: str, student_id_sta
                 parent_phones.append(p_phone)
                 
                 # Convert gender
-                p_gender = row.get('ParentGender1', False)
+                p_gender = row.get('ParentGender1', '')
                 if isinstance(p_gender, str):
-                    parent_genders.append(p_gender.lower() in ["nam", "true", "1", "yes"])
+                    is_male = p_gender.lower() in ["nam", "male", "true", "1", "yes"]
                 else:
-                    parent_genders.append(bool(p_gender))
+                    is_male = bool(p_gender)
+                parent_genders.append(is_male)
             
-            # Parent 2
+            # Process parent 2 information
             if not pd.isna(row.get('ParentName2', '')):
-                parent_names.append(str(row.get('ParentName2', '')))
-                parent_careers.append(str(row.get('ParentCareer2', '')))
+                parent_names.append(str(row.get('ParentName2', '')).strip())
+                parent_careers.append(str(row.get('ParentCareer2', '')).strip())
                 
                 # Clean phone number
                 p_phone = str(row.get('ParentPhone2', ''))
@@ -313,42 +324,39 @@ def import_students_from_excel(db, file_path: str, batch_id: str, student_id_sta
                 parent_phones.append(p_phone)
                 
                 # Convert gender
-                p_gender = row.get('ParentGender2', False)
+                p_gender = row.get('ParentGender2', '')
                 if isinstance(p_gender, str):
-                    parent_genders.append(p_gender.lower() in ["nam", "true", "1", "yes"])
+                    is_male = p_gender.lower() in ["nam", "male", "true", "1", "yes"]
                 else:
-                    parent_genders.append(bool(p_gender))
+                    is_male = bool(p_gender)
+                parent_genders.append(is_male)
             
             # Create user account
             user = UserAccount(
                 userId=username,
-                username=username,
-                password=hash_password("123456"),
                 email=email,
-                backup_email=None,
+                password=hash_password("123456"),
                 role="student",
                 isActive=True
             )
             student_users.append(user.dict(exclude={"collection"}))
             
-            # Create student
+            # Create student account
             student = Student(
-                studentId=str(sid),
+                studentId=sid,
                 userId=username,
-                firstName=first_name,
-                lastName=last_name,
+                fullName=f"{last_name} {first_name}".strip(),
                 email=email,
                 phone=phone,
                 dateOfBirth=date_of_birth,
-                gender="Male" if gender else "Female",
+                gender=gender,
                 address=address
             )
             
-            student_dict = student.dict(exclude={"collection"})
+            student_dict = student.dict(exclude={"collection", "firstName", "lastName"})
             student_dict.update({
                 "classId": None,
-                "batchId": batch_id,
-                "parentIds": [],
+                "batchId": int(batch_id),
                 "parentNames": parent_names,
                 "parentCareers": parent_careers,
                 "parentPhones": parent_phones,
@@ -386,19 +394,19 @@ def generate_all_students_from_excel(db, excel_files: List[str] = None):
     # Import batch info
     batches = [
         Batch(
-            batchId="3",
+            batchId=3,
             batchName="Khóa 2023-2026 (Lớp 10)",
             startDate=parse_date("2023-09-01"),
             endDate=parse_date("2026-06-30")
         ),
         Batch(
-            batchId="2",
+            batchId=2,
             batchName="Khóa 2022-2025 (Lớp 11)",
             startDate=parse_date("2022-09-01"),
             endDate=parse_date("2025-06-30")
         ),
         Batch(
-            batchId="1",
+            batchId=1,
             batchName="Khóa 2021-2024 (Lớp 12)",
             startDate=parse_date("2021-09-01"),
             endDate=parse_date("2024-06-30")
@@ -415,7 +423,7 @@ def generate_all_students_from_excel(db, excel_files: List[str] = None):
     # Check each file and import if exists
     for file_idx, file_path in enumerate(excel_files):
         if os.path.exists(file_path):
-            batch_id = str(3 - file_idx)  # 3, 2, 1 for grades 10, 11, 12
+            batch_id = 3 - file_idx  # 3, 2, 1 for grades 10, 11, 12 (as integers)
             students, student_id_counter = import_students_from_excel(
                 db, file_path, batch_id, student_id_counter
             )
@@ -615,7 +623,6 @@ def generate_missing_parents(db, students):
     """
     from datetime import datetime
     import random
-    import string
     import hashlib
     
     print(f"Generating missing parents for {len(students)} students...")
@@ -636,6 +643,25 @@ def generate_missing_parents(db, students):
     parents_created = 0
     relationships_created = 0
     
+    # Get current parent ID counter
+    max_parent_id = 0
+    last_parent = db[parent_collection].find_one(sort=[("parentId", -1)])
+    if last_parent and "parentId" in last_parent:
+        try:
+            max_parent_id = int(last_parent["parentId"])
+        except (ValueError, TypeError):
+            # If can't convert to int, try to find max manually
+            parents = db[parent_collection].find()
+            for parent in parents:
+                if "parentId" in parent:
+                    try:
+                        parent_id = int(parent["parentId"])
+                        max_parent_id = max(max_parent_id, parent_id)
+                    except (ValueError, TypeError):
+                        pass
+    
+    parent_id_counter = max_parent_id + 1
+    
     for student in students:
         # Skip if no parent data
         if not student.get("parentNames") or len(student.get("parentNames", [])) == 0:
@@ -643,7 +669,7 @@ def generate_missing_parents(db, students):
         
         # Get student ID
         student_id = student.get("studentId")
-        if not student_id:
+        if student_id is None:  # Check for None instead of falsy value
             continue
         
         # Generate parents from parent data
@@ -652,7 +678,7 @@ def generate_missing_parents(db, students):
         parent_phones = student.get("parentPhones", [])
         parent_genders = student.get("parentGenders", [])
         
-        created_parent_ids = []
+        student_parent_ids = []
         
         # Create parents
         for i in range(len(parent_names)):
@@ -661,44 +687,46 @@ def generate_missing_parents(db, students):
             parent_phone = parent_phones[i] if i < len(parent_phones) else f"9{random.randint(10000000, 99999999)}"
             parent_gender = parent_genders[i] if i < len(parent_genders) else True
             
-            # Split name into first and last name
+            if not parent_name or parent_name.strip() == "":
+                continue
+                
+            # Split name into first and last name for Vietnamese naming convention
             name_parts = parent_name.split(' ')
             if len(name_parts) > 1:
-                first_name = ' '.join(name_parts[:-1])
-                last_name = name_parts[-1]
+                last_name = ' '.join(name_parts[:-1])  # Family name is everything but the last part
+                first_name = name_parts[-1]  # Personal name is the last part
             else:
                 first_name = parent_name
                 last_name = ""
+                
+            # Format name in proper Vietnamese order
+            proper_full_name = f"{last_name} {first_name}".strip()
             
-            # Generate username and email
-            username = f"parent_{first_name.lower()}_{last_name.lower()}_{random.randint(1000, 9999)}"
+            # Generate username in the same format as students but with "pr" suffix
+            username = generate_username(proper_full_name, parent_id_counter, role="parent")
             email = f"{username}@fams.edu.vn"
             
-            # Generate password hash (default password: 'password')
-            password_hash = hashlib.sha256("password".encode()).hexdigest()
+            # Generate password hash
+            password_hash = hash_password("123456")
             
             # Check if parent already exists by name and phone
             existing_parent = db[parent_collection].find_one({
                 "$or": [
-                    {"firstName": first_name, "lastName": last_name, "phone": parent_phone},
+                    {"fullName": proper_full_name, "phone": parent_phone},
                     {"email": email}
                 ]
             })
             
             if existing_parent:
                 parent_id = existing_parent.get("parentId")
-                created_parent_ids.append(parent_id)
+                student_parent_ids.append(parent_id)
                 continue
             
             # Create user account for parent
-            next_user_count = db[user_collection].count_documents({}) + 1
-            user_id = username
-            
             user_account = {
-                "userId": user_id,
-                "username": username,
-                "password": password_hash,
+                "userId": username,
                 "email": email,
+                "password": password_hash,
                 "role": "parent",
                 "createdAt": datetime.utcnow(),
                 "updatedAt": datetime.utcnow(),
@@ -709,17 +737,15 @@ def generate_missing_parents(db, students):
             db[user_collection].insert_one(user_account)
             
             # Create parent
-            next_parent_count = db[parent_collection].count_documents({}) + 1
-            parent_id = str(next_parent_count)
-            
             parent = {
-                "parentId": parent_id,
-                "userId": user_id,
+                "parentId": parent_id_counter,
+                "userId": username,
+                "fullName": proper_full_name,
                 "firstName": first_name,
                 "lastName": last_name,
                 "email": email,
                 "phone": parent_phone,
-                "gender": "Male" if parent_gender else "Female",
+                "gender": parent_gender,  # Store as boolean True for Male, False for Female
                 "career": parent_career,
                 "createdAt": datetime.utcnow(),
                 "updatedAt": datetime.utcnow(),
@@ -731,19 +757,20 @@ def generate_missing_parents(db, students):
             parents_created += 1
             
             # Add to created parent IDs
-            created_parent_ids.append(parent_id)
+            student_parent_ids.append(parent_id_counter)
             
             # Create parent-student relationship
-            next_relationship_count = db[parent_student_collection].count_documents({}) + 1
-            relationship_id = str(next_relationship_count)
+            relationship_id_counter = db[parent_student_collection].count_documents({}) + 1
             
+            # Determine relationship type based on gender
             relationship_type = "Father" if parent_gender else "Mother"
             
             relationship = {
-                "parentStudentId": relationship_id,
-                "parentId": parent_id,
+                "parentStudentId": relationship_id_counter,
+                "parentId": parent_id_counter,
                 "studentId": student_id,
                 "relationship": relationship_type,
+                "isEmergencyContact": i == 0,  # First parent is emergency contact by default
                 "createdAt": datetime.utcnow(),
                 "updatedAt": datetime.utcnow(),
                 "isActive": True
@@ -752,12 +779,15 @@ def generate_missing_parents(db, students):
             # Insert relationship
             db[parent_student_collection].insert_one(relationship)
             relationships_created += 1
+            
+            # Increment parent ID counter
+            parent_id_counter += 1
         
         # Update student with parent IDs
-        if created_parent_ids:
+        if student_parent_ids:
             db[student_collection].update_one(
                 {"studentId": student_id},
-                {"$set": {"parentIds": created_parent_ids}}
+                {"$set": {"parentIds": student_parent_ids}}
             )
     
     print(f"Created {parents_created} parents and {relationships_created} parent-student relationships")

@@ -1,13 +1,69 @@
 import { useEffect, useState } from "react";
 import { fetchUser } from "../../store/slices/userSlice";
 import { useAppDispatch, useAppSelector } from "../../store/useStoreHook";
-import { Data, HeadCell } from "../../model/tableModels/tableDataModels.model";
+import {
+  AttendanceHeadCell,
+  AttendanceLog,
+  Data,
+  HeadCell,
+} from "../../model/tableModels/tableDataModels.model";
 
 function useAttendanceManagementPageHook() {
-const dispatch = useAppDispatch();
-  const userState = useAppSelector(state => state.users);
-  const [userMainData, setUserMainData] = useState<Data[]>([]);
-  const headCellsData: HeadCell[] = [
+  const sampleData: AttendanceLog[] = [
+    {
+      id: "1",
+      attendanceId: 1,
+      scheduleId: 101,
+      userId: 1001,
+      face: null,
+      checkin: "2025-04-16T07:05:00",
+      status: "Present",
+      checkinFace: "",
+    },
+    {
+      id: "2",
+      attendanceId: 2,
+      scheduleId: 101,
+      userId: 1002,
+      face: null,
+      checkin: "2025-04-16T07:15:00",
+      status: "Late",
+      checkinFace: "",
+    },
+    {
+      id: "3",
+      attendanceId: 3,
+      scheduleId: 101,
+      userId: 1003,
+      face: null,
+      checkin: null,
+      status: "Absent",
+      checkinFace: "",
+    },
+    {
+      id: "4",
+      attendanceId: 4,
+      scheduleId: 102,
+      userId: 1001,
+      face: null,
+      checkin: "2025-04-16T13:00:00",
+      status: "Present",
+      checkinFace: "",
+    },
+    {
+      id: "5",
+      attendanceId: 5,
+      scheduleId: 102,
+      userId: 1002,
+      face: null,
+      checkin: "2025-04-16T13:10:00",
+      status: "Late",
+      checkinFace: "",
+    },
+  ];
+  const [userMainData, setUserMainData] = useState<AttendanceLog[]>(sampleData);
+
+  const headCellsData: AttendanceHeadCell[] = [
     {
       id: "id",
       numeric: false,
@@ -15,54 +71,60 @@ const dispatch = useAppDispatch();
       label: "ID",
     },
     {
-      id: "name",
+      id: "scheduleId",
       numeric: false,
       disablePadding: true,
-      label: "Name",
+      label: "Schedule Id",
     },
     {
-      id: "avatar",
+      id: "face",
       numeric: false,
-      disablePadding: false,
-      label: "Avatar",
+      disablePadding: true,
+      label: "User Avatar",
     },
     {
-      id: "creationAt",
+      id: "checkinFace",
       numeric: false,
-      disablePadding: false,
-      label: "CreationAt",
+      disablePadding: true,
+      label: "Checkin Face",
     },
     {
-      id: "email",
+      id: "userId",
       numeric: false,
       disablePadding: false,
-      label: "Email",
+      label: "User Id",
     },
     {
-      id: "role",
+      id: "checkin",
       numeric: false,
       disablePadding: false,
-      label: "Role",
+      label: "Checkin",
     },
     {
-      id: "updatedAt",
+      id: "note",
       numeric: false,
       disablePadding: false,
-      label: "UpdatedAt",
+      label: "Note",
+    },
+    {
+      id: "status",
+      numeric: false,
+      disablePadding: false,
+      label: "Status",
     },
   ];
   const isCheckBox = false;
   const tableTitle = "Attendance Data";
-  useEffect(() => {  
-    if (!userState.user) {
-      dispatch(fetchUser());
-    } else {
-      // setUserMainData(userState?.user);
-    }
-  }, [dispatch, userState.user]);
+  // useEffect(() => {
+  //   if (!userState.user) {
+  //     dispatch(fetchUser());
+  //   } else {
+  //     // setUserMainData(userState?.user);
+  //   }
+  // }, [dispatch, userState.user]);
 
   const state = { headCellsData, userMainData, tableTitle, isCheckBox };
   const handler = {};
-    return { state, handler };
-  }
-  export default useAttendanceManagementPageHook;
+  return { state, handler };
+}
+export default useAttendanceManagementPageHook;
