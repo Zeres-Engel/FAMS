@@ -25,7 +25,12 @@ const ClassSchema = new mongoose.Schema({
     required: true
   },
   academicYear: {
-    type: String
+    type: String,
+    required: true
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, {
   timestamps: true,
@@ -46,7 +51,7 @@ ClassSchema.virtual('homeroomTeacher', {
 ClassSchema.virtual('students', {
   ref: 'Student',
   localField: 'classId',
-  foreignField: 'classId',
+  foreignField: 'classIds',
   justOne: false
 });
 

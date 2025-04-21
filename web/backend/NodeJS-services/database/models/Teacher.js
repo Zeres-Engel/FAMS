@@ -57,6 +57,10 @@ const TeacherSchema = new mongoose.Schema({
       return v ? 'Male' : 'Female';
     }
   },
+  classIds: {
+    type: [Number],
+    default: []
+  },
   major: {
     type: String
   },
@@ -65,6 +69,9 @@ const TeacherSchema = new mongoose.Schema({
     default: 10
   },
   degree: {
+    type: String
+  },
+  academicYear: {
     type: String
   }
 }, {
@@ -87,6 +94,14 @@ TeacherSchema.virtual('homeroomClasses', {
   ref: 'Class',
   localField: 'teacherId',
   foreignField: 'homeroomTeacherId',
+  justOne: false
+});
+
+// Virtual for getting all teaching classes
+TeacherSchema.virtual('teachingClasses', {
+  ref: 'Class',
+  localField: 'classIds',
+  foreignField: 'classId',
   justOne: false
 });
 

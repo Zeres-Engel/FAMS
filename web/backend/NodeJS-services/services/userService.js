@@ -7,6 +7,45 @@ const databaseService = require('./databaseService');
 const mongoose = require('mongoose');
 
 /**
+ * Format phone number to ensure it's a 10-digit string starting with '0'
+ * @param {any} phone - The phone number to format
+ * @returns {string} - Formatted phone number
+ */
+const formatPhoneNumber = (phone) => {
+  if (!phone) return '';
+  
+  // Convert to string and remove non-digit characters
+  let phoneStr = String(phone).replace(/[^\d]/g, '');
+  
+  // If it's already 10 digits and starts with 0, return as is
+  if (phoneStr.length === 10 && phoneStr.startsWith('0')) {
+    return phoneStr;
+  }
+  
+  // If it's 9 digits (missing leading 0), add the 0
+  if (phoneStr.length === 9) {
+    return '0' + phoneStr;
+  }
+  
+  // If it has more than 10 digits, trim to 10
+  if (phoneStr.length > 10) {
+    // If it doesn't start with 0, keep first 9 digits and add 0
+    if (!phoneStr.startsWith('0')) {
+      return '0' + phoneStr.substring(0, 9);
+    }
+    // If it starts with 0, keep first 10 digits
+    return phoneStr.substring(0, 10);
+  }
+  
+  // For other cases, return as is with best effort
+  if (!phoneStr.startsWith('0') && phoneStr.length > 0) {
+    return '0' + phoneStr;
+  }
+  
+  return phoneStr;
+};
+
+/**
  * Lấy danh sách người dùng với phân trang và lọc
  * @param {Object} options - Các option tìm kiếm
  * @returns {Promise<Object>} Danh sách người dùng
@@ -56,218 +95,82 @@ exports.getUsers = async (options = {}) => {
       }
     }
     
-    // Xử lý lọc theo phone
+    // Xử lý lọc theo số điện thoại
     if (phone && phone !== 'none') {
-      // Tiến hành tìm kiếm thông tin phone trong các bảng liên quan
-      const [students, teachers, parents] = await Promise.all([
-        models.Student.find({ phone: { $regex: phone, $options: 'i' } }),
-        models.Teacher.find({ phone: { $regex: phone, $options: 'i' } }),
-        models.Parent.find({ phone: { $regex: phone, $options: 'i' } })
-      ]);
-      
-      const userIds = [
-        ...students.map(s => s.userId),
-        ...teachers.map(t => t.userId),
-        ...parents.map(p => p.userId)
-      ];
-      
-      if (userIds.length > 0) {
-        if (query.$and || query.$or) {
-          // Có điều kiện phức tạp, thêm điều kiện AND
-          if (query.$and) {
-            query.$and.push({ userId: { $in: userIds } });
-          } else {
-            query = {
-              $and: [
-                query,
-                { userId: { $in: userIds } }
-              ]
-            };
-          }
+      if (query.$and || query.$or) {
+        // Có điều kiện phức tạp, thêm điều kiện AND
+        if (query.$and) {
+          query.$and.push({ phone: { $regex: phone, $options: 'i' } });
         } else {
-          // Chưa có điều kiện, thêm trực tiếp
-          query.userId = { $in: userIds };
+          query = {
+            $and: [
+              query,
+              { phone: { $regex: phone, $options: 'i' } }
+            ]
+          };
         }
       } else {
-        // Nếu không tìm thấy user nào với số điện thoại này, trả về kết quả rỗng
-        return {
-          success: true,
-          data: [],
-          count: 0,
-          pagination: {
-            total: 0,
-            page,
-            limit,
-            pages: 0
-          }
-        };
+        // Chưa có điều kiện, thêm trực tiếp
+        query.phone = { $regex: phone, $options: 'i' };
       }
     }
     
-    // Tạo danh sách userIds để áp dụng filter
+    // Chứa danh sách userId đã lọc
     let filteredUserIds = [];
     let hasClassOrGradeFilter = false;
     
-    // Xử lý lọc theo academicYear
-    if (academicYear && academicYear !== 'none') {
-      console.log(`Filtering by academic year: ${academicYear}`);
-      
-      // Tìm batchId từ academicYear
-      const academicYears = academicYear.split('-');
-      let startYear, endYear;
-      
-      if (academicYears.length === 2) {
-        startYear = parseInt(academicYears[0]);
-        endYear = parseInt(academicYears[1]);
-      } else {
-        // Nếu chỉ có một năm, giả định rằng đó là năm bắt đầu
-        startYear = parseInt(academicYear);
-        endYear = startYear + 1;
-      }
-      
-      if (!isNaN(startYear)) {
-        // Tìm batch dựa trên startYear
-        const batch = await models.Batch.findOne({ startYear });
-        
-        if (batch) {
-          console.log(`Found batch for year ${startYear}: ${batch.batchName}`);
-          
-          // Lấy tất cả semester trong năm học này
-          const semesters = await models.Semester.find({ batchId: batch.batchId });
-          const semesterIds = semesters.map(s => s.semesterId);
-          
-          if (semesterIds.length > 0) {
-            console.log(`Found ${semesterIds.length} semesters for this academic year`);
-            
-            // Xử lý khác nhau cho từng role
-            if (!selectedRoles.length || selectedRoles.includes('student')) {
-              // Tìm tất cả lịch học trong các semester này
-              const schedules = await models.ClassSchedule.find({ semesterId: { $in: semesterIds } });
-              const scheduleIds = schedules.map(s => s.scheduleId);
-              
-              if (scheduleIds.length > 0) {
-                // Tìm các sinh viên có mặt trong các lịch học này qua AttendanceLog
-                const attendanceLogs = await models.AttendanceLog.find({ scheduleId: { $in: scheduleIds } });
-                const studentUserIds = [...new Set(attendanceLogs.map(log => log.userId))];
-                
-                console.log(`Found ${studentUserIds.length} students in attendance logs for this academic year`);
-                filteredUserIds.push(...studentUserIds);
-              }
-            }
-            
-            if (!selectedRoles.length || selectedRoles.includes('teacher')) {
-              // Tìm giáo viên dạy trong năm học này thông qua ClassSchedule
-              const teacherSchedules = await models.ClassSchedule.find({ semesterId: { $in: semesterIds } });
-              const teacherIds = [...new Set(teacherSchedules.map(s => s.teacherId))];
-              
-              if (teacherIds.length > 0) {
-                // Lấy thông tin giáo viên
-                const teachers = await models.Teacher.find({ teacherId: { $in: teacherIds } });
-                const teacherUserIds = teachers.map(teacher => teacher.userId);
-                
-                console.log(`Found ${teacherUserIds.length} teachers teaching in this academic year`);
-                filteredUserIds.push(...teacherUserIds);
-              }
-            }
-            
-            if (!selectedRoles.length || selectedRoles.includes('parent')) {
-              // Tìm học sinh học trong năm học này
-              const schedules = await models.ClassSchedule.find({ semesterId: { $in: semesterIds } });
-              const scheduleIds = schedules.map(s => s.scheduleId);
-              
-              if (scheduleIds.length > 0) {
-                // Tìm tất cả sinh viên có mặt trong các lịch học này
-                const attendanceLogs = await models.AttendanceLog.find({ scheduleId: { $in: scheduleIds } });
-                const studentUserIds = [...new Set(attendanceLogs.map(log => log.userId))];
-                
-                if (studentUserIds.length > 0) {
-                  // Tìm học sinh từ userId
-                  const students = await models.Student.find({ userId: { $in: studentUserIds } });
-                  const studentIds = students.map(s => s.studentId);
-                  
-                  // Tìm quan hệ phụ huynh-học sinh
-                  const parentStudentRelations = await models.ParentStudent.find({
-                    studentId: { $in: studentIds }
-                  });
-                  const parentIds = [...new Set(parentStudentRelations.map(relation => relation.parentId))];
-                  
-                  // Lấy thông tin phụ huynh
-                  const parents = await models.Parent.find({ parentId: { $in: parentIds } });
-                  const parentUserIds = parents.map(parent => parent.userId);
-                  
-                  console.log(`Found ${parentUserIds.length} parents with children in this academic year`);
-                  filteredUserIds.push(...parentUserIds);
-                }
-              }
-            }
-            
-            // Nếu đã lọc theo academicYear, đánh dấu đã có filter
-            if (filteredUserIds.length > 0) {
-              hasClassOrGradeFilter = true;
-            }
-          }
-        }
-      }
-    }
-    
     // Xử lý lọc theo className và grade
-    if ((className && className !== 'none') || (grade && grade !== 'none')) {
+    if ((className && className !== 'none') || (grade && grade !== 'none') || (academicYear && academicYear !== 'none')) {
       hasClassOrGradeFilter = true;
       
-      // Lấy danh sách các lớp phù hợp với điều kiện
-      let matchingClassIds = [];
+      // Truy vấn lấy tất cả các lớp phù hợp
+      let classQuery = {};
       
       if (className && className !== 'none') {
-        // Tìm classId từ className cụ thể
-        const classInfo = await models.Class.findOne({ className });
-        if (classInfo) {
-          matchingClassIds.push(classInfo.classId);
-        }
+        classQuery.className = { $regex: className, $options: 'i' };
       }
       
       if (grade && grade !== 'none') {
-        // Tìm tất cả các lớp có khối tương ứng (bắt đầu bằng grade number)
-        const gradeString = grade.toString();
-        const gradeClasses = await models.Class.find({ 
-          className: { $regex: `^${gradeString}`, $options: 'i' } 
-        });
-        
-        if (gradeClasses && gradeClasses.length > 0) {
-          // Chỉ thêm các classId chưa có trong danh sách
-          for (const cls of gradeClasses) {
-            if (!matchingClassIds.includes(cls.classId)) {
-              matchingClassIds.push(cls.classId);
-            }
-          }
-        }
+        classQuery.grade = parseInt(grade, 10);
       }
       
-      console.log(`Found ${matchingClassIds.length} matching classes`);
+      if (academicYear && academicYear !== 'none') {
+        classQuery.academicYear = academicYear;
+      }
+      
+      // Tìm tất cả các lớp phù hợp
+      const Class = require('../database/models/Class');
+      const matchingClasses = await Class.find(classQuery);
+      const matchingClassIds = matchingClasses.map(cls => cls.classId);
+      
+      console.log(`Found ${matchingClasses.length} matching classes for filters:`, classQuery);
       
       if (matchingClassIds.length > 0) {
-        // Xử lý khác nhau cho từng role
-        
-        // Student: Lấy học sinh học trong các lớp phù hợp
+        // Student: Lấy học sinh trong các lớp phù hợp
         if (!selectedRoles.length || selectedRoles.includes('student')) {
-          const students = await models.Student.find({ classId: { $in: matchingClassIds } });
+          // Tìm học sinh trong các lớp (sử dụng classIds array)
+          const Student = require('../database/models/Student');
+          const students = await Student.find({ classIds: { $in: matchingClassIds } });
           const studentUserIds = students.map(student => student.userId);
+          
           filteredUserIds.push(...studentUserIds);
           console.log(`Found ${studentUserIds.length} students in matching classes`);
         }
         
-        // Teacher: Lấy giáo viên dạy trong các lớp phù hợp
+        // Teacher: Lấy giáo viên dạy các lớp phù hợp hoặc là GVCN
         if (!selectedRoles.length || selectedRoles.includes('teacher')) {
-          // Tìm lịch dạy cho các lớp
-          // Use direct collection access to bypass schema issues
-          const ClassScheduleCollection = mongoose.connection.db.collection('ClassSchedule');
-          const schedules = await ClassScheduleCollection.find({ classId: { $in: matchingClassIds.map(id => Number(id)) } }).toArray();
+          // 1. Tìm giáo viên là GVCN của các lớp
+          const homeroomTeacherIds = matchingClasses.map(cls => cls.homeroomTeacherId).filter(id => id);
           
-          // Lấy danh sách unique teacherIds
-          const teacherIds = [...new Set(schedules.map(s => s.teacherId))];
-          console.log(`Found ${teacherIds.length} unique teachers in matching classes`);
+          // 2. Tìm giáo viên dạy trong các lớp (sử dụng classIds array)
+          const Teacher = require('../database/models/Teacher');
+          const teachers = await Teacher.find({ 
+            $or: [
+              { userId: { $in: homeroomTeacherIds } },
+              { classIds: { $in: matchingClassIds } }
+            ]
+          });
           
-          // Lấy thông tin giáo viên
-          const teachers = await models.Teacher.find({ teacherId: { $in: teacherIds } });
           const teacherUserIds = teachers.map(teacher => teacher.userId);
           filteredUserIds.push(...teacherUserIds);
           console.log(`Found ${teacherUserIds.length} teachers teaching matching classes`);
@@ -276,21 +179,22 @@ exports.getUsers = async (options = {}) => {
         // Parent: Lấy phụ huynh có con học trong các lớp phù hợp
         if (!selectedRoles.length || selectedRoles.includes('parent')) {
           // 1. Tìm học sinh trong các lớp
-          const students = await models.Student.find({ classId: { $in: matchingClassIds } });
+          const Student = require('../database/models/Student');
+          const students = await Student.find({ classIds: { $in: matchingClassIds } });
           const studentIds = students.map(student => student.studentId);
           
-          // 2. Tìm quan hệ phụ huynh-học sinh
-          const parentStudentRelations = await models.ParentStudent.find({ 
-            studentId: { $in: studentIds } 
-          });
-          const parentIds = [...new Set(parentStudentRelations.map(relation => relation.parentId))];
+          // 2. Tìm phụ huynh qua parentIds trong bảng Student
+          const parentUserIds = [];
+          for (const student of students) {
+            if (student.parentIds && student.parentIds.length > 0) {
+              parentUserIds.push(...student.parentIds);
+            }
+          }
           
-          // 3. Lấy thông tin phụ huynh
-          const parents = await models.Parent.find({ parentId: { $in: parentIds } });
-          const parentUserIds = parents.map(parent => parent.userId);
-          
-          filteredUserIds.push(...parentUserIds);
-          console.log(`Found ${parentUserIds.length} parents with children in matching classes`);
+          if (parentUserIds.length > 0) {
+            filteredUserIds.push(...parentUserIds);
+            console.log(`Found ${parentUserIds.length} parents with children in matching classes`);
+          }
         }
       }
     }
@@ -332,91 +236,68 @@ exports.getUsers = async (options = {}) => {
       };
     }
     
-    // Thêm các điều kiện filter khác
-    const filterKeys = Object.keys(filter);
-    for (const key of filterKeys) {
-      if (key !== 'page' && key !== 'limit' && key !== 'sortBy' && key !== 'sortDir' &&
-          key !== 'search' && key !== 'className' && key !== 'roles' &&
-          key !== 'phone' && key !== 'grade' && key !== 'academicYear') {
-        const value = filter[key];
-        
-        // Bỏ qua các giá trị là 'none'
-        if (value !== 'none' && value !== undefined && value !== '') {
-          try {
-            // Kiểm tra nếu field là number trong schema thì convert sang Number
-            const modelSchema = models.User.schema.paths[key];
-            if (modelSchema && modelSchema.instance === 'Number') {
-              const numValue = Number(value);
-              if (!isNaN(numValue)) {
-                query[key] = numValue;
-              }
-            } else {
-              query[key] = value;
-            }
-          } catch (error) {
-            console.error(`Error processing filter ${key}=${value}:`, error);
-            query[key] = value; // Sử dụng giá trị gốc nếu có lỗi
-          }
+    // Áp dụng lọc theo các tham số khác
+    for (const [key, value] of Object.entries(filter)) {
+      if (value !== 'none' && value !== '') {
+        if (query.$and) {
+          query.$and.push({ [key]: value });
+        } else if (query.$or) {
+          query = { $and: [query, { [key]: value }] };
+        } else {
+          query[key] = value;
         }
       }
     }
     
-    console.log("Query filter:", JSON.stringify(query));
+    console.log("Final MongoDB query:", JSON.stringify(query, null, 2));
     
+    // Lấy tổng số bản ghi phù hợp với query
+    const UserAccount = require('../database/models/UserAccount');
+    const total = await UserAccount.countDocuments(query);
+    
+    // Tính toán skip và trang
     const skip = (page - 1) * limit;
-    const users = await models.User.find(query)
+    const pages = Math.ceil(total / limit);
+    
+    // Lấy danh sách người dùng với phân trang
+    const users = await UserAccount.find(query)
       .sort(sort)
       .skip(skip)
       .limit(limit);
-      
-    const total = await models.User.countDocuments(query);
     
-    console.log(`Found ${users.length} users out of ${total} total`);
-    
-    // Bổ sung thông tin chi tiết cho từng người dùng dựa theo role
-    const usersWithDetails = await Promise.all(users.map(async (user) => {
+    // Bổ sung thông tin chi tiết người dùng theo vai trò
+    const userData = await Promise.all(users.map(async (user) => {
       const userObj = user.toObject();
-      
-      // Không trả về mật khẩu
-      delete userObj.password;
-      
-      // Get RFID information for this user if exists
-      const RFID = require('../database/models/RFID');
-      const rfidCard = await RFID.findOne({ UserID: user.userId });
-      if (rfidCard) {
-        userObj.rfid = {
-          RFID_ID: rfidCard.RFID_ID,
-          IssueDate: rfidCard.IssueDate,
-          ExpiryDate: rfidCard.ExpiryDate,
-          Status: rfidCard.Status
-        };
-      }
-      
-      // Lấy thông tin chi tiết dựa theo role
       const role = user.role.toLowerCase();
       
+      // Bổ sung thông tin theo vai trò
       if (role === 'student') {
-        const student = await models.Student.findOne({ userId: user.userId });
+        // Lấy thông tin học sinh
+        const Student = require('../database/models/Student');
+        const student = await Student.findOne({ userId: user.userId });
+        
         if (student) {
-          // Debug to check if gender value exists in Student document
-          console.log(`Student ${student.fullName} (${user.userId}) gender from DB:`, student.gender);
-          console.log('Student gender type:', typeof student.gender);
-          console.log('Student full data:', JSON.stringify(student, null, 2));
+          // Lấy thông tin lớp học
+          const Class = require('../database/models/Class');
+          let classes = [];
           
-          // Thêm gender trực tiếp vào userObj - xử lý dạng chuỗi (Male/Female)
-          userObj.gender = student.gender || null;
+          if (student.classIds && student.classIds.length > 0) {
+            classes = await Class.find({ classId: { $in: student.classIds } });
+          }
           
-          // Bổ sung thông tin học sinh
           userObj.details = {
             studentId: student.studentId,
-            firstName: student.firstName,
-            lastName: student.lastName,
             fullName: student.fullName,
-            phone: student.phone,
-            gender: student.gender || null, // Giữ nguyên giá trị chuỗi Male/Female
             dateOfBirth: student.dateOfBirth,
+            gender: student.gender,
             address: student.address,
-            classId: student.classId,
+            phone: formatPhoneNumber(student.phone),
+            classes: classes.map(cls => ({
+              classId: cls.classId,
+              className: cls.className,
+              grade: cls.grade,
+              academicYear: cls.academicYear
+            })),
             batchId: student.batchId
           };
 
@@ -438,7 +319,7 @@ exports.getUsers = async (options = {}) => {
                 firstName: parent.firstName,
                 lastName: parent.lastName,
                 fullName: parent.fullName,
-                phone: parent.phone,
+                phone: formatPhoneNumber(parent.phone),
                 gender: parent.gender,
                 career: parent.career,
                 email: parentUser ? parentUser.email : null,
@@ -446,236 +327,93 @@ exports.getUsers = async (options = {}) => {
               };
             });
           }
-          
-          // Thêm thông tin className nếu có
-          if (student.classId) {
-            const classInfo = await models.Class.findOne({ classId: student.classId });
-            if (classInfo) {
-              userObj.details.className = classInfo.className;
-              // Thêm grade từ className
-              if (classInfo.className) {
-                const match = classInfo.className.match(/^(\d+)/);
-                if (match && match[1]) {
-                  userObj.details.grade = match[1];
-                }
-              }
-            }
-          }
-          
-          // Thêm thông tin về academicYears (các năm học đã tham gia)
-          try {
-            // Tìm lịch sử tham gia lớp học thông qua AttendanceLog
-            const attendanceLogs = await models.AttendanceLog.find({ userId: user.userId });
-            const scheduleIds = [...new Set(attendanceLogs.map(log => log.scheduleId))];
-            
-            if (scheduleIds.length > 0) {
-              // Tìm thông tin lịch học
-              const schedules = await models.ClassSchedule.find({ scheduleId: { $in: scheduleIds } });
-              const semesterIds = [...new Set(schedules.map(schedule => schedule.semesterId))];
-              
-              if (semesterIds.length > 0) {
-                // Tìm thông tin học kỳ
-                const semesters = await models.Semester.find({ semesterId: { $in: semesterIds } });
-                const batchIds = [...new Set(semesters.map(semester => semester.batchId))];
-                
-                if (batchIds.length > 0) {
-                  // Tìm thông tin khóa học
-                  const batches = await models.Batch.find({ batchId: { $in: batchIds } });
-                  
-                  // Format kết quả theo định dạng "startYear-endYear"
-                  userObj.academicYears = batches.map(batch => `${batch.startYear}-${batch.startYear + 3}`);
-                  userObj.academicYears.sort(); // Sắp xếp theo thứ tự năm học
-                }
-              }
-            }
-          } catch (error) {
-            console.error('Error getting student academic years:', error);
-          }
         }
       }
       else if (role === 'teacher') {
-        const teacher = await models.Teacher.findOne({ userId: user.userId });
+        // Lấy thông tin giáo viên
+        const Teacher = require('../database/models/Teacher');
+        const teacher = await Teacher.findOne({ userId: user.userId });
+        
         if (teacher) {
-          // Copy teacher data directly to userObj (flatter structure)
-          userObj.teacherId = teacher.teacherId;
-          userObj.firstName = teacher.firstName || null;
-          userObj.lastName = teacher.lastName || null;
-          userObj.fullName = teacher.fullName;
-          userObj.phone = teacher.phone;
-          userObj.dateOfBirth = teacher.dateOfBirth;
-          userObj.gender = teacher.gender;
-          userObj.major = teacher.major;
-          userObj.address = teacher.address;
-          userObj.weeklyCapacity = teacher.weeklyCapacity;
+          // Lấy danh sách lớp học
+          const Class = require('../database/models/Class');
+          let teachingClasses = [];
           
-          // Remove backup_email for teacher role
-          if ('backup_email' in userObj) {
-            delete userObj.backup_email;
+          if (teacher.classIds && teacher.classIds.length > 0) {
+            teachingClasses = await Class.find({ classId: { $in: teacher.classIds } });
           }
           
-          // Get classes where this teacher is homeroom teacher
-          const Class = require('../database/models/Class');
-          const homeroomClasses = await Class.find({ homeroomTeacherId: teacher.teacherId.toString() });
-          
-          // Get all classes that this teacher teaches
-          const ClassSchedule = require('../database/models/ClassSchedule');
-          const teachingSchedules = await ClassSchedule.find({ teacherId: teacher.teacherId });
-          const teachingClassIds = [...new Set(teachingSchedules.map(s => s.classId))];
-          const teachingClasses = await Class.find({ classId: { $in: teachingClassIds } });
-          
-          // Format classes theo định dạng yêu cầu
-          userObj.classes = teachingClasses.map(cls => ({
-            classId: cls.classId,
-            className: cls.className,
-            grade: cls.className ? cls.className.match(/^(\d+)/)?.[1] || '' : ''
-          }));
+          // Lấy các lớp làm GVCN
+          const homeroomClasses = await Class.find({ homeroomTeacherId: teacher.userId });
           
           userObj.details = {
             teacherId: teacher.teacherId,
+            fullName: teacher.fullName,
+            dateOfBirth: teacher.dateOfBirth,
+            gender: teacher.gender,
+            address: teacher.address,
+            phone: formatPhoneNumber(teacher.phone),
             major: teacher.major,
             degree: teacher.degree,
-            // Include original classes data for backward compatibility
-            classes: homeroomClasses || [],
-            weeklyhours: teacher.WeeklyCapacity
+            weeklyCapacity: teacher.weeklyCapacity,
+            academicYear: teacher.academicYear,
+            classes: teachingClasses.map(cls => ({
+              classId: cls.classId,
+              className: cls.className,
+              grade: cls.grade,
+              academicYear: cls.academicYear,
+              isHomeroom: homeroomClasses.some(h => h.classId === cls.classId)
+            }))
           };
-          
-          // Thêm thông tin về academicYears (các năm học đã tham gia giảng dạy)
-          try {
-            // Tìm các lịch dạy của giáo viên
-            const teachingSchedules = await models.ClassSchedule.find({ teacherId: teacher.teacherId });
-            const semesterIds = [...new Set(teachingSchedules.map(schedule => schedule.semesterId))];
-            
-            if (semesterIds.length > 0) {
-              // Tìm thông tin học kỳ
-              const semesters = await models.Semester.find({ semesterId: { $in: semesterIds } });
-              const batchIds = [...new Set(semesters.map(semester => semester.batchId))];
-              
-              if (batchIds.length > 0) {
-                // Tìm thông tin khóa học
-                const batches = await models.Batch.find({ batchId: { $in: batchIds } });
-                
-                // Format kết quả theo định dạng "startYear-endYear"
-                userObj.academicYears = batches.map(batch => `${batch.startYear}-${batch.startYear + 3}`);
-                userObj.academicYears.sort(); // Sắp xếp theo thứ tự năm học
-                
-                // Thêm vào details cho backward compatibility
-                userObj.details.academicYears = userObj.academicYears;
-              }
-            }
-          } catch (error) {
-            console.error('Error getting teacher academic years:', error);
-          }
         }
       }
       else if (role === 'parent') {
-        const parent = await models.Parent.findOne({ userId: user.userId });
-        if (parent) {
-          // Copy parent data directly to userObj
-          userObj.parentId = parent.parentId;
-          userObj.firstName = parent.firstName;
-          userObj.lastName = parent.lastName;
-          userObj.fullName = parent.fullName;
-          userObj.phone = parent.phone;
-          userObj.gender = parent.gender;
-          userObj.career = parent.career;
-          
-          // Tìm các học sinh liên quan
-          const parentStudents = await models.ParentStudent.find({ parentId: parent.parentId });
-          
-          // Initialize empty arrays
-          userObj.studentsId = [];
-          userObj.classesId = [];
-          userObj.classesName = [];
-          userObj.grades = [];
-          userObj.students = [];
-          
-          if (parentStudents.length > 0) {
-            const studentIds = parentStudents.map(ps => ps.studentId);
-            const students = await models.Student.find({ studentId: { $in: studentIds } });
-            
-            // Add student IDs directly to parent
-            userObj.studentsId = students.map(s => s.studentId);
-            
-            // Collect all classes and grades
-            const allClassIds = [];
-            const allClassNames = [];
-            const allGrades = [];
-            
-            // Tìm lớp học và thêm grade cho mỗi học sinh
-            const studentDetails = await Promise.all(students.map(async (s) => {
-              const studentObj = {
-                studentId: s.studentId,
-                firstName: s.firstName,
-                lastName: s.lastName,
-                fullName: s.fullName
-              };
-              
-              if (s.classId) {
-                allClassIds.push(s.classId);
-                
-                const classInfo = await models.Class.findOne({ classId: s.classId });
-                if (classInfo) {
-                  studentObj.className = classInfo.className;
-                  allClassNames.push(classInfo.className);
-                  
-                  if (classInfo.className) {
-                    const match = classInfo.className.match(/^(\d+)/);
-                    if (match && match[1]) {
-                      studentObj.grade = match[1];
-                      allGrades.push(match[1]);
-                    }
-                  }
-                }
-              }
-              
-              return studentObj;
-            }));
-            
-            userObj.students = studentDetails;
-            
-            // Add unique class IDs, class names and grades to parent
-            userObj.classesId = [...new Set(allClassIds)];
-            userObj.classesName = [...new Set(allClassNames)];
-            userObj.grades = [...new Set(allGrades)];
-            
-            // Thêm thông tin về academicYears (các năm học mà con đã tham gia)
-            try {
-              // Tìm lịch sử tham gia lớp học của các con thông qua AttendanceLog
-              const allAcademicYears = [];
-              
-              for (const student of students) {
-                // Tìm lịch sử điểm danh của từng học sinh
-                const attendanceLogs = await models.AttendanceLog.find({ userId: student.userId });
-                const scheduleIds = [...new Set(attendanceLogs.map(log => log.scheduleId))];
-                
-                if (scheduleIds.length > 0) {
-                  // Tìm thông tin lịch học
-                  const schedules = await models.ClassSchedule.find({ scheduleId: { $in: scheduleIds } });
-                  const semesterIds = [...new Set(schedules.map(schedule => schedule.semesterId))];
-                  
-                  if (semesterIds.length > 0) {
-                    // Tìm thông tin học kỳ
-                    const semesters = await models.Semester.find({ semesterId: { $in: semesterIds } });
-                    const batchIds = [...new Set(semesters.map(semester => semester.batchId))];
-                    
-                    if (batchIds.length > 0) {
-                      // Tìm thông tin khóa học
-                      const batches = await models.Batch.find({ batchId: { $in: batchIds } });
-                      
-                      // Format kết quả theo định dạng "startYear-endYear"
-                      const studentAcademicYears = batches.map(batch => `${batch.startYear}-${batch.startYear + 3}`);
-                      allAcademicYears.push(...studentAcademicYears);
-                    }
-                  }
-                }
-              }
-              
-              // Loại bỏ trùng lặp và sắp xếp
-              userObj.academicYears = [...new Set(allAcademicYears)].sort();
-            } catch (error) {
-              console.error('Error getting parent academic years:', error);
+        // Lấy thông tin phụ huynh (qua các con)
+        const Student = require('../database/models/Student');
+        const students = await Student.find({ parentIds: user.userId });
+        
+        if (students.length > 0) {
+          // Lấy thông tin lớp học của các con
+          const Class = require('../database/models/Class');
+          const allClassIds = [];
+          students.forEach(student => {
+            if (student.classIds && student.classIds.length > 0) {
+              allClassIds.push(...student.classIds);
             }
-          }
+          });
+          
+          const uniqueClassIds = [...new Set(allClassIds)];
+          const classes = await Class.find({ classId: { $in: uniqueClassIds } });
+          
+          // Thông tin chi tiết các con
+          const childrenDetails = await Promise.all(students.map(async student => {
+            const studentClasses = classes.filter(cls => 
+              student.classIds && student.classIds.includes(cls.classId)
+            );
+            
+            return {
+              studentId: student.studentId,
+              fullName: student.fullName,
+              gender: student.gender,
+              classes: studentClasses.map(cls => ({
+                classId: cls.classId,
+                className: cls.className,
+                grade: cls.grade,
+                academicYear: cls.academicYear
+              }))
+            };
+          }));
+          
+          // Lấy thông tin academicYear từ các lớp học
+          const academicYears = [...new Set(classes.map(cls => cls.academicYear))];
+          
+          userObj.details = {
+            fullName: user.fullName || students[0].parentNames?.[0],
+            phone: formatPhoneNumber(user.phone || students[0].parentPhones?.[0]),
+            email: user.email || students[0].parentEmails?.[0],
+            children: childrenDetails,
+            academicYears
+          };
         }
       }
       
@@ -684,13 +422,13 @@ exports.getUsers = async (options = {}) => {
     
     return {
       success: true,
-      data: usersWithDetails,
-      count: users.length,
+      data: userData,
+      count: total,
       pagination: {
         total,
         page,
         limit,
-        pages: Math.ceil(total / limit)
+        pages
       }
     };
   } catch (error) {
@@ -754,7 +492,7 @@ exports.getUserById = async (userId, includeDetails = true) => {
           firstName: student.firstName,
           lastName: student.lastName,
           fullName: student.fullName,
-          phone: student.phone,
+          phone: formatPhoneNumber(student.phone),
           gender: student.gender || null, // Giữ nguyên giá trị chuỗi Male/Female
           dateOfBirth: student.dateOfBirth,
           address: student.address,
@@ -780,7 +518,7 @@ exports.getUserById = async (userId, includeDetails = true) => {
               firstName: parent.firstName,
               lastName: parent.lastName,
               fullName: parent.fullName,
-              phone: parent.phone,
+              phone: formatPhoneNumber(parent.phone),
               gender: parent.gender,
               career: parent.career,
               email: parentUser ? parentUser.email : null,
@@ -798,7 +536,7 @@ exports.getUserById = async (userId, includeDetails = true) => {
         userObj.firstName = teacher.firstName || null;
         userObj.lastName = teacher.lastName || null;
         userObj.fullName = teacher.fullName;
-        userObj.phone = teacher.phone;
+        userObj.phone = formatPhoneNumber(teacher.phone);
         userObj.dateOfBirth = teacher.dateOfBirth;
         userObj.gender = teacher.gender;
         userObj.major = teacher.major;
@@ -829,11 +567,22 @@ exports.getUserById = async (userId, includeDetails = true) => {
         
         userObj.details = {
           teacherId: teacher.teacherId,
+          fullName: teacher.fullName,
+          dateOfBirth: teacher.dateOfBirth,
+          gender: teacher.gender,
+          address: teacher.address,
+          phone: formatPhoneNumber(teacher.phone),
           major: teacher.major,
           degree: teacher.degree,
-          // Include original classes data for backward compatibility
-          classes: homeroomClasses || [],
-          weeklyhours: teacher.WeeklyCapacity
+          weeklyCapacity: teacher.weeklyCapacity,
+          academicYear: teacher.academicYear,
+          classes: teachingClasses.map(cls => ({
+            classId: cls.classId,
+            className: cls.className,
+            grade: cls.grade,
+            academicYear: cls.academicYear,
+            isHomeroom: homeroomClasses.some(h => h.classId === cls.classId)
+          }))
         };
       }
     }

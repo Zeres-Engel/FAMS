@@ -2,3 +2,4 @@ jetson/assets/weights/retinaface.onnx
 *.onnx
 *.pyc
 /web/backend/Python-services/models
+web/backend/NodeJS-services/public/avatars/thanhnpst1-1745245666699-811398132_processed.jpg

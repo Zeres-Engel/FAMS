@@ -39,9 +39,12 @@ const StudentSchema = new mongoose.Schema({
   dateOfBirth: {
     type: Date
   },
-  classId: {
-    type: Number,
-    ref: 'Class'
+  classIds: {
+    type: [Number],
+    default: []
+  },
+  batchId: {
+    type: Number
   },
   gender: {
     type: Boolean,
@@ -62,22 +65,28 @@ const StudentSchema = new mongoose.Schema({
     type: String
   },
   parentIds: {
-    type: [String]
+    type: [String],
+    default: []
   },
   parentNames: {
-    type: [String]
+    type: [String],
+    default: []
   },
   parentCareers: {
-    type: [String]
+    type: [String],
+    default: []
   },
   parentPhones: {
-    type: [String]
+    type: [String],
+    default: []
   },
   parentGenders: {
-    type: [Boolean]
+    type: [Boolean],
+    default: []
   },
   parentEmails: {
-    type: [String]
+    type: [String],
+    default: []
   }
 }, {
   timestamps: true,
@@ -95,11 +104,11 @@ StudentSchema.virtual('user', {
 });
 
 // Virtual for getting class info
-StudentSchema.virtual('class', {
+StudentSchema.virtual('classes', {
   ref: 'Class',
-  localField: 'classId',
+  localField: 'classIds',
   foreignField: 'classId',
-  justOne: true
+  justOne: false
 });
 
 // Virtual for getting parent information through ParentStudent relation

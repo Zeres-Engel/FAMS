@@ -5,12 +5,12 @@
     "width": 2100,
     "height": 2100,
     "scrollTop": -714.8913,
-    "scrollLeft": -163,
+    "scrollLeft": -648.4184,
     "zoomLevel": 0.85,
     "show": 292,
     "database": 4,
     "databaseName": "FAMS",
-    "canvasType": "ERD",
+    "canvasType": "@dineug/erd-editor/builtin-schema-sql",
     "language": 1,
     "tableNameCase": 4,
     "columnNameCase": 2,
@@ -821,6 +821,7 @@
         "columnIds": [
           "K-zkYUacoUd7HI0kIU80Q",
           "epefHTcxdRrBKQOBMxL0N",
+          "WHMvngtLYiLBfvFn0av_i",
           "D9bhQf39vpaKNf5juvoX8",
           "LUS92VHTaZRnWobIuKMFU",
           "odRJ9iJQiJS2XXhLfjUxA",
@@ -837,6 +838,7 @@
         "seqColumnIds": [
           "K-zkYUacoUd7HI0kIU80Q",
           "epefHTcxdRrBKQOBMxL0N",
+          "WHMvngtLYiLBfvFn0av_i",
           "D9bhQf39vpaKNf5juvoX8",
           "LUS92VHTaZRnWobIuKMFU",
           "odRJ9iJQiJS2XXhLfjUxA",
@@ -859,7 +861,7 @@
           "color": ""
         },
         "meta": {
-          "updateAt": 1745220503341,
+          "updateAt": 1745232038562,
           "createAt": 1744876380156
         }
       },
@@ -4641,6 +4643,26 @@
           "updateAt": 1745228256634,
           "createAt": 1745228213042
         }
+      },
+      "WHMvngtLYiLBfvFn0av_i": {
+        "id": "WHMvngtLYiLBfvFn0av_i",
+        "tableId": "jKhFHWgQ4BsgHtE4C4Vxj",
+        "name": "ClassIDs",
+        "comment": "",
+        "dataType": "LIST",
+        "default": "",
+        "options": 0,
+        "ui": {
+          "keys": 0,
+          "widthName": 60,
+          "widthComment": 60,
+          "widthDataType": 60,
+          "widthDefault": 60
+        },
+        "meta": {
+          "updateAt": 1745232048475,
+          "createAt": 1745232036203
+        }
       }
     },
     "relationshipEntities": {
@@ -4851,7 +4873,7 @@
             "K-zkYUacoUd7HI0kIU80Q"
           ],
           "x": 996,
-          "y": 1278,
+          "y": 1290,
           "direction": 1
         },
         "end": {
@@ -5419,6 +5441,15 @@
       -1,
       {
         "dataType": 1745228228827
+      }
+    ],
+    "WHMvngtLYiLBfvFn0av_i": [
+      "tableColumnEntities",
+      1745232036202,
+      -1,
+      {
+        "name": 1745232043794,
+        "dataType": 1745232048474
       }
     ]
   }

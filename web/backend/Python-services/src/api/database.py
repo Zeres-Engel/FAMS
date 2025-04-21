@@ -552,6 +552,7 @@ async def init_fams_with_sample_data():
                 "major": teacher_data.get("major", ""),
                 "degree": teacher_data.get("degree", ""),
                 "weeklyCapacity": teacher_data.get("weeklyCapacity", 10),
+                "classIds": [],  # Initialize empty classIds array for tracking teaching history
                 "createdAt": datetime.datetime.now(),
                 "updatedAt": datetime.datetime.now(),
                 "isActive": True,

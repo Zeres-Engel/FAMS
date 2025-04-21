@@ -2,7 +2,7 @@
 Teacher model for FAMS
 """
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, Field
 from ..constants import COLLECTIONS
 
@@ -19,6 +19,7 @@ class Teacher(BaseModel):
     gender: bool = Field(..., description="Teacher's gender (True for Male, False for Female)")
     major: Optional[str] = Field(None, description="Teacher's area of expertise")
     weeklyCapacity: int = Field(default=10, description="Weekly teaching capacity in hours")
+    classIds: Optional[List[int]] = Field(default=[], description="IDs of classes the teacher has taught")
     createdAt: datetime = Field(default_factory=datetime.utcnow)
     updatedAt: datetime = Field(default_factory=datetime.utcnow)
     isActive: bool = Field(default=True)

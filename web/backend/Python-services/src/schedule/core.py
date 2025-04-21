@@ -397,6 +397,12 @@ def generate_improved_schedule(db, semester_info, total_weeks=18, academic_year=
                     teacher_weekly_usage[teacher_id] += 1
                     class_needs[class_id][subject_id] -= 1
                     
+                    # Update teacher's classIds - add this class to teacher's teaching history
+                    db.Teacher.update_one(
+                        {"teacherId": teacher_id},
+                        {"$addToSet": {"classIds": class_id}}
+                    )
+                    
                     # Get class and teacher name for better tracking
                     class_name = class_doc.get("className", f"Class {class_id}")
                     teacher_name = teacher_info.get(teacher_id, {}).get("name", f"Teacher {teacher_id}")
@@ -658,6 +664,12 @@ def generate_schedule(db, semester_doc, total_weeks=18):
                     available_rooms.remove(room_id)
                     teacher_weekly_usage[teacher_id] += 1
                     class_needs[class_id][subject_id] -= 1
+                    
+                    # Update teacher's classIds - add this class to teacher's teaching history
+                    db.Teacher.update_one(
+                        {"teacherId": teacher_id},
+                        {"$addToSet": {"classIds": class_id}}
+                    )
                     
                     # Create schedule entry
                     schedule_entry = {

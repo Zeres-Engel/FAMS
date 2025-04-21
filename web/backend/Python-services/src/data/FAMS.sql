@@ -39,7 +39,7 @@ CREATE TABLE Batch
 
 CREATE TABLE Class
 (
-  ClassID           INT         NULL     AUTO_INCREMENT,
+  ClassID           LIST        NULL     AUTO_INCREMENT,
   ClassName         VARCHAR(50) NOT NULL,
   HomeroomTeacherID INT         NULL    ,
   Grade             INT         NULL    ,
@@ -68,7 +68,7 @@ CREATE TABLE ClassSchedule
 (
   ScheduleID  INT          NULL     AUTO_INCREMENT,
   SemesterID  INT          NOT NULL,
-  ClassID     INT          NOT NULL,
+  ClassID     LIST         NOT NULL,
   SubjectID   INT          NOT NULL,
   TeacherID   INT          NOT NULL,
   ClassroomID INT          NOT NULL,
@@ -247,11 +247,11 @@ CREATE TABLE Student
 (
   StudentID   INT          NULL     AUTO_INCREMENT,
   UserID      VARCHAR(100) NOT NULL,
+  ClassIDs    LIST         NULL    ,
+  BatchID     INT          NULL    ,
   FullName    VARCHAR(100) NOT NULL,
   Email       VARCHAR(100) NULL    ,
   DateOfBirth DATE         NULL    ,
-  ClassID     INT          NULL    ,
-  BatchID     INT          NULL    ,
   Gender      VARCHAR(10)  NULL    ,
   Address     VARCHAR(200) NULL    ,
   Phone       VARCHAR(20)  NULL    ,
@@ -280,6 +280,7 @@ CREATE TABLE Teacher
 (
   TeacherID      INT          NULL     AUTO_INCREMENT,
   UserID         VARCHAR(100) NOT NULL,
+  ClassIDs       LIST         NULL    ,
   FullName       VARCHAR(100) NOT NULL,
   Email          VARCHAR(100) NULL    ,
   DateOfBirth    DATE         NULL    ,
@@ -431,7 +432,7 @@ ALTER TABLE Student
 
 ALTER TABLE Student
   ADD CONSTRAINT FK_Class_TO_Student
-    FOREIGN KEY (ClassID)
+    FOREIGN KEY (ClassIDs)
     REFERENCES Class (ClassID);
 
 ALTER TABLE Student
