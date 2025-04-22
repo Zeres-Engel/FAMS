@@ -268,6 +268,10 @@ exports.getUsers = async (options = {}) => {
     // Bổ sung thông tin chi tiết người dùng theo vai trò
     const userData = await Promise.all(users.map(async (user) => {
       const userObj = user.toObject();
+      
+      // Không trả về mật khẩu
+      delete userObj.password;
+      
       const role = user.role.toLowerCase();
       
       // Bổ sung thông tin theo vai trò
@@ -368,51 +372,87 @@ exports.getUsers = async (options = {}) => {
         }
       }
       else if (role === 'parent') {
-        // Lấy thông tin phụ huynh (qua các con)
-        const Student = require('../database/models/Student');
-        const students = await Student.find({ parentIds: user.userId });
+        // Lấy thông tin phụ huynh từ Parent model
+        const Parent = require('../database/models/Parent');
+        const parent = await Parent.findOne({ userId: user.userId });
         
-        if (students.length > 0) {
-          // Lấy thông tin lớp học của các con
-          const Class = require('../database/models/Class');
-          const allClassIds = [];
-          students.forEach(student => {
-            if (student.classIds && student.classIds.length > 0) {
-              allClassIds.push(...student.classIds);
-            }
-          });
-          
-          const uniqueClassIds = [...new Set(allClassIds)];
-          const classes = await Class.find({ classId: { $in: uniqueClassIds } });
-          
-          // Thông tin chi tiết các con
-          const childrenDetails = await Promise.all(students.map(async student => {
-            const studentClasses = classes.filter(cls => 
-              student.classIds && student.classIds.includes(cls.classId)
-            );
-            
-            return {
-              studentId: student.studentId,
-              fullName: student.fullName,
-              gender: student.gender,
-              classes: studentClasses.map(cls => ({
-                classId: cls.classId,
-                className: cls.className,
-                grade: cls.grade,
-                academicYear: cls.academicYear
-              }))
-            };
-          }));
-          
-          // Lấy thông tin academicYear từ các lớp học
-          const academicYears = [...new Set(classes.map(cls => cls.academicYear))];
-          
+        if (parent) {
+          // Lấy thông tin cơ bản của parent
           userObj.details = {
-            fullName: user.fullName || students[0].parentNames?.[0],
-            phone: formatPhoneNumber(user.phone || students[0].parentPhones?.[0]),
-            email: user.email || students[0].parentEmails?.[0],
-            children: childrenDetails,
-            academicYears
+            parentId: parent.parentId,
+            fullName: parent.fullName,
+            firstName: parent.firstName,
+            lastName: parent.lastName,
+            phone: formatPhoneNumber(parent.phone),
+            gender: parent.gender,
+            career: parent.career,
+            email: user.email,
+            backup_email: user.backup_email
+          };
+          
+          // Lấy thông tin các con của phụ huynh
+          const ParentStudent = require('../database/models/ParentStudent');
+          const Student = require('../database/models/Student');
+          const Class = require('../database/models/Class');
+          
+          const parentStudentRelations = await ParentStudent.find({ parentId: parent.parentId });
+          
+          if (parentStudentRelations.length > 0) {
+            const studentIds = parentStudentRelations.map(ps => ps.studentId);
+            const students = await Student.find({ studentId: { $in: studentIds } });
+            
+            // Lấy thông tin lớp học của các con
+            const allClassIds = students.reduce((ids, student) => {
+              if (student.classIds && student.classIds.length > 0) {
+                ids.push(...student.classIds);
+              }
+              return ids;
+            }, []);
+            
+            const uniqueClassIds = [...new Set(allClassIds)];
+            const classes = await Class.find({ classId: { $in: uniqueClassIds } });
+            
+            // Thông tin chi tiết các con
+            const childrenDetails = students.map(student => {
+              const studentClasses = classes.filter(cls => 
+                student.classIds && student.classIds.includes(cls.classId)
+              );
+              
+              // Tìm mối quan hệ
+              const relation = parentStudentRelations.find(ps => ps.studentId === student.studentId);
+              
+              return {
+                studentId: student.studentId,
+                fullName: student.fullName,
+                gender: student.gender,
+                phone: formatPhoneNumber(student.phone),
+                relationship: relation ? relation.relationship : 'Other',
+                classes: studentClasses.map(cls => ({
+                  classId: cls.classId,
+                  className: cls.className,
+                  grade: cls.grade,
+                  academicYear: cls.academicYear
+                }))
+              };
+            });
+            
+            userObj.details.children = childrenDetails;
+            
+            // Lấy thông tin academicYear từ các lớp học
+            const academicYears = [...new Set(classes.map(cls => cls.academicYear))];
+            userObj.details.academicYears = academicYears;
+          } else {
+            userObj.details.children = [];
+            userObj.details.academicYears = [];
+          }
+        } else {
+          // Nếu không tìm thấy thông tin phụ huynh, trả về thông tin cơ bản
+          userObj.details = {
+            fullName: user.name || '',
+            email: user.email,
+            backup_email: user.backup_email,
+            children: [],
+            academicYears: []
           };
         }
       }
@@ -589,6 +629,19 @@ exports.getUserById = async (userId, includeDetails = true) => {
     else if (role === 'parent') {
       const parent = await models.Parent.findOne({ userId: user.userId });
       if (parent) {
+        // Restructure parent data to match the format in getUsers
+        userObj.details = {
+          parentId: parent.parentId,
+          fullName: parent.fullName,
+          firstName: parent.firstName,
+          lastName: parent.lastName,
+          phone: formatPhoneNumber(parent.phone),
+          gender: parent.gender,
+          career: parent.career,
+          email: user.email,
+          backup_email: user.backup_email
+        };
+        
         // Get children
         const parentStudents = await models.ParentStudent.find({ parentId: parent.parentId });
         const studentIds = parentStudents.map(ps => ps.studentId);
@@ -596,12 +649,47 @@ exports.getUserById = async (userId, includeDetails = true) => {
         const students = studentIds.length > 0
           ? await models.Student.find({ studentId: { $in: studentIds } })
           : [];
+          
+        // Get class information for children
+        const allClassIds = students.reduce((ids, student) => {
+          if (student.classIds && student.classIds.length > 0) {
+            ids.push(...student.classIds);
+          }
+          return ids;
+        }, []);
         
-        userObj.details = {
-          parent,
-          students,
-          relations: parentStudents
-        };
+        const uniqueClassIds = [...new Set(allClassIds)];
+        const classes = await models.Class.find({ classId: { $in: uniqueClassIds } });
+        
+        // Format children details
+        const childrenDetails = students.map(student => {
+          const studentClasses = classes.filter(cls => 
+            student.classIds && student.classIds.includes(cls.classId)
+          );
+          
+          // Find relationship
+          const relation = parentStudents.find(ps => ps.studentId === student.studentId);
+          
+          return {
+            studentId: student.studentId,
+            fullName: student.fullName,
+            gender: student.gender,
+            phone: formatPhoneNumber(student.phone),
+            relationship: relation ? relation.relationship : 'Other',
+            classes: studentClasses.map(cls => ({
+              classId: cls.classId,
+              className: cls.className,
+              grade: cls.grade,
+              academicYear: cls.academicYear
+            }))
+          };
+        });
+        
+        userObj.details.children = childrenDetails;
+        
+        // Academic years
+        const academicYears = [...new Set(classes.map(cls => cls.academicYear))];
+        userObj.details.academicYears = academicYears;
       }
     }
     

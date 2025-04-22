@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { Controller } from "react-hook-form";
 import useAddUserFormHook from "./useAddUserFormHook";
+import "./AddUserForm.scss";
 
 const AddUserForm: React.FC = () => {
   const {
@@ -41,6 +42,7 @@ const AddUserForm: React.FC = () => {
       component="form"
       onSubmit={handleSubmit(onSubmit)}
       sx={{ padding: 3, display: "flex", flexDirection: "column", gap: 2 }}
+      className="add-user-form"
     >
       {/* User Type */}
       <Box sx={{ display: "flex", gap: 2 }}>
@@ -72,6 +74,33 @@ const AddUserForm: React.FC = () => {
           error={!!errors.lastName}
           helperText={errors.lastName?.message}
         />
+        {userType === "teacher" && (
+          <TextField
+            label="Email"
+            {...register("email", { 
+              required: true,
+              pattern: { 
+                value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 
+                message: "Invalid email format" 
+              } 
+            })}
+            error={!!errors.email}
+            helperText={errors.email?.message}
+          />
+        )}
+        {userType === "student" && (
+          <TextField
+            label="Backup Email"
+            {...register("backup_email", { 
+              pattern: { 
+                value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 
+                message: "Invalid email format" 
+              } 
+            })}
+            error={!!errors.backup_email}
+            helperText={errors.backup_email?.message || "Optional backup email for student"}
+          />
+        )}
         <TextField
           label="Phone"
           {...register("phone", {
@@ -138,6 +167,11 @@ const AddUserForm: React.FC = () => {
             hidden
             onChange={e => {
               const file = e.target.files?.[0] || null;
+              // Check file size - max 5MB
+              if (file && file.size > 5 * 1024 * 1024) {
+                alert("File size must be less than 5MB");
+                return;
+              }
               setValue("avatar", file);
               if (file) {
                 setAvatarPreview(URL.createObjectURL(file));
@@ -152,12 +186,7 @@ const AddUserForm: React.FC = () => {
             <img
               src={avatarPreview}
               alt="Avatar Preview"
-              style={{
-                width: 120,
-                height: 120,
-                objectFit: "cover",
-                borderRadius: 8,
-              }}
+              className="add-user-form__avatar-preview"
             />
           </Box>
         )}
@@ -167,7 +196,7 @@ const AddUserForm: React.FC = () => {
       </FormControl>
       {/* Teacher fields */}
       {userType === "teacher" && (
-        <Box sx={{ display: "flex", gap: 2 }}>
+        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
           <TextField
             label="Major"
             {...register("major", { required: "Required" })}
@@ -180,13 +209,19 @@ const AddUserForm: React.FC = () => {
             error={!!errors.weeklyCapacity}
             helperText={errors.weeklyCapacity?.message}
           />
+          <TextField
+            label="Degree"
+            {...register("degree")}
+            error={!!errors.degree}
+            helperText={errors.degree?.message}
+          />
         </Box>
       )}
 
       {/* Parent Section */}
       {userType === "student" && (
         <>
-          <FormLabel sx={{ fontSize: 20, fontWeight: "bold" }}>
+          <FormLabel className="add-user-form__section-title">
             Parent Section
           </FormLabel>
 
@@ -265,6 +300,7 @@ const AddUserForm: React.FC = () => {
         <Button
           type="submit"
           variant="contained"
+          className="add-user-form__submit-button"
           sx={{ mt: 4, width: "fit-content", px: 4 }}
         >
           Submit

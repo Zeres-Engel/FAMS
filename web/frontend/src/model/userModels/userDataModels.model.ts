@@ -67,6 +67,7 @@ interface CreateUserPayload {
   role: Role;
   firstName: string;
   lastName: string;
+  email: string;
   backup_email: string;
   phone: string;
   gender: Gender;
@@ -76,8 +77,11 @@ interface CreateUserPayload {
   parentCareers: string[];
   parentPhones: string[];
   parentGenders: boolean[]; // true: Male, false: Female
+  parentEmails: string[];
   major: string;
+  degree: string;
   weeklyCapacity: number; // as number, not string
+  avatar?: File | null;
 }
 export interface UpdateTeacherForm {
   firstName: string;
@@ -92,6 +96,7 @@ export interface UpdateTeacherForm {
 interface AddUserFormValues {
   firstName: string;
   lastName: string;
+  email: string;
   backup_email: string;
   phone: string;
   gender: "Male" | "Female" | "";
@@ -104,6 +109,7 @@ interface AddUserFormValues {
   parentEmails: string[];
   major: string;
   weeklyCapacity: string;
+  degree: string;
   role: Role;
   avatar: File | null;
 }
