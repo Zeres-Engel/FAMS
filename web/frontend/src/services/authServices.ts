@@ -21,7 +21,7 @@ export const refreshAccessToken = async (dispatch: Dispatch) => {
     setAccessToken(accessToken);
     setRefreshToken(newRefreshToken);
     if (role) {
-      dispatch(setRole(role)); // sử dụng dispatch truyền vào
+      dispatch(setRole(role.toLowerCase())); // sử dụng dispatch truyền vào
     }
 
     return accessToken;

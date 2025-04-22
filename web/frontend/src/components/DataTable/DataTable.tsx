@@ -190,13 +190,27 @@ export default function DataTable({
     <>
       {/* <TableCell align="left">{row.id}</TableCell> */}
       {/* <TableCell align="left">{row.username}</TableCell> */}
+      <TableCell align="left">
+        <img
+          src={
+            row.avatar
+              ? row.avatar
+              : `https://www.pngplay.com/wp-content/uploads/12/User-Avatar-Profile-Transparent-Clip-Art-PNG.png`
+          }
+          alt="User Avatar"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            objectFit: "cover",
+          }}
+        />
+      </TableCell>
+      <TableCell align="left">{row.name}</TableCell>
       <TableCell align="left">{row.email}</TableCell>
       {/* <TableCell align="left">{row.backup_email}</TableCell> */}
-      <TableCell align="left">{row.name}</TableCell>
       <TableCell align="left">{row.phoneSub}</TableCell>
       <TableCell align="left">{row.role}</TableCell>
-      <TableCell align="left">{row.classSubId}</TableCell>
-      <TableCell align="left">{row.gradeSub}</TableCell>
       <TableCell align="left">{row.createdAt}</TableCell>
       <TableCell align="left">{row.updatedAt}</TableCell>
     </>

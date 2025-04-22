@@ -46,7 +46,7 @@ interface EnhancedTableToolbarProps {
   onShowMyAttendance?: () => void;
 }
 
-const roleOptions = ["supervisor", "teacher", "student", "parent", "admin"];
+const roleOptions = ["teacher", "student", "parent"];
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
@@ -223,12 +223,13 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
               id="academicYear-select"
               name="academicYear"
               value={filters.academicYear}
+              displayEmpty
               label="academicYear"
               onChange={e => handleFilterChange("academicYear", e.target.value)}
             >
-              {handler.getAcademicYears(3).map(year => (
-                <MenuItem key={year} value={year}>
-                  {year}
+              {handler.getAcademicYears(3).map((year, index) => (
+                <MenuItem key={index} value={year}>
+                  {year === "" ? "None" : year}
                 </MenuItem>
               ))}
             </Select>
