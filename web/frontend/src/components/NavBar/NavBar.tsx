@@ -15,6 +15,7 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import useNavBarHook from "./useNavBarHook";
+import Skeleton from "@mui/material/Skeleton";
 
 const drawerWidth = 240;
 
@@ -37,8 +38,33 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
   const drawerContent = (
     <Box sx={{ textAlign: "center" }}>
       <Typography variant="h6" sx={{ my: 2 }}>
-        FAMS
+        {state.formattedName || state.userFullName || "FAMS"}
       </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'center', marginBottom: 2 }}>
+        {state.isLoading ? (
+          <Skeleton 
+            variant="circular"
+            width={60}
+            height={60}
+            animation="wave"
+          />
+        ) : (
+          <img
+            src={state.userAvatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"}
+            alt="User Avatar"
+            style={{ 
+              width: '60px', 
+              height: '60px', 
+              borderRadius: '50%',
+              cursor: 'pointer'
+            }}
+            onClick={() => {
+              handler.handleOnNavigate("Profile");
+              setMobileOpen(false);
+            }}
+          />
+        )}
+      </Box>
       <Divider />
       <List>
         {state.navItems?.map(item => (
@@ -80,17 +106,28 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
             // color="#1B78EC"
             sx={{ flexGrow: 1, display: { xs: "none", sm: "block" } }}
           >
-            {state.userFullName || "FAMS"}
+            {state.formattedName || state.userFullName || "FAMS"}
             <Box 
               component="span" 
               onClick={() => handler.handleOnNavigate("Profile")} 
               sx={{ cursor: 'pointer', display: 'inline-block', marginLeft: 2 }}
             >
-              <img
-                src={state.userAvatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"}
-                alt="User Avatar"
-                className="nav-User-Avatar"
-              />
+              {state.isLoading ? (
+                <Skeleton 
+                  variant="circular"
+                  width={50}
+                  height={50}
+                  animation="wave"
+                  className="nav-User-Avatar"
+                />
+              ) : (
+                <img
+                  src={state.userAvatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"}
+                  alt="User Avatar"
+                  className="nav-User-Avatar"
+                  title={state.userFullName || "User profile"}
+                />
+              )}
             </Box>
           </Typography>
           <Box
@@ -204,7 +241,18 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
                 component="div"
                 sx={{ flexGrow: 1 }}
               >
-                FAMS
+                {state.formattedName || state.userFullName || "FAMS"}
+                <img
+                  src={state.userAvatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"}
+                  alt="User Avatar"
+                  style={{ 
+                    width: '30px', 
+                    height: '30px', 
+                    borderRadius: '50%',
+                    marginLeft: '10px',
+                    verticalAlign: 'middle'
+                  }}
+                />
               </Typography>
             </Toolbar>
           </AppBar>
@@ -231,11 +279,12 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
                 alignItems: "center",
               }}
             >
-              HungDN
+              {state.formattedName || state.userFullName || "FAMS"}
               <img
-                src="https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"
+                src={state.userAvatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"}
                 alt="User Avatar"
                 className="nav-User-Avatar"
+                title={state.userFullName || "User profile"}
               />
             </Typography>
             <Box

@@ -290,50 +290,88 @@ function ProfilePage(): React.JSX.Element {
             <Typography variant="h6">{profileData.fullName}</Typography>
             <Typography color="textSecondary">ID: {profileData.userId}</Typography>
             
-            {/* Display role separately from the role chip to avoid nesting issues */}
-            <Box display="flex" alignItems="center" gap={1} my={1}>
-              <Typography color="textSecondary">Role:</Typography>
-              <Chip size="small" color="primary" label={profileData.role} />
+            {/* Display role centered */}
+            <Box display="flex" alignItems="center" justifyContent="center" gap={1} my={2}>
+              <Chip 
+                size="small" 
+                color={profileData.role === "teacher" ? "secondary" : "primary"} 
+                label={profileData.role} 
+                sx={{ 
+                  px: 2,
+                  ...(profileData.role === "teacher" && {
+                    backgroundColor: "#673ab7"
+                  })
+                }} 
+              />
             </Box>
             
             {/* Class display for teachers */}
-            {profileData.role === "teacher" && profileData.classesList && profileData.classesList.length > 0 && (
+            {profileData.role === "teacher" && (
               <Box mt={2}>
-                <Typography variant="subtitle2" gutterBottom>Classes</Typography>
-                <Box 
-                  sx={{
-                    display: 'flex', 
-                    flexWrap: 'wrap', 
-                    gap: 1, 
-                    justifyContent: 'center',
-                    flexDirection: 'row'
-                  }}
-                >
-                  {profileData.classesList.map((cls: {classId: number, className: string, grade: string}) => (
-                    <Chip 
-                      key={cls.classId}
-                      size="small"
-                      label={cls.className}
-                      color="info"
-                      variant="outlined"
-                      sx={{ minWidth: '60px' }}
-                    />
-                  ))}
-                </Box>
+                {/* Current classes the teacher is teaching */}
+                {profileData.classesList && profileData.classesList.length > 0 && (
+                  <>
+                    <Typography variant="caption" color="text.secondary" align="center" display="block" sx={{ mt: 1 }}>
+                      Teaching Classes
+                    </Typography>
+                    
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 0.5, mt: 0.5 }}>
+                      {profileData.classesList
+                        .filter((cls: any) => cls.academicYear === "2024-2025" || 
+                                             (cls.academicYear && profileData.classesByYear && 
+                                              Object.keys(profileData.classesByYear || {}).length > 0 && 
+                                              cls.academicYear === Object.keys(profileData.classesByYear || {})
+                                                .sort((a, b) => b.localeCompare(a))[0]))
+                        .map((cls: any) => (
+                          <Chip
+                            key={cls.classId}
+                            size="small"
+                            label={cls.className}
+                            color={cls.isHomeroom ? "secondary" : "default"}
+                            variant="outlined"
+                            sx={{ 
+                              minWidth: '60px',
+                              borderColor: cls.isHomeroom ? 'secondary.main' : '#673ab7',
+                              color: '#673ab7'
+                            }}
+                          />
+                        ))}
+                    </Box>
+                  </>
+                )}
+                
+                {profileData.classesList && profileData.classesList.some((cls: {
+                  classId: number;
+                  className: string;
+                  grade: number | string;
+                  academicYear?: string;
+                  isHomeroom?: boolean;
+                }) => cls.isHomeroom) && (
+                  <Chip 
+                    size="small"
+                    label="Homeroom Teacher"
+                    color="secondary"
+                    sx={{ mt: 1 }}
+                  />
+                )}
               </Box>
             )}
             
             {/* Class display for students */}
             {profileData.role === "student" && profileData.className && (
               <Box mt={2}>
-                <Typography variant="subtitle2" gutterBottom>Class</Typography>
-                <Chip 
-                  size="small"
-                  label={profileData.className}
-                  color="info"
-                  variant="outlined"
-                  sx={{ minWidth: '60px' }}
-                />
+                <Typography variant="caption" color="text.secondary" align="center" display="block" sx={{ mt: 1 }}>
+                  Class
+                </Typography>
+                <Box display="flex" justifyContent="center">
+                  <Chip 
+                    size="small"
+                    label={`${profileData.className}`}
+                    color="info"
+                    variant="outlined"
+                    sx={{ minWidth: '60px', px: 1 }}
+                  />
+                </Box>
               </Box>
             )}
           </Box>
@@ -406,41 +444,208 @@ function ProfilePage(): React.JSX.Element {
                   <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Professional Information</Typography>
                   <Divider sx={{ mb: 2 }} />
                   
-                  {[
-                    { label: "Major", key: "major" },
-                    { label: "Degree", key: "degree" },
-                  ].map(({ label, key }) => {
-                    if (Array.isArray(profileData[key as keyof typeof profileData])) return null;
+                  <Box 
+                    display="flex"
+                    flexDirection="column"
+                    gap={2}
+                    mb={3}
+                  >
+                    <Box display="flex" flexDirection="row" gap={1}>
+                      <Typography fontWeight={600} minWidth={120}>Skills:</Typography>
+                      <Typography>{profileData.major || 'N/A'}</Typography>
+                    </Box>
                     
-                    return (
-                      <Box
-                        key={key}
-                        display="flex"
-                        flexDirection={isMobile ? "column" : "row"}
-                        gap={2}
-                        alignItems={isMobile ? "flex-start" : "center"}
-                      >
-                        <Box minWidth={isMobile ? "auto" : 120}>
-                          <Typography fontWeight={600}>{label}:</Typography>
-                        </Box>
-                        <Box flex={1}>
-                          {isEditing ? (
-                            <TextField
-                              fullWidth
-                              size="small"
-                              name={key}
-                              value={String(profileData[key as keyof typeof profileData] || "")}
-                              onChange={handleChange}
-                            />
-                          ) : (
-                            <Typography>
-                              {renderFieldValue(key as keyof typeof profileData)}
-                            </Typography>
-                          )}
-                        </Box>
+                    <Box display="flex" flexDirection="row" gap={1}>
+                      <Typography fontWeight={600} minWidth={120}>Degree:</Typography>
+                      <Typography>{profileData.degree || 'N/A'}</Typography>
+                    </Box>
+                    
+                    <Box display="flex" flexDirection="row" gap={1}>
+                      <Typography fontWeight={600} minWidth={120}>Weekly Capacity:</Typography>
+                      <Typography>{profileData.weeklyCapacity || 'N/A'} hours</Typography>
+                    </Box>
+                  </Box>
+                  
+                  {/* Teaching classes by academic year */}
+                  <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Teaching Classes</Typography>
+                  <Divider sx={{ mb: 2 }} />
+                  
+                  {/* Display current class prominently - similar to student design */}
+                  {profileData.classesList && profileData.classesList.length > 0 && 
+                   profileData.academicYear && (
+                    <Box
+                      sx={{ 
+                        mb: 3, 
+                        bgcolor: "rgba(103, 58, 183, 0.05)", 
+                        p: 2, 
+                        borderRadius: 2
+                      }}
+                    >
+                      <Typography variant="subtitle1" fontWeight={600} gutterBottom sx={{ color: "#673ab7" }}>
+                        Current Classes (Academic Year: {profileData.classesByYear ? Object.keys(profileData.classesByYear || {}).sort((a, b) => b.localeCompare(a))[0] : '2024-2025'})
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        {/* Reorganize classes in up to 3 rows with normal layout */}
+                        {[...Array(3)].map((_, rowIndex) => {
+                          const rowClasses = profileData.classesList
+                            ?.filter((cls: any) => 
+                              cls.academicYear === "2024-2025" || 
+                              (cls.academicYear && profileData.classesByYear && 
+                              Object.keys(profileData.classesByYear || {}).length > 0 && 
+                              cls.academicYear === Object.keys(profileData.classesByYear || {})
+                                .sort((a, b) => b.localeCompare(a))[0]))
+                            ?.slice(rowIndex * 3, rowIndex * 3 + 3);
+                          
+                          if (!rowClasses || rowClasses.length === 0) return null;
+                          
+                          return (
+                            <Box 
+                              key={`row-${rowIndex}`} 
+                              sx={{ 
+                                display: 'flex', 
+                                flexWrap: 'wrap', 
+                                gap: 1 
+                              }}
+                            >
+                              {rowClasses.map((cls: any) => (
+                                <Chip
+                                  key={cls.classId}
+                                  size="small"
+                                  label={`${cls.className} (Grade ${cls.grade})`}
+                                  color={cls.isHomeroom ? "secondary" : "default"}
+                                  variant={cls.isHomeroom ? "filled" : "outlined"}
+                                  sx={{ 
+                                    minWidth: '60px',
+                                    fontWeight: cls.isHomeroom ? 600 : 400,
+                                    borderColor: '#673ab7',
+                                    color: cls.isHomeroom ? undefined : '#673ab7'
+                                  }}
+                                />
+                              ))}
+                            </Box>
+                          );
+                        })}
                       </Box>
-                    );
-                  })}
+                    </Box>
+                  )}
+                  
+                  {/* Homeroom classes section - shows only if any homeroom classes exist */}
+                  {profileData.classesList && profileData.classesList.some((cls: {
+                    classId: number;
+                    className: string;
+                    grade: number | string;
+                    academicYear?: string;
+                    isHomeroom?: boolean;
+                  }) => cls.isHomeroom) && (
+                    <>
+                      <Typography variant="h6" gutterBottom sx={{ mt: 3, color: "#673ab7" }}>Homeroom Teacher For</Typography>
+                      <Divider sx={{ mb: 2 }} />
+                      
+                      <Box 
+                        sx={{ 
+                          display: 'flex', 
+                          flexWrap: 'wrap', 
+                          gap: 1 
+                        }}
+                      >
+                        {profileData.classesList
+                          .filter((cls: {
+                            classId: number;
+                            className: string;
+                            grade: number | string;
+                            academicYear?: string;
+                            isHomeroom?: boolean;
+                          }) => cls.isHomeroom)
+                          .sort((a, b) => b.academicYear?.localeCompare(a.academicYear || '') || 0)
+                          .map(cls => (
+                            <Box 
+                              key={`homeroom-${cls.classId}`}
+                              sx={{
+                                backgroundColor: '#673ab7',
+                                color: 'white',
+                                px: 2,
+                                py: 1,
+                                borderRadius: 2,
+                                display: 'flex',
+                                alignItems: 'center',
+                                m: 0.5
+                              }}
+                            >
+                              <Typography fontWeight={600}>
+                                {cls.className} (Grade {cls.grade})
+                              </Typography>
+                              <Typography 
+                                variant="caption" 
+                                sx={{ 
+                                  ml: 1,
+                                  opacity: 0.8
+                                }}
+                              >
+                                {cls.academicYear}
+                              </Typography>
+                            </Box>
+                          ))
+                        }
+                      </Box>
+                    </>
+                  )}
+
+                  {/* Show Class History similar to student page */}
+                  {profileData.classesByYear && Object.keys(profileData.classesByYear).length > 0 && (
+                    <Box mb={3}>
+                      <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                        Class History
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        {Object.entries(profileData.classesByYear)
+                          .sort(([yearA], [yearB]) => yearB.localeCompare(yearA)) // Sort by year descending
+                          .slice(0, 3) // Show top 3 years
+                          .map(([academicYear, classes]: [string, any]) => {
+                            // Get unique class+grade combinations for this year
+                            const uniqueClasses = Array.from(new Set(
+                              classes.map((c: any) => `${c.className} (Grade ${c.grade})`)
+                            )).slice(0, 3) as string[]; // Show top 3 classes
+                            
+                            return (
+                              <Box 
+                                key={academicYear}
+                                sx={{ 
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  p: 1,
+                                  borderLeft: '3px solid',
+                                  borderColor: academicYear === profileData.academicYear ? '#673ab7' : 'grey.300',
+                                  bgcolor: academicYear === profileData.academicYear ? 'rgba(103, 58, 183, 0.05)' : 'transparent',
+                                  pl: 2
+                                }}
+                              >
+                                <Box>
+                                  {uniqueClasses.map((className: string, i: number) => (
+                                    <Typography key={i} variant="body2">
+                                      {className}
+                                    </Typography>
+                                  ))}
+                                  {classes.length > 3 && (
+                                    <Typography variant="caption" color="text.secondary">
+                                      +{classes.length - 3} more classes
+                                    </Typography>
+                                  )}
+                                </Box>
+                                <Typography color="text.secondary">
+                                  {academicYear}
+                                </Typography>
+                              </Box>
+                            );
+                          })
+                        }
+                        {Object.keys(profileData.classesByYear || {}).length > 3 && (
+                          <Typography variant="caption" color="text.secondary" align="center">
+                            +{Object.keys(profileData.classesByYear || {}).length - 3} more academic years
+                          </Typography>
+                        )}
+                      </Box>
+                    </Box>
+                  )}
                 </>
               )}
 
@@ -450,97 +655,97 @@ function ProfilePage(): React.JSX.Element {
                   <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Academic Information</Typography>
                   <Divider sx={{ mb: 2 }} />
                   
-                  {[
-                    { label: "Class", key: "className" },
-                    { label: "Grade", key: "grade" },
-                    { label: "Academic Year", key: "academicYear" },
-                  ].map(({ label, key }) => (
-                    <Box
-                      key={key}
-                      display="flex"
-                      flexDirection={isMobile ? "column" : "row"}
-                      gap={2}
-                      alignItems={isMobile ? "flex-start" : "center"}
-                    >
-                      <Box minWidth={isMobile ? "auto" : 120}>
-                        <Typography fontWeight={600}>{label}:</Typography>
-                      </Box>
-                      <Box flex={1}>
-                        <Typography>
-                          {renderFieldValue(key as keyof typeof profileData)}
-                        </Typography>
+                  {/* Display current class prominently */}
+                  <Box
+                    display="flex"
+                    flexDirection={isMobile ? "column" : "row"}
+                    gap={2}
+                    alignItems={isMobile ? "flex-start" : "center"}
+                    mb={3}
+                    sx={{ bgcolor: "rgba(25, 118, 210, 0.05)", p: 2, borderRadius: 2 }}
+                  >
+                    <Box minWidth={isMobile ? "auto" : 120}>
+                      <Typography fontWeight={600}>Current Class:</Typography>
+                    </Box>
+                    <Box flex={1}>
+                      <Typography variant="body1" fontWeight={500} color="primary">
+                        {profileData.className} {profileData.grade && `(Grade ${profileData.grade})`}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Academic Year: {profileData.academicYear || "N/A"}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  {/* Class history */}
+                  {profileData.classesList && profileData.classesList.length > 0 && (
+                    <Box mb={3}>
+                      <Typography variant="subtitle1" fontWeight={600} gutterBottom>Class History</Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        {[...profileData.classesList]
+                          .sort((a, b) => b.academicYear?.localeCompare(a.academicYear || '') || 0)
+                          .map((cls: {
+                            classId: number;
+                            className: string;
+                            grade: number | string;
+                            academicYear?: string;
+                          }, index, array) => (
+                            <Box 
+                              key={cls.classId} 
+                              sx={{ 
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                p: 1,
+                                borderLeft: '3px solid',
+                                borderColor: index === 0 ? 'primary.main' : 'grey.300',
+                                bgcolor: index === 0 ? 'rgba(25, 118, 210, 0.05)' : 'transparent',
+                                pl: 2
+                              }}
+                            >
+                              <Typography>
+                                {cls.className} (Grade {cls.grade})
+                              </Typography>
+                              <Typography color="text.secondary">
+                                {cls.academicYear}
+                              </Typography>
+                            </Box>
+                          ))}
                       </Box>
                     </Box>
-                  ))}
+                  )}
                   
-                  {/* Show parents information */}
+                  {/* Parents information */}
                   {profileData.parents && profileData.parents.length > 0 && (
                     <>
-                      <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Parents Information</Typography>
+                      <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Parent Information</Typography>
                       <Divider sx={{ mb: 2 }} />
                       
-                      {profileData.parents.map((parent: {
-                        parentId: number;
-                        fullName: string;
-                        career: string;
-                        phone: string;
-                        gender: boolean;
-                        dateOfBirth?: string;
-                        address?: string;
-                        email?: string;
-                        userId?: string;
-                      }, index: number) => (
-                        <Box 
-                          key={parent.parentId}
-                          sx={{ 
-                            mb: 2, 
-                            p: 2, 
-                            borderRadius: 2, 
-                            bgcolor: index % 2 === 0 ? 'rgba(0, 0, 0, 0.02)' : 'transparent'
-                          }}
-                        >
-                          <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-                            Parent {index + 1}: {parent.fullName} {parent.userId && `(ID: ${parent.userId})`}
+                      {profileData.parents.map((parent, index) => (
+                        <Box key={parent.parentId || index} mb={2}>
+                          <Typography variant="subtitle2" fontWeight={600} color="primary">
+                            {parent.relationship || `Parent ${index + 1}`}: {parent.fullName}
                           </Typography>
-                          <Box 
-                            display="grid" 
-                            gridTemplateColumns={isMobile ? "1fr" : "1fr 1fr"} 
-                            gap={2}
-                          >
-                            <Box display="flex" gap={1}>
-                              <Typography fontWeight={600}>Career:</Typography>
-                              <Typography>{parent.career}</Typography>
-                            </Box>
-                            <Box display="flex" gap={1}>
-                              <Typography fontWeight={600}>Phone:</Typography>
-                              <Typography>{parent.phone}</Typography>
-                            </Box>
-                            <Box display="flex" gap={1}>
-                              <Typography fontWeight={600}>Gender:</Typography>
-                              <Typography>{parent.gender ? "Male" : "Female"}</Typography>
+                          
+                          <Box ml={2} mt={1}>
+                            <Box display="flex" flexDirection="row" gap={1} mb={1}>
+                              <Typography fontWeight={600} minWidth={70}>Career:</Typography>
+                              <Typography>{parent.career || 'N/A'}</Typography>
                             </Box>
                             
-                            {/* Show optional fields if available */}
-                            {parent.dateOfBirth && (
-                              <Box display="flex" gap={1}>
-                                <Typography fontWeight={600}>Date of Birth:</Typography>
-                                <Typography>{parent.dateOfBirth}</Typography>
-                              </Box>
-                            )}
+                            <Box display="flex" flexDirection="row" gap={1} mb={1}>
+                              <Typography fontWeight={600} minWidth={70}>Phone:</Typography>
+                              <Typography>{parent.phone || 'N/A'}</Typography>
+                            </Box>
                             
-                            {parent.address && (
-                              <Box display="flex" gap={1}>
-                                <Typography fontWeight={600}>Address:</Typography>
-                                <Typography>{parent.address}</Typography>
-                              </Box>
-                            )}
+                            <Box display="flex" flexDirection="row" gap={1} mb={1}>
+                              <Typography fontWeight={600} minWidth={70}>Email:</Typography>
+                              <Typography>{parent.email || 'N/A'}</Typography>
+                            </Box>
                             
-                            {parent.email && (
-                              <Box display="flex" gap={1}>
-                                <Typography fontWeight={600}>Email:</Typography>
-                                <Typography>{parent.email}</Typography>
-                              </Box>
-                            )}
+                            <Box display="flex" flexDirection="row" gap={1}>
+                              <Typography fontWeight={600} minWidth={70}>Gender:</Typography>
+                              <Typography>{typeof parent.gender === 'boolean' ? (parent.gender ? 'Male' : 'Female') : parent.gender || 'N/A'}</Typography>
+                            </Box>
                           </Box>
                         </Box>
                       ))}

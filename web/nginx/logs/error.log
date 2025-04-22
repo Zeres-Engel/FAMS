@@ -4676,3 +4676,5 @@
 2025/04/22 03:07:25 [notice] 1#1: start worker process 32
 2025/04/22 03:07:25 [notice] 1#1: start worker process 33
 2025/04/22 03:07:25 [notice] 1#1: start worker process 34
+2025/04/22 04:18:16 [error] 32#32: *224 client intended to send too large body: 2343244 bytes, client: 42.119.101.43, server: localhost, request: "POST /api-nodejs/avatar/upload HTTP/1.1", host: "fams.io.vn", referrer: "http://14.225.204.42:3000/"
+2025/04/22 06:11:55 [error] 29#29: *1319 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 42.119.101.43, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.19.0.6:3000/ws", host: "fams.io.vn"

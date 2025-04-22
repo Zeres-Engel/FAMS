@@ -5,100 +5,68 @@ import userService from "../../services/userService";
 // Interfaces for API response
 interface ApiUserDetailsResponse {
   success: boolean;
-  data: {
-    user: {
-      backup_email: string | null;
-      avatar: string | null;
-      _id: string;
-      userId: string;
-      email: string;
-      role: string;
-      createdAt: string;
-      updatedAt: string;
-      isActive: boolean;
-      id: string;
-    };
-    role: {
-      type: string;
-      teacher?: {
-        _id: string;
-        teacherId: number;
-        userId: string;
-        fullName: string;
-        email: string;
-        dateOfBirth: string;
-        gender: boolean;
-        address: string;
-        phone: string;
-        major: string;
-        degree: string;
-        weeklyCapacity: number;
-        createdAt: string;
-        updatedAt: string;
-        isActive: boolean;
-        id: string;
-      };
-      student?: {
-        _id: string;
-        studentId: number;
-        userId: string;
-        fullName: string;
-        email: string;
-        dateOfBirth: string;
-        gender: boolean;
-        address: string;
-        phone: string;
-        batchId: number;
-        classId: number;
-        createdAt: string;
-        updatedAt: string;
-        isActive: boolean;
-        id: string;
-      };
-      class?: {
-        _id: string;
+  data: Array<{
+    backup_email: string | null;
+    _id: string;
+    userId: string;
+    email: string;
+    password: string;
+    role: string;
+    createdAt: string;
+    updatedAt: string;
+    isActive: boolean;
+    avatar: string | null;
+    username: string;
+    id: string;
+    details: {
+      studentId?: number;
+      teacherId?: number;
+      parentId?: number;
+      fullName: string;
+      dateOfBirth: string;
+      gender: string;
+      address: string;
+      phone: string;
+      batchId?: number;
+      academicYear?: string;
+      classes?: Array<{
         classId: number;
         className: string;
         grade: number;
         academicYear: string;
-        createdAt: string;
-        updatedAt: string;
-        isActive: boolean;
-        id: string;
-      };
-      parents?: {
-        _id: string;
+        isHomeroom?: boolean;
+      }>;
+      parents?: Array<{
         parentId: number;
-        userId: string;
         fullName: string;
-        career: string;
         phone: string;
-        gender: boolean;
-        dateOfBirth?: string;
-        address?: string;
-        email?: string;
-        createdAt: string;
-        updatedAt: string;
-        isActive: boolean;
-        id: string;
-      }[];
-      classes?: {
-        classId: number;
-        className: string;
-        grade: string;
-      }[];
-      homeroomClasses?: any[];
-      teachingClasses?: any[];
-      rfid?: string | null;
-    };
-  };
+        gender: string;
+        career: string;
+        email: string;
+        backup_email: string | null;
+        relationship: string;
+      }>;
+      major?: string;
+      degree?: string;
+      weeklyCapacity?: number;
+    }
+  }>;
+  count: number;
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  }
 }
 
 // Interface for representing class info
 interface ClassInfo {
   classId: number;
   className: string;
-  grade: string;
+  grade: number | string;
+  academicYear?: string;
+  isHomeroom?: boolean;
 }
 
 // Interface for parent info
@@ -107,11 +75,12 @@ interface ParentInfo {
   fullName: string;
   career: string;
   phone: string;
-  gender: boolean;
+  gender: boolean | string;
   dateOfBirth?: string;
   address?: string;
   email?: string;
   userId?: string;
+  relationship?: string;
 }
 
 interface ProfileData {
@@ -143,6 +112,7 @@ interface ProfileData {
   // Parent specific fields
   career?: string;
   weeklyCapacity?: number;
+  classesByYear?: Record<string, ClassInfo[]>;
 }
 
 // Import or re-define the AvatarUploadResponse interface
@@ -235,59 +205,102 @@ function useProfilePageHook() {
       console.log("Fetching profile for userId:", userId);
       const response = await axiosInstance.get<ApiUserDetailsResponse>(`/users/details/${userId}`);
       
-      if (response.data.success) {
-        const { user, role } = response.data.data;
+      if (response.data.success && response.data.data && response.data.data.length > 0) {
+        const userData = response.data.data[0];
+        const userDetails = userData.details;
         
         // Format data based on user role
-        if (role.type === "teacher" && role.teacher) {
+        if (userData.role === "teacher") {
+          // Group classes by academic year
+          const classesByYear: Record<string, ClassInfo[]> = {};
+          
+          if (userDetails.classes && userDetails.classes.length > 0) {
+            userDetails.classes.forEach((c: {
+              classId: number;
+              className: string;
+              grade: number | string;
+              academicYear: string;
+              isHomeroom?: boolean;
+            }) => {
+              if (!classesByYear[c.academicYear]) {
+                classesByYear[c.academicYear] = [];
+              }
+              classesByYear[c.academicYear].push({
+                classId: c.classId,
+                className: c.className,
+                grade: c.grade,
+                academicYear: c.academicYear,
+                isHomeroom: c.isHomeroom || false
+              });
+            });
+          }
+          
+          // Get the most recent academic year
+          const sortedYears = Object.keys(classesByYear).sort((a, b) => b.localeCompare(a));
+          const mostRecentYear = sortedYears.length > 0 ? sortedYears[0] : '2024-2025';
+          
           // Format classes as a readable string
-          const classesStr = role.classes && role.classes.length > 0 
-            ? role.classes.map((c: ClassInfo) => `${c.className} (${c.grade})`).join(", ")
+          const classesStr = userDetails.classes && userDetails.classes.length > 0 
+            ? userDetails.classes.map((c: {className: string, grade: number | string}) => `${c.className} (${c.grade})`).join(", ")
             : "No classes assigned";
           
           // Format phone number - add leading zero if it's a 9-digit number without leading zero
-          let formattedPhone = role.teacher.phone;
+          let formattedPhone = userDetails.phone;
           if (formattedPhone && formattedPhone.length === 9 && !formattedPhone.startsWith('0')) {
             formattedPhone = '0' + formattedPhone;
           }
             
           setProfileData({
-            id: user.id,
-            userId: user.userId,
-            fullName: role.teacher.fullName,
-            email: user.email,
-            dateOfBirth: new Date(role.teacher.dateOfBirth).toLocaleDateString(),
-            gender: role.teacher.gender ? "Male" : "Female",
-            address: role.teacher.address,
+            id: userData.id,
+            userId: userData.userId,
+            fullName: userDetails.fullName,
+            email: userData.email,
+            dateOfBirth: new Date(userDetails.dateOfBirth).toLocaleDateString(),
+            gender: userDetails.gender,
+            address: userDetails.address,
             phone: formattedPhone,
-            role: user.role,
-            major: role.teacher.major,
-            degree: role.teacher.degree,
-            avatarUrl: user.avatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg",
+            role: userData.role,
+            major: userDetails.major,
+            degree: userDetails.degree,
+            weeklyCapacity: userDetails.weeklyCapacity,
+            academicYear: mostRecentYear,
+            avatarUrl: userData.avatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg",
             classes: classesStr,
-            classesList: role.classes || []
+            classesByYear,
+            classesList: userDetails.classes?.map((c: {
+              classId: number;
+              className: string;
+              grade: number | string;
+              academicYear: string;
+              isHomeroom?: boolean;
+            }) => ({
+              classId: c.classId,
+              className: c.className,
+              grade: c.grade,
+              academicYear: c.academicYear,
+              isHomeroom: c.isHomeroom || false
+            })) || []
           });
-        } else if (role.type === "student" && role.student) {
+        } else if (userData.role === "student") {
           // Handle student data
-          let formattedPhone = role.student.phone || '';
+          let formattedPhone = userDetails.phone || '';
           if (formattedPhone && formattedPhone.length === 9 && !formattedPhone.startsWith('0')) {
             formattedPhone = '0' + formattedPhone;
           }
           
           // Format parents' phone numbers
-          const formattedParents = role.parents?.map((parent: {
+          const formattedParents = userDetails.parents?.map((parent: {
             parentId: number;
             fullName: string;
             career: string;
             phone: string;
-            gender: boolean;
-            dateOfBirth?: string;
-            address?: string;
-            email?: string;
-            userId?: string;
+            gender: string;
+            email: string;
+            backup_email: string | null;
+            relationship: string;
           }) => {
             let parentPhone = parent.phone || '';
-            if (parentPhone.length === 9 && !parentPhone.startsWith('0')) {
+            if (parentPhone && parentPhone.length === 9 && !parentPhone.startsWith('0')) {
               parentPhone = '0' + parentPhone;
             }
             
@@ -296,65 +309,79 @@ function useProfilePageHook() {
               fullName: parent.fullName,
               career: parent.career,
               phone: parentPhone,
-              gender: parent.gender,
-              // Add optional fields if they exist
-              dateOfBirth: parent.dateOfBirth ? new Date(parent.dateOfBirth).toLocaleDateString() : undefined,
-              address: parent.address || undefined,
-              email: parent.email || undefined,
-              userId: parent.userId || undefined
+              gender: parent.gender === "Male",
+              email: parent.email || undefined
             };
           });
           
-          // Get class info
-          const classInfo = role.class ? {
-            className: role.class.className,
-            grade: role.class.grade,
-            academicYear: role.class.academicYear
-          } : null;
+          // Get current class info (assuming the last class in the array is the current one)
+          const currentClass = userDetails.classes && userDetails.classes.length > 0 
+            ? userDetails.classes[userDetails.classes.length - 1] 
+            : null;
           
           setProfileData({
-            id: user.id,
-            userId: user.userId,
-            fullName: role.student.fullName,
-            email: user.email,
-            dateOfBirth: new Date(role.student.dateOfBirth).toLocaleDateString(),
-            gender: role.student.gender ? "Male" : "Female",
-            address: role.student.address,
+            id: userData.id,
+            userId: userData.userId,
+            fullName: userDetails.fullName,
+            email: userData.email,
+            dateOfBirth: new Date(userDetails.dateOfBirth).toLocaleDateString(),
+            gender: userDetails.gender,
+            address: userDetails.address,
             phone: formattedPhone,
-            role: user.role,
-            avatarUrl: user.avatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg",
+            role: userData.role,
+            avatarUrl: userData.avatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg",
             
             // Student specific info
-            batchId: role.student.batchId,
-            classId: role.student.classId,
-            className: classInfo?.className || "",
-            grade: classInfo?.grade || "",
-            academicYear: classInfo?.academicYear || "",
+            batchId: userDetails.batchId,
+            classId: currentClass?.classId,
+            className: currentClass?.className || "",
+            grade: currentClass?.grade || "",
+            academicYear: currentClass?.academicYear || "",
             
-            // Parents info
-            parents: formattedParents || []
+            // Class history for students
+            classesList: userDetails.classes?.map((c: {
+              classId: number;
+              className: string;
+              grade: number | string;
+              academicYear: string;
+            }) => ({
+              classId: c.classId,
+              className: c.className,
+              grade: c.grade,
+              academicYear: c.academicYear
+            })) || [],
+            
+            // Parents info with relationship
+            parents: formattedParents?.map((parent: ParentInfo) => ({
+              ...parent,
+              relationship: userDetails.parents?.find((p: {parentId: number, relationship: string}) => p.parentId === parent.parentId)?.relationship || undefined
+            })) || []
           });
         } else {
           // Handle other roles or cases where teacher/student data is missing
           setProfileData({
-            id: user.id,
-            userId: user.userId,
-            fullName: user.userId,
-            email: user.email,
-            dateOfBirth: "",
-            gender: "",
-            address: "",
-            phone: "",
-            role: user.role,
-            avatarUrl: user.avatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg",
+            id: userData.id,
+            userId: userData.userId,
+            fullName: userDetails.fullName || userData.userId,
+            email: userData.email,
+            dateOfBirth: userDetails.dateOfBirth ? new Date(userDetails.dateOfBirth).toLocaleDateString() : "",
+            gender: userDetails.gender || "",
+            address: userDetails.address || "",
+            phone: userDetails.phone || "",
+            role: userData.role,
+            avatarUrl: userData.avatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg",
           });
         }
       } else {
-        throw new Error("Failed to fetch profile data");
+        setError("No profile data found");
       }
     } catch (error: any) {
-      console.error("Failed to fetch profile", error);
-      setError(error.message || "Failed to load profile");
+      console.error("Error fetching profile:", error);
+      setError(
+        error.response?.data?.message || 
+        error.message || 
+        "Failed to fetch profile data"
+      );
     } finally {
       setLoading(false);
     }
