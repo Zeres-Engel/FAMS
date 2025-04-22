@@ -33,7 +33,10 @@ function normalizeGender(gender: any): Gender | undefined {
 }
 function formatUsersFromResponse(responseData: any[]): UserData[] {
   return responseData.map((user: any): UserData => {
-    const isStudent = user.role === "student";
+    const isStudent = user.role.toLowerCase() === "student";
+    const isParent = user.role.toLowerCase() === "parent";
+    const isTeacher = user.role.toLowerCase() === "teacher";
+
     const details = isStudent ? user.details : user;
 
     return {
@@ -41,26 +44,26 @@ function formatUsersFromResponse(responseData: any[]): UserData[] {
       username: user.username,
       email: user.email,
       backup_email: user.backup_email ?? "",
-      role: user.role,
+      role: user.role.toLowerCase(),
       createdAt: formatDateTime(user.createdAt),
       updatedAt: formatDateTime(user.updatedAt),
       gender: normalizeGender(details?.gender),
-      name: details?.fullName || "",
-      TeacherDOB: !isStudent ? user?.dateOfBirth : "",
-      teacherId: !isStudent ? user.teacherId : "",
-      teacherFirstName: !isStudent ? user.firstName : "",
-      teacherLastName: !isStudent ? user.lastName : "",
-      TeacherMajor: !isStudent ? user.major : "",
-      TeacherWeeklyCapacity: !isStudent ? user.weeklyCapacity : "",
-      parentCareer: !isStudent ? user.career : "",
-      parentEmail: !isStudent ? user.email : "",
-      parentAddr: !isStudent ? user.address : "",
-      parentDob: !isStudent ? user.dateOfBirth : "",
+      name: user?.details?.fullName || "",
+      TeacherDOB: isTeacher ? user?.details.dateOfBirth : "",
+      teacherId: isTeacher ? user?.details.teacherId : "",
+      teacherFirstName: isTeacher ? user?.firstName : "",
+      teacherLastName: isTeacher ? user?.lastName : "",
+      TeacherMajor: isTeacher ? user?.details.major : "",
+      TeacherWeeklyCapacity: isTeacher ? user?.details.weeklyCapacity : "",
+      parentCareer: isParent ? user?.details?.career : "",
+      parentEmail: isParent ? user?.email : "",
+      parentAddr: isParent ? user?.address : "",
+      parentDob: isParent ? user?.dateOfBirth : "",
       // Chỉ có học sinh mới có phụ huynh
       Parent: isStudent ? user.details?.parents || [] : [],
-
+      avatar: user.avatar || "",
       // Thông tin phụ hiển thị bảng
-      phoneSub: details?.phone || "None",
+      phoneSub: user?.details?.phone || "None",
 
       // 🟡 Đối với học sinh: classId, giáo viên: tên các lớp được nối lại
       classSubId: isStudent
@@ -74,7 +77,7 @@ function formatUsersFromResponse(responseData: any[]): UserData[] {
         : Array.isArray(user.grades)
         ? user.grades.join(", ")
         : "None",
-        TeacherAddress : !isStudent ? user?.address : "",
+      TeacherAddress: isTeacher ? user?.details.address : "",
       // Thông tin chi tiết học sinh
       details: isStudent
         ? {
@@ -89,14 +92,15 @@ function formatUsersFromResponse(responseData: any[]): UserData[] {
             batchId: details?.batchId ?? 0,
             className: details?.className ?? "",
             grade: details?.grade ?? "",
+            classes: details?.classes || [],
           }
         : undefined,
 
       // Thêm classTeacher nếu là giáo viên
       classTeacher:
-      user.role === "teacher" && Array.isArray(user.classes)
-        ? user.classes.map((cls: any) => cls.classId)
-        : [],
+        isTeacher && Array.isArray(user?.details.classes)
+          ? user?.details.classes
+          : [],
     };
   });
 }
@@ -110,7 +114,7 @@ export const createUser = createAsyncThunk(
       thunkAPI.dispatch(
         addNotify({
           type: "success",
-          message: "Update student successful!",
+          message: "Create student successful!",
           duration: 3000,
         })
       );
@@ -120,7 +124,7 @@ export const createUser = createAsyncThunk(
       thunkAPI.dispatch(
         addNotify({
           type: "error",
-          message: "Update student failed!",
+          message: "Create student failed!",
           duration: 3000,
         })
       );
@@ -132,7 +136,7 @@ export const createUser = createAsyncThunk(
 );
 export const deleteUser = createAsyncThunk(
   "user/deleteUser",
-  async (username: string|number|undefined, thunkAPI) => {
+  async (username: string | number | undefined, thunkAPI) => {
     try {
       thunkAPI.dispatch(showLoading());
       const response = await axiosInstance.delete(`/users/${username}`);
@@ -282,6 +286,8 @@ export const searchUsers = createAsyncThunk(
       );
       return formatUsersFromResponse(response.data.data);
     } catch (error: any) {
+      console.log(error);
+
       thunkAPI.dispatch(hideLoading());
       thunkAPI.dispatch(
         addNotify({

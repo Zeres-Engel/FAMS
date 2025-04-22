@@ -48,16 +48,22 @@ function useClassPageHook() {
       label: "ID",
     },
     {
-      id: "email",
+      id: "avatar",
       numeric: false,
       disablePadding: false,
-      label: "Email",
+      label: "Avatar",
     },
     {
       id: "name",
       numeric: false,
       disablePadding: false,
       label: "Name",
+    },
+    {
+      id: "email",
+      numeric: false,
+      disablePadding: false,
+      label: "Email",
     },
     {
       id: "phoneSub",
@@ -70,18 +76,6 @@ function useClassPageHook() {
       numeric: false,
       disablePadding: false,
       label: "Role",
-    },
-    {
-      id: "classSubId",
-      numeric: false,
-      disablePadding: false,
-      label: "Class Name",
-    },
-    {
-      id: "gradeSub",
-      numeric: false,
-      disablePadding: false,
-      label: "Grade",
     },
     {
       id: "updatedAt",

@@ -18,7 +18,10 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useForm, Controller } from "react-hook-form";
-import { EditUserForm } from "../../../model/tableModels/tableDataModels.model";
+import {
+  ClassID,
+  EditUserForm,
+} from "../../../model/tableModels/tableDataModels.model";
 
 interface EditUserModalProps {
   open: boolean;
@@ -53,10 +56,21 @@ export default function EditUserModal({
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
     formData.avatar || null
   );
-  const [classIDs, setClassIDs] = useState<string[]>(
+  const [avatarStatus, setAvatarStatus] = useState<
+    "approved" | "disapproved" | null
+  >(null);
+  const [classIDs, setClassIDs] = useState<ClassID[]>(
     Array.isArray(formData.classId)
       ? formData.classId
-      : [formData.classId || ""]
+      : [
+          formData.classId || {
+            academicYear: "",
+            classId: "",
+            className: "",
+            grade: "",
+            isHomeroom: false,
+          },
+        ]
   );
   console.log(userType);
   useEffect(() => {
@@ -71,36 +85,46 @@ export default function EditUserModal({
       ...formData,
       gender: formData.gender ?? true,
     });
+
     setAvatarPreview(formData.avatar || null);
-    setClassIDs(
-      Array.isArray(formData.classId)
-        ? formData.classId
-        : [formData.classId || ""]
-    );
+
+    const parsedClassIDs =
+      Array.isArray(formData.classId) &&
+      formData.classId.every(cls => typeof cls === "object")
+        ? (formData.classId as ClassID[])
+        : [];
+
+    setClassIDs(parsedClassIDs);
   }, [formData, reset]);
 
-  const handleAddClassID = () => {
-    setClassIDs([...classIDs, ""]);
-  };
+  // const handleAddClassID = () => {
+  //   setClassIDs([...classIDs, ""]);
+  // };
 
-  const handleClassIDChange = (value: string, index: number) => {
+  const handleClassIDChange = (
+    field: keyof ClassID,
+    value: string | boolean,
+    index: number
+  ) => {
     const updated = [...classIDs];
-    updated[index] = value;
+    updated[index] = {
+      ...updated[index],
+      [field]: value,
+    };
     setClassIDs(updated);
   };
 
   const onSubmit = (data: EditUserForm) => {
-    const finalClassID =
-      userType === "teacher"
-        ? classIDs
-        : [
-            Array.isArray(data.classId)
-              ? data.classId[0]
-              : (data.classId as any),
-          ];
+    const finalClassID = userType === "teacher" ? classIDs : classIDs[0];
     console.log(idUser);
 
-    onSave({ ...data, classId: finalClassID }, idUser);
+    onSave(
+      {
+        ...data,
+        classId: Array.isArray(finalClassID) ? finalClassID : [finalClassID],
+      },
+      idUser
+    );
   };
 
   return (
@@ -134,17 +158,22 @@ export default function EditUserModal({
               <Box sx={{ width: "100%" }}>
                 <FormLabel>Avatar</FormLabel>
                 <Box
-                  sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1 }}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 1,
+                    mt: 1,
+                  }}
                 >
-                  <Button variant="outlined" component="label">
-                    Choose Image
+                  <label style={{ cursor: "pointer" }}>
                     <input
                       type="file"
                       accept="image/*"
                       hidden
                       onChange={e => {
                         const file = e.target.files?.[0] || null;
-                        setValue("avatar", file as any); // 'any' nếu avatar là File
+                        setValue("avatar", file as any);
                         if (file) {
                           const previewURL = URL.createObjectURL(file);
                           setAvatarPreview(previewURL);
@@ -153,19 +182,63 @@ export default function EditUserModal({
                         }
                       }}
                     />
-                  </Button>
+                    {avatarPreview ? (
+                      <img
+                        src={avatarPreview}
+                        alt="Avatar Preview"
+                        style={{
+                          width: 100,
+                          height: 100,
+                          objectFit: "cover",
+                          borderRadius: "50%", // hình tròn
+                          border: "2px solid #ccc",
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          width: 100,
+                          height: 100,
+                          backgroundColor: "#f0f0f0",
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          border: "2px dashed #ccc",
+                          fontSize: 12,
+                          color: "#999",
+                        }}
+                      >
+                        Click to choose
+                      </Box>
+                    )}
+                  </label>
 
+                  <Typography variant="caption" color="text.secondary">
+                    Click the Img to change the avatar
+                  </Typography>
+                  {/* Nút Approve / Disapprove */}
                   {avatarPreview && (
-                    <img
-                      src={avatarPreview}
-                      alt="Avatar Preview"
-                      style={{
-                        width: 100,
-                        height: 100,
-                        objectFit: "cover",
-                        borderRadius: 8,
-                      }}
-                    />
+                    <>
+                      {avatarStatus === "approved" ? (
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          onClick={() => setAvatarStatus("disapproved")}
+                          size="small"
+                        >
+                          Disapprove Avatar
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="contained"
+                          onClick={() => setAvatarStatus("approved")}
+                          size="small"
+                        >
+                          Approve Avatar
+                        </Button>
+                      )}
+                    </>
                   )}
                 </Box>
               </Box>
@@ -248,46 +321,75 @@ export default function EditUserModal({
                 helperText={errors.address?.message}
               />
             )}
-            {userType === "student" && (
-              <TextField
-                fullWidth
-                label="Class ID"
-                {...register("classId", { required: "Class ID is required" })}
-                error={!!errors.classId}
-                helperText={errors.classId?.message as string}
-              />
-            )}
+            {userType !== "parent" && (
+              <Box sx={{ width: "100%" }}>
+                <Typography variant="h6">Class Information</Typography>
+                {(userType === "teacher"
+                  ? classIDs
+                  : [classIDs[0], ...classIDs.slice(1)]
+                ).map((classItem, index) => {
+                  const isEditable =
+                    userType === "teacher" || index === classIDs.length - 1;
 
-            {userType === "teacher" && (
-              <>
-                <TextField fullWidth label="Major" {...register("major")} />
-                <TextField
-                  fullWidth
-                  label="Weekly Capacity"
-                  {...register("weeklyCapacity")}
-                />
-
-                <Box sx={{ width: "100%" }}>
-                  <Typography variant="h6">Class IDs</Typography>
-                  {classIDs.map((id, index) => (
+                  return (
                     <Box
                       key={index}
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 2,
-                      }}
+                      sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}
                     >
                       <TextField
                         fullWidth
-                        label={`Class ID ${index + 1}`}
-                        value={id}
+                        label="Class Name"
+                        value={classItem.className}
                         onChange={e =>
-                          handleClassIDChange(e.target.value, index)
+                          handleClassIDChange(
+                            "className",
+                            e.target.value,
+                            index
+                          )
                         }
+                        disabled={!isEditable}
                       />
-                      {classIDs.length > 1 && (
+                      <TextField
+                        fullWidth
+                        label="Grade"
+                        value={classItem.grade}
+                        onChange={e =>
+                          handleClassIDChange("grade", e.target.value, index)
+                        }
+                        disabled={!isEditable}
+                      />
+                      <TextField
+                        fullWidth
+                        label="Academic Year"
+                        value={classItem.academicYear}
+                        onChange={e =>
+                          handleClassIDChange(
+                            "academicYear",
+                            e.target.value,
+                            index
+                          )
+                        }
+                        disabled={!isEditable}
+                      />
+                      {userType === "teacher" && (
+                        <FormControlLabel
+                          control={
+                            <Radio
+                              checked={classItem.isHomeroom}
+                              onChange={() =>
+                                handleClassIDChange(
+                                  "isHomeroom",
+                                  !classItem.isHomeroom,
+                                  index
+                                )
+                              }
+                            />
+                          }
+                          label="Homeroom"
+                        />
+                      )}
+
+                      {userType === "teacher" && classIDs.length > 1 && (
                         <Tooltip title="Remove">
                           <IconButton
                             color="error"
@@ -295,7 +397,6 @@ export default function EditUserModal({
                               const updated = [...classIDs];
                               updated.splice(index, 1);
                               setClassIDs(updated);
-                              setValue("classId", updated);
                             }}
                           >
                             <DeleteIcon />
@@ -303,14 +404,30 @@ export default function EditUserModal({
                         </Tooltip>
                       )}
                     </Box>
-                  ))}
-                  <Button variant="outlined" onClick={handleAddClassID}>
-                    + Add Class ID
-                  </Button>
-                </Box>
-              </>
-            )}
+                  );
+                })}
 
+                {userType === "teacher" && (
+                  <Button
+                    variant="outlined"
+                    onClick={() =>
+                      setClassIDs([
+                        ...classIDs,
+                        {
+                          academicYear: "",
+                          classId: "",
+                          className: "",
+                          grade: "",
+                          isHomeroom: false,
+                        },
+                      ])
+                    }
+                  >
+                    + Add Class
+                  </Button>
+                )}
+              </Box>
+            )}
             {userType === "student" && (
               <>
                 <Typography variant="h6" sx={{ mt: 2, width: "100%" }}>

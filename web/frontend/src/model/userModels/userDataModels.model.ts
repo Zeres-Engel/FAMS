@@ -1,3 +1,5 @@
+import { ClassID } from "../tableModels/tableDataModels.model";
+
 interface UserData {
   id: string;
   username: string;
@@ -12,7 +14,7 @@ interface UserData {
   Parent?: Parent[];
   phoneSub?: string;
   classSubId?: number;
-  classTeacher?: string[];
+  classTeacher?: ClassID[];
   gradeSub?: string;
   teacherId?:string;
   teacherFirstName?: string;
@@ -39,6 +41,7 @@ interface UserDataDetails {
   batchId: number;
   className: string;
   grade: string;
+  classes?: ClassID[];
 }
 interface Parent {
   parentId: string;

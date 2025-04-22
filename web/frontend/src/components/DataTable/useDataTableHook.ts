@@ -124,6 +124,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
   function formatUserToEditUserForm(user: any): EditUserForm {
     if (user?.role === "teacher") {
       return {
+        avatar: user?.avatar || null,
         classId: user?.classTeacher || [],
         firstName: user?.teacherFirstName || "",
         lastName: user?.teacherLastName || "",
@@ -147,7 +148,8 @@ function useDataTableHook(props: UseDataTableHookProps) {
       };
     }
     return {
-      classId: [user?.details?.classId],
+      avatar: user?.avatar || null,
+      classId: user?.role === "student" ? user?.details.classes : [],
       firstName: user.details?.firstName || "",
       lastName: user.details?.lastName || "",
       fullName: user.name || "",
@@ -188,11 +190,9 @@ function useDataTableHook(props: UseDataTableHookProps) {
   const handleEditClick = (user: EditUserForm, userId?: string) => {
     const userEdit = allUsers?.find(u => u.id === userId);
     // Lọc tại đây nếu cần'
-    console.log("Editing user:", userEdit);
+    console.log("Editing user:", userEdit); 
     
     console.log(formatUserToEditUserForm(userEdit));
-    console.log(userEdit?.id);
-    
     setEditingUserId(userEdit?.id);
     setEditingUser(formatUserToEditUserForm(userEdit));
     setIsEditOpen(true);

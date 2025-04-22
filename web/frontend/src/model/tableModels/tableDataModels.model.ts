@@ -27,10 +27,10 @@ interface AttendanceLog {
   attendanceId: number;
   scheduleId: number;
   userId: number;
-  face: string | null; 
-  checkin: string | null; 
+  face: string | null;
+  checkin: string | null;
   status: AttendanceStatus;
-  checkinFace:string;
+  checkinFace: string;
   role?: string;
   fullName?: string;
   note?: string;
@@ -52,7 +52,7 @@ interface NotifyProps {
   message: string;
   sender: string;
   receiver: string;
-  sendDate:string;
+  sendDate: string;
   role?: string;
 }
 interface NotifyHeadCell {
@@ -73,7 +73,7 @@ interface ClassArrangementData {
   action?: string;
   role?: string;
 }
-interface SystemRole{
+interface SystemRole {
   role: "student" | "teacher" | "admin" | "parent" | "supervisor";
 }
 interface ClassArrangementHeadCellProps {
@@ -131,8 +131,15 @@ interface AddUserForm {
   weeklyCapacity: string;
   role: string;
 }
+interface ClassID {
+  academicYear: string;
+  classId: string;
+  className: string;
+  grade: string;
+  isHomeroom: boolean;
+}
 interface EditUserForm {
-  classId: string[];
+  classId: ClassID[];
   firstName: string;
   lastName: string;
   fullName: string;
@@ -149,8 +156,8 @@ interface EditUserForm {
   weeklyCapacity: string;
   role: string;
   career?: string;
-  email?: string;  
-  avatar?: string; 
+  email?: string;
+  avatar?: string;
 }
 interface EditTeacherForm {
   classId: number[];
@@ -166,6 +173,7 @@ interface EditTeacherForm {
 }
 
 export type {
+  ClassID,
   Order,
   Data,
   HeadCell,
