@@ -1,5 +1,14 @@
 const express = require('express');
 const router = express.Router();
+const { protect } = require('../middleware/authMiddleware');
+const { searchTeachers } = require('../controllers/teacherSearchController');
+
+/**
+ * @route   GET /api/teachers/search
+ * @desc    Search teachers with minimal info (userId and name)
+ * @access  Private
+ */
+router.get('/search', protect, searchTeachers);
 
 /**
  * Deprecated Routes - Redirects to User API
@@ -7,8 +16,8 @@ const router = express.Router();
  * Please use the User API instead.
  */
 
-// Redirect all GET requests to User API
-router.get('/*', (req, res) => {
+// Redirect all GET requests to User API (except our new search endpoint)
+router.get('/:path([^search].*)?', (req, res) => {
   res.status(301).json({
     success: false,
     message: 'This API endpoint is deprecated. Please use /api/users with appropriate filters instead.',
