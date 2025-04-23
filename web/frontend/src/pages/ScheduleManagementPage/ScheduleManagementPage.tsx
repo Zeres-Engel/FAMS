@@ -31,13 +31,13 @@ const localizer = momentLocalizer(moment);
 const ScheduleManagementPage: React.FC = () => {
   const { state, handler } = useScheduleManagementPageHook();
   const isMobile = useMediaQuery("(max-width:600px)");
-  const role =
-    useSelector((state: RootState) => state.authUser.role);
+  const role = useSelector((state: RootState) => state.authUser.role);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [openArrangementDialog, setOpenArrangementDialog] = useState(false);
   const [newEvent, setNewEvent] = useState({
     id: 0,
     subject: "",
+    subjectId: "",
     title: "",
     start: new Date(),
     end: new Date(),
@@ -50,7 +50,8 @@ const ScheduleManagementPage: React.FC = () => {
   const [semesterError, setSemesterError] = useState(false);
   const [dateFromError, setDateFromError] = useState(false);
   const [dateToError, setDateToError] = useState(false);
-
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 10 }, (_, i) => currentYear - 5 + i); // Từ 5 năm trước đến 5 năm sau
   return (
     <LayoutComponent
       pageHeader={role === "admin" ? "Schedule Management" : "Schedule Page"}
@@ -72,11 +73,16 @@ const ScheduleManagementPage: React.FC = () => {
                   <Autocomplete
                     disablePortal
                     options={state.classOptions}
-                    value={state.filters.class}
-                    onChange={(event, value) =>
+                    getOptionLabel={option => option.label}
+                    value={
+                      state.classOptions.find(
+                        opt => opt.value === state.filters.class
+                      ) || null
+                    }
+                    onChange={(event, newValue) =>
                       handler.setFilters({
                         ...state.filters,
-                        class: value || "",
+                        class: newValue?.value || "",
                       })
                     }
                     renderInput={params => (
@@ -86,7 +92,7 @@ const ScheduleManagementPage: React.FC = () => {
                   />
                 </Box>
                 {/* <Box sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}> */}
-                <FormControl
+                {/* <FormControl
                   fullWidth={isMobile}
                   sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
                 >
@@ -112,21 +118,65 @@ const ScheduleManagementPage: React.FC = () => {
                       </MenuItem>
                     ))}
                   </Select>
-                </FormControl>
-                {/* </Box> */}
-
+                </FormControl> */}
                 <Box sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}>
                   <TextField
-                    label="Teacher ID"
+                    label="Date From"
+                    type="date"
+                    InputLabelProps={{ shrink: true }}
                     fullWidth
-                    value={state.filters.userId}
+                    value={state.filters.dateFrom || ""}
                     onChange={e =>
                       handler.setFilters({
                         ...state.filters,
-                        userId: e.target.value,
+                        dateFrom: e.target.value,
                       })
                     }
                   />
+                </Box>
+
+                <Box sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}>
+                  <TextField
+                    label="Date To"
+                    type="date"
+                    InputLabelProps={{ shrink: true }}
+                    fullWidth
+                    value={state.filters.dateTo || ""}
+                    onChange={e =>
+                      handler.setFilters({
+                        ...state.filters,
+                        dateTo: e.target.value,
+                      })
+                    }
+                  />
+                </Box>
+
+                {/* </Box> */}
+
+                <Box sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}>
+                  <FormControl fullWidth>
+                    <InputLabel id="filter-teacher-select-label">
+                      Teacher
+                    </InputLabel>
+                    <Select
+                      labelId="filter-teacher-select-label"
+                      id="filter-teacher-select"
+                      value={state.filters.userId}
+                      label="Teacher"
+                      onChange={e =>
+                        handler.setFilters({
+                          ...state.filters,
+                          userId: e.target.value,
+                        })
+                      }
+                    >
+                      {state.teachers.map(teacher => (
+                        <MenuItem key={teacher.userId} value={teacher.userId}>
+                          {teacher.fullName} - {teacher.userId}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </Box>
                 <Button variant="contained" onClick={handler.handleSearch}>
                   Search
@@ -148,11 +198,16 @@ const ScheduleManagementPage: React.FC = () => {
                   <Autocomplete
                     disablePortal
                     options={state.classOptions}
-                    value={state.filters.class}
-                    onChange={(event, value) =>
+                    getOptionLabel={option => option.label}
+                    value={
+                      state.classOptions.find(
+                        opt => opt.value === state.filters.class
+                      ) || null
+                    }
+                    onChange={(event, newValue) =>
                       handler.setFilters({
                         ...state.filters,
-                        class: value || "",
+                        class: newValue?.value || "",
                       })
                     }
                     renderInput={params => (
@@ -161,8 +216,39 @@ const ScheduleManagementPage: React.FC = () => {
                     fullWidth
                   />
                 </Box>
+                <Box sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}>
+                  <TextField
+                    label="Date From"
+                    type="date"
+                    InputLabelProps={{ shrink: true }}
+                    fullWidth
+                    value={state.filters.dateFrom || ""}
+                    onChange={e =>
+                      handler.setFilters({
+                        ...state.filters,
+                        dateFrom: e.target.value,
+                      })
+                    }
+                  />
+                </Box>
+
+                <Box sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}>
+                  <TextField
+                    label="Date To"
+                    type="date"
+                    InputLabelProps={{ shrink: true }}
+                    fullWidth
+                    value={state.filters.dateTo || ""}
+                    onChange={e =>
+                      handler.setFilters({
+                        ...state.filters,
+                        dateTo: e.target.value,
+                      })
+                    }
+                  />
+                </Box>
                 {/* <Box sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}> */}
-                <FormControl
+                {/* <FormControl
                   fullWidth={isMobile}
                   sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
                 >
@@ -188,7 +274,7 @@ const ScheduleManagementPage: React.FC = () => {
                       </MenuItem>
                     ))}
                   </Select>
-                </FormControl>
+                </FormControl> */}
                 {/* </Box> */}
                 <Button
                   variant="contained"
@@ -205,7 +291,29 @@ const ScheduleManagementPage: React.FC = () => {
                 </Button>
               </Box>
             )}
-
+            <FormControl size="small" sx={{ minWidth: 100, mr: 2, mb: 1 }}>
+              <InputLabel id="year-select-label">Year</InputLabel>
+              <Select
+                labelId="year-select-label"
+                value={state.currentDate.getFullYear()}
+                label="Year"
+                onChange={e => {
+                  const newYear = Number(e.target.value);
+                  const newDate = new Date(
+                    newYear,
+                    state.currentDate.getMonth(),
+                    1
+                  );
+                  handler.handleSetDate(newDate);
+                }}
+              >
+                {years.map(year => (
+                  <MenuItem key={year} value={year}>
+                    {year}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <Calendar
               localizer={localizer}
               view={state.view}
@@ -221,7 +329,6 @@ const ScheduleManagementPage: React.FC = () => {
               onView={handler.handleSetView}
               onNavigate={handler.handleSetDate}
             />
-
             {role === "admin" && (
               <Box textAlign="center" mt={2}>
                 <Button
@@ -261,11 +368,35 @@ const ScheduleManagementPage: React.FC = () => {
             <DialogContent dividers>
               {state.isEditing ? (
                 <>
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel id="subject-select-label">Subject</InputLabel>
+                    <Select
+                      labelId="subject-select-label"
+                      id="subject-select"
+                      value={String(state.eventShow?.subjectId || "")}
+                      label="Subject"
+                      onChange={e =>
+                        handler.setEventShow({
+                          ...state.eventShow,
+                          subject: e.target.value,
+                        })
+                      }
+                    >
+                      {state.subjectState.map(subject => (
+                        <MenuItem
+                          key={subject.subjectId}
+                          value={subject.subjectId}
+                        >
+                          {subject.subjectName}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                   <TextField
-                    label="Subject"
+                    label="Topic"
                     fullWidth
                     sx={{ mb: 2 }}
-                    value={state.eventShow?.title}
+                    value={state.eventShow?.title || ""}
                     onChange={e =>
                       handler.setEventShow({
                         ...state.eventShow,
@@ -277,6 +408,7 @@ const ScheduleManagementPage: React.FC = () => {
                     label="Start"
                     type="datetime-local"
                     fullWidth
+                    disabled={true}
                     sx={{ mb: 2 }}
                     value={moment(state.eventShow?.start).format(
                       "YYYY-MM-DDTHH:mm"
@@ -292,6 +424,7 @@ const ScheduleManagementPage: React.FC = () => {
                     label="End"
                     type="datetime-local"
                     fullWidth
+                    disabled={true}
                     sx={{ mb: 2 }}
                     value={moment(state.eventShow?.end).format(
                       "YYYY-MM-DDTHH:mm"
@@ -303,36 +436,64 @@ const ScheduleManagementPage: React.FC = () => {
                       })
                     }
                   />
-                  <TextField
-                    label="Classroom ID"
-                    fullWidth
-                    sx={{ mb: 2 }}
-                    value={state.eventShow?.classroomNumber || ""}
-                    onChange={e =>
-                      handler.setEventShow({
-                        ...state.eventShow,
-                        classroomNumber: e.target.value,
-                      })
-                    }
-                  />
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel id="classroom-select-label">
+                      Classroom
+                    </InputLabel>
+                    <Select
+                      labelId="classroom-select-label"
+                      id="classroom-select"
+                      value={String(state.eventShow?.classroomId || "")}
+                      label="Classroom"
+                      onChange={e =>
+                        handler.setEventShow({
+                          ...state.eventShow,
+                          classroomNumber: e.target.value,
+                        })
+                      }
+                    >
+                      {state.classrooms.map(room => (
+                        <MenuItem
+                          key={room.classroomId}
+                          value={room.classroomId}
+                        >
+                          {room.classroomName}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
 
-                  <TextField
-                    label="Teacher"
-                    fullWidth
-                    sx={{ mb: 2 }}
-                    value={state.eventShow?.teacher}
-                    onChange={e =>
-                      handler.setEventShow({
-                        ...state.eventShow,
-                        teacher: e.target.value,
-                      })
-                    }
-                  />
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel id="event-teacher-select-label">
+                      Teacher
+                    </InputLabel>
+                    <Select
+                      labelId="event-teacher-select-label"
+                      id="event-teacher-select"
+                      value={String(state.eventShow?.teacher || "")}
+                      label="Teacher"
+                      onChange={e =>
+                        handler.setEventShow({
+                          ...state.eventShow,
+                          teacher: e.target.value,
+                        })
+                      }
+                    >
+                      {state.teachers.map(teacher => (
+                        <MenuItem key={teacher.userId} value={teacher.userId}>
+                          {teacher.fullName} - {teacher.userId}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </>
               ) : (
                 <>
                   <Typography>
-                    <strong>Subject:</strong> {state.eventShow?.title}
+                    <strong>Subject:</strong> {state.eventShow?.subject}
+                  </Typography>
+                  <Typography>
+                    <strong>Topic:</strong> {state.eventShow?.title || "N/A"}
                   </Typography>
                   <Typography>
                     <strong>Start:</strong>{" "}
@@ -403,7 +564,7 @@ const ScheduleManagementPage: React.FC = () => {
               </Button>
             </DialogActions>
           </Dialog>
-
+          {/* add new */}
           <Dialog
             open={openCreateDialog}
             onClose={() => setOpenCreateDialog(false)}
@@ -412,15 +573,24 @@ const ScheduleManagementPage: React.FC = () => {
           >
             <DialogTitle>Add new Schedule</DialogTitle>
             <DialogContent dividers>
-              <TextField
-                label="Subject"
-                fullWidth
-                sx={{ mb: 2 }}
-                value={newEvent.title}
-                onChange={e =>
-                  setNewEvent({ ...newEvent, title: e.target.value })
-                }
-              />
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel id="subject-select-label">Subject</InputLabel>
+                <Select
+                  labelId="subject-select-label"
+                  id="subject-select"
+                  value={String(newEvent.subjectId || "")}
+                  label="Subject"
+                  onChange={e =>
+                    setNewEvent({ ...newEvent, subjectId: e.target.value })
+                  }
+                >
+                  {state.subjectState.map(subject => (
+                    <MenuItem key={subject.subjectId} value={subject.subjectId}>
+                      {subject.subjectName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               <TextField
                 label="Start"
                 type="datetime-local"
@@ -441,24 +611,45 @@ const ScheduleManagementPage: React.FC = () => {
                   setNewEvent({ ...newEvent, end: new Date(e.target.value) })
                 }
               />
-              <TextField
-                label="Classroom ID"
-                fullWidth
-                sx={{ mb: 2 }}
-                value={newEvent.classroomNumber}
-                onChange={e =>
-                  setNewEvent({ ...newEvent, classroomNumber: e.target.value })
-                }
-              />
-              <TextField
-                label="Teacher"
-                fullWidth
-                sx={{ mb: 2 }}
-                value={newEvent.teacher}
-                onChange={e =>
-                  setNewEvent({ ...newEvent, teacher: e.target.value })
-                }
-              />
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel id="classroom-select-label">Classroom</InputLabel>
+                <Select
+                  labelId="classroom-select-label"
+                  id="classroom-select"
+                  value={String(newEvent.classroomNumber || "")}
+                  label="Classroom"
+                  onChange={e =>
+                    setNewEvent({
+                      ...newEvent,
+                      classroomNumber: e.target.value,
+                    })
+                  }
+                >
+                  {state.classrooms.map(room => (
+                    <MenuItem key={room.classroomId} value={room.classroomId}>
+                      {room.classroomName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel id="new-event-teacher-label">Teacher</InputLabel>
+                <Select
+                  labelId="new-event-teacher-label"
+                  id="new-event-teacher"
+                  value={newEvent.teacher || ""}
+                  label="Teacher"
+                  onChange={e =>
+                    setNewEvent({ ...newEvent, teacher: e.target.value })
+                  }
+                >
+                  {state.teachers.map(teacher => (
+                    <MenuItem key={teacher.userId} value={teacher.userId}>
+                      {teacher.fullName} - {teacher.userId}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </DialogContent>
             <DialogActions>
               <Button
@@ -469,6 +660,7 @@ const ScheduleManagementPage: React.FC = () => {
                   setNewEvent({
                     id: 0,
                     subject: "",
+                    subjectId: "",
                     title: "",
                     start: new Date(),
                     end: new Date(),
@@ -487,7 +679,7 @@ const ScheduleManagementPage: React.FC = () => {
               </Button>
             </DialogActions>
           </Dialog>
-
+          {/* aragement schedule */}
           <Dialog
             open={openArrangementDialog}
             onClose={() => setOpenArrangementDialog(false)}

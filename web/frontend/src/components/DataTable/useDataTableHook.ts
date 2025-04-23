@@ -22,6 +22,7 @@ import {
   updateTeacher,
 } from "../../store/slices/userSlice";
 import { ClassData } from "../../model/classModels/classModels.model";
+import { deleteClass, editClass } from "../../store/slices/classSlice";
 
 interface UseDataTableHookProps {
   tableMainData:
@@ -91,6 +92,8 @@ function useDataTableHook(props: UseDataTableHookProps) {
     React.useState<EditUserForm>(editUserDefault);
   const [editingClass, setEditingClass] =
     React.useState<editClassForm>(editClassDefaul);
+  const [editingClassID, setEditingClassID] =
+    React.useState<string>('');
   const [editingAttendance, setEditingAttendance] =
     React.useState<EditAttendanceFormProps>(editAttendanceDefault);
   const [page, setPage] = React.useState(0);
@@ -197,9 +200,10 @@ function useDataTableHook(props: UseDataTableHookProps) {
     setEditingUser(formatUserToEditUserForm(userEdit));
     setIsEditOpen(true);
   };
-  const handleEditClassClick = (classData: editClassForm) => {
+  const handleEditClassClick = (classData: editClassForm,editID:string) => {
     setEditingClass(classData);
     setIsEditOpen(true);
+    setEditingClassID(editID);
   };
   const handleEditAttendanceClick = (
     attendanceStatus: EditAttendanceFormProps
@@ -228,8 +232,8 @@ function useDataTableHook(props: UseDataTableHookProps) {
       dispatch(deleteUser(selectedUserToDelete.id));
     }
     if (selectedUserToDelete && typeDelete === "classDelete") {
-      console.log("Deleting user:", selectedUserToDelete.id);
-      // dispatch(deleteUser(selectedUserToDelete.id));
+      console.log("Deleting Class:", selectedUserToDelete.id);
+      dispatch(deleteClass(String(selectedUserToDelete.id)));
     }
     setIsDeleteDialogOpen(false);
     setSelectedUserToDelete(null);
@@ -255,7 +259,15 @@ function useDataTableHook(props: UseDataTableHookProps) {
     setIsEditOpen(false);
   };
   const handleEditClassSave = (classFormData: editClassForm) => {
+    const payload = {
+      className: classFormData.className,
+      homeroomTeacherId: classFormData.teacherId,
+      grade: classFormData.grade,
+      academicYear: classFormData.academicYear,
+    };
     console.log("Saving edited class:", classFormData);
+    console.log("Saving edited class ID:", editingClassID);
+    dispatch(editClass({ id: editingClassID, ...payload }))
     setIsEditOpen(false);
   };
   const handleEditAttendanceSave = (

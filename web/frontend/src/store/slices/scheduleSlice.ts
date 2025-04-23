@@ -16,7 +16,7 @@ export interface Schedule {
   dayNumber: number;
   sessionDate: string; // ISO string
   sessionWeek: string;
-  slotId: string;
+  SlotID: string;
   dayOfWeek: string;
   startTime: string; // Format: "HH:mm"
   endTime: string;
@@ -25,16 +25,29 @@ export interface Schedule {
   classroomNumber: string;
 
   // Các field phụ trợ cho calendar (Big Calendar)
-  id?: number | string;  // ID cho calendar event
-  title?: string;        // Title hiển thị
+  id?: number | string; // ID cho calendar event
+  title?: string; // Title hiển thị
   start: Date | string;
   end: Date | string;
   subject?: string;
   teacher?: string;
+  teacherUserId?: string;
+
 }
 
-
-
+export interface ScheduleAction {
+  scheduleId?: string;      
+  semesterId?: string;      
+  semesterNumber?: string;  
+  classId?: string;    
+  subjectId?: string;       
+  teacherId?: string;      
+  classroomId?: string;    
+  slotId?: string;         
+  topic?: string;           
+  sessionDate?: string;     
+  isActive?: boolean;       
+}
 export interface ScheduleFilters {
   className?: string;
   userId?: string;
@@ -106,6 +119,96 @@ export const fetchSchedules = createAsyncThunk(
     }
   }
 );
+// Create Schedule Thunk
+export const createSchedule = createAsyncThunk(
+  "schedule/createSchedule",
+  async (newSchedule: ScheduleAction, thunkAPI) => {
+    try {
+      thunkAPI.dispatch(showLoading());
+
+      const response = await axiosInstance.post("/api-nodejs/schedules", {
+        semesterId: newSchedule.semesterId,
+        semesterNumber: newSchedule.semesterNumber,
+        classId: newSchedule.classId,
+        subjectId: newSchedule.subjectId,
+        teacherId: newSchedule.teacherId,
+        classroomId: newSchedule.classroomId,
+        slotId: newSchedule.slotId,
+        topic: newSchedule.topic,
+        sessionDate: newSchedule.sessionDate,
+        isActive: true,
+      });
+
+      thunkAPI.dispatch(
+        addNotify({
+          type: "success",
+          message: "Create schedule successful!",
+          duration: 3000,
+        })
+      );
+
+      return response.data; // Giả định API trả về dữ liệu lịch mới
+    } catch (error: any) {
+      thunkAPI.dispatch(
+        addNotify({
+          type: "error",
+          message: "Create schedule failed!",
+          duration: 3000,
+        })
+      );
+      return thunkAPI.rejectWithValue(error.message);
+    } finally {
+      thunkAPI.dispatch(hideLoading());
+    }
+  }
+);
+
+// Update Schedule Thunk
+export const updateSchedule = createAsyncThunk(
+  "schedule/updateSchedule",
+  async (updatedSchedule: ScheduleAction, thunkAPI) => {
+    try {
+      thunkAPI.dispatch(showLoading());
+
+      const response = await axiosInstance.put(
+        `/api-nodejs/schedules/${updatedSchedule.scheduleId}`,
+        {
+          semesterId: updatedSchedule.semesterId,
+          semesterNumber: updatedSchedule.semesterNumber,
+          classId: updatedSchedule.classId,
+          subjectId: updatedSchedule.subjectId,
+          teacherId: updatedSchedule.teacherId,
+          classroomId: updatedSchedule.classroomId,
+          slotId: updatedSchedule.slotId,
+          topic: updatedSchedule.topic,
+          sessionDate: updatedSchedule.sessionDate,
+          isActive: updatedSchedule.isActive,
+        }
+      );
+
+      thunkAPI.dispatch(
+        addNotify({
+          type: "success",
+          message: "Update schedule successful!",
+          duration: 3000,
+        })
+      );
+
+      return response.data; // Giả định API trả về dữ liệu lịch đã cập nhật
+    } catch (error: any) {
+      thunkAPI.dispatch(
+        addNotify({
+          type: "error",
+          message: "Update schedule failed!",
+          duration: 3000,
+        })
+      );
+      return thunkAPI.rejectWithValue(error.message);
+    } finally {
+      thunkAPI.dispatch(hideLoading());
+    }
+  }
+);
 
 const scheduleSlice = createSlice({
   name: "schedule",
@@ -113,6 +216,7 @@ const scheduleSlice = createSlice({
   reducers: {},
   extraReducers: builder => {
     builder
+      // Fetch schedules
       .addCase(fetchSchedules.pending, state => {
         state.loading = true;
         state.error = null;
@@ -123,6 +227,41 @@ const scheduleSlice = createSlice({
         state.schedules = action.payload;
       })
       .addCase(fetchSchedules.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // Create Schedule
+      .addCase(createSchedule.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createSchedule.fulfilled, (state, action) => {
+        state.loading = false;
+        state.schedules.push(action.payload);
+        state.error = null;
+      })
+      .addCase(createSchedule.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      // Update Schedule
+      .addCase(updateSchedule.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateSchedule.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.schedules.findIndex(
+          schedule => schedule.scheduleId === action.payload.scheduleId
+        );
+        if (index !== -1) {
+          state.schedules[index] = action.payload;
+        }
+        state.error = null;
+      })
+      .addCase(updateSchedule.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       });

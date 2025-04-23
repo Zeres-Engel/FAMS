@@ -169,8 +169,8 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             onChange={e => handleFilterChange("class", e.target.value)}
           >
             <MenuItem value="">None</MenuItem>
-            {classOptions?.map(option => (
-              <MenuItem key={option} value={option}>
+            {classOptions?.map((option,index) => (
+              <MenuItem key={index} value={option}>
                 {option}
               </MenuItem>
             ))}
@@ -204,8 +204,8 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
               onChange={e => handleFilterChange("class", e.target.value)}
             >
               <MenuItem value="">None</MenuItem>
-              {classOptions?.map(option => (
-                <MenuItem key={option} value={option}>
+              {classOptions?.map((option,index) => (
+                <MenuItem key={index} value={option}>
                   {option}
                 </MenuItem>
               ))}
@@ -291,8 +291,8 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
               label="Class"
               onChange={e => handleFilterChange("class", e.target.value)}
             >
-              {classOptions?.map(option => (
-                <MenuItem key={option} value={option}>
+              {classOptions?.map((option,index) => (
+                <MenuItem key={index} value={option}>
                   {option}
                 </MenuItem>
               ))}
@@ -345,8 +345,8 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             onChange={e => handleFilterChange("class", e.target.value)}
           >
             <MenuItem value="">None</MenuItem>
-            {classOptions?.map(option => (
-              <MenuItem key={option} value={option}>
+            {classOptions?.map((option,index) => (
+              <MenuItem key={index} value={option}>
                 {option}
               </MenuItem>
             ))}
@@ -458,8 +458,8 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             onChange={e => handleFilterChange("class", e.target.value)}
           >
             <MenuItem value="">None</MenuItem>
-            {classOptions?.map(option => (
-              <MenuItem key={option} value={option}>
+            {classOptions?.map((option,index) => (
+              <MenuItem key={index} value={option}>
                 {option}
               </MenuItem>
             ))}

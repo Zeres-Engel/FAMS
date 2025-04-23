@@ -7,6 +7,9 @@ import authSlice from './slices/authSlice';
 import notifySlice from './slices/notifySlice';
 import classSlice from './slices/classSlice';
 import scheduleSlice from './slices/scheduleSlice';
+import teacherSlice from './slices/teacherSlice';
+import classroomSlice from './slices/classroomSlice';
+import subjectSlice from './slices/subjectSlice';
 // Kết hợp tất cả reducers lại
 export const rootReducer = combineReducers({
   users: userSlice, // Tên 'users' sẽ là key trong state toàn cục, chứa dữ liệu từ userReducer
@@ -15,5 +18,8 @@ export const rootReducer = combineReducers({
   authUser:authSlice,
   notify:notifySlice,
   class:classSlice,
-  schedule:scheduleSlice
+  schedule:scheduleSlice,
+  teacher:teacherSlice,
+  classroom:classroomSlice,
+  subject: subjectSlice,
 });

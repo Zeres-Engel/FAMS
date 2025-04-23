@@ -124,7 +124,7 @@ export default function DataTable({
               grade: row.grade,
               teacherId: row.homeroomTeacherd,
               academicYear: row.academicYear,
-            });
+            },row.id);
           } else if (isAttendance && isRoleTeacher) {
             handler.handleEditAttendanceClick({
               attendanceId: row.attendanceId,
