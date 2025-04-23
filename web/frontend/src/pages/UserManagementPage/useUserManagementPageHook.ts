@@ -40,22 +40,59 @@ function useClassPageHook() {
   const userState = useAppSelector(state => state.users);
   const [userMainData, setUserMainData] = useState<UserData[]>([]);
   const [initUserFile, setInitUserFile] = useState<File | null>(null);
+  const [uploadedUserData, setUploadedUserData] = useState<any[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   
   // 👇 NEW: Handle file upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setInitUserFile(file);
-      console.log("filesent");
-
-      // dispatch(uploadInitUserFile(file)); // gọi API gửi file lên
+      console.log("File selected:", file.name);
     }
   };
 
-  // 👇 NEW: Gửi file đã upload để xử lý
-  const handleSubmitInitUserData = () => {
-    console.log("fileaccept");
-    // dispatch(submitInitUserData()); // không truyền file vì file đã được gửi ở bước trước
+  // 👇 NEW: Upload file to API
+  const handleSubmitInitUserData = async () => {
+    if (!initUserFile) {
+      console.error("No file selected");
+      return;
+    }
+    
+    setIsUploading(true);
+    
+    try {
+      // Create FormData
+      const formData = new FormData();
+      formData.append('file', initUserFile);
+      
+      // Send request to API
+      const response = await axios.post(
+        'http://14.225.204.42:3001/api/users/upload/fams',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          }
+        }
+      );
+      
+      console.log("API response:", response.data);
+      
+      if (response.data && response.data.data) {
+        // Store the user data from response
+        setUploadedUserData(response.data.data.user_data || []);
+        return response.data.data.user_data || [];
+      } else {
+        console.error("Invalid API response format", response.data);
+        return [];
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      return [];
+    } finally {
+      setIsUploading(false);
+    }
   };
   
   // Hàm xử lý chuyển trang
@@ -233,12 +270,69 @@ function useClassPageHook() {
     dispatch(fetchUserPaginated(filters));
   }, [filters, dispatch]);
 
+  // 👇 NEW: Toggle user selection status
+  const toggleUserSelection = (index: number) => {
+    setUploadedUserData(prev => {
+      const newData = [...prev];
+      // Đảm bảo chosen được set rõ ràng là true hoặc false
+      const currentValue = newData[index].chosen;
+      // Nếu currentValue là undefined hoặc true, đổi thành false; ngược lại là true
+      newData[index] = {
+        ...newData[index],
+        chosen: currentValue === undefined || currentValue === true ? false : true
+      };
+      console.log("Toggled user selection:", index, "New value:", newData[index].chosen);
+      return newData;
+    });
+  };
+
+  // 👇 NEW: Import selected users
+  const confirmImportUsers = async () => {
+    // Filter only users with chosen=true or undefined (default is true)
+    const selectedUsers = uploadedUserData.filter(user => user.chosen !== false);
+    
+    if (selectedUsers.length === 0) {
+      console.error("No users selected for import");
+      return { success: false, message: "No users selected for import" };
+    }
+    
+    try {
+      // Send request to API
+      const response = await axios.post(
+        'http://14.225.204.42:3001/api/users/import/users',
+        selectedUsers,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+      
+      console.log("Import API response:", response.data);
+      
+      if (response.data && response.data.success) {
+        // Clear uploaded data after successful import
+        setUploadedUserData([]);
+        setInitUserFile(null);
+        return { success: true, data: response.data };
+      } else {
+        console.error("Import failed:", response.data);
+        return { success: false, message: response.data?.message || "Import failed" };
+      }
+    } catch (error) {
+      console.error("Error importing users:", error);
+      return { success: false, message: "Error importing users" };
+    }
+  };
+
   const state = {
     headCellsData,
     userMainData,
     tableTitle,
     isCheckBox,
     initUserFile,
+    uploadedUserData,
+    isUploading,
     classOptions: classOptions.map(c => c.className), // For backward compatibility
     classOptionsData: classOptions, // Full class data including id
     pagination, // Thêm state pagination
@@ -250,6 +344,8 @@ function useClassPageHook() {
     setFiltersUser,
     handleFileChange,
     handleSubmitInitUserData,
+    toggleUserSelection,
+    confirmImportUsers,
     handlePageChange, // Thêm handler cho phân trang
     handleClassSearchChange,
   };
