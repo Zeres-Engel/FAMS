@@ -14,13 +14,20 @@ CREATE TABLE AttendanceLog
   AttendanceID INT                              NULL     AUTO_INCREMENT,
   ScheduleID   INT                              NOT NULL,
   UserID       VARCHAR(100)                     NOT NULL,
-  CheckInFace  BLOB                             NULL    ,
+  Avatar       VARCHAR(255)                     NULL    ,
+  CheckInFace  VARCHAR(255)                     NULL    ,
   CheckIn      DATETIME                         NULL    ,
   Note         VARCHAR(100)                     NULL    ,
   Status       ENUM(Present,Late,Absent,NotNow) NULL     DEFAULT Absent,
   CreatedAt    DATETIME                         NULL     DEFAULT CURRENT_TIMESTAMP,
   UpdatedAt    DATETIME                         NULL     DEFAULT CURRENT_TIMESTAMP,
   IsActive     BOOLEAN                          NULL     DEFAULT TRUE,
+  TeacherId    INT                              NULL    ,
+  TeacherName  VARCHAR(100)                     NULL    ,
+  SubjectID    INT                              NULL    ,
+  SubjectName  VARCHAR(100)                     NULL    ,
+  ClassId      INT                              NULL    ,
+  ClassName    VARCHAR(100)                     NULL    ,
   PRIMARY KEY (AttendanceID)
 );
 

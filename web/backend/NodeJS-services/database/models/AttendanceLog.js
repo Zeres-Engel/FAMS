@@ -18,7 +18,7 @@ const AttendanceLogSchema = new mongoose.Schema({
     ref: 'ClassSchedule'
   },
   userId: {
-    type: Number,
+    type: String,
     required: true,
     ref: 'UserAccount'
   },
@@ -28,10 +28,66 @@ const AttendanceLogSchema = new mongoose.Schema({
   checkIn: {
     type: Date
   },
+  note: {
+    type: String,
+    default: ''
+  },
   status: {
     type: String,
-    enum: ['Present', 'Late', 'Absent'],
-    default: 'Absent'
+    enum: ['Present', 'Late', 'Absent', 'Not Now'],
+    default: 'Not Now'
+  },
+  semesterNumber: {
+    type: Number
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  userRole: {
+    type: String,
+    enum: ['teacher', 'student'],
+    required: true
+  },
+  // Teacher information
+  teacherId: {
+    type: Number,
+    ref: 'Teacher'
+  },
+  teacherName: {
+    type: String
+  },
+  // Subject information
+  subjectId: {
+    type: Number,
+    ref: 'Subject'
+  },
+  subjectName: {
+    type: String
+  },
+  // Class information
+  classId: {
+    type: Number,
+    ref: 'Class'
+  },
+  className: {
+    type: String
+  },
+  // Classroom information
+  classroomId: {
+    type: Number,
+    ref: 'Classroom'
+  },
+  classroomName: {
+    type: String
+  },
+  // Student-specific information (only used for student attendance)
+  studentId: {
+    type: Number,
+    ref: 'Student'
+  },
+  studentName: {
+    type: String
   }
 }, {
   timestamps: true,
@@ -39,6 +95,14 @@ const AttendanceLogSchema = new mongoose.Schema({
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
+
+// Create index on userId for faster queries
+AttendanceLogSchema.index({ userId: 1 });
+
+// Create compound indexes for common query patterns
+AttendanceLogSchema.index({ userId: 1, subjectName: 1 });
+AttendanceLogSchema.index({ userId: 1, className: 1 });
+AttendanceLogSchema.index({ userId: 1, teacherName: 1 });
 
 // Virtual for getting schedule info
 AttendanceLogSchema.virtual('schedule', {

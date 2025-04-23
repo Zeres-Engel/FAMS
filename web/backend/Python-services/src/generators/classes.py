@@ -98,7 +98,7 @@ def distribute_students(db, students, grade, batch_id, academic_year=None):
     print(f"[INFO] Creating classes for academic year: {academic_year}")
     
     students_sorted = sorted(students, key=get_full_name)
-    chunk_size = 40  # Number of students per class (changed from 20 to 40)
+    chunk_size = 20  # Number of students per class (changed from 40 to 20)
     class_index = 1
     created_classes = []
     

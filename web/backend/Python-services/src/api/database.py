@@ -99,8 +99,8 @@ def promote_students_to_next_grade(db, current_academic_year, next_academic_year
                     student_count = db.Student.count_documents({"classId": class_id})
                     total_students += student_count
             
-            # Calculate how many additional classes we need (aim for ~40 students per class)
-            students_per_class = 40
+            # Calculate how many additional classes we need (aim for ~20 students per class)
+            students_per_class = 20
             existing_classes_count = len(current_grade_classes)
             total_classes_needed = (total_students + students_per_class - 1) // students_per_class
             
@@ -894,8 +894,27 @@ async def init_fams_with_sample_data():
                     
                     print(f"[INFO] Creating attendance logs for class ID {class_id} with {len(students_in_class)} students")
                     
+                    # Lấy thông tin time slot
+                    class_id = schedule["classId"]
+                    
                     # Get teacher information
                     teacher = db.Teacher.find_one({"teacherId": teacher_id})
+                    teacher_name = teacher.get("fullName", "") if teacher else ""
+                    
+                    # Get subject information 
+                    subject_id = schedule["subjectId"]
+                    subject = db.Subject.find_one({"subjectId": subject_id})
+                    subject_name = subject.get("subjectName", "") if subject else ""
+                    
+                    # Get class information
+                    class_info = db.Class.find_one({"classId": class_id})
+                    class_name = class_info.get("className", "") if class_info else ""
+                    
+                    # Get classroom information
+                    classroom_id = schedule["classroomId"]
+                    classroom = db.Classroom.find_one({"classroomId": classroom_id})
+                    classroom_name = classroom.get("classroomName", "") if classroom else ""
+                    
                     if teacher and "userId" in teacher:
                         # Create attendance log for teacher
                         teacher_attendance = {
@@ -909,7 +928,15 @@ async def init_fams_with_sample_data():
                             "createdAt": datetime.datetime.now(),
                             "updatedAt": datetime.datetime.now(),
                             "isActive": True,
-                            "userRole": "teacher"  # Add role to differentiate from students
+                            "userRole": "teacher",  # Add role to differentiate from students
+                            "teacherId": teacher_id,
+                            "teacherName": teacher_name,
+                            "subjectId": subject_id,
+                            "subjectName": subject_name,
+                            "classId": class_id,
+                            "className": class_name,
+                            "classroomId": classroom_id,
+                            "classroomName": classroom_name
                         }
                         attendance_logs.append(teacher_attendance)
                         next_attendance_id += 1
@@ -928,7 +955,17 @@ async def init_fams_with_sample_data():
                                 "createdAt": datetime.datetime.now(),
                                 "updatedAt": datetime.datetime.now(),
                                 "isActive": True,
-                                "userRole": "student"  # Add role for consistency
+                                "userRole": "student",  # Add role for consistency
+                                "teacherId": teacher_id,
+                                "teacherName": teacher_name,
+                                "subjectId": subject_id,
+                                "subjectName": subject_name,
+                                "classId": class_id,
+                                "className": class_name,
+                                "studentId": student.get("studentId"),
+                                "studentName": student.get("fullName", ""),
+                                "classroomId": classroom_id,
+                                "classroomName": classroom_name
                             }
                             attendance_logs.append(attendance_log)
                             next_attendance_id += 1
@@ -1144,6 +1181,20 @@ async def init_fams_with_sample_data():
     # Thống kê số lượng face vector
     total_face_vectors = db.FaceVector.count_documents({})
     print(f"[INFO] Total face vectors in system: {total_face_vectors}")
+    
+    # Tạo indexes cho các collection quan trọng để tối ưu tìm kiếm
+    print("[INFO] Creating indexes for important collections")
+    
+    # Index cho AttendanceLog.userId để tìm kiếm nhanh theo user
+    db.AttendanceLog.create_index("userId")
+    print("[INFO] Created index for AttendanceLog.userId")
+    
+    # Index cho các trường hay dùng trong AttendanceLog
+    db.AttendanceLog.create_index("scheduleId")
+    db.AttendanceLog.create_index("status")
+    db.AttendanceLog.create_index([("userId", 1), ("scheduleId", 1)])
+    db.AttendanceLog.create_index([("classId", 1), ("sessionDate", 1)])
+    print("[INFO] Created additional indexes for AttendanceLog")
     
     print("[INFO] Database initialization complete!")
     

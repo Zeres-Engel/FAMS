@@ -2401,3 +2401,511 @@ fetch('http://fams.io.vn/api-nodejs/users/create', {
 .then(data => console.log(data))
 .catch(error => console.error('Error:', error));
 ```
+
+## Attendance API
+Base path: `/attendance`
+
+### Test Attendance API Connectivity
+- **URL**: `http://fams.io.vn/api-nodejs/attendance/test`
+- **Method**: `GET`
+- **Auth Required**: No
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Attendance API is working correctly",
+  "timestamp": "2025-05-16T10:24:35.123Z"
+}
+```
+
+### Get Attendance by User ID
+- **URL**: `http://fams.io.vn/api-nodejs/attendance/user/:userId`
+- **Method**: `GET`
+- **Auth Required**: Yes
+- **URL Parameters**:
+  - `userId`: ID of the user (either student or teacher)
+- **Query Parameters**:
+  - `subjectName`: Filter by subject name
+  - `className`: Filter by class name
+  - `teacherName`: Filter by teacher name
+  - `status`: Filter by attendance status ("Present", "Late", "Absent", "Not Now")
+  - `from`: Start date for date range filter (YYYY-MM-DD)
+  - `to`: End date for date range filter (YYYY-MM-DD)
+  - `slotNumber`: Filter by slot number (e.g., 1, 2, 3)
+  - `page`: Page number for pagination (default: 1)
+  - `limit`: Number of records per page (default: 10)
+- **Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "records": [
+      {
+        "attendanceId": 1,
+        "scheduleId": 1,
+        "userId": "thanhnpst1",
+        "checkIn": null,
+        "note": "",
+        "status": "Not Now",
+        "semesterNumber": 1,
+        "createdAt": "2025-04-23T13:34:16.779Z",
+        "updatedAt": "2025-04-23T13:34:16.779Z",
+        "isActive": true,
+        "userRole": "student",
+        "teacherId": 5,
+        "teacherName": "Lê Văn Quân",
+        "subjectId": 1,
+        "subjectName": "Toán",
+        "classId": 1,
+        "className": "10A1",
+        "studentId": 1,
+        "studentName": "Nguyễn Phước Thành",
+        "classroomId": 1,
+        "classroomName": "Room 101, Building A",
+        "slotId": 41,
+        "slotNumber": 1,
+        "dayOfWeek": "Monday",
+        "startTime": "07:30",
+        "endTime": "08:15",
+        "avatar": "http://fams.io.vn/avatars/thanhnpst1-1715472562345.jpg"
+      }
+      // More attendance records
+    ],
+    "pagination": {
+      "total": 25,
+      "page": 1,
+      "limit": 10,
+      "pages": 3
+    }
+  },
+  "message": "Attendance logs retrieved successfully"
+}
+```
+
+### Create Attendance Record
+- **URL**: `http://fams.io.vn/api-nodejs/attendance`
+- **Method**: `POST`
+- **Auth Required**: Yes (Teacher/Admin only)
+- **Body**:
+```json
+{
+  "scheduleId": 1,
+  "userId": "thanhnpst1",
+  "status": "Present",
+  "note": "Student arrived on time",
+  "checkIn": "2025-05-16T08:30:00Z",
+  "userRole": "student",
+  "teacherId": 5,
+  "teacherName": "Lê Văn Quân",
+  "subjectId": 1,
+  "subjectName": "Toán",
+  "classId": 1,
+  "className": "10A1",
+  "studentId": 1,
+  "studentName": "Nguyễn Phước Thành",
+  "classroomId": 1,
+  "classroomName": "Room 101, Building A",
+  "semesterNumber": 1
+}
+```
+- **Required Fields**: `scheduleId`, `userId`, `userRole`
+- **Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "attendanceId": 3,
+    "scheduleId": 1,
+    "userId": "thanhnpst1",
+    "status": "Present",
+    "note": "Student arrived on time",
+    "checkIn": "2025-05-16T08:30:00.000Z",
+    "userRole": "student",
+    "teacherId": 5,
+    "teacherName": "Lê Văn Quân",
+    "subjectId": 1,
+    "subjectName": "Toán",
+    "classId": 1, 
+    "className": "10A1",
+    "studentId": 1,
+    "studentName": "Nguyễn Phước Thành",
+    "classroomId": 1,
+    "classroomName": "Room 101, Building A",
+    "semesterNumber": 1,
+    "createdAt": "2025-05-16T10:35:22.456Z",
+    "updatedAt": "2025-05-16T10:35:22.456Z",
+    "isActive": true
+  },
+  "message": "Attendance record created successfully"
+}
+```
+
+### Update Attendance Record
+- **URL**: `http://fams.io.vn/api-nodejs/attendance/:attendanceId`
+- **Method**: `PUT`
+- **Auth Required**: Yes (Teacher/Admin only)
+- **URL Parameters**:
+  - `attendanceId`: ID of the attendance record to update
+- **Body**:
+```json
+{
+  "status": "Late",
+  "note": "Student arrived 10 minutes late",
+  "checkIn": "2025-05-16T08:40:00Z"
+}
+```
+- **Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "attendanceId": 3,
+    "scheduleId": 1,
+    "userId": "thanhnpst1",
+    "status": "Late",
+    "note": "Student arrived 10 minutes late",
+    "checkIn": "2025-05-16T08:40:00.000Z",
+    "userRole": "student",
+    "teacherId": 5,
+    "teacherName": "Lê Văn Quân",
+    "subjectId": 1,
+    "subjectName": "Toán",
+    "classId": 1,
+    "className": "10A1",
+    "studentId": 1,
+    "studentName": "Nguyễn Phước Thành",
+    "classroomId": 1,
+    "classroomName": "Room 101, Building A",
+    "semesterNumber": 1,
+    "createdAt": "2025-05-16T10:35:22.456Z",
+    "updatedAt": "2025-05-16T10:40:15.789Z",
+    "isActive": true
+  },
+  "message": "Attendance record updated successfully"
+}
+```
+
+### Batch Update Attendance Records
+- **URL**: `http://fams.io.vn/api-nodejs/attendance/batch/update`
+- **Method**: `PUT`
+- **Auth Required**: Yes (Teacher/Admin only)
+- **Body**:
+```json
+{
+  "attendanceRecords": [
+    {
+      "attendanceId": 1,
+      "status": "Present",
+      "note": "On time"
+    },
+    {
+      "attendanceId": 2,
+      "status": "Late",
+      "note": "Arrived 5 minutes late"
+    },
+    {
+      "attendanceId": 3,
+      "status": "Absent",
+      "note": "No show"
+    }
+  ]
+}
+```
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Updated 3 attendance records, 0 failed",
+  "successCount": 3,
+  "failedCount": 0,
+  "results": [
+    {
+      "success": true,
+      "data": {
+        "attendanceId": 1,
+        "status": "Present",
+        "note": "On time",
+        "updatedAt": "2025-05-16T10:45:30.123Z"
+        // Other record fields
+      }
+    },
+    {
+      "success": true,
+      "data": {
+        "attendanceId": 2,
+        "status": "Late",
+        "note": "Arrived 5 minutes late",
+        "updatedAt": "2025-05-16T10:45:30.123Z"
+        // Other record fields
+      }
+    },
+    {
+      "success": true,
+      "data": {
+        "attendanceId": 3,
+        "status": "Absent",
+        "note": "No show",
+        "updatedAt": "2025-05-16T10:45:30.123Z"
+        // Other record fields
+      }
+    }
+  ]
+}
+```
+
+### Get Attendance by Class ID
+- **URL**: `http://fams.io.vn/api-nodejs/attendance/class/:classId`
+- **Method**: `GET`
+- **Auth Required**: Yes (Teacher/Admin only)
+- **URL Parameters**:
+  - `classId`: ID of the class
+- **Query Parameters**:
+  - `date`: Filter by specific date (YYYY-MM-DD)
+  - `subjectId`: Filter by subject ID
+  - `slotNumber`: Filter by slot number (e.g., 1, 2, 3)
+  - `page`: Page number for pagination (default: 1)
+  - `limit`: Number of records per page (default: 20)
+- **Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "records": [
+      {
+        "attendanceId": 1,
+        "scheduleId": 1,
+        "userId": "thanhnpst1",
+        "checkIn": "2025-05-16T08:30:00.000Z",
+        "note": "On time",
+        "status": "Present",
+        "semesterNumber": 1,
+        "createdAt": "2025-05-16T08:30:00.000Z",
+        "updatedAt": "2025-05-16T10:45:30.123Z",
+        "isActive": true,
+        "userRole": "student",
+        "teacherId": 5,
+        "teacherName": "Lê Văn Quân",
+        "subjectId": 1,
+        "subjectName": "Toán",
+        "classId": 1,
+        "className": "10A1",
+        "studentId": 1,
+        "studentName": "Nguyễn Phước Thành",
+        "slotId": 41,
+        "slotNumber": 1,
+        "dayOfWeek": "Monday",
+        "startTime": "07:30",
+        "endTime": "08:15",
+        "avatar": "http://fams.io.vn/avatars/thanhnpst1-1715472562345.jpg"
+      }
+      // More attendance records for this class
+    ],
+    "pagination": {
+      "total": 30,
+      "page": 1,
+      "limit": 20,
+      "pages": 2
+    }
+  },
+  "message": "Class attendance logs retrieved successfully"
+}
+```
+
+### Get Attendance Statistics
+- **URL**: `http://fams.io.vn/api-nodejs/attendance/stats`
+- **Method**: `GET`
+- **Auth Required**: Yes
+- **Query Parameters**:
+  - `classId`: Filter by class ID
+  - `teacherId`: Filter by teacher ID
+  - `startDate`: Start date for statistics (YYYY-MM-DD)
+  - `endDate`: End date for statistics (YYYY-MM-DD)
+- **Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "total": 120,
+    "present": 85,
+    "late": 20,
+    "absent": 10,
+    "notNow": 5,
+    "percentages": {
+      "present": 70.83,
+      "late": 16.67,
+      "absent": 8.33,
+      "notNow": 4.17
+    }
+  },
+  "message": "Attendance statistics retrieved successfully"
+}
+```
+
+### Error Responses
+- **Missing Required Fields**:
+```json
+{
+  "success": false,
+  "message": "Required fields missing: scheduleId, userId, and userRole are required",
+  "code": "MISSING_FIELDS"
+}
+```
+- **Record Not Found**:
+```json
+{
+  "success": false,
+  "message": "Attendance record not found",
+  "code": "RECORD_NOT_FOUND"
+}
+```
+- **Duplicate Record**:
+```json
+{
+  "success": false,
+  "message": "Attendance record already exists for this user and schedule",
+  "code": "DUPLICATE_RECORD"
+}
+```
+- **Unauthorized**:
+```json
+{
+  "success": false,
+  "message": "Unauthorized: Only teachers and admins can update attendance",
+  "code": "UNAUTHORIZED"
+}
+```
+
+## Examples
+
+### Fetch Student Attendance with Filters
+```
+GET http://fams.io.vn/api-nodejs/attendance/user/thanhnpst1?subjectName=Toán&className=10A1&from=2025-05-01&to=2025-05-31&slotNumber=1
+```
+
+This request will retrieve all attendance records for student with ID "thanhnpst1" where:
+- Subject is "Toán"
+- Class is "10A1"
+- Date range is from May 1, 2025 to May 31, 2025
+- Slot number is 1 (typically first period in the morning)
+
+## Attendance Check-in
+
+### Standard Check-in
+- **URL**: `http://fams.io.vn/api-nodejs/attendance/check-in`
+- **Method**: `POST`
+- **Auth Required**: Yes
+- **Body**:
+```json
+{
+  "scheduleId": 1,
+  "userId": "thanhnpst1",
+  "checkInFace": "base64_encoded_face_image",
+  "note": "Student arrived on time",
+  "status": "Present"
+}
+```
+- **Required Fields**: `scheduleId`, `userId`
+- **Optional Fields**: `checkInFace`, `note`, `status`
+- **Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "attendanceId": 3,
+    "scheduleId": 1,
+    "userId": "thanhnpst1",
+    "checkIn": "2025-05-16T08:30:00.000Z",
+    "checkInFace": "base64_encoded_face_image",
+    "note": "Student arrived on time",
+    "status": "Present",
+    "userRole": "student",
+    "teacherId": 5,
+    "teacherName": "Lê Văn Quân",
+    "subjectId": 1,
+    "subjectName": "Toán",
+    "classId": 1,
+    "className": "10A1",
+    "studentId": 1,
+    "studentName": "Nguyễn Phước Thành",
+    "classroomId": 1,
+    "classroomName": "Room 101, Building A",
+    "semesterNumber": 1,
+    "createdAt": "2025-05-16T08:30:00.000Z",
+    "updatedAt": "2025-05-16T08:30:00.000Z",
+    "isActive": true
+  },
+  "message": "Attendance check-in successful"
+}
+```
+
+### Automatic Check-in
+- **URL**: `http://fams.io.vn/api-nodejs/attendance/auto-check-in`
+- **Method**: `POST`
+- **Auth Required**: Yes
+- **Description**: This endpoint automatically determines which class the user should be attending based on the time and classroom, and marks the attendance with an appropriate status.
+- **Body**:
+```json
+{
+  "userId": "thanhnpst1",
+  "checkInFace": "base64_encoded_face_image",
+  "checkIn": "2025-05-16T08:30:00Z",
+  "classroomId": 1
+}
+```
+- **Required Fields**: `userId`, `classroomId`
+- **Optional Fields**: `checkInFace`, `checkIn` (defaults to current time)
+- **Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "attendanceId": 3,
+    "scheduleId": 1,
+    "userId": "thanhnpst1",
+    "checkIn": "2025-05-16T08:30:00.000Z",
+    "checkInFace": "base64_encoded_face_image",
+    "note": "On time",
+    "status": "Present",
+    "userRole": "student",
+    "teacherId": 5,
+    "teacherName": "Lê Văn Quân",
+    "subjectId": 1,
+    "subjectName": "Toán",
+    "classId": 1,
+    "className": "10A1",
+    "studentId": 1,
+    "studentName": "Nguyễn Phước Thành",
+    "classroomId": 1,
+    "classroomName": "Room 101, Building A",
+    "semesterNumber": 1,
+    "createdAt": "2025-05-16T08:30:00.000Z",
+    "updatedAt": "2025-05-16T08:30:00.000Z",
+    "isActive": true,
+    "schedule": {
+      "scheduleId": 1,
+      "topic": "Toán - Tuần 1"
+    },
+    "slot": {
+      "slotId": 41,
+      "slotNumber": 1,
+      "dayOfWeek": "Monday",
+      "startTime": "07:30",
+      "endTime": "08:15"
+    }
+  },
+  "message": "Automatic attendance registered as Present"
+}
+```
+
+### Auto-Check-in Status Rules
+The automatic check-in API determines attendance status based on these timing rules:
+
+- **Present**: 
+  - Student arrives on time or within 5 minutes of class start time
+  - Student arrives between 5-15 minutes late (marked as "Slightly late but present")
+
+- **Late**:
+  - Student arrives 15 or more minutes late, but before half the class period has passed
+
+- **Absent**:
+  - Student arrives after more than half of the class period has passed
