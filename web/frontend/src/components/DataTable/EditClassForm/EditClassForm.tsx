@@ -10,6 +10,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  FormHelperText,
 } from "@mui/material";
 import React from "react";
 import { editClassForm } from "../../../model/tableModels/tableDataModels.model";
@@ -29,6 +30,13 @@ export default function EditClassForm({
   formData,
 }: EditClassFormProps) {
   const { state, handler } = useEditClassFormHook(formData);
+
+  const handleSubmit = () => {
+    if (handler.validateForm()) {
+      onSave(state.editingClass);
+    }
+  };
+
   return (
     <Dialog
       open={open}
@@ -48,54 +56,84 @@ export default function EditClassForm({
             fullWidth
             label="Class Name"
             name="className"
-            value={state.editingClass?.className}
+            value={state.editingClass.className}
             onChange={handler.handleEditClassChange}
+            error={!!state.formErrors.className}
+            helperText={state.formErrors.className}
           />
-          <TextField
+
+          <FormControl
             fullWidth
-            label="Teacher ID"
-            name="teacherId"
-            value={state.editingClass?.teacherId}
-            onChange={handler.handleEditClassChange}
-          />
-          <FormControl fullWidth>
+            error={!!state.formErrors.teacherId}
+          >
+            <InputLabel id="teacher-select-label">Teacher</InputLabel>
+            <Select
+              labelId="teacher-select-label"
+              id="teacherId"
+              name="teacherId"
+              value={state.editingClass.teacherId}
+              label="Teacher"
+              onChange={handler.handleSelectChange}
+            >
+              {state.teachers.map(teacher => (
+                <MenuItem key={teacher.userId} value={teacher.userId}>
+                  {teacher.fullName} - {teacher.userId}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>{state.formErrors.teacherId}</FormHelperText>
+          </FormControl>
+
+          <FormControl
+            fullWidth
+            error={!!state.formErrors.grade}
+          >
             <InputLabel id="grade-select-label">Grade</InputLabel>
             <Select
               labelId="grade-select-label"
               id="grade-select"
               name="grade"
-              value={state.editingClass?.grade}
-              label="Batch"
+              value={state.editingClass.grade}
+              label="Grade"
               onChange={handler.handleSelectChange}
             >
               <MenuItem value="10">10</MenuItem>
               <MenuItem value="11">11</MenuItem>
               <MenuItem value="12">12</MenuItem>
             </Select>
+            <FormHelperText>{state.formErrors.grade}</FormHelperText>
           </FormControl>
-          <FormControl fullWidth>
+
+          <FormControl
+            fullWidth
+            error={!!state.formErrors.academicYear}
+          >
             <InputLabel id="academicYear-select-label">School Year</InputLabel>
             <Select
               labelId="academicYear-select-label"
               id="academicYear-select"
               name="academicYear"
-              value={state.editingClass?.academicYear}
-              label="academicYear"
+              value={state.editingClass.academicYear}
+              disabled={true}
+              label="Academic Year"
               onChange={handler.handleSelectChange}
             >
-              {handler.getAcademicYears(3,state.editingClass?.academicYear).map(year => (
-                <MenuItem key={year} value={year}>
-                  {year}
-                </MenuItem>
-              ))}
+              {handler
+                .getAcademicYears(3, state.editingClass.academicYear)
+                .map(year => (
+                  <MenuItem key={year} value={year}>
+                    {year}
+                  </MenuItem>
+                ))}
             </Select>
+            <FormHelperText>{state.formErrors.academicYear}</FormHelperText>
           </FormControl>
         </Box>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
         <Button
-          onClick={() => onSave(state.editingClass)}
+          onClick={handleSubmit}
           variant="contained"
           color="primary"
         >

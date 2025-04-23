@@ -23,6 +23,10 @@ const SubjectSchema = new mongoose.Schema({
     type: String,
     enum: ['Chinh', 'TuChon', 'NgoaiKhoa'],
     required: true
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, {
   timestamps: true,

@@ -37,25 +37,48 @@ def parse_date(date_str: str):
 
 def generate_username(full_name: str, id_num: int, batch: int = None, role: str = None) -> str:
     """Generate a username from a full name and ID"""
-    parts = remove_accents(full_name).lower().strip().split()
-    if not parts:
-        return str(id_num)
+    # Handle empty names
+    if not full_name or full_name.strip() == "":
+        return f"user{id_num}"
     
-    # Đảo ngược vì trong tiếng Việt, tên (given name) ở cuối và họ (last name) ở đầu
-    last_name = parts[-1]
-    initials = "".join(part[0] for part in parts[:-1])
+    # Xử lý đặc biệt cho tiếng Việt - chuyển đ/Đ thành d/D trước khi remove_accents
+    normalized_name = full_name.replace("đ", "d").replace("Đ", "D")
+    
+    # Loại bỏ dấu và chuyển về chữ thường
+    normalized_name = remove_accents(normalized_name).lower().strip()
+    
+    # Tách thành các phần
+    parts = normalized_name.split()
+    if not parts:
+        return f"user{id_num}"
+    
+    # Đảo ngược vì trong tiếng Việt, tên (first name) ở cuối và họ (family name) ở đầu
+    first_name = parts[-1]  # Tên (last part)
+    
+    # Lấy chữ cái đầu của họ và tên đệm
+    initials = ""
+    for part in parts[:-1]:  # Tất cả các phần trừ phần cuối
+        if part:
+            initials += part[0]
+    
+    # Đảm bảo role được chuyển thành chữ thường
+    if role:
+        role = role.lower()
     
     # Thêm hậu tố theo role
     role_suffix = ""
     if role == "student":
-        role_suffix = "st"
+        role_suffix = "st"  # Chỉ dùng 'st' không dùng 'student'
+    elif role == "teacher":
+        role_suffix = "tc"
     elif role == "parent":
         role_suffix = "pr"
     
+    # Tạo username theo format: first_name + initials + role_suffix + [batch] + id_num
     if batch is not None:
-        return f"{last_name}{initials}{role_suffix}{batch}{id_num}"
+        return f"{first_name}{initials}{role_suffix}{batch}{id_num}"
     else:
-        return f"{last_name}{initials}{role_suffix}{id_num}"
+        return f"{first_name}{initials}{role_suffix}{id_num}"
 
 
 def find_file_path(paths):

@@ -2,14 +2,13 @@ import axios from 'axios';
 
 // Determine the base URL based on environment
 const getBaseUrl = () => {
-  // When accessed through a domain, use relative path
-  // This works for both development and production domains
-  if (typeof window !== 'undefined' && window.location.host) {
-    return '/api';
+  // For production use domain directly
+  if (typeof window !== 'undefined' && window.location.hostname === 'fams.io.vn') {
+    return 'http://fams.io.vn/api';
   }
   
-  // Inside Docker container - fallback to nginx service name
-  return 'http://nginx:80/api';
+  // For development
+  return 'http://fams.io.vn/api';
 };
 
 // Create an axios instance with default config
@@ -18,6 +17,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Include cookies in cross-site requests
 });
 
 console.log('API Base URL:', api.defaults.baseURL);
@@ -29,7 +29,7 @@ console.log('Window location (if browser):', typeof window !== 'undefined' ? win
 // Add request interceptor to include auth token
 api.interceptors.request.use(
   (config) => {
-    console.log('Request:', config.method, config.url, config.baseURL);
+    console.log('Request:', config.method, config.url);
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -50,7 +50,7 @@ api.interceptors.response.use(
   async (error) => {
     console.error('Response error:', error.message);
     if (error.config) {
-      console.error('Failed request URL:', error.config.baseURL + error.config.url);
+      console.error('Failed request URL:', error.config.url);
     }
     
     const originalRequest = error.config;
@@ -66,11 +66,12 @@ api.interceptors.response.use(
           throw new Error('No refresh token available');
         }
         
-        const response = await axios.post(`${api.defaults.baseURL}/auth/refresh-token`, {
+        // Use direct axios call instead of api instance to avoid circular interceptors
+        const response = await axios.post('http://fams.io.vn/api-nodejs/auth/refresh-token', {
           refreshToken,
         });
         
-        if (response.data.success) {
+        if (response.data && response.data.data) {
           // Save new tokens
           const { accessToken, refreshToken: newRefreshToken } = response.data.data;
           localStorage.setItem('accessToken', accessToken);
@@ -78,7 +79,9 @@ api.interceptors.response.use(
           
           // Retry the original request
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-          return api(originalRequest);
+          return axios(originalRequest);
+        } else {
+          throw new Error('Invalid refresh token response');
         }
       } catch (refreshError) {
         console.error('Token refresh failed:', refreshError);

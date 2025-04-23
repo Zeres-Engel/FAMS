@@ -18,30 +18,19 @@ const StudentSchema = new mongoose.Schema({
     unique: true,
     ref: 'UserAccount'
   },
-  firstName: {
-    type: String,
-    required: false
-  },
-  lastName: {
-    type: String,
-    required: false
-  },
   fullName: {
     type: String,
-    required: true,
-    default: function() {
-      if (this.lastName && this.firstName) {
-        return `${this.lastName} ${this.firstName}`;
-      }
-      return this.fullName;
-    }
+    required: true
   },
   dateOfBirth: {
     type: Date
   },
-  classId: {
-    type: Number,
-    ref: 'Class'
+  classIds: {
+    type: [Number],
+    default: []
+  },
+  batchId: {
+    type: Number
   },
   gender: {
     type: Boolean,
@@ -62,28 +51,58 @@ const StudentSchema = new mongoose.Schema({
     type: String
   },
   parentIds: {
-    type: [String]
+    type: [String],
+    default: []
   },
   parentNames: {
-    type: [String]
+    type: [String],
+    default: []
   },
   parentCareers: {
-    type: [String]
+    type: [String],
+    default: []
   },
   parentPhones: {
-    type: [String]
+    type: [String],
+    default: []
   },
   parentGenders: {
-    type: [Boolean]
+    type: [Boolean],
+    default: []
   },
   parentEmails: {
-    type: [String]
+    type: [String],
+    default: []
   }
 }, {
   timestamps: true,
   versionKey: false,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  toJSON: { 
+    virtuals: true,
+    transform: function(doc, ret) {
+      // Remove unnecessary fields from the response
+      delete ret.parentCareers;
+      delete ret.parentEmails;
+      delete ret.parentGenders;
+      delete ret.parentIds;
+      delete ret.parentNames;
+      delete ret.parentPhones;
+      return ret;
+    }
+  },
+  toObject: { 
+    virtuals: true,
+    transform: function(doc, ret) {
+      // Remove unnecessary fields from the response
+      delete ret.parentCareers;
+      delete ret.parentEmails;
+      delete ret.parentGenders;
+      delete ret.parentIds;
+      delete ret.parentNames;
+      delete ret.parentPhones;
+      return ret;
+    }
+  }
 });
 
 // Virtual for getting user info
@@ -95,11 +114,11 @@ StudentSchema.virtual('user', {
 });
 
 // Virtual for getting class info
-StudentSchema.virtual('class', {
+StudentSchema.virtual('classes', {
   ref: 'Class',
-  localField: 'classId',
+  localField: 'classIds',
   foreignField: 'classId',
-  justOne: true
+  justOne: false
 });
 
 // Virtual for getting parent information through ParentStudent relation
@@ -111,22 +130,22 @@ StudentSchema.virtual('parents', {
 });
 
 // Static method to generate a userId for a student
-StudentSchema.statics.generateUserId = function(firstName, lastName, batchId, studentId) {
-  if (!firstName || !lastName || !batchId || !studentId) {
-    throw new Error('First name, last name, batch ID, and student ID are required to generate userId');
+StudentSchema.statics.generateUserId = function(fullName, batchId, studentId) {
+  if (!fullName || !batchId || !studentId) {
+    throw new Error('Full name, batch ID, and student ID are required to generate userId');
   }
   
-  // Lấy firstName ở dạng lowercase
-  const firstNameLower = firstName.toLowerCase();
+  // Split full name to get first name and last name parts
+  const nameParts = fullName.split(' ');
+  const firstName = nameParts.pop().toLowerCase(); // Last part is first name
   
   // Get initials of last name (all words)
-  const lastNameInitials = lastName
-    .split(' ')
+  const lastNameInitials = nameParts
     .map(part => part.charAt(0).toLowerCase())
     .join('');
   
   // Combine with 'st' prefix, batchId and studentId
-  return `${firstNameLower}${lastNameInitials}st${batchId}${studentId}`;
+  return `${firstName}${lastNameInitials}st${batchId}${studentId}`;
 };
 
 module.exports = mongoose.model('Student', StudentSchema, COLLECTIONS.STUDENT); 

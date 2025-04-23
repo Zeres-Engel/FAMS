@@ -21,6 +21,7 @@ interface SearchClassFilters {
   search?: string;
   grade?: string;
   homeroomTeacherd?: string;
+  academicYear?: string;
 }
 
 export type { SearchClassFilters, ClassData };

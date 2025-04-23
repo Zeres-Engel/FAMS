@@ -557,8 +557,9 @@ const formatScheduleData = async (schedules, format = 'daily') => {
     const subjectIds = [...new Set(schedules.map(s => s.subjectId).filter(Boolean))];
     const teacherIds = [...new Set(schedules.map(s => s.teacherId).filter(Boolean))];
     const classroomIds = [...new Set(schedules.map(s => s.classroomId).filter(Boolean))];
+    const slotIds = [...new Set(schedules.map(s => s.SlotID || s.slotId).filter(Boolean))];
     
-    console.log(`Cần lấy thông tin của ${subjectIds.length} môn học, ${teacherIds.length} giáo viên, ${classroomIds.length} phòng học`);
+    console.log(`Cần lấy thông tin của ${subjectIds.length} môn học, ${teacherIds.length} giáo viên, ${classroomIds.length} phòng học, ${slotIds.length} slots`);
     
     // Query subjects
     const subjects = subjectIds.length > 0 ? 
@@ -574,13 +575,19 @@ const formatScheduleData = async (schedules, format = 'daily') => {
     const classrooms = classroomIds.length > 0 ? 
       await mongoose.connection.db.collection('Classroom').find({ classroomId: { $in: classroomIds } }).toArray() : 
       [];
+      
+    // Query schedule formats (slots)
+    const scheduleFormats = slotIds.length > 0 ?
+      await mongoose.connection.db.collection('ScheduleFormat').find({ slotId: { $in: slotIds } }).toArray() :
+      [];
     
-    console.log(`Đã lấy được ${subjects.length}/${subjectIds.length} môn học, ${teachers.length}/${teacherIds.length} giáo viên, ${classrooms.length}/${classroomIds.length} phòng học`);
+    console.log(`Đã lấy được ${subjects.length}/${subjectIds.length} môn học, ${teachers.length}/${teacherIds.length} giáo viên, ${classrooms.length}/${classroomIds.length} phòng học, ${scheduleFormats.length}/${slotIds.length} slots`);
     
     // Map entities by ID for easier lookup
     const subjectMap = new Map(subjects.map(s => [s.subjectId, s]));
     const teacherMap = new Map(teachers.map(t => [t.teacherId, t]));
     const classroomMap = new Map(classrooms.map(c => [c.classroomId, c]));
+    const slotMap = new Map(scheduleFormats.map(sf => [sf.slotId, sf]));
     
     // Format each schedule
     const formattedSchedules = schedules.map(schedule => {
@@ -616,6 +623,10 @@ const formatScheduleData = async (schedules, format = 'daily') => {
         const teacher = teacherMap.get(normalizedSchedule.teacherId);
         if (teacher) {
           normalizedSchedule.teacherName = teacher.fullName;
+          // Add teacher userId if available
+          if (teacher.userId) {
+            normalizedSchedule.teacherUserId = teacher.userId;
+          }
         } else {
           normalizedSchedule.teacherName = `Giáo viên ${normalizedSchedule.teacherId}`;
         }
@@ -626,6 +637,13 @@ const formatScheduleData = async (schedules, format = 'daily') => {
           normalizedSchedule.classroomNumber = classroom.roomNumber;
         } else {
           normalizedSchedule.classroomNumber = `Phòng ${normalizedSchedule.classroomId}`;
+        }
+        
+        // Add slot time info (startTime, endTime) from ScheduleFormat
+        const slot = slotMap.get(normalizedSchedule.slotId);
+        if (slot) {
+          normalizedSchedule.startTime = slot.startTime;
+          normalizedSchedule.endTime = slot.endTime;
         }
         
         console.log(`Đã chuẩn hóa lịch học ID ${normalizedSchedule.scheduleId}, tiết ${normalizedSchedule.slotId}, subject ${normalizedSchedule.subjectId}`);

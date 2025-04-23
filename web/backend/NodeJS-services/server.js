@@ -15,6 +15,9 @@ const scheduleRoutes = require('./routes/scheduleRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const classRoutes = require('./routes/classRoutes');
 const rfidRoutes = require('./routes/rfidRoutes');
+const avatarRoutes = require('./routes/avatarRoutes');
+const classroomRoutes = require('./routes/classroomRoutes');
+const subjectRoutes = require('./routes/subjectRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -64,6 +67,12 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '50mb' })); // Increase JSON payload limit
 app.use(express.urlencoded({ extended: true, limit: '50mb' })); // Parse URL-encoded bodies with increased limit
 
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Đặc biệt cấu hình đường dẫn cho avatars để đảm bảo chúng luôn được phục vụ với đường dẫn tương đối đúng
+app.use('/avatars', express.static(path.join(__dirname, 'public/avatars')));
+
 // Test route để kiểm tra kết nối
 app.get('/api/test', (req, res) => {
   res.json({ success: true, message: 'API kết nối thành công!', code: 'CONNECTION_SUCCESS' });
@@ -104,6 +113,9 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/classes', classRoutes);
 app.use('/api/rfid', rfidRoutes);
 app.use('/api/database', apiRouter);
+app.use('/api/avatar', avatarRoutes);
+app.use('/api/classrooms', classroomRoutes);
+app.use('/api/subjects', subjectRoutes);
 
 // Root route
 app.get('/', (req, res) => {

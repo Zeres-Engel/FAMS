@@ -12,15 +12,30 @@ const ClassroomSchema = new mongoose.Schema({
     unique: true,
     auto: true
   },
+  classroomName: {
+    type: String,
+    required: true
+  },
   roomNumber: {
     type: String,
     required: true
   },
+  roomName: {
+    type: String
+  },
   building: {
     type: String
   },
+  location: {
+    type: String
+  },
   capacity: {
-    type: Number
+    type: Number,
+    default: 40
+  },
+  isActive: {
+    type: Boolean, 
+    default: true
   }
 }, {
   timestamps: true,

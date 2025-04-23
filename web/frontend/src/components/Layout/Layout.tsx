@@ -25,7 +25,12 @@ function LayoutComponent({
     <Container maxWidth={false} disableGutters>
       <GlobalLoading />
       <Box sx={{ display: "flex" }}>
-        <NavBar variant={isSidebarLayout ? "vertical" : "horizontal"} />
+        {/* Chỉ hiển thị NavBar nếu không phải là trang admin hoặc supervisor */}
+        {!isSidebarLayout ? (
+          <NavBar variant="horizontal" />
+        ) : (
+          <NavBar variant="vertical" />
+        )}
 
         <Box
           component="main"

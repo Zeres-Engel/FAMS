@@ -19,6 +19,8 @@ import {
   NotifyHeadCell,
   NotifyProps,
   Order,
+  RFIDData,
+  RFIDHeadCell,
   UserHeadCell,
 } from "../../../model/tableModels/tableDataModels.model";
 import useTableHeaderHook from "./useTableHeaderHook";
@@ -30,18 +32,26 @@ interface EnhancedTableProps {
   numSelected: number;
   onRequestSort: (
     event: React.MouseEvent<unknown>,
-    property: keyof Data | keyof UserData |keyof ClassData | keyof AttendanceLog | keyof ClassArrangementData | keyof NotifyProps
+    property: string
   ) => void;
   onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
   order: Order;
   orderBy: string;
   rowCount: number;
-  headCellsData: HeadCell[] | UserHeadCell[] | ClassHeadCell[] | AttendanceHeadCell[] | ClassArrangementHeadCellProps[] | NotifyHeadCell[];
+  headCellsData:
+    | HeadCell[]
+    | UserHeadCell[]
+    | ClassHeadCell[]
+    | AttendanceHeadCell[]
+    | ClassArrangementHeadCellProps[]
+    | NotifyHeadCell[]
+    | RFIDHeadCell[];
   isCheckBox: boolean;
   isAdmin?: boolean;
   isTeacher?: boolean;
   isClassArrangement?: boolean;
   isNewSemester?: boolean;
+  isRFIDPage?: boolean;
 }
 
 function TableHeader(props: EnhancedTableProps): React.JSX.Element {
@@ -57,7 +67,8 @@ function TableHeader(props: EnhancedTableProps): React.JSX.Element {
     isAdmin,
     isTeacher,
     isClassArrangement,
-    isNewSemester
+    isNewSemester,
+    isRFIDPage,
   } = props;
 
   const { state, handler } = useTableHeaderHook({
@@ -81,9 +92,9 @@ function TableHeader(props: EnhancedTableProps): React.JSX.Element {
             />
           )}
         </TableCell>
-        {state?.headCellsData.map(headCell => (
+        {state?.headCellsData.map((headCell, index) => (
           <TableCell
-            key={headCell.id}
+            key={`header-cell-${headCell.id}-${index}`}
             align={headCell.numeric ? "right" : "left"}
             padding={headCell.disablePadding ? "none" : "normal"}
             sortDirection={orderBy === headCell.id ? order : false}
@@ -103,8 +114,10 @@ function TableHeader(props: EnhancedTableProps): React.JSX.Element {
           </TableCell>
         ))}
 
-        {isAdmin && !isClassArrangement && !isNewSemester && <TableCell align="left">Action</TableCell>}
-        {isTeacher &&  <TableCell align="left">Action</TableCell>}
+        {isAdmin && !isClassArrangement && !isNewSemester && !isRFIDPage && (
+          <TableCell align="left">Action</TableCell>
+        )}
+        {isTeacher && <TableCell align="left">Action</TableCell>}
       </TableRow>
     </TableHead>
   );

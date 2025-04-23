@@ -137,6 +137,7 @@ Base path: `/users`
   - `roles`: Lọc theo nhiều vai trò, phân cách bằng dấu phẩy (VD: teacher,admin)
   - `phone`: Lọc theo số điện thoại
   - `grade`: Lọc theo khối lớp (10, 11, 12)
+  - `academicYear`: Lọc theo năm học (VD: 2022-2023, 2023-2024)
   - Có thể filter theo bất kỳ trường nào trong model User (userId, email, v.v.)
 
 **Ví dụ Filter:**
@@ -173,10 +174,20 @@ Base path: `/users`
    http://fams.io.vn/api-nodejs/users?search=nguyen
    ```
 
-7. **Kết hợp nhiều điều kiện lọc**:
+7. **Lọc theo năm học**:
    ```
-   http://fams.io.vn/api-nodejs/users?roles=teacher&grade=11&phone=0987
+   http://fams.io.vn/api-nodejs/users?academicYear=2022-2023
    ```
+   Lọc này sẽ trả về:
+   - Học sinh có tham gia lớp học trong năm học 2022-2023
+   - Giáo viên đã dạy trong năm học 2022-2023
+   - Phụ huynh có con học trong năm học 2022-2023
+
+8. **Kết hợp nhiều điều kiện lọc**:
+   ```
+   http://fams.io.vn/api-nodejs/users?roles=teacher&grade=11&academicYear=2023-2024
+   ```
+   Lọc này sẽ trả về tất cả giáo viên dạy khối 11 trong năm học 2023-2024.
 
 **Response:**
 ```json
@@ -194,6 +205,7 @@ Base path: `/users`
         "ExpiryDate": "2026-05-01T00:00:00Z",
         "Status": "Active"
       },
+      "academicYears": ["2022-2023", "2023-2024", "2024-2025"],
       "details": {
         "teacherId": "5",
         "firstName": "Tuấn",
@@ -213,7 +225,8 @@ Base path: `/users`
             "className": "10A2",
             "grade": "10"
           }
-        ]
+        ],
+        "academicYears": ["2022-2023", "2023-2024", "2024-2025"]
       }
     },
     {
@@ -221,6 +234,7 @@ Base path: `/users`
       "username": "anhdmst37",
       "email": "anhdmst37@fams.edu.vn",
       "role": "student",
+      "academicYears": ["2022-2023", "2023-2024"],
       "rfid": {
         "RFID_ID": "STUD67890",
         "IssueDate": "2024-03-15T00:00:00Z",
@@ -253,6 +267,8 @@ Base path: `/users`
 ```
 
 **Lưu ý về RFID**: Nếu người dùng có thẻ RFID, thông tin thẻ sẽ được trả về trong trường `rfid` với các thuộc tính `RFID_ID`, `IssueDate`, `ExpiryDate` và `Status`.
+
+**Lưu ý về academicYears**: Trường `academicYears` chứa danh sách các năm học mà người dùng đã tham gia, dựa trên dữ liệu lịch học (ClassSchedule) và điểm danh (AttendanceLog).
 
 #### Get User by ID
 - **URL**: `http://fams.io.vn/api-nodejs/users/:id`
@@ -758,18 +774,18 @@ Base path: `/schedules`
       "subjectId": 2,
       "teacherId": 5,
       "classroomId": 10,
-      "WeekNumber": 1,
-      "DayNumber": 2,
-      "SessionDate": "2024-09-10",
-      "SlotID": 3,
+      "weekNumber": 1,
       "dayOfWeek": "Tuesday",
+      "sessionDate": "2024-09-10T00:00:00.000Z",
+      "sessionWeek": "09/09/2024 to 15/09/2024",
+      "slotId": 3,
       "startTime": "08:50",
       "endTime": "09:35",
-      "Topic": "Đại số",
-      "status": "scheduled",
-      "className": "10A3",
+      "topic": "Đại số",
       "subjectName": "Toán học",
-      "teacherName": "Tuấn Phạm Văn"
+      "teacherName": "Tuấn Phạm Văn",
+      "classroomNumber": "101",
+      "teacherUserId": "tuanpv5"
     }
     // More schedules...
   ],
@@ -780,6 +796,8 @@ Base path: `/schedules`
   }
 }
 ```
+
+**Note**: All schedule responses include `teacherUserId` which is the user ID of the teacher, in addition to `teacherId` and `teacherName`.
 
 #### Get Schedules by Class Name
 - **URL**: `http://fams.io.vn/api-nodejs/schedules/class/:className`
@@ -841,152 +859,233 @@ Base path: `/schedules`
 }
 ```
 
-#### Get All Schedules
-- **URL**: `http://fams.io.vn/api-nodejs/schedules`
-- **Method**: `GET`
-- **Auth Required**: Yes
-
-#### Get Schedule by ID
-- **URL**: `http://fams.io.vn/api-nodejs/schedules/:id`
-- **Method**: `GET`
-- **Auth Required**: Yes
-
 #### Create Schedule
-- **URL**: `http://fams.io.vn/api-nodejs/schedules/create`
+- **URL**: `http://fams.io.vn/api-nodejs/schedules`
 - **Method**: `POST`
-- **Auth Required**: Yes (Admin or Teacher only)
-- **Body**: 
+- **Auth Required**: Yes
+- **Body**:
 ```json
 {
-  "date": "2024-09-10",               // Required - Format: YYYY-MM-DD
-  "slotNumber": 3,                    // Required - Slot number (1-10)
-  
-  // Cách 1: Sử dụng ID (phương thức truyền thống)
-  "classId": 3,                       // ID của lớp học
-  "teacherId": 5,                     // ID của giáo viên
-  "subjectId": 2,                     // ID của môn học
-  
-  // Cách 2: Sử dụng tên (phương thức thân thiện hơn)
-  "className": "10A3",                // Tên lớp học (thay thế cho classId)
-  "teacherUserId": "tuanpv5",         // UserID của giáo viên (thay thế cho teacherId)
-  "subjectName": "Toán học",          // Tên môn học (thay thế cho subjectId)
-  
-  // Các thông tin khác
-  "topic": "Đại số",                  // Optional - Chủ đề buổi học
-  "roomName": "Room 101",             // Optional - Tên phòng học
-  "classroomId": 10,                  // Optional - ID phòng học
-  "weekNumber": 1,                    // Optional - Số tuần trong học kỳ
-  "semesterId": "1"                   // Optional - ID học kỳ
+  "semesterId": 6,
+  "semesterNumber": 1,
+  "classId": 18,
+  "subjectId": 10,
+  "teacherId": 7,        // Either teacherId or teacherUserId must be provided
+  "classroomId": 3,
+  "slotId": 14,
+  "topic": "Cầu Lông - Tuần 16",
+  "sessionDate": "2025-04-19",
+  "isActive": true
 }
 ```
 
-**Ví dụ tạo lịch học đơn giản**:
+**Alternative using teacherUserId instead of teacherId**:
 ```json
 {
-  "date": "2024-10-15",
-  "slotNumber": 3,
-  "className": "10A2", 
-  "teacherUserId": "tuanpv5",
-  "subjectName": "Toán học",
-  "topic": "Đại số",
-  "roomName": "B203"
+  "semesterId": 6,
+  "semesterNumber": 1,
+  "classId": 18,
+  "subjectId": 10,
+  "teacherUserId": "buihuukhanh",  // Can use teacher's userId instead of teacherId
+  "classroomId": 3,
+  "slotId": 14,
+  "topic": "Cầu Lông - Tuần 16",
+  "sessionDate": "2025-04-19",
+  "isActive": true
 }
 ```
 
-**Lưu ý về kiểm tra xung đột lịch học:**
-
-Khi tạo lịch học mới, hệ thống sẽ kiểm tra ba loại xung đột có thể xảy ra:
-
-1. **Xung đột lớp học**: Nếu lớp đã có lịch học vào ngày và tiết đó
-   ```json
-   {
-     "success": false,
-     "message": "Lớp 10A3 đã có lịch học môn Toán học vào ngày 10/09/2024 tiết 3 (08:50-09:35) với giáo viên Tuấn Phạm Văn",
-     "code": "CLASS_SCHEDULE_CONFLICT",
-     "conflict": {
-       // Chi tiết về lịch học xung đột
-     }
-   }
-   ```
-
-2. **Xung đột giáo viên**: Nếu giáo viên đã dạy lớp khác vào ngày và tiết đó
-   ```json
-   {
-     "success": false,
-     "message": "Giáo viên đã có lịch dạy lớp 10A1 môn Toán học vào ngày 10/09/2024 tiết 3 (08:50-09:35)",
-      "message": "Bạn không có quyền cập nhật lịch học",
-      "code": "PERMISSION_DENIED"
-    }
-    ```
-  - `404` - Schedule not found:
-    ```json
-    {
-      "success": false,
-      "message": "Không tìm thấy lịch học với ID 650d1f4c8d43e21234567890",
-      "code": "SCHEDULE_NOT_FOUND"
-    }
-    ```
-  - `409` - Schedule already exists:
-    ```json
-    {
-      "success": false,
-      "message": "Đã tồn tại lịch học cho lớp 3 vào ngày 12/09/2024 tiết 4",
-      "code": "SCHEDULE_EXISTS"
-    }
-    ```
-
-#### Delete Schedule
-- **URL**: `http://fams.io.vn/api-nodejs/schedules/:id`
-- **Method**: `DELETE`
-- **Auth Required**: Yes (Admin or Teacher only)
-- **URL Parameters**:
-  - `id`: Schedule ID to delete
+- **Required Fields**: `semesterId`, `classId`, `subjectId`, `teacherId` (or `teacherUserId`), `classroomId`, `slotId`, `sessionDate`
 - **Response**:
 ```json
 {
   "success": true,
-  "message": "Đã xóa lịch học Toán học cho lớp 10A3 vào ngày 12/09/2024 tiết 4",
+  "message": "Schedule created successfully",
   "data": {
-    "deletedSchedule": {
-      "scheduleId": "650d1f4c8d43e21234567890",
-      "classId": 3,
-      "subjectId": 2,
-      "teacherId": 5,
-      "slotId": "4",
-      "dayOfWeek": "Thursday",
-      "topic": "Hình học không gian",
-      "className": "10A3",
-      "teacherName": "Tuấn Phạm Văn",
-      "subjectName": "Toán học"
-    }
-  }
+    "scheduleId": 3978,
+    "semesterId": 6,
+    "semesterNumber": 1,
+    "classId": 18,
+    "subjectId": 10,
+    "teacherId": 7,
+    "classroomId": 3,
+    "slotId": 14,
+    "topic": "Cầu Lông - Tuần 16",
+    "sessionDate": "2025-04-19T00:00:00.000Z",
+    "sessionWeek": "14/04/2025 to 20/04/2025",
+    "dayOfWeek": "Saturday",
+    "createdAt": "2025-04-22T09:15:36.789Z",
+    "updatedAt": "2025-04-22T09:15:36.789Z",
+    "isActive": true,
+    "startTime": "15:30",
+    "endTime": "16:15"
+  },
+  "code": "SCHEDULE_CREATED"
 }
 ```
 - **Error Responses**:
-  - `403` - Unauthorized:
+  - `400` - Missing required fields:
     ```json
     {
       "success": false,
-      "message": "Bạn không có quyền xóa lịch học",
-      "code": "PERMISSION_DENIED"
+      "message": "Missing required fields",
+      "code": "MISSING_FIELDS"
     }
     ```
-  - `403` - Teacher permission denied:
+  - `400` - Invalid date format:
     ```json
     {
       "success": false,
-      "message": "Bạn không có quyền xóa lịch học của giáo viên khác",
-      "code": "PERMISSION_DENIED_TEACHER"
+      "message": "Invalid date format",
+      "code": "INVALID_DATE"
     }
     ```
+  - `500` - Server error:
+    ```json
+    {
+      "success": false,
+      "message": "Error message details",
+      "code": "SCHEDULE_CREATE_ERROR"
+    }
+    ```
+
+#### Update Schedule
+- **URL**: `http://fams.io.vn/api-nodejs/schedules/:scheduleId`
+- **Method**: `PUT`
+- **Auth Required**: Yes
+- **URL Parameters**:
+  - `scheduleId`: ID of the schedule to update
+- **Body**:
+```json
+{
+  "semesterId": 6,
+  "semesterNumber": 1,
+  "classId": 18,
+  "subjectId": 7,
+  "teacherId": 8,        // Either teacherId or teacherUserId can be provided
+  "classroomId": 3,
+  "slotId": 11,
+  "topic": "Dã Ngoại - Tuần 16 (Updated)",
+  "sessionDate": "2025-04-20",
+  "isActive": true
+}
+```
+
+**Alternative using teacherUserId**:
+```json
+{
+  "teacherUserId": "buixuanbinh",  // Can use teacher's userId instead of teacherId
+  "topic": "Dã Ngoại - Tuần 16 (Updated)",
+  "sessionDate": "2025-04-20"
+}
+```
+
+- **Note**: Only include fields you want to update. All fields are optional. You can use either `teacherId` or `teacherUserId` to update the teacher.
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Schedule updated successfully",
+  "data": {
+    "scheduleId": 3968,
+    "semesterId": 6,
+    "semesterNumber": 1,
+    "classId": 18,
+    "subjectId": 7,
+    "teacherId": 8,
+    "classroomId": 3,
+    "sessionDate": "2025-04-20T00:00:00.000Z",
+    "sessionWeek": "14/04/2025 to 20/04/2025",
+    "slotId": 11,
+    "dayOfWeek": "Sunday",
+    "topic": "Dã Ngoại - Tuần 16 (Updated)",
+    "subjectName": "Dã ngoại",
+    "teacherName": "Bùi Xuân Bình",
+    "classroomNumber": "101",
+    "startTime": "09:40",
+    "endTime": "10:25",
+    "updatedAt": "2025-04-22T09:17:23.456Z",
+    "isActive": true
+  },
+  "code": "SCHEDULE_UPDATED"
+}
+```
+- **Error Responses**:
   - `404` - Schedule not found:
     ```json
     {
       "success": false,
-      "message": "Không tìm thấy lịch học với ID 650d1f4c8d43e21234567890",
+      "message": "Schedule with ID 9999 not found",
       "code": "SCHEDULE_NOT_FOUND"
     }
     ```
+  - `400` - Invalid date format:
+    ```json
+    {
+      "success": false,
+      "message": "Invalid date format",
+      "code": "INVALID_DATE"
+    }
+    ```
+  - `400` - No changes made:
+    ```json
+    {
+      "success": false,
+      "message": "No changes made to the schedule",
+      "code": "NO_CHANGES"
+    }
+    ```
+  - `500` - Server error:
+    ```json
+    {
+      "success": false,
+      "message": "Error message details",
+      "code": "SCHEDULE_UPDATE_ERROR"
+    }
+    ```
+
+#### Delete Schedule
+- **URL**: `http://fams.io.vn/api-nodejs/schedules/:scheduleId`
+- **Method**: `DELETE`
+- **Auth Required**: Yes
+- **URL Parameters**:
+  - `scheduleId`: ID of the schedule to delete
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Schedule with ID 3968 deleted successfully",
+  "code": "SCHEDULE_DELETED"
+}
+```
+- **Error Responses**:
+  - `404` - Schedule not found:
+    ```json
+    {
+      "success": false,
+      "message": "Schedule with ID 9999 not found",
+      "code": "SCHEDULE_NOT_FOUND"
+    }
+    ```
+  - `400` - Delete failed:
+    ```json
+    {
+      "success": false,
+      "message": "Failed to delete schedule",
+      "code": "DELETE_FAILED"
+    }
+    ```
+  - `500` - Server error:
+    ```json
+    {
+      "success": false,
+      "message": "Error message details",
+      "code": "SCHEDULE_DELETE_ERROR"
+    }
+    ```
+
+**Note on Schedule Times**: 
+Each schedule is associated with a slot (slotId) that has predefined start and end times. The API will automatically include these times in the response when available.
 
 ### Admin API
 Base path: `/admin`
@@ -1014,6 +1113,7 @@ Base path: `/classes`
   - `search`: Tìm kiếm theo tên lớp
   - `className`: Lọc theo tên lớp (exact match hoặc partial match)
   - `homeroomTeacherId`: Lọc theo ID giáo viên chủ nhiệm
+  - `academicYear`: Lọc theo năm học (ví dụ: "2022-2023", "2023-2024", "2024-2025")
 - **Response**:
 ```json
 {
@@ -1026,12 +1126,32 @@ Base path: `/classes`
       "classId": 3,
       "homeroomTeacherId": "tuanpv5",
       "batchId": 3,
-      "grade": "10"
+      "grade": "10",
+      "academicYear": "2023-2024"
     },
     // More classes...
   ]
 }
 ```
+
+**Ví dụ Filter:**
+1. **Lọc theo khối lớp**:
+   ```
+   http://fams.io.vn/api-nodejs/classes?grade=10
+   ```
+   Lọc này sẽ trả về tất cả các lớp 10 (10A1, 10A2, 10A3, etc.).
+
+2. **Lọc theo năm học**:
+   ```
+   http://fams.io.vn/api-nodejs/classes?academicYear=2023-2024
+   ```
+   Lọc này sẽ trả về tất cả các lớp trong năm học 2023-2024.
+
+3. **Kết hợp điều kiện lọc**:
+   ```
+   http://fams.io.vn/api-nodejs/classes?grade=11&academicYear=2024-2025
+   ```
+   Lọc này sẽ trả về các lớp 11 trong năm học 2024-2025.
 
 #### Get Class by ID or className
 - **URL**: `http://fams.io.vn/api-nodejs/classes/:id`
@@ -1532,6 +1652,302 @@ Tương tự, bạn có thể cập nhật hoặc tạo mới thẻ RFID cho gi�
 }
 ```
 
+## Avatar API
+Base path: `/api/avatar`
+
+Avatar API cho phép tải lên và lấy avatar của người dùng.
+
+### Upload Avatar
+- **URL**: `http://fams.io.vn/api-nodejs/avatar/upload`
+- **Method**: `POST`
+- **Auth Required**: Yes
+- **Content-Type**: `multipart/form-data`
+- **Body**:
+  - `avatar`: File ảnh (định dạng JPG, JPEG, PNG, GIF)
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Avatar đã được tải lên thành công",
+  "data": {
+    "userId": "tuanpv5",
+    "avatar": "http://fams.io.vn/avatars/tuanpv5-1720123456789-123456789_processed.jpg",
+    "avatarUrl": "http://fams.io.vn/avatars/tuanpv5-1720123456789-123456789_processed.jpg"
+  },
+  "code": "AVATAR_UPLOADED"
+}
+```
+- **Error Responses**:
+  - `400` - No file uploaded:
+    ```json
+    {
+      "success": false,
+      "message": "Vui lòng upload một file hình ảnh",
+      "code": "NO_FILE_UPLOADED"
+    }
+    ```
+  - `400` - Invalid file type:
+    ```json
+    {
+      "success": false,
+      "message": "Chỉ chấp nhận file hình ảnh!",
+      "code": "INVALID_FILE_TYPE"
+    }
+    ```
+  - `404` - User not found:
+    ```json
+    {
+      "success": false,
+      "message": "Không tìm thấy người dùng",
+      "code": "USER_NOT_FOUND"
+    }
+    ```
+
+### Get User Avatar
+- **URL**: `http://fams.io.vn/api-nodejs/avatar/:userId`
+- **Method**: `GET`
+- **Auth Required**: No
+- **URL Parameters**:
+  - `userId`: ID của người dùng cần lấy avatar
+- **Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "userId": "tuanpv5",
+    "avatar": "http://fams.io.vn/avatars/tuanpv5-1720123456789-123456789_processed.jpg",
+    "avatarUrl": "http://fams.io.vn/avatars/tuanpv5-1720123456789-123456789_processed.jpg"
+  },
+  "code": "AVATAR_FOUND"
+}
+```
+- **Error Responses**:
+  - `404` - User not found:
+    ```json
+    {
+      "success": false,
+      "message": "Không tìm thấy người dùng",
+      "code": "USER_NOT_FOUND"
+    }
+    ```
+  - `404` - No avatar:
+    ```json
+    {
+      "success": false,
+      "message": "Người dùng chưa có avatar",
+      "code": "NO_AVATAR"
+    }
+    ```
+
+### Delete User Avatar
+- **URL**: `http://fams.io.vn/api-nodejs/avatar`
+- **Method**: `DELETE`
+- **Auth Required**: Yes
+- **Description**: Xóa avatar của người dùng hiện tại (dựa vào token)
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Avatar đã được xóa thành công",
+  "code": "AVATAR_DELETED"
+}
+```
+- **Error Responses**:
+  - `404` - User not found:
+    ```json
+    {
+      "success": false,
+      "message": "Không tìm thấy người dùng",
+      "code": "USER_NOT_FOUND"
+    }
+    ```
+  - `404` - No avatar:
+    ```json
+    {
+      "success": false,
+      "message": "Người dùng chưa có avatar",
+      "code": "NO_AVATAR"
+    }
+    ```
+
+### Direct Access Avatar Image
+- **URL**: `http://fams.io.vn/avatars/:filename`
+- **Method**: `GET`
+- **Description**: Truy cập trực tiếp hình ảnh avatar từ URL được trả về trong trường `avatarUrl`
+
+### Cải tiến mới về Avatar
+
+#### URL đầy đủ trong Database
+Hệ thống đã được cải tiến để lưu URL đầy đủ (full URL) của avatar trong database thay vì chỉ lưu đường dẫn tương đối. Điều này giúp:
+- Đảm bảo avatar hiển thị đúng trên mọi trình duyệt và thiết bị
+- Tránh lỗi đường dẫn khi truy cập từ các nguồn khác nhau
+- Frontend có thể sử dụng URL trực tiếp mà không cần xử lý thêm
+
+#### Xử lý hình ảnh tự động
+Khi tải lên, avatar được xử lý tự động:
+- Resize về kích thước 400x400 pixels
+- Tối ưu hóa với định dạng JPEG chất lượng 80%
+- Tệp gốc được xóa sau khi xử lý để tiết kiệm không gian lưu trữ
+
+#### Cấu hình Nginx cho Avatar
+Nginx được cấu hình để phục vụ tệp avatar với location riêng:
+```nginx
+location /avatars/ {
+    proxy_pass http://api-nodejs:3000/avatars/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+#### Xử lý Domain tự động
+Hệ thống tự động phát hiện và sử dụng domain thích hợp:
+- Lấy domain từ headers HTTP request
+- Tự động xác định protocol (http/https)
+- Fallback về domain mặc định nếu không xác định được
+
+### Sử dụng Avatar trong Frontend
+
+#### Upload Avatar
+```javascript
+// Sử dụng FormData để upload file
+const uploadAvatar = async (file) => {
+  const formData = new FormData();
+  formData.append('avatar', file);
+  
+  try {
+    const response = await fetch('http://fams.io.vn/api-nodejs/avatar/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}` // Token xác thực
+      },
+      body: formData
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Hiển thị avatar mới
+      const avatarUrl = data.data.avatarUrl;
+      // Lưu avatarUrl vào state hoặc global store của ứng dụng
+    } else {
+      console.error('Upload error:', data.message);
+    }
+  } catch (error) {
+    console.error('Error uploading avatar:', error);
+  }
+};
+```
+
+#### Hiển thị Avatar trong React
+```jsx
+import React, { useState, useEffect } from 'react';
+
+const UserAvatar = ({ userId }) => {
+  const [avatarUrl, setAvatarUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      try {
+        const response = await fetch(`http://fams.io.vn/api-nodejs/avatar/${userId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          setAvatarUrl(data.data.avatarUrl);
+        } else {
+          // Sử dụng avatar mặc định nếu người dùng không có avatar
+          setAvatarUrl('/default-avatar.png');
+        }
+      } catch (error) {
+        console.error('Error fetching avatar:', error);
+        setError('Failed to load avatar');
+        // Sử dụng avatar mặc định nếu có lỗi
+        setAvatarUrl('/default-avatar.png');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchAvatar();
+  }, [userId]);
+  
+  if (loading) return <div>Loading...</div>;
+  
+  return (
+    <div className="avatar-container">
+      <img 
+        src={avatarUrl} 
+        alt={`${userId}'s avatar`} 
+        className="user-avatar"
+        onError={(e) => {
+          // Fallback nếu không tải được avatar
+          e.target.src = '/default-avatar.png';
+        }}
+      />
+      {error && <p className="error-text">{error}</p>}
+    </div>
+  );
+};
+
+export default UserAvatar;
+```
+
+#### Xóa Avatar
+```javascript
+const deleteAvatar = async () => {
+  try {
+    const response = await fetch('http://fams.io.vn/api-nodejs/avatar', {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`, // Token xác thực
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Avatar đã được xóa thành công
+      // Cập nhật giao diện người dùng về avatar mặc định
+    } else {
+      console.error('Delete error:', data.message);
+    }
+  } catch (error) {
+    console.error('Error deleting avatar:', error);
+  }
+};
+```
+
+### Lưu ý về Avatar API
+
+1. **Giới hạn kích thước file**:
+   - Kích thước tối đa: 5MB
+   - Định dạng hỗ trợ: JPG, JPEG, PNG, GIF
+
+2. **Xử lý hình ảnh**:
+   - Hình ảnh tải lên sẽ được tự động xử lý để tạo ra phiên bản tối ưu
+   - Kích thước 400x400 pixels, chất lượng JPEG 80%
+   - File gốc sẽ bị xóa sau khi xử lý
+
+3. **Đường dẫn lưu trữ**:
+   - Avatar được lưu trong thư mục `/public/avatars/` trên server
+   - Tên file được tạo tự động theo định dạng: `{userId}-{timestamp}-{random}_processed.jpg`
+
+4. **Cơ chế cache**:
+   - Khách hàng (frontend) nên triển khai cache cho avatar để giảm tải server
+   - Thêm version query string (ví dụ: `?v=1`) khi URL avatar thay đổi để cập nhật cache
+
+5. **Tích hợp với API khác**:
+   - Thông tin avatar sẽ được trả về trong `/api/auth/me` và `/api/users/details/:id`
+   - Khi cập nhật thông tin người dùng, avatar sẽ không bị ảnh hưởng
+
+6. **Docker và triển khai**:
+   - File avatar được lưu trong thư mục `/public/avatars/` nên cần đảm bảo thư mục này tồn tại và có đủ quyền ghi
+   - Khi sử dụng Docker, volume cho thư mục `/public/avatars/` đã được cấu hình trong Dockerfile
+
 ## Testing with Postman
 
 ### Creating a Collection
@@ -1823,3 +2239,165 @@ Khi cập nhật phụ huynh, bạn có thể thêm học sinh mới vào danh s
 2. Đối với các trường đặc biệt như `fullName`, API sẽ tự động xử lý tách và kết hợp với `firstName` và `lastName`
 3. Khi cung cấp trường `gender`, bạn có thể sử dụng `true`/`false`, `"Male"`/`"Female"` hoặc `"true"`/`"false"`
 4. Thông tin RFID sẽ được tự động cập nhật hoặc tạo mới tùy thuộc vào trạng thái hiện tại
+
+## User Creation API with Avatar Upload
+
+The FAMS system provides a unified API endpoint for creating users of different roles (student, teacher, parent) with the ability to upload avatars.
+
+### Endpoint
+
+```
+POST http://fams.io.vn/api-nodejs/users/create
+```
+
+### Authentication
+
+This endpoint requires admin authentication. Include the authorization token in the header:
+
+```
+Authorization: Bearer YOUR_ACCESS_TOKEN
+```
+
+### Request Format
+
+Use **multipart/form-data** format to support file upload.
+
+### Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| role | string | User role: "student", "teacher", or "parent" |
+| firstName | string | User's first name |
+| lastName | string | User's last name |
+| phone | string | Contact phone number |
+| avatar | file | User's profile picture (optional) |
+
+### Common Optional Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| email | string | Primary email address |
+| backup_email | string | Backup email address |
+| gender | string | "Male" or "Female" |
+| dateOfBirth | string | Date in YYYY-MM-DD format |
+| address | string | Physical address |
+
+### Role-Specific Fields
+
+#### Student Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| parentNames | array | Array of parent names |
+| parentCareers | array | Array of parent careers |
+| parentPhones | array | Array of parent phone numbers |
+| parentGenders | array | Array of parent genders (true for Male, false for Female) |
+| parentEmails | array | Array of parent email addresses |
+
+#### Teacher Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| major | string | Teacher's specialization |
+| weeklyCapacity | number | Weekly teaching hours capacity |
+| degree | string | Academic degree |
+
+#### Parent Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| career | string | Parent's career |
+| childrenIds | array | Array of existing student IDs to link with this parent |
+
+### Example Request
+
+Here's an example of a unified form that includes fields for all user types:
+
+```json
+{
+  "role": "student",
+  "firstName": "Thành",
+  "lastName": "Nguyễn Phước",
+  "email": "thanhnp@gmail.com",
+  "backup_email": "thanhnp@gmail.com",
+  "phone": "0987654321",
+  "gender": "Male",
+  "dateOfBirth": "2005-05-15",
+  "address": "123 Đường ABC, Thành phố XYZ",
+  "parentNames": ["Nguyễn Phước Hải", "Trần Thị Mai"],
+  "parentCareers": ["Kỹ sư", "Giáo viên"],
+  "parentPhones": ["0123456789", "0987654321"],
+  "parentGenders": [true, false],
+  "parentEmails": ["nph@gmail.com", "ttm@gmail.com"],
+  "major": "Công nghệ",
+  "degree": "Cử nhân Sư phạm",
+  "weeklyCapacity": 10
+}
+```
+
+> **Note**: When submitting the form, only fields relevant to the specified role will be processed. You can include all fields in a single form, making it easier to use the same form for different user types.
+
+### Avatar Upload
+
+To upload an avatar:
+1. Use `multipart/form-data` encoding
+2. Include the avatar file in the `avatar` field
+3. Only image files (jpg, jpeg, png, gif) are accepted
+4. Maximum file size: 5MB
+
+### Response Format
+
+On successful creation:
+
+```json
+{
+  "success": true,
+  "message": "User created successfully",
+  "data": {
+    "user": {
+      "userId": "thanhngst12345",
+      "email": "thanhnp@gmail.com",
+      "role": "student",
+      "avatar": "http://fams.io.vn/avatars/student/thanhngst12345.jpg"
+      // Additional user details
+    },
+    "student": {
+      // Student-specific information
+    },
+    // Additional role-specific data
+  }
+}
+```
+
+### Error Responses
+
+| Status | Description |
+|--------|-------------|
+| 400 | Bad Request - Missing required fields or invalid data |
+| 401 | Unauthorized - Invalid or missing authentication token |
+| 403 | Forbidden - User doesn't have admin privileges |
+| 500 | Server Error - Internal processing error |
+
+### JavaScript Fetch Example
+
+```javascript
+const formData = new FormData();
+formData.append('role', 'student');
+formData.append('firstName', 'Thành');
+formData.append('lastName', 'Nguyễn Phước');
+formData.append('phone', '0987654321');
+formData.append('email', 'thanhnp@gmail.com');
+// Add more fields as needed
+formData.append('avatar', fileInputElement.files[0]); // From input[type='file']
+
+fetch('http://fams.io.vn/api-nodejs/users/create', {
+  method: 'POST',
+  headers: {
+    'Authorization': 'Bearer YOUR_ACCESS_TOKEN'
+  },
+  body: formData
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Error:', error));
+```

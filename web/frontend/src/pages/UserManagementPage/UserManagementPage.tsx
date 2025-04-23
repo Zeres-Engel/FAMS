@@ -23,6 +23,9 @@ function UserManagementPage(): React.JSX.Element {
               isAdmin={true}
               isUserManagement={true}
               setFiltersUser={handler.setFiltersUser}
+              classOptions={state.classOptions}
+              pagination={state.pagination}
+              onPageChange={handler.handlePageChange}
             />
           </Box>
 

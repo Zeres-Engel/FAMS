@@ -125,7 +125,7 @@ def get_period_time(period_index):
     return periods.get(period_index, {"start": "00:00", "end": "00:00"})
 
 
-def generate_improved_schedule(db, semester_info, total_weeks=18):
+def generate_improved_schedule(db, semester_info, total_weeks=18, academic_year=None):
     """
     Generate schedule for a semester using the improved algorithm
     
@@ -133,6 +133,7 @@ def generate_improved_schedule(db, semester_info, total_weeks=18):
         db: MongoDB database connection
         semester_info: Dictionary with semester information
         total_weeks: Number of weeks in semester (default 18)
+        academic_year: Optional academic year to filter classes (e.g. "2022-2023")
         
     Returns:
         tuple - (schedule_entries, warnings)
@@ -143,28 +144,36 @@ def generate_improved_schedule(db, semester_info, total_weeks=18):
     
     logger.info(f"Generating schedule for Semester {semesterNumber}")
     
-    # Load all classes first - don't filter by isActive since it might not exist
-    all_classes = list(db.Class.find())
+    # Load all classes with optional academic year filter
+    class_query = {}
+    if academic_year:
+        class_query["academicYear"] = academic_year
+        logger.info(f"Filtering classes by academic year: {academic_year}")
+    
+    all_classes = list(db.Class.find(class_query))
     
     # Filter classes by class name pattern to only include specific formats like "10A1", "11B2", "12C3"
     classes = []
     for c in all_classes:
+        # Chấp nhận tất cả lớp, không lọc theo pattern
+        classes.append(c)
         class_name = c.get("className", "")
-        # Looking for patterns like 10A1, 11B2, 12C3 etc.
-        if re.match(r'^\d{1,2}[A-Z]\d+$', class_name):
-            classes.append(c)
-        else:
-            logger.debug(f"Skipping class with name '{class_name}' (doesn't match pattern)")
+        if not re.match(r'^\d{1,2}[A-Z]\d+$', class_name):
+            logger.info(f"Class with name '{class_name}' doesn't match standard pattern but will be included")
     
     if not classes:
-        logger.error("No classes found matching required pattern (like 10A1, 11B2, etc.)")
-        return [], ["No classes found matching required pattern (like 10A1, 11B2, etc.)"]
+        logger.error("No classes found")
+        return [], ["No classes found"]
     
-    logger.info(f"Found {len(classes)} classes matching required pattern")
+    logger.info(f"Found {len(classes)} classes")
     for c in classes[:5]:  # Log a few sample classes
         class_id = c.get("classId") or c.get("ClassID")
         class_name = c.get("className", "Unknown")
         logger.info(f"  - Class: {class_name} (ID: {class_id})")
+        
+        # Kiểm tra học sinh trong lớp này
+        student_count = db.Student.count_documents({"classIds": class_id})
+        logger.info(f"    - Students: {student_count}")
     
     # Get curriculum based on grade
     # Extract grades from class data
@@ -387,6 +396,12 @@ def generate_improved_schedule(db, semester_info, total_weeks=18):
                     used_rooms.add(room_id)
                     teacher_weekly_usage[teacher_id] += 1
                     class_needs[class_id][subject_id] -= 1
+                    
+                    # Update teacher's classIds - add this class to teacher's teaching history
+                    db.Teacher.update_one(
+                        {"teacherId": teacher_id},
+                        {"$addToSet": {"classIds": class_id}}
+                    )
                     
                     # Get class and teacher name for better tracking
                     class_name = class_doc.get("className", f"Class {class_id}")
@@ -649,6 +664,12 @@ def generate_schedule(db, semester_doc, total_weeks=18):
                     available_rooms.remove(room_id)
                     teacher_weekly_usage[teacher_id] += 1
                     class_needs[class_id][subject_id] -= 1
+                    
+                    # Update teacher's classIds - add this class to teacher's teaching history
+                    db.Teacher.update_one(
+                        {"teacherId": teacher_id},
+                        {"$addToSet": {"classIds": class_id}}
+                    )
                     
                     # Create schedule entry
                     schedule_entry = {

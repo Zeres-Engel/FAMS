@@ -4329,3 +4329,384 @@
 2025/04/19 13:22:58 [notice] 1#1: start worker process 31
 2025/04/19 13:22:58 [notice] 1#1: start worker process 32
 2025/04/19 13:22:58 [notice] 1#1: start worker process 33
+2025/04/19 13:28:59 [error] 29#29: *51 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 42.119.101.57, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://192.168.16.6:3000/ws", host: "fams.io.vn"
+2025/04/19 13:28:59 [error] 29#29: *55 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 42.119.101.57, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://192.168.16.6:3000/ws", host: "fams.io.vn"
+2025/04/19 13:28:59 [error] 30#30: *32 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 116.96.77.176, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://192.168.16.6:3000/ws", host: "fams.io.vn"
+2025/04/19 13:30:07 [error] 29#29: *62 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 42.119.101.57, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://192.168.16.6:3000/ws", host: "fams.io.vn"
+2025/04/19 13:30:07 [error] 28#28: *73 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 42.119.101.57, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://192.168.16.6:3000/ws", host: "fams.io.vn"
+2025/04/19 13:30:07 [error] 28#28: *85 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 116.96.77.176, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://192.168.16.6:3000/ws", host: "fams.io.vn"
+2025/04/19 13:57:33 [error] 31#31: *177 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "GET /api-nodejs/users/update/dungahst1 HTTP/1.1", upstream: "http://192.168.16.5:3000/api/users/update/dungahst1", host: "fams.io.vn"
+2025/04/19 13:57:46 [error] 31#31: *177 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "GET /api-nodejs/users/update/dungahst1 HTTP/1.1", upstream: "http://192.168.16.5:3000/api/users/update/dungahst1", host: "fams.io.vn"
+2025/04/19 13:58:29 [error] 31#31: *180 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "GET /api-nodejs/users/update/dungahst1 HTTP/1.1", upstream: "http://192.168.16.5:3000/api/users/update/dungahst1", host: "fams.io.vn"
+2025/04/19 13:58:37 [error] 31#31: *182 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.57, server: localhost, request: "POST /api-nodejs/auth/refresh-token HTTP/1.1", upstream: "http://192.168.16.5:3000/api/auth/refresh-token", host: "fams.io.vn", referrer: "http://fams.io.vn/AttendanceManagement"
+2025/04/19 13:58:37 [error] 31#31: *183 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.57, server: localhost, request: "POST /api-nodejs/auth/refresh-token HTTP/1.1", upstream: "http://192.168.16.5:3000/api/auth/refresh-token", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/19 13:58:39 [error] 31#31: *183 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.57, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.16.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/19 13:58:42 [error] 31#31: *183 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.57, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.16.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/19 13:59:25 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/19 13:59:25 [notice] 33#33: gracefully shutting down
+2025/04/19 13:59:25 [notice] 29#29: gracefully shutting down
+2025/04/19 13:59:25 [notice] 28#28: gracefully shutting down
+2025/04/19 13:59:25 [notice] 33#33: exiting
+2025/04/19 13:59:25 [notice] 29#29: exiting
+2025/04/19 13:59:25 [notice] 30#30: gracefully shutting down
+2025/04/19 13:59:25 [notice] 30#30: exiting
+2025/04/19 13:59:25 [notice] 33#33: exit
+2025/04/19 13:59:25 [notice] 30#30: exit
+2025/04/19 13:59:25 [notice] 31#31: gracefully shutting down
+2025/04/19 13:59:25 [notice] 32#32: gracefully shutting down
+2025/04/19 13:59:25 [notice] 32#32: exiting
+2025/04/19 13:59:25 [notice] 32#32: exit
+2025/04/19 13:59:25 [notice] 29#29: exit
+2025/04/19 13:59:25 [notice] 1#1: signal 17 (SIGCHLD) received from 33
+2025/04/19 13:59:25 [notice] 1#1: worker process 29 exited with code 0
+2025/04/19 13:59:25 [notice] 1#1: worker process 30 exited with code 0
+2025/04/19 13:59:25 [notice] 1#1: worker process 32 exited with code 0
+2025/04/19 13:59:25 [notice] 1#1: worker process 33 exited with code 0
+2025/04/19 13:59:25 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/19 14:00:27 [notice] 1#1: using the "epoll" event method
+2025/04/19 14:00:27 [notice] 1#1: nginx/1.27.4
+2025/04/19 14:00:27 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/19 14:00:27 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/19 14:00:27 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/19 14:00:27 [notice] 1#1: start worker processes
+2025/04/19 14:00:27 [notice] 1#1: start worker process 29
+2025/04/19 14:00:27 [notice] 1#1: start worker process 30
+2025/04/19 14:00:27 [notice] 1#1: start worker process 31
+2025/04/19 14:00:27 [notice] 1#1: start worker process 32
+2025/04/19 14:00:27 [notice] 1#1: start worker process 33
+2025/04/19 14:00:27 [notice] 1#1: start worker process 34
+2025/04/19 14:07:08 [error] 31#31: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/19 14:07:12 [error] 31#31: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/19 14:07:13 [error] 31#31: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/19 14:07:16 [error] 31#31: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/19 14:07:37 [error] 29#29: *16 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "POST /api-nodejs/auth/refresh-token HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/refresh-token", host: "fams.io.vn", referrer: "http://fams.io.vn/ScheduleManagement"
+2025/04/19 14:07:37 [error] 29#29: *16 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "POST /api-nodejs/auth/refresh-token HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/refresh-token", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/19 14:07:41 [error] 34#34: *14 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/19 14:07:46 [error] 31#31: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/19 14:07:47 [error] 31#31: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/19 14:07:47 [error] 31#31: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/19 14:07:48 [error] 31#31: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/19 14:07:48 [error] 31#31: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/19 14:07:55 [error] 31#31: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/19 14:07:55 [error] 31#31: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/19 14:07:56 [error] 31#31: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/19 14:07:56 [error] 31#31: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/19 14:07:57 [error] 31#31: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/19 14:08:02 [error] 29#29: *38 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.57, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/19 14:08:08 [error] 31#31: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/19 14:08:09 [error] 31#31: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/19 14:08:10 [error] 31#31: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/19 14:10:07 [error] 29#29: *52 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.57, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.32.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/19 14:10:39 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/19 14:10:39 [notice] 29#29: gracefully shutting down
+2025/04/19 14:10:39 [notice] 31#31: gracefully shutting down
+2025/04/19 14:10:39 [notice] 30#30: gracefully shutting down
+2025/04/19 14:10:39 [notice] 33#33: gracefully shutting down
+2025/04/19 14:10:39 [notice] 31#31: exiting
+2025/04/19 14:10:39 [notice] 30#30: exiting
+2025/04/19 14:10:39 [notice] 33#33: exiting
+2025/04/19 14:10:39 [notice] 32#32: gracefully shutting down
+2025/04/19 14:10:39 [notice] 32#32: exiting
+2025/04/19 14:10:39 [notice] 34#34: gracefully shutting down
+2025/04/19 14:10:39 [notice] 34#34: exiting
+2025/04/19 14:10:39 [notice] 31#31: exit
+2025/04/19 14:10:39 [notice] 33#33: exit
+2025/04/19 14:10:39 [notice] 32#32: exit
+2025/04/19 14:10:39 [notice] 30#30: exit
+2025/04/19 14:10:39 [notice] 34#34: exit
+2025/04/19 14:10:39 [notice] 1#1: signal 17 (SIGCHLD) received from 33
+2025/04/19 14:10:39 [notice] 1#1: worker process 33 exited with code 0
+2025/04/19 14:10:39 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/19 14:10:39 [notice] 1#1: signal 17 (SIGCHLD) received from 34
+2025/04/19 14:10:39 [notice] 1#1: worker process 34 exited with code 0
+2025/04/19 14:10:39 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/19 14:10:39 [notice] 1#1: signal 17 (SIGCHLD) received from 30
+2025/04/19 14:10:39 [notice] 1#1: worker process 30 exited with code 0
+2025/04/19 14:10:39 [notice] 1#1: worker process 32 exited with code 0
+2025/04/19 14:10:39 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/19 14:10:39 [notice] 1#1: signal 17 (SIGCHLD) received from 31
+2025/04/19 14:10:39 [notice] 1#1: worker process 31 exited with code 0
+2025/04/19 14:10:39 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/19 14:12:07 [notice] 1#1: using the "epoll" event method
+2025/04/19 14:12:07 [notice] 1#1: nginx/1.27.4
+2025/04/19 14:12:07 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/19 14:12:07 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/19 14:12:07 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/19 14:12:07 [notice] 1#1: start worker processes
+2025/04/19 14:12:07 [notice] 1#1: start worker process 29
+2025/04/19 14:12:07 [notice] 1#1: start worker process 30
+2025/04/19 14:12:07 [notice] 1#1: start worker process 31
+2025/04/19 14:12:07 [notice] 1#1: start worker process 32
+2025/04/19 14:12:07 [notice] 1#1: start worker process 33
+2025/04/19 14:12:07 [notice] 1#1: start worker process 34
+2025/04/19 14:12:08 [error] 31#31: *1 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.57, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://192.168.48.6:3000/ws", host: "fams.io.vn"
+2025/04/19 14:17:02 [error] 34#34: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.48.5:3000/api/auth/login", host: "fams.io.vn"
+2025/04/19 14:17:05 [error] 29#29: *11 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.48.5:3000/api/auth/login", host: "fams.io.vn"
+2025/04/19 14:17:20 [error] 34#34: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.48.5:3000/api/auth/login", host: "fams.io.vn"
+2025/04/19 14:17:23 [error] 29#29: *11 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.48.5:3000/api/auth/login", host: "fams.io.vn"
+2025/04/19 14:17:34 [error] 34#34: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.48.5:3000/api/auth/login", host: "fams.io.vn"
+2025/04/20 15:23:58 [error] 33#33: *1639 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 116.96.77.148, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://192.168.48.6:3000/ws", host: "fams.io.vn"
+2025/04/21 04:27:11 [error] 33#33: *2021 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.41, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.48.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/21 04:27:19 [error] 33#33: *2021 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.41, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.48.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/21 04:28:43 [error] 31#31: *2035 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.41, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.48.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/21 04:29:01 [error] 31#31: *2035 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.41, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.48.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/21 04:29:03 [error] 31#31: *2035 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.41, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.48.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/21 04:29:05 [error] 31#31: *2035 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.41, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.48.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/21 04:29:31 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/21 04:29:31 [notice] 31#31: gracefully shutting down
+2025/04/21 04:29:31 [notice] 30#30: gracefully shutting down
+2025/04/21 04:29:31 [notice] 32#32: gracefully shutting down
+2025/04/21 04:29:31 [notice] 30#30: exiting
+2025/04/21 04:29:31 [notice] 33#33: gracefully shutting down
+2025/04/21 04:29:31 [notice] 32#32: exiting
+2025/04/21 04:29:31 [notice] 33#33: exiting
+2025/04/21 04:29:31 [notice] 30#30: exit
+2025/04/21 04:29:31 [notice] 32#32: exit
+2025/04/21 04:29:31 [notice] 33#33: exit
+2025/04/21 04:29:31 [notice] 34#34: gracefully shutting down
+2025/04/21 04:29:31 [notice] 34#34: exiting
+2025/04/21 04:29:31 [notice] 34#34: exit
+2025/04/21 04:29:31 [notice] 29#29: gracefully shutting down
+2025/04/21 04:29:31 [notice] 29#29: exiting
+2025/04/21 04:29:31 [notice] 29#29: exit
+2025/04/21 04:29:31 [notice] 1#1: signal 17 (SIGCHLD) received from 32
+2025/04/21 04:29:31 [notice] 1#1: worker process 29 exited with code 0
+2025/04/21 04:29:31 [notice] 1#1: worker process 30 exited with code 0
+2025/04/21 04:29:31 [notice] 1#1: worker process 32 exited with code 0
+2025/04/21 04:29:31 [notice] 1#1: worker process 33 exited with code 0
+2025/04/21 04:29:31 [notice] 1#1: worker process 34 exited with code 0
+2025/04/21 04:29:31 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/21 04:29:31 [notice] 1#1: signal 17 (SIGCHLD) received from 29
+2025/04/21 04:33:14 [notice] 1#1: using the "epoll" event method
+2025/04/21 04:33:14 [notice] 1#1: nginx/1.27.4
+2025/04/21 04:33:14 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/21 04:33:14 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/21 04:33:14 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/21 04:33:14 [notice] 1#1: start worker processes
+2025/04/21 04:33:14 [notice] 1#1: start worker process 29
+2025/04/21 04:33:14 [notice] 1#1: start worker process 30
+2025/04/21 04:33:14 [notice] 1#1: start worker process 31
+2025/04/21 04:33:14 [notice] 1#1: start worker process 32
+2025/04/21 04:33:14 [notice] 1#1: start worker process 33
+2025/04/21 04:33:14 [notice] 1#1: start worker process 34
+2025/04/21 05:00:48 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/21 05:00:48 [notice] 29#29: gracefully shutting down
+2025/04/21 05:00:48 [notice] 29#29: exiting
+2025/04/21 05:00:48 [notice] 33#33: gracefully shutting down
+2025/04/21 05:00:48 [notice] 33#33: exiting
+2025/04/21 05:00:48 [notice] 30#30: gracefully shutting down
+2025/04/21 05:00:48 [notice] 30#30: exiting
+2025/04/21 05:00:48 [notice] 34#34: gracefully shutting down
+2025/04/21 05:00:48 [notice] 29#29: exit
+2025/04/21 05:00:48 [notice] 30#30: exit
+2025/04/21 05:00:48 [notice] 33#33: exit
+2025/04/21 05:00:48 [notice] 31#31: gracefully shutting down
+2025/04/21 05:00:48 [notice] 34#34: exiting
+2025/04/21 05:00:48 [notice] 32#32: gracefully shutting down
+2025/04/21 05:00:48 [notice] 32#32: exiting
+2025/04/21 05:00:48 [notice] 34#34: exit
+2025/04/21 05:00:48 [notice] 32#32: exit
+2025/04/21 05:00:48 [notice] 1#1: signal 17 (SIGCHLD) received from 30
+2025/04/21 05:00:48 [notice] 1#1: worker process 30 exited with code 0
+2025/04/21 05:00:48 [notice] 1#1: worker process 33 exited with code 0
+2025/04/21 05:00:48 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/21 05:00:48 [notice] 1#1: signal 17 (SIGCHLD) received from 29
+2025/04/21 05:00:48 [notice] 1#1: worker process 29 exited with code 0
+2025/04/21 05:00:48 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/21 05:00:48 [notice] 1#1: signal 17 (SIGCHLD) received from 32
+2025/04/21 05:00:48 [notice] 1#1: worker process 32 exited with code 0
+2025/04/21 05:00:48 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/21 05:00:48 [notice] 1#1: signal 17 (SIGCHLD) received from 34
+2025/04/21 05:00:48 [notice] 1#1: worker process 34 exited with code 0
+2025/04/21 05:00:48 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/21 05:02:39 [notice] 1#1: using the "epoll" event method
+2025/04/21 05:02:39 [notice] 1#1: nginx/1.27.4
+2025/04/21 05:02:39 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/21 05:02:39 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/21 05:02:39 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/21 05:02:39 [notice] 1#1: start worker processes
+2025/04/21 05:02:39 [notice] 1#1: start worker process 29
+2025/04/21 05:02:39 [notice] 1#1: start worker process 30
+2025/04/21 05:02:39 [notice] 1#1: start worker process 31
+2025/04/21 05:02:39 [notice] 1#1: start worker process 32
+2025/04/21 05:02:39 [notice] 1#1: start worker process 33
+2025/04/21 05:02:39 [notice] 1#1: start worker process 34
+2025/04/21 05:11:28 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/21 05:11:28 [notice] 29#29: gracefully shutting down
+2025/04/21 05:11:28 [notice] 32#32: gracefully shutting down
+2025/04/21 05:11:28 [notice] 30#30: gracefully shutting down
+2025/04/21 05:11:28 [notice] 31#31: gracefully shutting down
+2025/04/21 05:11:28 [notice] 34#34: gracefully shutting down
+2025/04/21 05:11:28 [notice] 33#33: gracefully shutting down
+2025/04/21 05:11:28 [notice] 31#31: exiting
+2025/04/21 05:11:28 [notice] 30#30: exiting
+2025/04/21 05:11:28 [notice] 34#34: exiting
+2025/04/21 05:11:28 [notice] 33#33: exiting
+2025/04/21 05:11:28 [notice] 31#31: exit
+2025/04/21 05:11:28 [notice] 30#30: exit
+2025/04/21 05:11:28 [notice] 33#33: exit
+2025/04/21 05:11:28 [notice] 34#34: exit
+2025/04/21 05:11:28 [notice] 32#32: exiting
+2025/04/21 05:11:28 [notice] 32#32: exit
+2025/04/21 05:11:28 [notice] 1#1: signal 17 (SIGCHLD) received from 31
+2025/04/21 05:11:28 [notice] 1#1: worker process 30 exited with code 0
+2025/04/21 05:11:28 [notice] 1#1: worker process 31 exited with code 0
+2025/04/21 05:11:28 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/21 05:11:28 [notice] 1#1: signal 17 (SIGCHLD) received from 32
+2025/04/21 05:11:28 [notice] 1#1: worker process 32 exited with code 0
+2025/04/21 05:11:28 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/21 05:11:28 [notice] 1#1: signal 17 (SIGCHLD) received from 34
+2025/04/21 05:11:28 [notice] 1#1: worker process 34 exited with code 0
+2025/04/21 05:11:28 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/21 05:11:28 [notice] 1#1: signal 17 (SIGCHLD) received from 33
+2025/04/21 05:11:28 [notice] 1#1: worker process 33 exited with code 0
+2025/04/21 05:11:28 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/21 05:13:14 [notice] 1#1: using the "epoll" event method
+2025/04/21 05:13:14 [notice] 1#1: nginx/1.27.4
+2025/04/21 05:13:14 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/21 05:13:14 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/21 05:13:14 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/21 05:13:14 [notice] 1#1: start worker processes
+2025/04/21 05:13:14 [notice] 1#1: start worker process 29
+2025/04/21 05:13:14 [notice] 1#1: start worker process 30
+2025/04/21 05:13:14 [notice] 1#1: start worker process 31
+2025/04/21 05:13:14 [notice] 1#1: start worker process 32
+2025/04/21 05:13:14 [notice] 1#1: start worker process 33
+2025/04/21 05:13:14 [notice] 1#1: start worker process 34
+2025/04/21 06:34:09 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/21 06:34:09 [notice] 34#34: gracefully shutting down
+2025/04/21 06:34:09 [notice] 30#30: gracefully shutting down
+2025/04/21 06:34:09 [notice] 32#32: gracefully shutting down
+2025/04/21 06:34:09 [notice] 29#29: gracefully shutting down
+2025/04/21 06:34:09 [notice] 33#33: gracefully shutting down
+2025/04/21 06:34:09 [notice] 30#30: exiting
+2025/04/21 06:34:09 [notice] 32#32: exiting
+2025/04/21 06:34:09 [notice] 30#30: exit
+2025/04/21 06:34:09 [notice] 29#29: exiting
+2025/04/21 06:34:09 [notice] 32#32: exit
+2025/04/21 06:34:09 [notice] 33#33: exiting
+2025/04/21 06:34:09 [notice] 31#31: gracefully shutting down
+2025/04/21 06:34:09 [notice] 29#29: exit
+2025/04/21 06:34:09 [notice] 33#33: exit
+2025/04/21 06:34:09 [notice] 31#31: exiting
+2025/04/21 06:34:09 [notice] 31#31: exit
+2025/04/21 06:34:09 [notice] 1#1: signal 17 (SIGCHLD) received from 31
+2025/04/21 06:34:09 [notice] 1#1: worker process 29 exited with code 0
+2025/04/21 06:34:09 [notice] 1#1: worker process 30 exited with code 0
+2025/04/21 06:34:09 [notice] 1#1: worker process 31 exited with code 0
+2025/04/21 06:34:09 [notice] 1#1: worker process 32 exited with code 0
+2025/04/21 06:34:09 [notice] 1#1: worker process 33 exited with code 0
+2025/04/21 06:34:09 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/21 06:34:09 [notice] 1#1: signal 17 (SIGCHLD) received from 33
+2025/04/21 06:35:18 [notice] 1#1: using the "epoll" event method
+2025/04/21 06:35:18 [notice] 1#1: nginx/1.27.4
+2025/04/21 06:35:18 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/21 06:35:18 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/21 06:35:18 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/21 06:35:18 [notice] 1#1: start worker processes
+2025/04/21 06:35:18 [notice] 1#1: start worker process 29
+2025/04/21 06:35:18 [notice] 1#1: start worker process 30
+2025/04/21 06:35:18 [notice] 1#1: start worker process 31
+2025/04/21 06:35:18 [notice] 1#1: start worker process 32
+2025/04/21 06:35:18 [notice] 1#1: start worker process 33
+2025/04/21 06:35:18 [notice] 1#1: start worker process 34
+2025/04/21 08:57:44 [notice] 1#1: signal 3 (SIGQUIT) received, shutting down
+2025/04/21 08:57:44 [notice] 31#31: gracefully shutting down
+2025/04/21 08:57:44 [notice] 29#29: gracefully shutting down
+2025/04/21 08:57:44 [notice] 32#32: gracefully shutting down
+2025/04/21 08:57:44 [notice] 30#30: gracefully shutting down
+2025/04/21 08:57:44 [notice] 29#29: exiting
+2025/04/21 08:57:44 [notice] 33#33: gracefully shutting down
+2025/04/21 08:57:44 [notice] 32#32: exiting
+2025/04/21 08:57:44 [notice] 33#33: exiting
+2025/04/21 08:57:44 [notice] 30#30: exiting
+2025/04/21 08:57:44 [notice] 29#29: exit
+2025/04/21 08:57:44 [notice] 32#32: exit
+2025/04/21 08:57:44 [notice] 33#33: exit
+2025/04/21 08:57:44 [notice] 30#30: exit
+2025/04/21 08:57:44 [notice] 34#34: gracefully shutting down
+2025/04/21 08:57:44 [notice] 34#34: exiting
+2025/04/21 08:57:44 [notice] 34#34: exit
+2025/04/21 08:57:44 [notice] 1#1: signal 17 (SIGCHLD) received from 33
+2025/04/21 08:57:44 [notice] 1#1: worker process 29 exited with code 0
+2025/04/21 08:57:44 [notice] 1#1: worker process 30 exited with code 0
+2025/04/21 08:57:44 [notice] 1#1: worker process 33 exited with code 0
+2025/04/21 08:57:44 [notice] 1#1: worker process 32 exited with code 0
+2025/04/21 08:57:44 [notice] 1#1: worker process 34 exited with code 0
+2025/04/21 08:57:44 [notice] 1#1: signal 29 (SIGIO) received
+2025/04/21 08:57:44 [notice] 1#1: signal 17 (SIGCHLD) received from 34
+2025/04/21 10:27:36 [notice] 1#1: using the "epoll" event method
+2025/04/21 10:27:36 [notice] 1#1: nginx/1.27.5
+2025/04/21 10:27:36 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/21 10:27:36 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/21 10:27:36 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/21 10:27:36 [notice] 1#1: start worker processes
+2025/04/21 10:27:36 [notice] 1#1: start worker process 29
+2025/04/21 10:27:36 [notice] 1#1: start worker process 30
+2025/04/21 10:27:36 [notice] 1#1: start worker process 31
+2025/04/21 10:27:36 [notice] 1#1: start worker process 32
+2025/04/21 10:27:36 [notice] 1#1: start worker process 33
+2025/04/21 10:27:36 [notice] 1#1: start worker process 34
+2025/04/21 15:09:03 [error] 34#34: *561 client intended to send too large body: 1253527 bytes, client: 42.119.101.41, server: localhost, request: "POST /api-nodejs/avatar/upload HTTP/1.1", host: "fams.io.vn", referrer: "http://fams.io.vn/profile"
+2025/04/21 15:09:15 [error] 34#34: *571 client intended to send too large body: 1253527 bytes, client: 42.119.101.41, server: localhost, request: "POST /api-nodejs/avatar/upload HTTP/1.1", host: "fams.io.vn", referrer: "http://fams.io.vn/profile"
+2025/04/21 15:20:14 [error] 30#30: *693 upstream prematurely closed connection while reading response header from upstream, client: 116.96.77.176, server: localhost, request: "GET /api-nodejs/users?page=1&search=&grade=&roles=&className=&limit=500&phone HTTP/1.1", upstream: "http://192.168.160.5:3000/api/users?page=1&search=&grade=&roles=&className=&limit=500&phone", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/21 15:21:09 [error] 30#30: *693 upstream prematurely closed connection while reading response header from upstream, client: 116.96.77.176, server: localhost, request: "GET /api-nodejs/users?page=1&academicYear=&search=&grade=&roles=&className=&limit=100&phone= HTTP/1.1", upstream: "http://192.168.160.5:3000/api/users?page=1&academicYear=&search=&grade=&roles=&className=&limit=100&phone=", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/21 15:21:09 [error] 29#29: *748 upstream prematurely closed connection while reading response header from upstream, client: 116.96.77.176, server: localhost, request: "GET /api-nodejs/classes HTTP/1.1", upstream: "http://192.168.160.5:3000/api/classes", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/21 15:21:09 [error] 29#29: *720 upstream prematurely closed connection while reading response header from upstream, client: 116.96.77.176, server: localhost, request: "GET /api-nodejs/users?page=1&search=&grade=&roles=&className=&limit=500&phone HTTP/1.1", upstream: "http://192.168.160.5:3000/api/users?page=1&search=&grade=&roles=&className=&limit=500&phone", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/21 15:21:09 [error] 30#30: *693 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "GET /api-nodejs/users?page=1&academicYear=&search=&grade=&roles=&className=&limit=100&phone= HTTP/1.1", upstream: "http://192.168.160.5:3000/api/users?page=1&academicYear=&search=&grade=&roles=&className=&limit=100&phone=", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/21 15:21:09 [error] 29#29: *720 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "GET /api-nodejs/users?page=1&search=&grade=&roles=&className=&limit=500&phone HTTP/1.1", upstream: "http://192.168.160.5:3000/api/users?page=1&search=&grade=&roles=&className=&limit=500&phone", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/21 15:21:09 [error] 30#30: *693 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "GET /api-nodejs/users?page=1&academicYear=&search=&grade=&roles=&className=&limit=100&phone= HTTP/1.1", upstream: "http://192.168.160.5:3000/api/users?page=1&academicYear=&search=&grade=&roles=&className=&limit=100&phone=", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/21 15:21:55 [error] 29#29: *748 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/users?page=1&academicYear=&search=&grade=&roles=teacher&className=&limit=100&phone= HTTP/1.1", upstream: "http://192.168.160.5:3000/api/users?page=1&academicYear=&search=&grade=&roles=teacher&className=&limit=100&phone=", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/21 15:33:48 [error] 33#33: *942 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/users?page=1&academicYear=&search=&grade=&roles=teacher&className=&limit=100&phone= HTTP/1.1", upstream: "http://192.168.160.5:3000/api/users?page=1&academicYear=&search=&grade=&roles=teacher&className=&limit=100&phone=", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/21 15:33:56 [error] 33#33: *942 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/users?page=1&academicYear=&search=&grade=&roles=teacher&className=&limit=100&phone= HTTP/1.1", upstream: "http://192.168.160.5:3000/api/users?page=1&academicYear=&search=&grade=&roles=teacher&className=&limit=100&phone=", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/21 15:34:16 [error] 33#33: *942 upstream prematurely closed connection while reading response header from upstream, client: 116.96.77.176, server: localhost, request: "GET /api-nodejs/users?page=1&academicYear=&search=&grade=&roles=teacher&className=&limit=100&phone= HTTP/1.1", upstream: "http://192.168.160.5:3000/api/users?page=1&academicYear=&search=&grade=&roles=teacher&className=&limit=100&phone=", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/21 16:39:34 [error] 31#31: *1418 client intended to send too large body: 2345064 bytes, client: 42.119.101.41, server: localhost, request: "POST /api-nodejs/users/create HTTP/1.1", host: "fams.io.vn", referrer: "http://fams.io.vn/UserManagement"
+2025/04/21 16:47:51 [error] 31#31: *1481 upstream timed out (110: Operation timed out) while reading response header from upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/refresh-token HTTP/1.1", upstream: "http://192.168.160.5:3000/api/auth/refresh-token", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/21 16:48:54 [error] 31#31: *1487 upstream timed out (110: Operation timed out) while reading response header from upstream, client: 42.119.101.41, server: localhost, request: "GET / HTTP/1.1", upstream: "http://192.168.160.6:3000/", host: "fams.io.vn"
+2025/04/21 16:50:27 [error] 31#31: *1496 upstream timed out (110: Operation timed out) while reading response header from upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://192.168.160.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/22 03:07:25 [notice] 1#1: using the "epoll" event method
+2025/04/22 03:07:25 [notice] 1#1: nginx/1.27.5
+2025/04/22 03:07:25 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
+2025/04/22 03:07:25 [notice] 1#1: OS: Linux 6.8.0-57-generic
+2025/04/22 03:07:25 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
+2025/04/22 03:07:25 [notice] 1#1: start worker processes
+2025/04/22 03:07:25 [notice] 1#1: start worker process 29
+2025/04/22 03:07:25 [notice] 1#1: start worker process 30
+2025/04/22 03:07:25 [notice] 1#1: start worker process 31
+2025/04/22 03:07:25 [notice] 1#1: start worker process 32
+2025/04/22 03:07:25 [notice] 1#1: start worker process 33
+2025/04/22 03:07:25 [notice] 1#1: start worker process 34
+2025/04/22 04:18:16 [error] 32#32: *224 client intended to send too large body: 2343244 bytes, client: 42.119.101.43, server: localhost, request: "POST /api-nodejs/avatar/upload HTTP/1.1", host: "fams.io.vn", referrer: "http://14.225.204.42:3000/"
+2025/04/22 06:11:55 [error] 29#29: *1319 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 42.119.101.43, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.19.0.6:3000/ws", host: "fams.io.vn"
+2025/04/22 06:45:57 [error] 33#33: *1673 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.43, server: localhost, request: "POST /api-nodejs/auth/refresh-token HTTP/1.1", upstream: "http://172.19.0.5:3000/api/auth/refresh-token", host: "fams.io.vn", referrer: "http://fams.io.vn/"
+2025/04/22 06:45:57 [error] 33#33: *1674 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.43, server: localhost, request: "POST /api-nodejs/auth/refresh-token HTTP/1.1", upstream: "http://172.19.0.5:3000/api/auth/refresh-token", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/22 09:41:37 [error] 33#33: *2798 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 116.96.77.148, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.19.0.6:3000/ws", host: "fams.io.vn"
+2025/04/22 10:33:10 [error] 31#31: *3592 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.43, server: localhost, request: "GET /api-nodejs/classes?grade=&search=12A1&homeroomTeacherd=&academicYear=2024-2025 HTTP/1.1", upstream: "http://172.19.0.5:3000/api/classes?grade=&search=12A1&homeroomTeacherd=&academicYear=2024-2025", host: "fams.io.vn", referrer: "http://fams.io.vn/UserManagement"
+2025/04/22 10:58:52 [error] 29#29: *3779 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.148, server: localhost, request: "PUT /api-nodejs/users/update/anhvnst3 HTTP/1.1", upstream: "http://172.19.0.5:3000/api/users/update/anhvnst3", host: "fams.io.vn", referrer: "http://fams.io.vn/profile"
+2025/04/22 11:05:27 [error] 29#29: *3830 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 116.96.77.148, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.19.0.6:3000/ws", host: "fams.io.vn"
+2025/04/22 12:08:12 [error] 29#29: *4170 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 116.96.77.148, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.19.0.6:3000/ws", host: "fams.io.vn"
+2025/04/22 12:30:27 [error] 32#32: *4700 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 116.96.77.148, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.19.0.6:3000/ws", host: "fams.io.vn"
+2025/04/22 12:44:54 [error] 33#33: *4755 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 42.119.101.43, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.19.0.6:3000/ws", host: "fams.io.vn"
+2025/04/22 13:23:18 [error] 33#33: *5068 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "GET /api-nodejs/classrooms HTTP/1.1", upstream: "http://172.19.0.5:3000/api/classrooms", host: "fams.io.vn"
+2025/04/22 13:23:31 [error] 33#33: *5070 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "GET /api-nodejs/classrooms/ HTTP/1.1", upstream: "http://172.19.0.5:3000/api/classrooms/", host: "fams.io.vn"
+2025/04/22 13:25:04 [error] 33#33: *5072 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/api-nodejs/schedules/3730 HTTP/1.1", upstream: "http://172.19.0.5:3000/api/api-nodejs/schedules/3730", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/22 13:25:20 [error] 33#33: *5072 connect() failed (111: Connection refused) while connecting to upstream, client: 116.96.77.176, server: localhost, request: "OPTIONS /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.19.0.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://localhost:3000/"
+2025/04/22 13:25:22 [error] 33#33: *5075 connect() failed (111: Connection refused) while connecting to upstream, client: 54.86.50.139, server: localhost, request: "GET /api-nodejs/classrooms HTTP/1.1", upstream: "http://172.19.0.5:3000/api/classrooms", host: "fams.io.vn"
+2025/04/22 13:25:54 [error] 33#33: *5077 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.43, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.19.0.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/22 13:25:55 [error] 33#33: *5077 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.43, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.19.0.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/22 13:25:55 [error] 33#33: *5077 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.43, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.19.0.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/22 13:25:55 [error] 33#33: *5077 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.43, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.19.0.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/22 13:25:55 [error] 33#33: *5077 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.43, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.19.0.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/22 13:25:56 [error] 33#33: *5077 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.43, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.19.0.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/22 13:25:56 [error] 33#33: *5077 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.43, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.19.0.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/22 13:25:56 [error] 33#33: *5077 connect() failed (111: Connection refused) while connecting to upstream, client: 42.119.101.43, server: localhost, request: "POST /api-nodejs/auth/login HTTP/1.1", upstream: "http://172.19.0.5:3000/api/auth/login", host: "fams.io.vn", referrer: "http://fams.io.vn/login"
+2025/04/22 13:29:52 [error] 33#33: *5107 connect() failed (111: Connection refused) while connecting to upstream, client: 1.53.225.52, server: localhost, request: "GET /avatars/student/nganttst4.jpg HTTP/1.1", upstream: "http://172.19.0.5:3000/avatars/student/nganttst4.jpg", host: "fams.io.vn", referrer: "http://fams.io.vn/Schedule"
+2025/04/22 13:43:40 [error] 31#31: *5288 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 116.96.77.148, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.19.0.6:3000/ws", host: "fams.io.vn"
+2025/04/22 14:17:55 [error] 32#32: *5309 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 116.96.77.148, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.19.0.6:3000/ws", host: "fams.io.vn"
+2025/04/22 14:34:01 [error] 29#29: *5511 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 116.96.77.148, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.19.0.6:3000/ws", host: "fams.io.vn"
+2025/04/22 14:38:07 [error] 30#30: *5564 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 116.96.77.148, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.19.0.6:3000/ws", host: "fams.io.vn"
+2025/04/22 14:54:14 [error] 33#33: *5687 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 116.96.77.148, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.19.0.6:3000/ws", host: "fams.io.vn"
+2025/04/22 14:56:57 [error] 33#33: *5697 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 116.96.77.148, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.19.0.6:3000/ws", host: "fams.io.vn"
+2025/04/22 14:59:14 [error] 34#34: *5725 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 116.96.77.148, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.19.0.6:3000/ws", host: "fams.io.vn"
+2025/04/22 15:01:03 [error] 29#29: *5749 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 116.96.77.148, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.19.0.6:3000/ws", host: "fams.io.vn"
+2025/04/22 15:01:13 [error] 29#29: *5751 recv() failed (104: Connection reset by peer) while proxying upgraded connection, client: 116.96.77.148, server: localhost, request: "GET /ws HTTP/1.1", upstream: "http://172.19.0.6:3000/ws", host: "fams.io.vn"

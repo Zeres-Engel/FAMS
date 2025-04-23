@@ -16,7 +16,7 @@ from ..generators.users import (
     create_admin_user,
     link_parents_to_students
 )
-from ..generators.classes import create_all_classes
+from ..generators.classes import create_all_classes, assign_homeroom_teachers
 from ..schedule.generator import generate_all_schedules
 from ..generators.curriculum import generate_semesters
 
@@ -92,6 +92,11 @@ def init_database_from_excel(excel_files=None):
     # Create classes and distribute students
     classes = create_all_classes(db, students_by_grade)
     print(f"  - Created {len(classes)} classes")
+    
+    # Assign homeroom teachers for all classes
+    for academic_year in ["2022-2023", "2023-2024", "2024-2025"]:
+        assignment_result = assign_homeroom_teachers(db, academic_year)
+        print(f"  - Assigned {assignment_result['assigned_count']} homeroom teachers for {academic_year}")
     
     # Step 4: Generate schedules
     print("\n[4] Generating schedules...")

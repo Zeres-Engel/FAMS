@@ -9,6 +9,8 @@ import {
   HeadCell,
   NotifyHeadCell,
   NotifyProps,
+  RFIDData,
+  RFIDHeadCell,
   UserHeadCell,
 } from "../../../model/tableModels/tableDataModels.model";
 import { UserData } from "../../../model/userModels/userDataModels.model";
@@ -22,7 +24,8 @@ interface useTableHeaderHookProps {
       | keyof ClassData
       | keyof AttendanceLog
       | keyof ClassArrangementData
-      | keyof NotifyProps
+      | keyof NotifyProps 
+      | keyof RFIDData
   ) => void;
   headCellsData:
     | HeadCell[]
@@ -30,7 +33,8 @@ interface useTableHeaderHookProps {
     | ClassHeadCell[]
     | AttendanceHeadCell[]
     | ClassArrangementHeadCellProps[]
-    | NotifyHeadCell[];
+    | NotifyHeadCell[]
+    | RFIDHeadCell[];
 }
 function useTableHeaderHook(props: useTableHeaderHookProps) {
   const { onRequestSort, headCellsData } = props;
@@ -43,6 +47,7 @@ function useTableHeaderHook(props: useTableHeaderHookProps) {
         | keyof AttendanceLog
         | keyof ClassArrangementData
         | keyof NotifyProps
+        | keyof RFIDData
     ) =>
     (event: React.MouseEvent<unknown>) => {
       onRequestSort(event, property);

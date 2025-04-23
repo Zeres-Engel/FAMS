@@ -30,6 +30,8 @@ import {
   HeadCell,
   NotifyHeadCell,
   NotifyProps,
+  RFIDData,
+  RFIDHeadCell,
   SystemRole,
   UserHeadCell,
 } from "../../model/tableModels/tableDataModels.model";
@@ -43,10 +45,17 @@ import {
   UserData,
 } from "../../model/userModels/userDataModels.model";
 import useState from "react";
-import { ClassData } from "../../model/classModels/classModels.model";
+import { ClassData, SearchClassFilters } from "../../model/classModels/classModels.model";
 import EditAttendanceForm from "./EditAttendanceForm/EditAttendanceForm";
 import CreateNotifyForm from "./CreateNotifyForm/CreateNotifyForm";
 import ShowNotify from "./ShowNotify/ShowNotify";
+
+// Thêm interface cho pagination
+interface PaginationProps {
+  page: number;
+  limit: number;
+  total: number;
+}
 
 interface DataTableProps {
   headCellsData:
@@ -55,14 +64,16 @@ interface DataTableProps {
     | ClassHeadCell[]
     | AttendanceHeadCell[]
     | ClassArrangementHeadCellProps[]
-    | NotifyHeadCell[];
+    | NotifyHeadCell[]
+    | RFIDHeadCell[];
   tableMainData:
     | UserData[]
     | Data[]
     | ClassData[]
     | AttendanceLog[]
     | ClassArrangementData[]
-    | NotifyProps[];
+    | NotifyProps[]
+    | RFIDData[];
   tableTitle: string;
   isCheckBox: boolean;
   isAdmin?: boolean;
@@ -70,6 +81,7 @@ interface DataTableProps {
   isAttendance?: boolean;
   isUserManagement?: boolean;
   setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
+  setFiltersClass?: React.Dispatch<React.SetStateAction<SearchClassFilters>>;
   isRoleTeacher?: boolean;
   isClassArrangement?: boolean;
   isNewSemester?: boolean;
@@ -77,6 +89,12 @@ interface DataTableProps {
   isRoleStudent?: boolean;
   isNotifyPage?: boolean;
   isNotifyRole?: string;
+  isRFIDPage?: boolean;
+  classOptions?: string[];
+  // Thêm props mới cho pagination
+  pagination?: PaginationProps;
+  onPageChange?: (newPage: number) => void;
+  onRowsPerPageChange?: (newLimit: number) => void;
 }
 
 export default function DataTable({
@@ -90,12 +108,18 @@ export default function DataTable({
   isUserManagement,
   isRoleTeacher,
   setFiltersUser,
+  setFiltersClass,
   isClassArrangement,
   isNewSemester,
   isTeacherView,
   isRoleStudent,
   isNotifyPage,
   isNotifyRole,
+  isRFIDPage,
+  classOptions,
+  pagination,
+  onPageChange,
+  onRowsPerPageChange
 }: DataTableProps) {
   const { state, handler } = useDataTableHook({ tableMainData });
 
@@ -114,7 +138,7 @@ export default function DataTable({
               grade: row.grade,
               teacherId: row.homeroomTeacherd,
               academicYear: row.academicYear,
-            });
+            },row.id);
           } else if (isAttendance && isRoleTeacher) {
             handler.handleEditAttendanceClick({
               attendanceId: row.attendanceId,
@@ -180,13 +204,27 @@ export default function DataTable({
     <>
       {/* <TableCell align="left">{row.id}</TableCell> */}
       {/* <TableCell align="left">{row.username}</TableCell> */}
+      <TableCell align="left">
+        <img
+          src={
+            row.avatar
+              ? row.avatar
+              : `https://www.pngplay.com/wp-content/uploads/12/User-Avatar-Profile-Transparent-Clip-Art-PNG.png`
+          }
+          alt="User Avatar"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            objectFit: "cover",
+          }}
+        />
+      </TableCell>
+      <TableCell align="left">{row.name}</TableCell>
       <TableCell align="left">{row.email}</TableCell>
       {/* <TableCell align="left">{row.backup_email}</TableCell> */}
-      <TableCell align="left">{row.name}</TableCell>
       <TableCell align="left">{row.phoneSub}</TableCell>
       <TableCell align="left">{row.role}</TableCell>
-      <TableCell align="left">{row.classSubId}</TableCell>
-      <TableCell align="left">{row.gradeSub}</TableCell>
       <TableCell align="left">{row.createdAt}</TableCell>
       <TableCell align="left">{row.updatedAt}</TableCell>
     </>
@@ -197,7 +235,7 @@ export default function DataTable({
       <TableCell align="left">{row.grade}</TableCell>
       <TableCell align="left">{row.homeroomTeacherd || "none"}</TableCell>
       <TableCell align="left">{row.studentNumber || 0}</TableCell>
-      <TableCell align="left">{row.batchId}</TableCell>
+      {/* <TableCell align="left">{row.batchId}</TableCell> */}
       <TableCell align="left">{row.academicYear}</TableCell>
       <TableCell align="left">{row.createdAt}</TableCell>
     </>
@@ -226,6 +264,14 @@ export default function DataTable({
       <TableCell align="left">{row.message}</TableCell>
       <TableCell align="left">{row.sender}</TableCell>
       <TableCell align="left">{row.receiver}</TableCell>
+    </>
+  );
+  const renderRFIDNewCells = (row: any) => (
+    <>
+      <TableCell align="left">{row.userid}</TableCell>
+      <TableCell align="left">{row.rfid}</TableCell>
+      <TableCell align="left">{row.expTime}</TableCell>
+      <TableCell align="left">{row.faceAttendance}</TableCell>
     </>
   );
   const renderAttendanceManagementCells = (row: any) => (
@@ -273,9 +319,33 @@ export default function DataTable({
     </>
   );
 
+  // Thêm hàm xử lý phân trang
+  const handleChangePage = (event: unknown, newPage: number) => {
+    if (onPageChange) {
+      onPageChange(newPage + 1); // API uses 1-based indexing
+    }
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (onRowsPerPageChange) {
+      onRowsPerPageChange(parseInt(event.target.value, 10));
+    }
+  };
+
   return (
     <Box sx={{ width: "100%" }} className="dataTable-Container">
-      <Paper sx={{ width: "100%", mb: 2 }} className="dataTable-Table">
+      {/* <Paper sx={{ width: "100%", mb: 2 }} className="dataTable-Table"> */}
+      <Paper
+        sx={{
+          width: "100%",
+          mb: 2,
+          border: "1px solid #ddd",
+          borderRadius: 2,
+          boxShadow: "0px 2px 10px rgba(0,0,0,0.05)",
+          overflow: "hidden",
+        }}
+        className="dataTable-Table"
+      >
         <TableToolBar
           isUserManagement={isUserManagement}
           numSelected={state.selected.length}
@@ -284,12 +354,15 @@ export default function DataTable({
           isClassManagement={isClassManagement}
           isAttendance={isAttendance}
           setFiltersUser={setFiltersUser}
+          setFiltersClass={setFiltersClass}
           isTeacher={isRoleTeacher}
           isClassArrangement={isClassArrangement}
           isNewSemester={isNewSemester}
           isTeacherView={isTeacherView}
           isRoleStudent={isRoleStudent}
           isNotifyPage={isNotifyPage}
+          isRFIDPage={isRFIDPage}
+          classOptions={classOptions}
         />
         <TableContainer>
           <Table sx={{ minWidth: 850 }} aria-labelledby="tableTitle">
@@ -306,6 +379,7 @@ export default function DataTable({
               isTeacher={isRoleTeacher}
               isNewSemester={isNewSemester}
               isClassArrangement={isClassArrangement}
+              isRFIDPage={isRFIDPage}
             />
             <TableBody>
               {state.visibleRows.map((row, index) => {
@@ -317,7 +391,7 @@ export default function DataTable({
                   <TableRow
                     hover
                     tabIndex={-1}
-                    key={row?.id}
+                    key={`table-row-${row?.id || index}-${tableTitle}`}
                     sx={{ cursor: "pointer" }}
                     onClick={event =>
                       isCheckBox &&
@@ -341,6 +415,7 @@ export default function DataTable({
                     {isNewSemester && renderNewSemesterArrangementNewCells(row)}
                     {isNotifyPage && renderNotifyNewCells(row)}
                     {isNotifyPage && renderActionCell(row)}
+                    {isRFIDPage && renderRFIDNewCells(row)}
                   </TableRow>
                 );
               })}
@@ -433,15 +508,20 @@ export default function DataTable({
         )}
 
         {/* Pagination */}
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={state.rows.length}
-          rowsPerPage={state.rowsPerPage}
-          page={state.page}
-          onPageChange={handler.handleChangePage}
-          onRowsPerPageChange={handler.handleChangeRowsPerPage}
-        />
+        {pagination && (
+          <TablePagination
+            rowsPerPageOptions={[]}
+            component="div"
+            count={pagination.total}
+            rowsPerPage={5}
+            page={pagination.page - 1}
+            onPageChange={handleChangePage}
+            labelDisplayedRows={({ from, to, count }) => {
+              const totalPages = Math.ceil(count / 5);
+              return `${from}–${to} of ${count} (Page ${pagination.page} of ${totalPages})`;
+            }}
+          />
+        )}
       </Paper>
       {state.isEditOpen && isUserManagement && state.editingUser && (
         <EditUserModal
@@ -464,7 +544,7 @@ export default function DataTable({
 
       {state.isEditOpen &&
         isAttendance &&
-        state.editingClass &&
+        state.editingAttendance &&
         isRoleTeacher && (
           <EditAttendanceForm
             open={state.isEditOpen}

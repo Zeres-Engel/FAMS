@@ -11,16 +11,16 @@ CREATE TABLE Announcement
 
 CREATE TABLE AttendanceLog
 (
-  AttendanceID INT                       NULL     AUTO_INCREMENT,
-  ScheduleID   INT                       NOT NULL,
-  UserID       VARCHAR(100)              NOT NULL,
-  CheckInFace  BLOB                      NULL    ,
-  CheckIn      DATETIME                  NULL    ,
-  Status       ENUM(Present,Late,Absent) NULL     DEFAULT Absent,
-  CreatedAt    DATETIME                  NULL     DEFAULT CURRENT_TIMESTAMP,
-  UpdatedAt    DATETIME                  NULL     DEFAULT CURRENT_TIMESTAMP,
-  IsActive     BOOLEAN                   NULL     DEFAULT TRUE,
-  Note         VARCHAR(100)              NULL    ,
+  AttendanceID INT                              NULL     AUTO_INCREMENT,
+  ScheduleID   INT                              NOT NULL,
+  UserID       VARCHAR(100)                     NOT NULL,
+  CheckInFace  BLOB                             NULL    ,
+  CheckIn      DATETIME                         NULL    ,
+  Note         VARCHAR(100)                     NULL    ,
+  Status       ENUM(Present,Late,Absent,NotNow) NULL     DEFAULT Absent,
+  CreatedAt    DATETIME                         NULL     DEFAULT CURRENT_TIMESTAMP,
+  UpdatedAt    DATETIME                         NULL     DEFAULT CURRENT_TIMESTAMP,
+  IsActive     BOOLEAN                          NULL     DEFAULT TRUE,
   PRIMARY KEY (AttendanceID)
 );
 
@@ -107,38 +107,40 @@ CREATE TABLE CurriculumSubject
 
 CREATE TABLE Device
 (
-  DeviceID   INT          NULL     AUTO_INCREMENT,
-  DeviceName VARCHAR(100) NOT NULL,
-  DeviceType VARCHAR(50)  NULL     DEFAULT Jetson,
-  Location   VARCHAR(100) NULL    ,
-  Status     BOOLEAN      NULL     DEFAULT TRUE,
-  CreatedAt  DATETIME     NULL     DEFAULT CURRENT_TIMESTAMP,
-  UpdatedAt  DATETIME     NULL     DEFAULT CURRENT_TIMESTAMP,
-  IsActive   BOOLEAN      NULL     DEFAULT TRUE,
+  DeviceID    INT          NULL     AUTO_INCREMENT,
+  DeviceName  VARCHAR(100) NOT NULL,
+  DeviceType  VARCHAR(50)  NULL     DEFAULT Jetson,
+  Status      BOOLEAN      NULL     DEFAULT TRUE,
+  CreatedAt   DATETIME     NULL     DEFAULT CURRENT_TIMESTAMP,
+  UpdatedAt   DATETIME     NULL     DEFAULT CURRENT_TIMESTAMP,
+  IsActive    BOOLEAN      NULL     DEFAULT TRUE,
+  ClassroomID INT          NOT NULL,
   PRIMARY KEY (DeviceID)
 );
 
 CREATE TABLE FaceVector
 (
-  FaceVectorID INT          NULL     AUTO_INCREMENT,
-  UserID       VARCHAR(100) NOT NULL,
-  ModelID      INT          NULL    ,
-  Vector       JSON         NOT NULL,
-  CapturedDate DATETIME     NULL     DEFAULT CURRENT_TIMESTAMP,
-  CreatedAt    DATETIME     NULL     DEFAULT CURRENT_TIMESTAMP,
-  UpdatedAt    DATETIME     NULL     DEFAULT CURRENT_TIMESTAMP,
-  IsActive     BOOLEAN      NULL     DEFAULT TRUE,
+  FaceVectorID INT                            NULL     AUTO_INCREMENT,
+  UserID       VARCHAR(100)                   NOT NULL,
+  ModelD       INT                            NULL    ,
+  Vector       JSON                           NOT NULL,
+  CapturedDate DATETIME                       NULL     DEFAULT CURRENT_TIMESTAMP,
+  CreatedAt    DATETIME                       NULL     DEFAULT CURRENT_TIMESTAMP,
+  UpdatedAt    DATETIME                       NULL     DEFAULT CURRENT_TIMESTAMP,
+  IsActive     BOOLEAN                        NULL     DEFAULT TRUE,
+  Category     ENUM(front,up,down,left,right) NULL    ,
+  Score        FLOAT                          NULL    ,
   PRIMARY KEY (FaceVectorID)
 );
 
 CREATE TABLE ModelVersion
 (
   ModelID        INT                   NULL     AUTO_INCREMENT,
+  DeviceID       INT                   NULL    ,
   ModelName      VARCHAR(100)          NOT NULL,
   Version        VARCHAR(50)           NOT NULL,
   DeploymentDate DATETIME              NULL     DEFAULT CURRENT_TIMESTAMP,
   Description    TEXT                  NULL    ,
-  DeviceID       INT                   NULL    ,
   CheckpointPath VARCHAR(255)          NOT NULL,
   Status         ENUM(Active,Inactive) NULL     DEFAULT Active,
   CreatedAt      DATETIME              NULL     DEFAULT CURRENT_TIMESTAMP,
@@ -247,11 +249,11 @@ CREATE TABLE Student
 (
   StudentID   INT          NULL     AUTO_INCREMENT,
   UserID      VARCHAR(100) NOT NULL,
+  ClassIDs    INT          NULL    ,
+  BatchID     INT          NULL    ,
   FullName    VARCHAR(100) NOT NULL,
   Email       VARCHAR(100) NULL    ,
   DateOfBirth DATE         NULL    ,
-  ClassID     INT          NULL    ,
-  BatchID     INT          NULL    ,
   Gender      VARCHAR(10)  NULL    ,
   Address     VARCHAR(200) NULL    ,
   Phone       VARCHAR(20)  NULL    ,
@@ -280,6 +282,7 @@ CREATE TABLE Teacher
 (
   TeacherID      INT          NULL     AUTO_INCREMENT,
   UserID         VARCHAR(100) NOT NULL,
+  ClassIDs                    NULL    ,
   FullName       VARCHAR(100) NOT NULL,
   Email          VARCHAR(100) NULL    ,
   DateOfBirth    DATE         NULL    ,
@@ -374,6 +377,11 @@ ALTER TABLE CurriculumSubject
     FOREIGN KEY (SubjectID)
     REFERENCES Subject (SubjectID);
 
+ALTER TABLE Device
+  ADD CONSTRAINT FK_Classroom_TO_Device
+    FOREIGN KEY (ClassroomID)
+    REFERENCES Classroom (ClassroomID);
+
 ALTER TABLE FaceVector
   ADD CONSTRAINT FK_UserAccount_TO_FaceVector
     FOREIGN KEY (UserID)
@@ -381,7 +389,7 @@ ALTER TABLE FaceVector
 
 ALTER TABLE FaceVector
   ADD CONSTRAINT FK_ModelVersion_TO_FaceVector
-    FOREIGN KEY (ModelID)
+    FOREIGN KEY (ModelD)
     REFERENCES ModelVersion (ModelID);
 
 ALTER TABLE ModelVersion
@@ -431,7 +439,7 @@ ALTER TABLE Student
 
 ALTER TABLE Student
   ADD CONSTRAINT FK_Class_TO_Student
-    FOREIGN KEY (ClassID)
+    FOREIGN KEY (ClassIDs)
     REFERENCES Class (ClassID);
 
 ALTER TABLE Student

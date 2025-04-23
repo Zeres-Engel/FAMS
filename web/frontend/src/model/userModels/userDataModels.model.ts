@@ -1,3 +1,5 @@
+import { ClassID } from "../tableModels/tableDataModels.model";
+
 interface UserData {
   id: string;
   username: string;
@@ -12,7 +14,7 @@ interface UserData {
   Parent?: Parent[];
   phoneSub?: string;
   classSubId?: number;
-  classTeacher?: string[];
+  classTeacher?: ClassID[];
   gradeSub?: string;
   teacherId?:string;
   teacherFirstName?: string;
@@ -24,6 +26,7 @@ interface UserData {
   parentCareer? : string;
   parentEmail?: string;
   parentAddr?: string;
+  avatar?: string;
   parentDob?: string;
 }
 interface UserDataDetails {
@@ -38,6 +41,7 @@ interface UserDataDetails {
   batchId: number;
   className: string;
   grade: string;
+  classes?: ClassID[];
 }
 interface Parent {
   parentId: string;
@@ -57,6 +61,8 @@ interface SearchFilters {
   className?: string;
   limit?: number;
   phone?: string;
+  academicYear?: string;
+  page?: number;
 }
 type Gender = "Male" | "Female";
 type Role = "student" | "teacher";
@@ -65,6 +71,7 @@ interface CreateUserPayload {
   role: Role;
   firstName: string;
   lastName: string;
+  email: string;
   backup_email: string;
   phone: string;
   gender: Gender;
@@ -74,8 +81,11 @@ interface CreateUserPayload {
   parentCareers: string[];
   parentPhones: string[];
   parentGenders: boolean[]; // true: Male, false: Female
+  parentEmails: string[];
   major: string;
+  degree: string;
   weeklyCapacity: number; // as number, not string
+  avatar?: File | null;
 }
 export interface UpdateTeacherForm {
   firstName: string;
@@ -90,6 +100,7 @@ export interface UpdateTeacherForm {
 interface AddUserFormValues {
   firstName: string;
   lastName: string;
+  email: string;
   backup_email: string;
   phone: string;
   gender: "Male" | "Female" | "";
@@ -102,7 +113,9 @@ interface AddUserFormValues {
   parentEmails: string[];
   major: string;
   weeklyCapacity: string;
+  degree: string;
   role: Role;
+  avatar: File | null;
 }
 interface EditUserFormValues {
   firstName: string;

@@ -15,6 +15,7 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import useNavBarHook from "./useNavBarHook";
+import Skeleton from "@mui/material/Skeleton";
 
 const drawerWidth = 240;
 
@@ -37,8 +38,33 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
   const drawerContent = (
     <Box sx={{ textAlign: "center" }}>
       <Typography variant="h6" sx={{ my: 2 }}>
-        FAMS
+        {state.formattedName || state.userFullName || "FAMS"}
       </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'center', marginBottom: 2 }}>
+        {state.isLoading ? (
+          <Skeleton 
+            variant="circular"
+            width={60}
+            height={60}
+            animation="wave"
+          />
+        ) : (
+          <img
+            src={state.userAvatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"}
+            alt="User Avatar"
+            style={{ 
+              width: '60px', 
+              height: '60px', 
+              borderRadius: '50%',
+              cursor: 'pointer'
+            }}
+            onClick={() => {
+              handler.handleOnNavigate("Profile");
+              setMobileOpen(false);
+            }}
+          />
+        )}
+      </Box>
       <Divider />
       <List>
         {state.navItems?.map(item => (
@@ -62,65 +88,81 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
   return (
     <Box className="navBar-container" sx={{ display: "flex" }}>
       <CssBaseline />
-      <AppBar component="nav" className="navBar-Logo">
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: "none" } }}
-          >
-            <ListIcon className="navBar-MB-Icon" />
-          </IconButton>
-          <Typography
-            variant="h5"
-            component="div"
-            className="navBar-Logo-font"
-            // color="#1B78EC"
-            sx={{ flexGrow: 1, display: { xs: "none", sm: "block" } }}
-          >
-            {state.userFullName || "FAMS"}
-            <Box 
-              component="span" 
-              onClick={() => handler.handleOnNavigate("Profile")} 
-              sx={{ cursor: 'pointer', display: 'inline-block', marginLeft: 2 }}
+      
+      {/* Chỉ hiển thị AppBar ngang khi variant là horizontal */}
+      {!isVertical && (
+        <AppBar component="nav" className="navBar-Logo">
+          <Toolbar>
+            <IconButton
+              color="inherit"
+              aria-label="open drawer"
+              edge="start"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2, display: { sm: "none" } }}
             >
-              <img
-                src={state.userAvatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"}
-                alt="User Avatar"
-                className="nav-User-Avatar"
-              />
-            </Box>
-          </Typography>
-          <Box
-            sx={{
-              display: { xs: "none", sm: "flex" },
-              alignItems: "center",
-              justifyContent:"center",
-              gap: 1,
-            }}
-          >
-            {state.navItems?.map((item, index) => (
-              <React.Fragment key={item}>
-                <Button
-                  onClick={() => handler.handleOnNavigate(item)}
-                  className="navBar-Item-Font"
-                >
-                  {item}
-                </Button>
-                {index < state.navItems.length - 1 && (
-                  <Divider
-                    orientation="vertical"
-                    flexItem
-                    sx={{ bgcolor: "white", height: 35, }}
+              <ListIcon className="navBar-MB-Icon" />
+            </IconButton>
+            <Typography
+              variant="h5"
+              component="div"
+              className="navBar-Logo-font"
+              sx={{ flexGrow: 1, display: { xs: "none", sm: "block" } }}
+            >
+              {state.formattedName || state.userFullName || "FAMS"}
+              <Box 
+                component="span" 
+                onClick={() => handler.handleOnNavigate("Profile")} 
+                sx={{ cursor: 'pointer', display: 'inline-block', marginLeft: 2 }}
+              >
+                {state.isLoading ? (
+                  <Skeleton 
+                    variant="circular"
+                    width={50}
+                    height={50}
+                    animation="wave"
+                    className="nav-User-Avatar"
+                  />
+                ) : (
+                  <img
+                    src={state.userAvatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"}
+                    alt="User Avatar"
+                    className="nav-User-Avatar"
+                    title={state.userFullName || "User profile"}
                   />
                 )}
-              </React.Fragment>
-            ))}
-          </Box>
-        </Toolbar>
-      </AppBar>
+              </Box>
+            </Typography>
+            <Box
+              sx={{
+                display: { xs: "none", sm: "flex" },
+                alignItems: "center",
+                justifyContent:"center",
+                gap: 1,
+              }}
+            >
+              {state.navItems?.map((item, index) => (
+                <React.Fragment key={item}>
+                  <Button
+                    onClick={() => handler.handleOnNavigate(item)}
+                    className="navBar-Item-Font"
+                  >
+                    {item}
+                  </Button>
+                  {index < state.navItems.length - 1 && (
+                    <Divider
+                      orientation="vertical"
+                      flexItem
+                      sx={{ bgcolor: "white", height: 35, }}
+                    />
+                  )}
+                </React.Fragment>
+              ))}
+            </Box>
+          </Toolbar>
+        </AppBar>
+      )}
+      
+      {/* Mobile drawer - hiển thị ở tất cả chế độ */}
       <nav>
         <Drawer
           container={container}
@@ -141,11 +183,17 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
           {drawerContent}
         </Drawer>
       </nav>
-      <Box component="main" sx={{ p: 3 }}>
-        <Toolbar />
-        <Typography></Typography>
-      </Box>
-      {isVertical ? (
+
+      {/* Chỉ hiển thị box spacing khi là horizontal */}
+      {!isVertical && (
+        <Box component="main" sx={{ p: 3 }}>
+          <Toolbar />
+          <Typography></Typography>
+        </Box>
+      )}
+
+      {/* Chỉ hiển thị sidebar bên trái khi variant là vertical */}
+      {isVertical && (
         <>
           {/* Sidebar on desktop */}
           <Drawer
@@ -164,27 +212,7 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
             {drawerContent}
           </Drawer>
 
-          {/* Mobile drawer */}
-          <Drawer
-            container={container}
-            variant="temporary"
-            open={mobileOpen}
-            onClose={handleDrawerToggle}
-            ModalProps={{
-              keepMounted: true,
-            }}
-            sx={{
-              display: { xs: "block", sm: "none" },
-              "& .MuiDrawer-paper": {
-                boxSizing: "border-box",
-                width: drawerWidth,
-              },
-            }}
-          >
-            {drawerContent}
-          </Drawer>
-
-          {/* Icon toggle mobile */}
+          {/* Mobile navbar dành cho vertical layout */}
           <AppBar
             position="fixed"
             sx={{ display: { sm: "none" }, zIndex: 1300 }}
@@ -204,68 +232,22 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
                 component="div"
                 sx={{ flexGrow: 1 }}
               >
-                FAMS
+                {state.formattedName || state.userFullName || "FAMS"}
+                <img
+                  src={state.userAvatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"}
+                  alt="User Avatar"
+                  style={{ 
+                    width: '30px', 
+                    height: '30px', 
+                    borderRadius: '50%',
+                    marginLeft: '10px',
+                    verticalAlign: 'middle'
+                  }}
+                />
               </Typography>
             </Toolbar>
           </AppBar>
         </>
-      ) : (
-        <AppBar component="nav" className="navBar-Logo">
-          <Toolbar>
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="start"
-              onClick={handleDrawerToggle}
-              sx={{ mr: 2, display: { sm: "none" } }}
-            >
-              <ListIcon className="navBar-MB-Icon" />
-            </IconButton>
-            <Typography
-              variant="h5"
-              component="div"
-              className="navBar-Logo-font"
-              sx={{
-                flexGrow: 1,
-                display: { xs: "none", sm: "flex" },
-                alignItems: "center",
-              }}
-            >
-              HungDN
-              <img
-                src="https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"
-                alt="User Avatar"
-                className="nav-User-Avatar"
-              />
-            </Typography>
-            <Box
-              sx={{
-                display: { xs: "none", sm: "flex" },
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 1,
-              }}
-            >
-              {state.navItems?.map((item, index) => (
-                <React.Fragment key={item}>
-                  <Button
-                    onClick={() => handler.handleOnNavigate(item)}
-                    className="navBar-Item-Font"
-                  >
-                    {item}
-                  </Button>
-                  {index < state.navItems.length - 1 && (
-                    <Divider
-                      orientation="vertical"
-                      flexItem
-                      sx={{ bgcolor: "white", height: 35 }}
-                    />
-                  )}
-                </React.Fragment>
-              ))}
-            </Box>
-          </Toolbar>
-        </AppBar>
       )}
     </Box>
   );
