@@ -18,23 +18,9 @@ const ParentSchema = new mongoose.Schema({
     unique: true,
     ref: 'UserAccount'
   },
-  firstName: {
-    type: String,
-    required: false
-  },
-  lastName: {
-    type: String,
-    required: false
-  },
   fullName: {
     type: String,
-    required: true,
-    default: function() {
-      if (this.lastName && this.firstName) {
-        return `${this.lastName} ${this.firstName}`;
-      }
-      return this.fullName;
-    }
+    required: true
   },
   email: {
     type: String
@@ -60,8 +46,24 @@ const ParentSchema = new mongoose.Schema({
 }, {
   timestamps: true,
   versionKey: false,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  toJSON: { 
+    virtuals: true,
+    transform: function(doc, ret) {
+      // Remove unnecessary fields from the response
+      delete ret.firstName;
+      delete ret.lastName;
+      return ret;
+    }
+  },
+  toObject: { 
+    virtuals: true,
+    transform: function(doc, ret) {
+      // Remove unnecessary fields from the response
+      delete ret.firstName;
+      delete ret.lastName;
+      return ret;
+    }
+  }
 });
 
 // Virtual for getting user info

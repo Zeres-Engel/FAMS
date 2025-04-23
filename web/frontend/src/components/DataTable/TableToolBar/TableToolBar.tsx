@@ -169,8 +169,8 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             onChange={e => handleFilterChange("class", e.target.value)}
           >
             <MenuItem value="">None</MenuItem>
-            {classOptions?.map(option => (
-              <MenuItem key={option} value={option}>
+            {classOptions?.map((option, index) => (
+              <MenuItem key={`class-option-${option}-${index}`} value={option}>
                 {option}
               </MenuItem>
             ))}
@@ -204,8 +204,8 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
               onChange={e => handleFilterChange("class", e.target.value)}
             >
               <MenuItem value="">None</MenuItem>
-              {classOptions?.map(option => (
-                <MenuItem key={option} value={option}>
+              {classOptions?.map((option, index) => (
+                <MenuItem key={`class-option-${option}-${index}`} value={option}>
                   {option}
                 </MenuItem>
               ))}
@@ -228,7 +228,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
               onChange={e => handleFilterChange("academicYear", e.target.value)}
             >
               {handler.getAcademicYears(3).map((year, index) => (
-                <MenuItem key={index} value={year}>
+                <MenuItem key={`academic-year-${year}-${index}`} value={year}>
                   {year === "" ? "None" : year}
                 </MenuItem>
               ))}
@@ -291,8 +291,8 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
               label="Class"
               onChange={e => handleFilterChange("class", e.target.value)}
             >
-              {classOptions?.map(option => (
-                <MenuItem key={option} value={option}>
+              {classOptions?.map((option, index) => (
+                <MenuItem key={`class-option-${option}-${index}`} value={option}>
                   {option}
                 </MenuItem>
               ))}
@@ -345,8 +345,8 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             onChange={e => handleFilterChange("class", e.target.value)}
           >
             <MenuItem value="">None</MenuItem>
-            {classOptions?.map(option => (
-              <MenuItem key={option} value={option}>
+            {classOptions?.map((option, index) => (
+              <MenuItem key={`class-option-${option}-${index}`} value={option}>
                 {option}
               </MenuItem>
             ))}
@@ -367,8 +367,8 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
               label="academicYear"
               onChange={e => handleFilterChange("academicYear", e.target.value)}
             >
-              {handler.getAcademicYears(3).map(year => (
-                <MenuItem key={year} value={year}>
+              {handler.getAcademicYears(3).map((year, index) => (
+                <MenuItem key={`academic-year-${year}-${index}`} value={year}>
                   {year}
                 </MenuItem>
               ))}
@@ -426,8 +426,8 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
               label="academicYear"
               onChange={e => handleFilterChange("academicYear", e.target.value)}
             >
-              {handler.getAcademicYears(3).map(year => (
-                <MenuItem key={year} value={year}>
+              {handler.getAcademicYears(3).map((year, index) => (
+                <MenuItem key={`academic-year-${year}-${index}`} value={year}>
                   {year}
                 </MenuItem>
               ))}
@@ -458,8 +458,8 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             onChange={e => handleFilterChange("class", e.target.value)}
           >
             <MenuItem value="">None</MenuItem>
-            {classOptions?.map(option => (
-              <MenuItem key={option} value={option}>
+            {classOptions?.map((option, index) => (
+              <MenuItem key={`class-option-${option}-${index}`} value={option}>
                 {option}
               </MenuItem>
             ))}
@@ -478,8 +478,8 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             label="academicYear"
             onChange={e => handleFilterChange("academicYear", e.target.value)}
           >
-            {handler.getAcademicYears(3).map(year => (
-              <MenuItem key={year} value={year}>
+            {handler.getAcademicYears(3).map((year, index) => (
+              <MenuItem key={`academic-year-${year}-${index}`} value={year}>
                 {year}
               </MenuItem>
             ))}

@@ -9,6 +9,8 @@ const mongoose = require('mongoose');
 const createClass = async (req, res) => {
   try {
     const { className, homeroomTeacherId, grade, academicYear } = req.body;
+    
+    console.log(`Attempting to create class with data:`, JSON.stringify(req.body));
 
     // Validate required fields
     if (!className) {
@@ -30,6 +32,7 @@ const createClass = async (req, res) => {
     // Check if class name already exists
     const existingClass = await Class.findOne({ className });
     if (existingClass) {
+      console.log(`Class with name ${className} already exists:`, JSON.stringify(existingClass));
       return res.status(400).json({
         success: false,
         error: 'Class name already exists',
@@ -37,14 +40,26 @@ const createClass = async (req, res) => {
       });
     }
 
-    // If teacherId is provided, validate it exists
+    // If teacherId is provided, validate it exists and not already a homeroom teacher
     if (homeroomTeacherId) {
       const teacher = await Teacher.findOne({ userId: homeroomTeacherId });
       if (!teacher) {
+        console.log(`Teacher with ID ${homeroomTeacherId} not found`);
         return res.status(400).json({
           success: false,
           error: 'Teacher ID does not exist',
           code: 'INVALID_TEACHER_ID'
+        });
+      }
+      
+      // Check if teacher is already a homeroom teacher of another class
+      const existingHomeroom = await Class.findOne({ homeroomTeacherId });
+      if (existingHomeroom) {
+        console.log(`Teacher ${homeroomTeacherId} is already homeroom for class:`, JSON.stringify(existingHomeroom));
+        return res.status(400).json({
+          success: false,
+          error: 'This teacher is already a homeroom teacher for another class',
+          code: 'TEACHER_ALREADY_HOMEROOM'
         });
       }
     }
@@ -52,15 +67,19 @@ const createClass = async (req, res) => {
     // Generate a new classId (auto-increment)
     const lastClass = await Class.findOne().sort({ classId: -1 });
     const classId = lastClass ? lastClass.classId + 1 : 1;
+    console.log(`Generated new classId: ${classId}`);
 
-    // Create the new class
+    // Create the new class with explicit grade independent of className
     const newClass = await Class.create({
       className,
       classId,
       homeroomTeacherId,
-      grade,
-      academicYear
+      grade: Number(grade), // Ensure grade is stored as a number
+      academicYear,
+      isActive: true
     });
+
+    console.log(`Created new class:`, JSON.stringify(newClass));
 
     return res.status(201).json({
       success: true,
@@ -87,45 +106,32 @@ const getAllClasses = async (req, res) => {
     // Extract query parameters
     const { grade, batchId, search, homeroomTeacherId, className, academicYear } = req.query;
     
+    console.log(`Getting all classes with filters:`, JSON.stringify(req.query));
+    
     // Build query filter
     let query = {};
     
-    // Filter by grade - extract from className (e.g., "10A1" has grade "10")
+    // Filter by grade directly
     if (grade && grade !== 'none') {
-      // Create a regex pattern to match className that starts with the specified grade
-      const gradePattern = `^${grade}`;
-      query.className = { $regex: gradePattern, $options: 'i' };
+      query.grade = Number(grade);
     }
     
     // Filter by className directly (exact match or partial match)
     if (className && className !== 'none') {
-      if (query.className) {
-        // If className regex already exists (from grade filter), use $and
-        query.$and = [
-          { className: query.className },
-          { className: { $regex: className, $options: 'i' } }
-        ];
-        delete query.className; // Remove the original as it's now in $and
-      } else {
-        query.className = { $regex: className, $options: 'i' };
-      }
+      query.className = { $regex: className, $options: 'i' };
     }
     
     // Filter by search term
     if (search && search !== 'none') {
-      if (query.$and) {
-        // Add to existing $and
-        query.$and.push({ className: { $regex: search, $options: 'i' } });
-      } else if (query.className) {
-        // If className regex already exists, use $and
+      if (!query.className) {
+        query.className = { $regex: search, $options: 'i' };
+      } else {
+        // If className filter already exists, use $and
         query.$and = [
           { className: query.className },
           { className: { $regex: search, $options: 'i' } }
         ];
-        delete query.className; // Remove the original as it's now in $and
-      } else {
-        // Just search filter
-        query.className = { $regex: search, $options: 'i' };
+        delete query.className;
       }
     }
     
@@ -148,20 +154,13 @@ const getAllClasses = async (req, res) => {
     
     // Find classes based on the query
     const classes = await Class.find(query).sort({ classId: 1 });
+    console.log(`Found ${classes.length} classes`);
     
-    // Add grade information to each class
-    const classesWithGrade = classes.map(cls => {
-      const classObj = cls.toObject();
-      // Extract grade from className (e.g., from "10A1" extract "10")
-      const gradeMatch = cls.className.match(/^(\d+)/);
-      classObj.grade = gradeMatch ? gradeMatch[1] : 'Unknown';
-      return classObj;
-    });
-    
+    // Return the classes directly without modifying the grade field
     return res.status(200).json({
       success: true,
       count: classes.length,
-      data: classesWithGrade
+      data: classes
     });
   } catch (error) {
     console.error('Error fetching classes:', error);
@@ -183,23 +182,30 @@ const getClassById = async (req, res) => {
     const idParam = req.params.id;
     let classRecord;
     
+    console.log(`Getting class with ID parameter: ${idParam}`);
+    
     // Check if the parameter is a number or a string
     if (!isNaN(idParam)) {
       // If it's a number, search by classId
       const classId = parseInt(idParam);
+      console.log(`Searching for class with classId: ${classId}`);
       classRecord = await Class.findOne({ classId });
     } else {
       // If it's not a number, search by className
+      console.log(`Searching for class with className: ${idParam}`);
       classRecord = await Class.findOne({ className: idParam });
     }
     
     if (!classRecord) {
+      console.log(`Class not found with ID parameter: ${idParam}`);
       return res.status(404).json({
         success: false,
         error: 'Class not found',
         code: 'CLASS_NOT_FOUND'
       });
     }
+    
+    console.log(`Found class:`, JSON.stringify(classRecord));
     
     return res.status(200).json({
       success: true,
@@ -225,6 +231,11 @@ const updateClass = async (req, res) => {
     const idParam = req.params.id;
     const { className, homeroomTeacherId, grade, academicYear } = req.body;
     
+    // Log update attempt for debugging
+    console.log(`Attempting to update class with ID parameter: ${idParam}`);
+    console.log(`Update data:`, JSON.stringify(req.body));
+    console.log(`Grade type:`, typeof grade, `Value:`, grade);
+    
     // Find the class by ID or className
     let classRecord;
     let query = {};
@@ -234,20 +245,25 @@ const updateClass = async (req, res) => {
       // If it's a number, search by classId
       const classId = parseInt(idParam);
       query = { classId };
+      console.log(`Searching for class with ID: ${classId}`);
       classRecord = await Class.findOne(query);
     } else {
       // If it's not a number, search by className
       query = { className: idParam };
+      console.log(`Searching for class with className: ${idParam}`);
       classRecord = await Class.findOne(query);
     }
     
     if (!classRecord) {
+      console.log(`Class not found with query:`, JSON.stringify(query));
       return res.status(404).json({
         success: false,
         error: 'Class not found',
         code: 'CLASS_NOT_FOUND'
       });
     }
+    
+    console.log(`Found class:`, JSON.stringify(classRecord));
     
     // Check if updated class name already exists (if changing class name)
     if (className && className !== classRecord.className) {
@@ -263,6 +279,7 @@ const updateClass = async (req, res) => {
     
     // If teacherId is provided, validate it exists
     if (homeroomTeacherId && homeroomTeacherId !== classRecord.homeroomTeacherId) {
+      // Check if teacher exists
       const teacher = await Teacher.findOne({ userId: homeroomTeacherId });
       if (!teacher) {
         return res.status(400).json({
@@ -271,21 +288,56 @@ const updateClass = async (req, res) => {
           code: 'INVALID_TEACHER_ID'
         });
       }
+      
+      // Check if teacher is already a homeroom teacher for another class
+      const existingHomeroom = await Class.findOne({ 
+        homeroomTeacherId, 
+        classId: { $ne: classRecord.classId } 
+      });
+      
+      if (existingHomeroom) {
+        return res.status(400).json({
+          success: false,
+          error: 'This teacher is already a homeroom teacher for another class',
+          code: 'TEACHER_ALREADY_HOMEROOM'
+        });
+      }
     }
     
     // Prepare update data
     const updateData = {};
     if (className) updateData.className = className;
     if (homeroomTeacherId) updateData.homeroomTeacherId = homeroomTeacherId;
-    if (grade) updateData.grade = grade;
+    
+    // Handle grade update - always convert to Number to ensure proper update
+    if (grade !== undefined) {
+      updateData.grade = Number(grade);
+      console.log(`Setting grade to:`, updateData.grade, `(type: ${typeof updateData.grade})`);
+    }
+    
     if (academicYear) updateData.academicYear = academicYear;
     
-    // Update the class
-    const updatedClass = await Class.findOneAndUpdate(
-      query, 
-      updateData, 
-      { new: true }
+    console.log(`Final update data:`, JSON.stringify(updateData));
+    
+    // Force update directly using MongoDB's collection to bypass potential schema validation
+    const db = mongoose.connection.db;
+    const ClassCollection = db.collection('Class');
+    
+    const updateResult = await ClassCollection.updateOne(
+      { classId: classRecord.classId },
+      { $set: updateData }
     );
+    
+    console.log(`Raw update result:`, JSON.stringify(updateResult));
+    
+    if (updateResult.modifiedCount === 0) {
+      console.log(`Warning: No modifications made to class ${classRecord.classId}`);
+    }
+    
+    // Get the updated class
+    const updatedClass = await Class.findOne({ classId: classRecord.classId });
+    
+    console.log(`Updated class:`, JSON.stringify(updatedClass));
     
     return res.status(200).json({
       success: true,
@@ -312,17 +364,22 @@ const deleteClass = async (req, res) => {
     const idParam = req.params.id;
     let classRecord;
     
+    console.log(`Attempting to delete class with ID parameter: ${idParam}`);
+    
     // Check if the parameter is a number or a string
     if (!isNaN(idParam)) {
       // If it's a number, find by classId
       const classId = parseInt(idParam);
+      console.log(`Searching for class with classId: ${classId}`);
       classRecord = await Class.findOne({ classId });
     } else {
       // If it's not a number, find by className
+      console.log(`Searching for class with className: ${idParam}`);
       classRecord = await Class.findOne({ className: idParam });
     }
     
     if (!classRecord) {
+      console.log(`Class not found with ID parameter: ${idParam}`);
       return res.status(404).json({
         success: false,
         error: 'Class not found',
@@ -355,8 +412,31 @@ const deleteClass = async (req, res) => {
     
     console.log(`Deleted ${schedulesDeleteResult.deletedCount} class schedules`);
     
-    // 3. Finally delete the class itself
-    const deleteResult = await Class.deleteOne({ classId });
+    // 3. Delete all attendance logs related to this class
+    const AttendanceLogCollection = db.collection('AttendanceLog');
+    const attendanceDeleteResult = await AttendanceLogCollection.deleteMany({
+      classId: Number(classId)
+    });
+    
+    console.log(`Deleted ${attendanceDeleteResult.deletedCount} attendance logs`);
+    
+    // 4. Check for other related data that might need cascade deletion
+    // (Add more cascade deletion logic here if needed)
+    
+    // 5. Finally delete the class itself - using direct collection access for consistency
+    const ClassCollection = db.collection('Class');
+    const deleteResult = await ClassCollection.deleteOne({ classId: Number(classId) });
+    
+    console.log(`Class deletion result:`, JSON.stringify(deleteResult));
+    
+    if (deleteResult.deletedCount === 0) {
+      console.log(`Warning: Class document not deleted, may have been removed earlier`);
+      return res.status(404).json({
+        success: false,
+        error: 'Class could not be deleted',
+        code: 'CLASS_DELETE_FAILED'
+      });
+    }
     
     return res.status(200).json({
       success: true,
@@ -366,6 +446,7 @@ const deleteClass = async (req, res) => {
         classId,
         studentsUpdated: studentsUpdateResult.modifiedCount,
         schedulesDeleted: schedulesDeleteResult.deletedCount,
+        attendanceLogsDeleted: attendanceDeleteResult.deletedCount,
         classDeleted: deleteResult.deletedCount === 1
       }
     });

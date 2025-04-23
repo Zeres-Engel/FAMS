@@ -216,6 +216,11 @@ module.exports = async (req, res) => {
       if (userData.name) userUpdateData.name = userData.name;
       if (userData.password) userUpdateData.password = userData.password;
       
+      // Ensure username is set to prevent validation error
+      if (!user.username) {
+        userUpdateData.username = userId; // Use userId as username if not set
+      }
+      
       Object.assign(user, userUpdateData);
       await user.save();
     }
@@ -357,20 +362,9 @@ module.exports = async (req, res) => {
       
       // Handle other student fields
       const studentFields = [
-        'firstName', 'lastName', 'fullName', 'dateOfBirth', 'gender', 
-        'address', 'phone', 'classId', 'batchId', 'isActive'
+        'fullName', 'dateOfBirth', 'gender', 
+        'address', 'phone', 'batchId', 'isActive'
       ];
-      
-      // Tự động xử lý fullName thành firstName và lastName nếu cần
-      if (userData.fullName && (!userData.firstName || !userData.lastName)) {
-        // Tách fullName thành firstName và lastName
-        // Cho tiếng Việt: "Nguyễn Văn A" -> lastName = "Nguyễn Văn", firstName = "A"
-        const nameParts = userData.fullName.split(' ');
-        if (nameParts.length > 0) {
-          userData.firstName = nameParts.pop(); // Phần tử cuối cùng là firstName
-          userData.lastName = nameParts.join(' '); // Phần còn lại là lastName
-        }
-      }
       
       studentFields.forEach(field => {
         if (userData[field] !== undefined) {
@@ -384,14 +378,140 @@ module.exports = async (req, res) => {
         }
       });
       
-      // Generate fullName if firstName or lastName was updated but fullName wasn't
-      if ((userData.firstName || userData.lastName) && !userData.fullName) {
-        student.fullName = `${student.lastName || ''} ${student.firstName || ''}`.trim();
+      // Handle classIds separately - accept both classId and classIds
+      if (userData.classIds !== undefined && Array.isArray(userData.classIds)) {
+        student.classIds = userData.classIds;
+      } else if (userData.classId !== undefined) {
+        // If only a single classId is provided, make it an array
+        if (!Array.isArray(student.classIds)) {
+          student.classIds = [];
+        }
+        if (!student.classIds.includes(userData.classId)) {
+          student.classIds.push(userData.classId);
+        }
+      }
+      
+      // Remove unnecessary fields that might cause unwanted data
+      if (student) {
+        // Remove empty parent arrays to avoid data bloat
+        const fieldsToRemove = ['parentCareers', 'parentEmails', 'parentGenders', 'parentIds', 'parentNames', 'parentPhones'];
+        fieldsToRemove.forEach(field => {
+          // Only remove if not explicitly provided in update data
+          if (!userData[field]) {
+            student[field] = undefined;
+          }
+        });
       }
       
       // Save student changes
       await student.save();
+      
+      // Format the response to match getUserDetails API
+      // Get class information
+      let classes = [];
+      if (student.classIds && student.classIds.length > 0) {
+        classes = await Class.find({ classId: { $in: student.classIds } });
+      }
+      
+      // Get RFID info
+      const rfidInfo = await RFID.findOne({ UserID: userId });
+      
+      // Get parent information
+      const parents = [];
+      
+      // Get parents from ParentStudent using studentId
+      const studentId = student.studentId;
+      if (studentId) {
+        const parentStudentRelations = await ParentStudent.find({ studentId: studentId });
+        
+        if (parentStudentRelations && parentStudentRelations.length > 0) {
+          const parentIds = parentStudentRelations.map(ps => ps.parentId);
+          const parentRecords = await Parent.find({ parentId: { $in: parentIds } });
+          
+          // Get parent user accounts for additional info
+          const parentUserIds = parentRecords.map(p => p.userId);
+          const parentUsers = await UserAccount.find({ userId: { $in: parentUserIds } });
+          
+          // Add parents from ParentStudent relationships
+          for (const parentRecord of parentRecords) {
+            const parentUser = parentUsers.find(u => u.userId === parentRecord.userId);
+            const relation = parentStudentRelations.find(ps => ps.parentId === parentRecord.parentId);
+            
+            parents.push({
+              parentId: parentRecord.parentId,
+              fullName: parentRecord.fullName,
+              phone: parentRecord.phone && !parentRecord.phone.startsWith('0') ? 
+                    '0' + parentRecord.phone : parentRecord.phone,
+              gender: typeof parentRecord.gender === 'boolean' ? 
+                    (parentRecord.gender ? 'Male' : 'Female') : parentRecord.gender,
+              career: parentRecord.career || '',
+              email: parentUser?.email || parentRecord.email || '',
+              backup_email: parentUser?.backup_email || null,
+              relationship: relation?.relationship || 'Other'
+            });
+          }
+        }
+      }
+      
+      // If we still have no parents, fallback to parentIds
+      if (parents.length === 0 && student.parentIds && student.parentIds.length > 0) {
+        // Get parent information from parent IDs stored in student record
+        const parentDetails = await Parent.find({ userId: { $in: student.parentIds } });
+        const parentUsers = await UserAccount.find({ userId: { $in: student.parentIds } });
+        
+        // Map parents with their user accounts
+        for (let i = 0; i < student.parentIds.length; i++) {
+          const parentUserId = student.parentIds[i];
+          const parentRecord = parentDetails.find(p => p.userId === parentUserId);
+          const parentUserRecord = parentUsers.find(u => u.userId === parentUserId);
+          
+          if (parentRecord) {
+            // We found the complete parent record
+            parents.push({
+              parentId: parentRecord.parentId,
+              fullName: parentRecord.fullName,
+              phone: parentRecord.phone && !parentRecord.phone.startsWith('0') ? 
+                    '0' + parentRecord.phone : parentRecord.phone,
+              gender: typeof parentRecord.gender === 'boolean' ? 
+                    (parentRecord.gender ? 'Male' : 'Female') : parentRecord.gender,
+              career: parentRecord.career || '',
+              email: parentUserRecord?.email || parentRecord.email || '',
+              backup_email: parentUserRecord?.backup_email || null
+            });
+          }
+        }
+      }
+      
+      // Ensure phone number has correct format
+      const phoneFormatted = student.phone && !student.phone.startsWith('0') ? '0' + student.phone : student.phone;
+      
+      // Format student details in the same structure as the getUserDetails API
+      const details = {
+        studentId: student.studentId,
+        fullName: student.fullName,
+        dateOfBirth: student.dateOfBirth,
+        gender: typeof student.gender === 'boolean' ? (student.gender ? 'Male' : 'Female') : student.gender,
+        address: student.address,
+        phone: phoneFormatted,
+        batchId: student.batchId,
+        classes: classes.map(cls => ({
+          classId: cls.classId,
+          className: cls.className,
+          grade: cls.grade,
+          academicYear: cls.academicYear
+        })),
+        parents: parents
+      };
+      
+      if (rfidInfo) {
+        details.rfid = {
+          rfidId: rfidInfo.RFID_ID,
+          expiryDate: rfidInfo.ExpiryDate
+        };
+      }
+      
       result.student = student;
+      result.details = details;
       
     } else if (role === 'teacher') {
       // Update teacher record
@@ -408,20 +528,9 @@ module.exports = async (req, res) => {
       
       // Handle teacher fields
       const teacherFields = [
-        'firstName', 'lastName', 'fullName', 'dateOfBirth', 'gender', 
+        'fullName', 'dateOfBirth', 'gender', 
         'address', 'phone', 'major', 'degree', 'weeklyCapacity', 'isActive'
       ];
-      
-      // Tự động xử lý fullName thành firstName và lastName nếu cần
-      if (userData.fullName && (!userData.firstName || !userData.lastName)) {
-        // Tách fullName thành firstName và lastName
-        // Cho tiếng Việt: "Nguyễn Văn A" -> lastName = "Nguyễn Văn", firstName = "A"
-        const nameParts = userData.fullName.split(' ');
-        if (nameParts.length > 0) {
-          userData.firstName = nameParts.pop(); // Phần tử cuối cùng là firstName
-          userData.lastName = nameParts.join(' '); // Phần còn lại là lastName
-        }
-      }
       
       teacherFields.forEach(field => {
         if (userData[field] !== undefined) {
@@ -434,11 +543,6 @@ module.exports = async (req, res) => {
           }
         }
       });
-      
-      // Generate fullName if firstName or lastName was updated but fullName wasn't
-      if ((userData.firstName || userData.lastName) && !userData.fullName) {
-        teacher.fullName = `${teacher.lastName || ''} ${teacher.firstName || ''}`.trim();
-      }
       
       // Save teacher changes
       await teacher.save();
@@ -459,20 +563,9 @@ module.exports = async (req, res) => {
       
       // Handle parent fields
       const parentFields = [
-        'firstName', 'lastName', 'fullName', 'career', 
+        'fullName', 'career', 
         'phone', 'gender', 'isActive'
       ];
-      
-      // Tự động xử lý fullName thành firstName và lastName nếu cần
-      if (userData.fullName && (!userData.firstName || !userData.lastName)) {
-        // Tách fullName thành firstName và lastName
-        // Cho tiếng Việt: "Nguyễn Văn A" -> lastName = "Nguyễn Văn", firstName = "A"
-        const nameParts = userData.fullName.split(' ');
-        if (nameParts.length > 0) {
-          userData.firstName = nameParts.pop(); // Phần tử cuối cùng là firstName
-          userData.lastName = nameParts.join(' '); // Phần còn lại là lastName
-        }
-      }
       
       parentFields.forEach(field => {
         if (userData[field] !== undefined) {
@@ -483,11 +576,6 @@ module.exports = async (req, res) => {
           }
         }
       });
-      
-      // Generate fullName if firstName or lastName was updated but fullName wasn't
-      if ((userData.firstName || userData.lastName) && !userData.fullName) {
-        parent.fullName = `${parent.lastName || ''} ${parent.firstName || ''}`.trim();
-      }
       
       // Handle children updates if provided
       if (userData.studentIds && Array.isArray(userData.studentIds)) {
@@ -626,11 +714,9 @@ module.exports = async (req, res) => {
       
       // Clean student object by removing empty array fields
       const cleanStudent = student.toObject();
-      const fieldsToRemove = ['parentCareers', 'parentEmails', 'parentGenders', 'parentIds', 'parentNames', 'parentPhones'];
+      const fieldsToRemove = ['firstName', 'lastName', 'parentCareers', 'parentEmails', 'parentGenders', 'parentIds', 'parentNames', 'parentPhones'];
       fieldsToRemove.forEach(field => {
-        if (Array.isArray(cleanStudent[field]) && cleanStudent[field].length === 0) {
-          delete cleanStudent[field];
-        }
+        delete cleanStudent[field];
       });
       
       roleSpecificData = {
@@ -656,7 +742,12 @@ module.exports = async (req, res) => {
       
       // Clean teacher object
       const cleanTeacher = teacher.toObject();
-      // Remove any empty array fields
+      // Remove any empty array fields and firstName/lastName
+      const teacherFieldsToRemove = ['firstName', 'lastName'];
+      teacherFieldsToRemove.forEach(field => {
+        delete cleanTeacher[field];
+      });
+      
       Object.keys(cleanTeacher).forEach(key => {
         if (Array.isArray(cleanTeacher[key]) && cleanTeacher[key].length === 0) {
           delete cleanTeacher[key];
@@ -682,6 +773,12 @@ module.exports = async (req, res) => {
       
       // Clean parent object
       const cleanParent = parent.toObject();
+      // Remove any empty array fields and firstName/lastName
+      const parentFieldsToRemove = ['firstName', 'lastName'];
+      parentFieldsToRemove.forEach(field => {
+        delete cleanParent[field];
+      });
+      
       // Remove any empty array fields
       Object.keys(cleanParent).forEach(key => {
         if (Array.isArray(cleanParent[key]) && cleanParent[key].length === 0) {
@@ -737,13 +834,26 @@ module.exports = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: `User ${userId} updated successfully`,
-      data: {
-        user: {
+      data: [
+        {
+          _id: user._id,
           userId: user.userId,
           email: user.email,
-          role: user.role
-        },
-        role: roleSpecificData
+          password: user.password,
+          role: user.role,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          isActive: user.isActive,
+          id: user._id,
+          details: role === 'student' ? result.details : roleSpecificData
+        }
+      ],
+      count: 1,
+      pagination: {
+        total: 1,
+        page: 1,
+        limit: 1,
+        pages: 1
       }
     });
   } catch (error) {

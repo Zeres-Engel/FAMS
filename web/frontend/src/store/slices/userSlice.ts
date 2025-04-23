@@ -16,16 +16,28 @@ import {
   EditUserForm,
 } from "../../model/tableModels/tableDataModels.model";
 
+// Thêm interface để lưu trữ pagination
+interface PaginationInfo {
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
 interface UserState {
   user: null | UserData[];
   loading: boolean;
   error: string | null;
+  pagination: PaginationInfo | null; // Thêm trường pagination vào state
 }
+
 const initialState: UserState = {
   user: null,
   loading: false,
   error: null,
+  pagination: null, // Khởi tạo giá trị cho pagination
 };
+
 function normalizeGender(gender: any): Gender | undefined {
   if (gender === true || gender === "Male") return "Male";
   if (gender === false || gender === "Female") return "Female";
@@ -214,38 +226,140 @@ function normalizeStudentData(data: Partial<EditUserForm>) {
     parentPhones,
     parentCareers,
     parentGenders,
+    parentEmails,
     classId,
+    gender,
+    dob,
     ...rest
   } = data;
 
-  const cleanedParents = (parentNames || [])
-    .map((name, index) => ({
-      name: name.trim(),
-      phone: parentPhones?.[index] || "",
-      career: parentCareers?.[index] || "",
-      gender: parentGenders?.[index],
-    }))
-    .filter(p => p.name !== "");
+  // Xử lý thông tin phụ huynh
+  const parents = (parentNames || [])
+    .map((name, index) => {
+      // Xử lý gender đúng cách
+      let parentGender: boolean;
+      if (typeof parentGenders?.[index] === "boolean") {
+        // Chuyển thành so sánh đúng - sử dụng Boolean để đảm bảo kết quả là boolean
+        parentGender = Boolean(parentGenders[index]);
+      } else if (parentGenders?.[index] === "Male") {
+        parentGender = true;
+      } else if (parentGenders?.[index] === "Female") {
+        parentGender = false;
+      } else {
+        parentGender = index === 0; // Mặc định: bố = true, mẹ = false
+      }
 
+      return {
+        fullName: name?.trim() || "",
+        phone: parentPhones?.[index] || "",
+        career: parentCareers?.[index] || "",
+        gender: parentGender,
+        email: parentEmails?.[index] || "",
+      };
+    })
+    .filter(p => p.fullName !== "");
+
+  // Xử lý thông tin lớp học
+  let classIds: number[] = [];
+  if (Array.isArray(classId) && classId.length > 0) {
+    // Nếu là mảng object
+    if (typeof classId[0] === 'object' && classId[0] !== null) {
+      classIds = classId
+        .map(cls => {
+          if (typeof cls.classId === 'number') return cls.classId;
+          if (typeof cls.classId === 'string') {
+            const num = parseInt(cls.classId, 10);
+            return isNaN(num) ? null : num;
+          }
+          return null;
+        })
+        .filter((id): id is number => id !== null);
+    } else {
+      // Nếu là mảng số hoặc chuỗi
+      classIds = classId
+        .map(id => {
+          if (typeof id === 'number') return id;
+          if (typeof id === 'string') {
+            const num = parseInt(id, 10);
+            return isNaN(num) ? null : num;
+          }
+          return null;
+        })
+        .filter((id): id is number => id !== null);
+    }
+  }
+
+  // Convert gender sang chuỗi đúng format
+  let genderStr: string;
+  if (typeof gender === 'boolean') {
+    genderStr = gender ? "Male" : "Female";
+  } else if (gender === "Male" || gender === "Female") {
+    genderStr = gender;
+  } else {
+    // Mặc định
+    genderStr = "Male";
+  }
+
+  // Format ngày sinh đúng định dạng
+  const dateOfBirth = dob || "";
+
+  // Đảm bảo fullName có giá trị
+  const fullName = rest.fullName || `${rest.firstName || ""} ${rest.lastName || ""}`.trim();
+
+  // Format dữ liệu theo chuẩn API
   return {
-    ...rest,
-    classId: Array.isArray(classId) ? classId[0] : classId,
-    parentNames: cleanedParents.map(p => p.name),
-    parentPhones: cleanedParents.map(p => p.phone),
-    parentCareers: cleanedParents.map(p => p.career),
-    parentGenders: cleanedParents.map(p => p.gender),
+    fullName,
+    backup_email: rest.email || "",
+    phone: rest.phone || "",
+    gender: genderStr,
+    dateOfBirth,
+    address: rest.address || "",
+    classIds,
+    parentNames: parents.map(p => p.fullName),
+    parentCareers: parents.map(p => p.career),
+    parentPhones: parents.map(p => p.phone),
+    parentGenders: parents.map(p => p.gender),
+    parentEmails: parents.map(p => p.email)
   };
 }
 export const updateStudent = createAsyncThunk(
   "user/updateStudent",
   async (payload: { id: string; data: Partial<EditUserForm> }, thunkAPI) => {
     try {
+      console.log("Cập nhật student - ID:", payload.id);
+      console.log("Dữ liệu gốc:", JSON.stringify(payload.data, null, 2));
+      
       const formattedData = normalizeStudentData(payload.data);
+      console.log("Dữ liệu đã format theo API:", JSON.stringify(formattedData, null, 2));
+      
       thunkAPI.dispatch(showLoading());
       const response = await axiosInstance.put(
-        `/students/${payload.id}`,
+        `/users/update/${payload.id}`,
         formattedData
       );
+
+      console.log("Kết quả API trả về:", response.data);
+      
+      // Kết hợp dữ liệu đã gửi đi và dữ liệu trả về để có thông tin đầy đủ
+      // Điều này giúp hiển thị ngay dữ liệu mới mà không cần refresh
+      const updatedData = {
+        ...response.data,
+        name: formattedData.fullName,
+        email: response.data.email || "",
+        backup_email: formattedData.backup_email,
+        phoneSub: formattedData.phone,
+        gender: formattedData.gender,
+        details: {
+          ...response.data.details,
+          fullName: formattedData.fullName,
+          firstName: payload.data.firstName,
+          lastName: payload.data.lastName,
+          phone: formattedData.phone,
+          dateOfBirth: formattedData.dateOfBirth,
+          address: formattedData.address,
+          classes: formattedData.classIds
+        }
+      };
 
       thunkAPI.dispatch(
         addNotify({
@@ -254,17 +368,21 @@ export const updateStudent = createAsyncThunk(
           duration: 3000,
         })
       );
-      return response.data; // Trả lại student đã update
+      
+      return updatedData;
     } catch (error: any) {
+      console.error("Lỗi cập nhật student:", error);
+      console.error("Chi tiết lỗi:", error.response?.data || error.message);
+      
       thunkAPI.dispatch(hideLoading());
       thunkAPI.dispatch(
         addNotify({
           type: "error",
-          message: "Update student failed!",
-          duration: 3000,
+          message: error.response?.data?.message || "Update student failed!",
+          duration: 5000,
         })
       );
-      return thunkAPI.rejectWithValue(error.message);
+      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
     } finally {
       thunkAPI.dispatch(hideLoading());
     }
@@ -274,12 +392,17 @@ export const updateTeacher = createAsyncThunk(
   "user/updateTeacher",
   async (payload: { id: string; data: Partial<EditTeacherForm> }, thunkAPI) => {
     try {
+      console.log("Cập nhật teacher - ID:", payload.id);
+      console.log("Dữ liệu gốc:", JSON.stringify(payload.data, null, 2));
+      
       thunkAPI.dispatch(showLoading());
       const response = await axiosInstance.put(
-        `/teachers/${payload.id}`,
+        `/users/update/${payload.id}`,
         payload.data
       );
 
+      console.log("Kết quả API trả về:", response.data);
+      
       thunkAPI.dispatch(
         addNotify({
           type: "success",
@@ -287,17 +410,20 @@ export const updateTeacher = createAsyncThunk(
           duration: 3000,
         })
       );
-      return response.data; // Trả lại student đã update
+      return response.data; // Trả lại teacher đã update
     } catch (error: any) {
+      console.error("Lỗi cập nhật teacher:", error);
+      console.error("Chi tiết lỗi:", error.response?.data || error.message);
+      
       thunkAPI.dispatch(hideLoading());
       thunkAPI.dispatch(
         addNotify({
           type: "error",
-          message: "Update Teacher failed!",
+          message: error.response?.data?.message || "Update Teacher failed!",
           duration: 3000,
         })
       );
-      return thunkAPI.rejectWithValue(error.message);
+      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
     } finally {
       thunkAPI.dispatch(hideLoading());
     }
@@ -310,26 +436,24 @@ export const searchUsers = createAsyncThunk(
       thunkAPI.dispatch(showLoading());
 
       const params = {
-        page: "1",
+        page: (filters.page || 1).toString(),
         academicYear: filters.academicYear || "",
         search: filters.search || "",
         grade: filters.grade || "",
         roles: filters.roles?.join(",") || "",
         className: filters.className || "",
-        limit: (filters.limit || 100).toString(),
+        limit: (filters.limit || 10).toString(),
         phone: filters.phone || "",
       };
 
       const query = new URLSearchParams(params).toString();
       const response = await axiosInstance.get(`/users?${query}`);
-      thunkAPI.dispatch(
-        addNotify({
-          type: "success",
-          message: "Search User successful!",
-          duration: 3000,
-        })
-      );
-      return formatUsersFromResponse(response.data.data);
+      
+      // Trả về cả dữ liệu users và thông tin phân trang
+      return {
+        users: formatUsersFromResponse(response.data.data),
+        pagination: response.data.pagination
+      };
     } catch (error: any) {
       console.log(error);
 
@@ -380,6 +504,49 @@ export const fetchUser = createAsyncThunk(
   }
 );
 
+// Thêm action thunk mới để hỗ trợ phân trang
+export const fetchUserPaginated = createAsyncThunk(
+  "user/fetchUserPaginated",
+  async (filters: SearchFilters, thunkAPI) => {
+    try {
+      thunkAPI.dispatch(showLoading());
+
+      const params = {
+        page: (filters.page || 1).toString(),
+        academicYear: filters.academicYear || "",
+        search: filters.search || "",
+        grade: filters.grade || "",
+        roles: filters.roles?.join(",") || "",
+        className: filters.className || "",
+        limit: "5", // Cố định 5 dòng mỗi trang bất kể giá trị limit trong filters
+        phone: filters.phone || "",
+      };
+
+      const query = new URLSearchParams(params).toString();
+      const response = await axiosInstance.get(`/users?${query}`);
+      
+      // Không hiển thị thông báo thành công khi phân trang để tránh spam
+      return {
+        users: formatUsersFromResponse(response.data.data),
+        pagination: response.data.pagination // Lấy thông tin phân trang từ response
+      };
+    } catch (error: any) {
+      console.log(error);
+      thunkAPI.dispatch(hideLoading());
+      thunkAPI.dispatch(
+        addNotify({
+          type: "error",
+          message: "Load User Failed!",
+          duration: 3000,
+        })
+      );
+      return thunkAPI.rejectWithValue(error.message);
+    } finally {
+      thunkAPI.dispatch(hideLoading());
+    }
+  }
+);
+
 const userSlice = createSlice({
   name: "user",
   initialState,
@@ -400,7 +567,8 @@ const userSlice = createSlice({
         state.error = action.payload as string; // Lưu lỗi vào state nếu có
       })
       .addCase(searchUsers.fulfilled, (state, action) => {
-        state.user = action.payload;
+        state.user = action.payload.users;
+        state.pagination = action.payload.pagination;
         state.loading = false;
         state.error = null;
       })
@@ -430,16 +598,52 @@ const userSlice = createSlice({
 
         if (state.user) {
           const updatedUser = action.payload;
-          const index = state.user.findIndex(u => u.id === updatedUser.userId);
+          
+          // Tìm người dùng trong state để cập nhật
+          const index = state.user.findIndex(u => u.id === updatedUser.userId || u.id === updatedUser.id);
+          
           if (index !== -1) {
+            // Bảo toàn tất cả các trường bắt buộc từ details hiện tại
+            const updatedDetails = {
+              studentId: state.user[index].details?.studentId || "",
+              firstName: state.user[index].details?.firstName || "",
+              lastName: state.user[index].details?.lastName || "",
+              fullName: state.user[index].details?.fullName || "",
+              phone: state.user[index].details?.phone || "",
+              dateOfBirth: state.user[index].details?.dateOfBirth || "",
+              address: state.user[index].details?.address || "",
+              classId: state.user[index].details?.classId || 0,
+              batchId: state.user[index].details?.batchId || 0,
+              className: state.user[index].details?.className || "",
+              grade: state.user[index].details?.grade || "",
+              classes: state.user[index].details?.classes || [],
+            };
+            
+            // Cập nhật các trường từ dữ liệu mới
+            if (updatedUser.details?.fullName) updatedDetails.fullName = updatedUser.details.fullName;
+            if (updatedUser.details?.firstName) updatedDetails.firstName = updatedUser.details.firstName;
+            if (updatedUser.details?.lastName) updatedDetails.lastName = updatedUser.details.lastName;
+            if (updatedUser.details?.phone) updatedDetails.phone = updatedUser.details.phone;
+            if (updatedUser.details?.dateOfBirth) updatedDetails.dateOfBirth = updatedUser.details.dateOfBirth;
+            if (updatedUser.details?.address) updatedDetails.address = updatedUser.details.address;
+            if (updatedUser.details?.classes) updatedDetails.classes = updatedUser.details.classes;
+            
+            // Cập nhật dữ liệu ngay lập tức không cần refresh
             state.user[index] = {
               ...state.user[index],
-              ...updatedUser,
-              details: {
-                ...state.user[index].details,
-                ...updatedUser.details,
-              },
+              name: updatedUser.name || state.user[index].name,
+              email: updatedUser.email || state.user[index].email,
+              backup_email: updatedUser.backup_email || state.user[index].backup_email,
+              gender: updatedUser.gender || state.user[index].gender,
+              phoneSub: updatedUser.phoneSub || state.user[index].phoneSub,
+              updatedAt: new Date().toISOString(),
+              details: updatedDetails,
+              Parent: updatedUser.Parent || state.user[index].Parent,
             };
+            
+            console.log("Dữ liệu người dùng đã được cập nhật trong state:", state.user[index]);
+          } else {
+            console.warn("Không tìm thấy người dùng để cập nhật trong state. ID:", updatedUser.id || updatedUser.userId);
           }
         }
       })
@@ -503,6 +707,20 @@ const userSlice = createSlice({
       .addCase(deleteUser.pending, state => {
         state.loading = true;
         state.error = null;
+      })
+      .addCase(fetchUserPaginated.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchUserPaginated.fulfilled, (state, action) => {
+        state.user = action.payload.users;
+        state.pagination = action.payload.pagination;
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(fetchUserPaginated.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });

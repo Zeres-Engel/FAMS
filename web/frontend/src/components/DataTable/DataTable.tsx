@@ -50,6 +50,13 @@ import EditAttendanceForm from "./EditAttendanceForm/EditAttendanceForm";
 import CreateNotifyForm from "./CreateNotifyForm/CreateNotifyForm";
 import ShowNotify from "./ShowNotify/ShowNotify";
 
+// Thêm interface cho pagination
+interface PaginationProps {
+  page: number;
+  limit: number;
+  total: number;
+}
+
 interface DataTableProps {
   headCellsData:
     | HeadCell[]
@@ -84,6 +91,10 @@ interface DataTableProps {
   isNotifyRole?: string;
   isRFIDPage?: boolean;
   classOptions?: string[];
+  // Thêm props mới cho pagination
+  pagination?: PaginationProps;
+  onPageChange?: (newPage: number) => void;
+  onRowsPerPageChange?: (newLimit: number) => void;
 }
 
 export default function DataTable({
@@ -106,6 +117,9 @@ export default function DataTable({
   isNotifyRole,
   isRFIDPage,
   classOptions,
+  pagination,
+  onPageChange,
+  onRowsPerPageChange
 }: DataTableProps) {
   const { state, handler } = useDataTableHook({ tableMainData });
 
@@ -305,6 +319,19 @@ export default function DataTable({
     </>
   );
 
+  // Thêm hàm xử lý phân trang
+  const handleChangePage = (event: unknown, newPage: number) => {
+    if (onPageChange) {
+      onPageChange(newPage + 1); // API uses 1-based indexing
+    }
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (onRowsPerPageChange) {
+      onRowsPerPageChange(parseInt(event.target.value, 10));
+    }
+  };
+
   return (
     <Box sx={{ width: "100%" }} className="dataTable-Container">
       {/* <Paper sx={{ width: "100%", mb: 2 }} className="dataTable-Table"> */}
@@ -364,7 +391,7 @@ export default function DataTable({
                   <TableRow
                     hover
                     tabIndex={-1}
-                    key={row?.id}
+                    key={`table-row-${row?.id || index}-${tableTitle}`}
                     sx={{ cursor: "pointer" }}
                     onClick={event =>
                       isCheckBox &&
@@ -481,15 +508,20 @@ export default function DataTable({
         )}
 
         {/* Pagination */}
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={state.rows.length}
-          rowsPerPage={state.rowsPerPage}
-          page={state.page}
-          onPageChange={handler.handleChangePage}
-          onRowsPerPageChange={handler.handleChangeRowsPerPage}
-        />
+        {pagination && (
+          <TablePagination
+            rowsPerPageOptions={[]}
+            component="div"
+            count={pagination.total}
+            rowsPerPage={5}
+            page={pagination.page - 1}
+            onPageChange={handleChangePage}
+            labelDisplayedRows={({ from, to, count }) => {
+              const totalPages = Math.ceil(count / 5);
+              return `${from}–${to} of ${count} (Page ${pagination.page} of ${totalPages})`;
+            }}
+          />
+        )}
       </Paper>
       {state.isEditOpen && isUserManagement && state.editingUser && (
         <EditUserModal
@@ -512,7 +544,7 @@ export default function DataTable({
 
       {state.isEditOpen &&
         isAttendance &&
-        state.editingClass &&
+        state.editingAttendance &&
         isRoleTeacher && (
           <EditAttendanceForm
             open={state.isEditOpen}

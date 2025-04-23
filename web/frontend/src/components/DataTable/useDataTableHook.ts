@@ -22,6 +22,7 @@ import {
   updateTeacher,
 } from "../../store/slices/userSlice";
 import { ClassData } from "../../model/classModels/classModels.model";
+import { fetchUserPaginated } from "../../store/slices/userSlice";
 
 interface UseDataTableHookProps {
   tableMainData:
@@ -33,8 +34,39 @@ interface UseDataTableHookProps {
     | NotifyProps[]
     | RFIDData[];
 }
-function useDataTableHook(props: UseDataTableHookProps) {
-  const { tableMainData } = props;
+
+const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const [order, setOrder] = useState<Order>("asc");
+  const [orderBy, setOrderBy] = useState<string>("name");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rows, setRows] = useState<typeof tableMainData>([]);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<EditUserForm | null>(null);
+  const [editingUserId, setEditingUserId] = useState<string>("");
+  const [selectedUserToDelete, setSelectedUserToDelete] =
+    useState<UserData | null>(null);
+  const [isCreateUser, setIsCreateUser] = useState(false);
+  const [selectedGrade, setSelectedGrade] = useState<string>("");
+  const [gradeError, setGradeError] = useState(false);
+  const [isShowNotifyOpen, setIsShowNotifyOpen] = useState(false);
+  const [selectedNotify, setSelectedNotify] = useState<NotifyProps | null>(
+    null
+  );
+  const [editingClass, setEditingClass] = useState<editClassForm | null>(null);
+  const [editingAttendance, setEditingAttendance] =
+    useState<EditAttendanceFormProps | null>(null);
+
+  // Cập nhật rows khi tableMainData thay đổi
+  useEffect(() => {
+    if (tableMainData && tableMainData.length > 0) {
+      setRows(tableMainData);
+    }
+  }, [tableMainData]);
+
   const editClassDefaul: editClassForm = {
     className: "",
     teacherId: "",
@@ -70,57 +102,18 @@ function useDataTableHook(props: UseDataTableHookProps) {
     weeklyCapacity: "",
     role: "",
   };
-  const dispatch = useDispatch<AppDispatch>();
-  const rows = React.useMemo(() => [...tableMainData], [tableMainData]);
-  const [isCreateUser, setIsCreateUser] = useState<boolean>(false);
-  const [order, setOrder] = React.useState<Order>("asc");
-  const [orderBy, setOrderBy] = React.useState<
-    | keyof Data
-    | keyof UserData
-    | keyof ClassData
-    | keyof AttendanceLog
-    | keyof ClassArrangementData
-    | keyof NotifyProps
-    | keyof RFIDData
-  >("id");
-  const [gradeError, setGradeError] = React.useState(false);
-  const [selected, setSelected] = React.useState<readonly string[]>([]);
-  const [selectedGrade, setSelectedGrade] = React.useState<string>("");
-  const [isEditOpen, setIsEditOpen] = React.useState(false);
-  const [editingUser, setEditingUser] =
-    React.useState<EditUserForm>(editUserDefault);
-  const [editingClass, setEditingClass] =
-    React.useState<editClassForm>(editClassDefaul);
-  const [editingAttendance, setEditingAttendance] =
-    React.useState<EditAttendanceFormProps>(editAttendanceDefault);
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedUserToDelete, setSelectedUserToDelete] = useState<
-    Data | UserData | ClassData | null
-  >(null);
-  const [editingUserId, setEditingUserId] = useState<string | undefined>(
-    undefined
-  );
-  const [isShowNotifyOpen, setIsShowNotifyOpen] = useState(false);
-  const [selectedNotify, setSelectedNotify] = useState<NotifyProps | null>(null);
 
   const allUsers = useSelector((state: RootState) => state.users.user);
+
   const handleRequestSort = (
     event: React.MouseEvent<unknown>,
-    property:
-      | keyof Data
-      | keyof UserData
-      | keyof ClassData
-      | keyof AttendanceLog
-      | keyof ClassArrangementData
-      | keyof NotifyProps
-      | keyof RFIDData
+    property: string
   ) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
     setOrderBy(property);
   };
+
   function formatUserToEditUserForm(user: any): EditUserForm {
     if (user?.role === "teacher") {
       return {
@@ -147,9 +140,33 @@ function useDataTableHook(props: UseDataTableHookProps) {
         role: user.role || "",
       };
     }
+    
+    // Xử lý thông tin classId - đảm bảo là mảng số hoặc object có classId
+    let classIds = [];
+
+    // Kiểm tra nếu user.details.classes tồn tại và là mảng
+    if (user?.details?.classes && Array.isArray(user.details.classes)) {
+      classIds = user.details.classes.map((cls: any) => {
+        // Nếu đã là object có classId, sử dụng trực tiếp
+        if (typeof cls === 'object' && cls !== null && 'classId' in cls) {
+          return cls;
+        }
+        // Nếu là số, chuyển thành object
+        if (typeof cls === 'number') {
+          return { classId: cls };
+        }
+        // Nếu là string và có thể chuyển thành số
+        if (typeof cls === 'string' && !isNaN(parseInt(cls))) {
+          return { classId: parseInt(cls) };
+        }
+        // Giữ nguyên nếu không phù hợp cấu trúc nào
+        return cls;
+      });
+    }
+
     return {
       avatar: user?.avatar || null,
-      classId: user?.role === "student" ? user?.details.classes : [],
+      classId: classIds,
       firstName: user.details?.firstName || "",
       lastName: user.details?.lastName || "",
       fullName: user.name || "",
@@ -193,7 +210,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
     console.log("Editing user:", userEdit); 
     
     console.log(formatUserToEditUserForm(userEdit));
-    setEditingUserId(userEdit?.id);
+    setEditingUserId(userEdit?.id || "");
     setEditingUser(formatUserToEditUserForm(userEdit));
     setIsEditOpen(true);
   };
@@ -209,7 +226,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
   };
   const handleDeleteClick = (user: Data | UserData | ClassData) => {
     console.log("Deleting user:", user.id);
-    setSelectedUserToDelete(user);
+    setSelectedUserToDelete(user as UserData);
     setIsDeleteDialogOpen(true);
   };
   const handleShowNotify = (row: any) => {
@@ -236,22 +253,59 @@ function useDataTableHook(props: UseDataTableHookProps) {
   };
   const handleEditSave = (userFormData: EditUserForm, idUser: string) => {
     const userEdit = allUsers?.find(u => u.id === idUser);
+    console.log("Đang cập nhật user với dữ liệu:", JSON.stringify(userFormData, null, 2));
+    console.log("User tìm thấy từ allUsers:", JSON.stringify(userEdit, null, 2));
+    
+    let updatePromise;
+    
     if (userFormData?.role === "teacher") {
       const teacherEdit = allUsers?.find(u => u.id === editingUserId);
-      dispatch(
+      console.log("Teacher Edit ID:", editingUserId);
+      console.log("Teacher tìm thấy:", JSON.stringify(teacherEdit, null, 2));
+      const formattedData = formatTeacherObj(userFormData);
+      console.log("Dữ liệu teacher được format:", JSON.stringify(formattedData, null, 2));
+      
+      updatePromise = dispatch(
         updateTeacher({
-          id: teacherEdit?.teacherId || "000",
-          data: formatTeacherObj(userFormData),
+          id: userEdit?.id || teacherEdit?.id || editingUserId,
+          data: formattedData,
         })
       );
     } else {
-      dispatch(
+      console.log("Student ID:", userEdit?.id || idUser);
+      console.log("Student data gửi đi:", JSON.stringify(userFormData, null, 2));
+      
+      updatePromise = dispatch(
         updateStudent({
-          id: userEdit?.details?.studentId || "000",
+          id: userEdit?.id || idUser,
           data: userFormData,
         })
       );
     }
+    
+    // Handle after update
+    updatePromise.then((result) => {
+      console.log("Kết quả cập nhật:", result);
+      
+      // Refresh data table while staying on the same page
+      // Get the current filters from component state if available
+      const currentPage = page + 1; // React MUI uses 0-based indexing for pages
+      
+      // Dispatch action to fetch users with current pagination
+      dispatch(fetchUserPaginated({
+        page: currentPage,
+        limit: rowsPerPage,
+        search: "",
+        grade: "",
+        roles: [],
+        className: "",
+        academicYear: "",
+        phone: ""
+      }));
+    }).catch((error) => {
+      console.error("Lỗi khi cập nhật:", error);
+    });
+    
     setIsEditOpen(false);
   };
   const handleEditClassSave = (classFormData: editClassForm) => {
@@ -266,20 +320,22 @@ function useDataTableHook(props: UseDataTableHookProps) {
   };
   const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
-      const newSelected = rows.map(n => String(n.id));
+      const newSelected = rows.map((n) => String(n.id || ""));
       setSelected(newSelected);
       return;
     }
     setSelected([]);
   };
 
-  const handleClick = (event: React.MouseEvent<unknown>, id: string) => {
-    const idStr = String(id);
-    const selectedIndex = selected.indexOf(idStr);
-    let newSelected: readonly string[] = [];
+  const handleClick = (
+    event: React.MouseEvent<unknown>,
+    id: string
+  ) => {
+    const selectedIndex = selected.indexOf(id);
+    let newSelected: string[] = [];
 
     if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, idStr);
+      newSelected = newSelected.concat(selected, id);
     } else if (selectedIndex === 0) {
       newSelected = newSelected.concat(selected.slice(1));
     } else if (selectedIndex === selected.length - 1) {
@@ -297,7 +353,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
     setPage(newPage);
   };
   const handleSubmitClassArrangement = (isClassArrangement: boolean) => {
-    if (isClassArrangement && state.selected.length > 0 && !selectedGrade) {
+    if (isClassArrangement && selected.length > 0 && !selectedGrade) {
       setGradeError(true);
       return;
     }
@@ -307,7 +363,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
     setGradeError(false);
   };
   const handleSubmitNewSemesterArrangement = (isNewSemester: boolean) => {
-    if (isNewSemester && state.selected.length > 0) {
+    if (isNewSemester && selected.length > 0) {
       console.log("Submitting New Semester with data:", selected);
       return;
     }
@@ -329,6 +385,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
     [order, orderBy, page, rowsPerPage, rows]
   );
+
   const state = {
     emptyRows,
     visibleRows,
@@ -377,5 +434,6 @@ function useDataTableHook(props: UseDataTableHookProps) {
   };
 
   return { state, handler };
-}
+};
+
 export default useDataTableHook;

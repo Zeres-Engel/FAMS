@@ -62,6 +62,7 @@ interface SearchFilters {
   limit?: number;
   phone?: string;
   academicYear?: string;
+  page?: number;
 }
 type Gender = "Male" | "Female";
 type Role = "student" | "teacher";

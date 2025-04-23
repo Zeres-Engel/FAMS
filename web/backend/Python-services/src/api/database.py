@@ -13,6 +13,7 @@ from .models import ResponseModel, ErrorResponseModel
 import pandas as pd
 from ..schedule.core import generate_improved_schedule
 import re
+import numpy as np
 
 router = APIRouter()
 
@@ -626,9 +627,17 @@ async def init_fams_with_sample_data():
                     if not parent_data.get("name"):
                         continue
                     
-                    # Process parent as in user_management.py
-                    offset = 1000 if parent_idx > 0 else 0  # Add offset for second parents
-                    parent_username = generate_username(parent_data["name"], idx + offset, role="parent")
+                    # First, get the next parent ID to use it in the username
+                    last_parent = db.Parent.find_one(sort=[("parentId", -1)])
+                    parent_id = 1
+                    if last_parent and "parentId" in last_parent:
+                        try:
+                            parent_id = int(last_parent["parentId"]) + 1
+                        except (ValueError, TypeError):
+                            parent_id = 1
+                    
+                    # Generate username using the parent_id to ensure uniqueness
+                    parent_username = generate_username(parent_data["name"], parent_id, role="parent")
                     parent_email = parent_data.get("email") or f"{parent_username}@fams.edu.vn"
                     
                     # Create parent UserAccount
@@ -644,15 +653,6 @@ async def init_fams_with_sample_data():
                     
                     # Insert UserAccount
                     db.UserAccount.insert_one(parent_account)
-                    
-                    # Get next parent ID
-                    last_parent = db.Parent.find_one(sort=[("parentId", -1)])
-                    parent_id = 1
-                    if last_parent and "parentId" in last_parent:
-                        try:
-                            parent_id = int(last_parent["parentId"]) + 1
-                        except (ValueError, TypeError):
-                            parent_id = 1
                     
                     # Create parent document
                     parent_doc = {
@@ -1011,6 +1011,140 @@ async def init_fams_with_sample_data():
     attendance_count = db.AttendanceLog.count_documents({})
     print(f"[INFO] Total attendance logs in system: {attendance_count}")
     
+    print("[INFO] Initializing devices and models")
+
+    # Kiểm tra nếu đã có thiết bị
+    existing_device = db.Device.find_one({"deviceName": "Jetson Nano 1"})
+    if not existing_device:
+        # Tạo thiết bị Jetson Nano đặt tại classroom 1
+        device_id = 1
+        last_device = db.Device.find_one(sort=[("deviceId", -1)])
+        if last_device and "deviceId" in last_device:
+            try:
+                device_id = int(last_device["deviceId"]) + 1
+            except (ValueError, TypeError):
+                device_id = 1
+        
+        device_doc = {
+            "deviceId": device_id,
+            "deviceName": "Jetson Nano 1",
+            "deviceType": "Jetson",
+            "status": True,
+            "classroomId": 1,
+            "createdAt": datetime.datetime.now(),
+            "updatedAt": datetime.datetime.now(),
+            "isActive": True
+        }
+        
+        db.Device.insert_one(device_doc)
+        print(f"[INFO] Created device: Jetson Nano 1 with ID: {device_id}")
+        
+        # Tạo phiên bản model cho thiết bị
+        model_id = 1
+        last_model = db.ModelVersion.find_one(sort=[("modelId", -1)])
+        if last_model and "modelId" in last_model:
+            try:
+                model_id = int(last_model["modelId"]) + 1
+            except (ValueError, TypeError):
+                model_id = 1
+        
+        model_doc = {
+            "modelId": model_id,
+            "deviceId": device_id,
+            "modelName": "FaceNet",
+            "version": "1.0.0",
+            "deploymentDate": datetime.datetime.now(),
+            "description": "Initial face recognition model for attendance",
+            "checkpointPath": "/models/facenet_v1.0.0.pt",
+            "status": "Active",
+            "createdAt": datetime.datetime.now(),
+            "updatedAt": datetime.datetime.now(),
+            "isActive": True
+        }
+        
+        db.ModelVersion.insert_one(model_doc)
+        print(f"[INFO] Created model version: FaceNet 1.0.0 with ID: {model_id} for device ID: {device_id}")
+    else:
+        print(f"[INFO] Device Jetson Nano 1 already exists with ID: {existing_device.get('deviceId')}")
+
+    # Report on devices and models
+    device_count = db.Device.count_documents({})
+    model_count = db.ModelVersion.count_documents({})
+    print(f"[INFO] Total devices in system: {device_count}")
+    print(f"[INFO] Total model versions in system: {model_count}")
+    
+    print("[INFO] Generating face vectors for users")
+
+    # Tạo vector random cho AdaFace (512 chiều)
+    def generate_random_face_vector():
+        # Tạo vector 512 chiều với giá trị random từ -1 đến 1
+        vector = np.random.uniform(-1, 1, 512).tolist()
+        return vector
+
+    # Tạo face vector cho học sinh và giáo viên
+    face_vector_count = 0
+    face_angles = ["front", "up", "down", "left", "right"]
+
+    # Danh sách userIds đã có trong hệ thống
+    all_users = list(db.UserAccount.find({"isActive": True}, {"userId": 1}))
+    print(f"[INFO] Found {len(all_users)} users to generate face vectors")
+
+    # Lấy model ID
+    model = db.ModelVersion.find_one({"modelName": "FaceNet"})
+    model_id = model["modelId"] if model else None
+
+    if model_id:
+        # Kiểm tra các user đã có FaceVector chưa
+        existing_users_with_vectors = set(doc["userId"] for doc in db.FaceVector.find({}, {"userId": 1}))
+        
+        # Lọc các user chưa có FaceVector
+        users_needing_vectors = [user for user in all_users if user["userId"] not in existing_users_with_vectors]
+        print(f"[INFO] Generating face vectors for {len(users_needing_vectors)} users who don't have them yet")
+        
+        face_vectors_to_insert = []
+        for user in users_needing_vectors:
+            user_id = user["userId"]
+            
+            # Tạo 5 face vector cho 5 góc khác nhau
+            for angle in face_angles:
+                face_vector = {
+                    "userId": user_id,
+                    "modelId": model_id,
+                    "vector": generate_random_face_vector(),
+                    "capturedDate": datetime.datetime.now(),
+                    "createdAt": datetime.datetime.now(),
+                    "updatedAt": datetime.datetime.now(),
+                    "isActive": True,
+                    "category": angle,
+                    "score": round(np.random.uniform(0.85, 0.98), 2)  # Score từ 0.85 đến 0.98
+                }
+                face_vectors_to_insert.append(face_vector)
+                face_vector_count += 1
+                
+                # Insert theo batch để tránh vấn đề về bộ nhớ
+                if len(face_vectors_to_insert) >= 100:
+                    try:
+                        db.FaceVector.insert_many(face_vectors_to_insert)
+                        print(f"[INFO] Inserted batch of {len(face_vectors_to_insert)} face vectors")
+                        face_vectors_to_insert = []
+                    except Exception as e:
+                        print(f"[ERROR] Failed to insert face vectors batch: {str(e)}")
+                        face_vectors_to_insert = []
+        
+        # Insert những vector còn lại
+        if face_vectors_to_insert:
+            try:
+                db.FaceVector.insert_many(face_vectors_to_insert)
+                print(f"[INFO] Inserted final batch of {len(face_vectors_to_insert)} face vectors")
+            except Exception as e:
+                print(f"[ERROR] Failed to insert final batch of face vectors: {str(e)}")
+    else:
+        print("[WARNING] No model found for face vectors. Skipping face vector generation.")
+
+    # Thống kê số lượng face vector
+    total_face_vectors = db.FaceVector.count_documents({})
+    print(f"[INFO] Total face vectors in system: {total_face_vectors}")
+    
     print("[INFO] Database initialization complete!")
     
     return {
@@ -1021,5 +1155,8 @@ async def init_fams_with_sample_data():
         "classes": db.Class.count_documents({}),
         "academicYears": ["2022-2023", "2023-2024", "2024-2025"],
         "schedules": schedule_count,
-        "attendanceLogs": attendance_count
+        "attendanceLogs": attendance_count,
+        "devices": device_count,
+        "modelVersions": model_count,
+        "faceVectors": total_face_vectors
     }

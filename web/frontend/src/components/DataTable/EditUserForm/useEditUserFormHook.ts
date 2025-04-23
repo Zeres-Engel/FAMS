@@ -1,93 +1,162 @@
-import { useState } from "react";
-import { AddUserForm, EditUserForm } from "../../../model/tableModels/tableDataModels.model";
+import { useEffect, useState } from "react";
+import { AddUserForm, EditUserForm, ClassID } from "../../../model/tableModels/tableDataModels.model";
 import { RootState } from "../../../store/store";
 import { useSelector } from "react-redux";
 import { UserData } from "../../../model/userModels/userDataModels.model";
+import axiosInstance from "../../../services/axiosInstance";
 
-function useEditTableFormHook(formData: AddUserForm, userId: string) {
-  // const user = useSelector((state: RootState) =>
-  //   state.users.user?.find(u => u.id === userId)
-  // );
+interface ClassOption {
+  _id: string;
+  className: string;
+  grade: number;
+  academicYear: string;
+  homeroomTeacherId: string;
+  classId: number;
+}
 
-  // const editUserDefault: EditUserForm = {
-  //   classId:[],
-  //   firstName: "",
-  //   lastName: "",
-  //   dob: "",
-  //   gender: true,
-  //   address: "",
-  //   phone: "",
-  //   parentNames: ["", ""],
-  //   parentCareers: ["", ""],
-  //   parentPhones: ["", ""],
-  //   parentGenders: ['false', 'false'],
-  //   major: "",
-  //   weeklyCapacity: "",
-  //   role: "",
-  // };
+function useEditUserFormHook() {
+  // State for class search and suggestions
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [classOptions, setClassOptions] = useState<ClassOption[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedGrade, setSelectedGrade] = useState<string>("10");
+  
+  // Grade options
+  const gradeOptions = [10, 11, 12];
+  
+  // Current academic year (fixed)
+  const currentAcademicYear = "2024-2025";
 
-  // const formatUserEditData = (data: UserData | undefined): EditUserForm => {
-  //   // if (!data)
-  //      return editUserDefault;
+  // Simple debounce implementation
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
 
-  //   // return {
-  //   //   firstName: data.details?.firstName || "",
-  //   //   lastName: data.details?.lastName || "",
-  //   //   dob: data.details?.dateOfBirth || "",
-  //   //   gender: data.gender || "",
-  //   //   address: data.details?.address || "",
-  //   //   phone: data.details?.phone || "",
-  //   //   parentNames: data.details?.parentNames || ["", ""],
-  //   //   careers: data.details?.careers || ["", ""],
-  //   //   parentPhones: data.details?.parentPhones || ["", ""],
-  //   //   parentGenders: data.details?.parentGenders || [false, false],
-  //   //   major: data.details?.major || "",
-  //   //   weeklyCapacity: data.details?.weeklyCapacity || "",
-  //   //   role: data.role || "",
-  //   // };
-  // };
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
 
-  // const [editingUser, setEditingUser] = useState<EditUserForm>(
-  //   formatUserEditData(user)
-  // );
+  // Fetch class suggestions when search term changes
+  useEffect(() => {
+    const fetchClassSuggestions = async () => {
+      if (debouncedSearchTerm === "" && !selectedGrade) {
+        setClassOptions([]);
+        return;
+      }
 
-  // const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   setEditingUser(prev => ({
-  //     ...prev,
-  //     [e.target.name]: e.target.value,
-  //   }));
-  // };
+      setLoading(true);
+      try {
+        // Include grade in the search query when available
+        const response = await axiosInstance.get(
+          `/classes?grade=${selectedGrade || ""}&search=${debouncedSearchTerm}&homeroomTeacherd=&academicYear=${currentAcademicYear}`
+        );
+        
+        console.log("Class search results:", response.data);
+        
+        // Use all classes from response (up to a reasonable limit)
+        const suggestedClasses = response.data.data.slice(0, 10);
+        setClassOptions(suggestedClasses);
+      } catch (error) {
+        console.error("Error fetching class suggestions:", error);
+        setClassOptions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // const handleArrayChange = (key: keyof EditUserForm, index: number) => 
-  //   (e: React.ChangeEvent<HTMLInputElement>) => {
-  //     const value = e.target.value;
-  //     setEditingUser(prev => {
-  //       const arr = [...(prev[key] as string[])];
-  //       arr[index] = value;
-  //       return { ...prev, [key]: arr };
-  //     });
-  //   };
+    fetchClassSuggestions();
+  }, [debouncedSearchTerm, selectedGrade, currentAcademicYear]);
 
-  // const handleParentGenderChange = (index: number) =>
-  //   (e: React.ChangeEvent<HTMLInputElement>) => {
-  //     const isFemale = e.target.value === "Female";
-  //     setEditingUser(prev => {
-  //       const newGenders = [...(prev.parentGenders || [false, false])];
-  //       newGenders[index] = isFemale;
-  //       return { ...prev, parentGenders: newGenders };
-  //     });
-  //   };
+  // Delete avatar function
+  const deleteAvatar = async (userId: string) => {
+    try {
+      setLoading(true);
+      const response = await axiosInstance.delete(`/avatar/${userId}`);
+      console.log("Avatar deletion response:", response.data);
+      return {
+        success: true,
+        message: "Avatar deleted successfully"
+      };
+    } catch (error) {
+      console.error("Error deleting avatar:", error);
+      return {
+        success: false,
+        message: "Failed to delete avatar"
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Upload avatar function
+  const uploadAvatar = async (userId: string, file: File) => {
+    try {
+      setLoading(true);
+      const formData = new FormData();
+      formData.append('avatar', file);
+      
+      const response = await axiosInstance.post(`/avatar/admin/${userId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      console.log("Avatar upload response:", response.data);
+      return {
+        success: true,
+        message: "Avatar uploaded successfully",
+        avatarUrl: response.data.data?.avatarUrl || null
+      };
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      return {
+        success: false,
+        message: "Failed to upload avatar"
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update user function
+  const updateUser = async (userId: string, userData: any) => {
+    try {
+      // Format class IDs for API if needed
+      if (userData.classId && Array.isArray(userData.classId)) {
+        // Extract classIds for the API request
+        userData.classIds = userData.classId.map((cls: any) => 
+          typeof cls === 'object' && cls.classId ? Number(cls.classId) : Number(cls)
+        );
+      }
+      
+      console.log("Sending update request:", userData);
+      const response = await axiosInstance.put(`/users/update/${userId}`, userData);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating user:", error);
+      throw error;
+    }
+  };
 
   return {
     state: {
-      //  editingUser
-       },
+      classOptions,
+      loading,
+      gradeOptions,
+      currentAcademicYear,
+      selectedGrade
+    },
     handler: {
-      // handleEditChange,
-      // handleArrayChange,
-      // handleParentGenderChange,
+      setSearchTerm,
+      updateUser,
+      setSelectedGrade,
+      deleteAvatar,
+      uploadAvatar
     },
   };
 }
 
-export default useEditTableFormHook;
+export default useEditUserFormHook;

@@ -54,6 +54,30 @@ const upload = multer({
   fileFilter: fileFilter
 });
 
+// Configure multer storage for admin uploads
+const adminUploadStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    // Get target user role from the database lookup (done in the handler)
+    // Will default to student directory initially
+    const roleDir = path.join(rootUploadDir, 'student');
+    cb(null, roleDir);
+  },
+  filename: function (req, file, cb) {
+    // Use the target userId from params as filename
+    const userId = req.params.userId;
+    cb(null, `${userId}.jpg.temp`); // Use temp extension initially
+  }
+});
+
+// Configure admin upload
+const adminUpload = multer({
+  storage: adminUploadStorage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB
+  },
+  fileFilter: fileFilter
+});
+
 /**
  * @desc    Upload avatar for current user
  * @route   POST /api/avatar/upload
@@ -355,4 +379,215 @@ exports.deleteAvatar = asyncHandler(async (req, res) => {
       code: 'SERVER_ERROR'
     });
   }
-}); 
+});
+
+/**
+ * @desc    Delete avatar for a specific user (by userId)
+ * @route   DELETE /api/avatar/:userId
+ * @access  Private (Admin only)
+ */
+exports.deleteAvatarByUserId = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  
+  // Verify admin rights
+  if (req.user.role.toLowerCase() !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Bạn không có quyền thực hiện chức năng này',
+      code: 'PERMISSION_DENIED'
+    });
+  }
+  
+  // Find user
+  const user = await UserAccount.findOne({ userId });
+  
+  if (!user) {
+    return res.status(404).json({
+      success: false,
+      message: 'Không tìm thấy người dùng',
+      code: 'USER_NOT_FOUND'
+    });
+  }
+  
+  try {
+    // Get user role for path construction
+    const userRole = (user.role || 'student').toLowerCase();
+    const validRole = roles.includes(userRole) ? userRole : 'student';
+    
+    // Direct path to user's avatar using userId and role
+    const avatarPath = path.join(rootUploadDir, validRole, `${userId}.jpg`);
+    console.log('Deleting avatar file for userId:', userId, 'at path:', avatarPath);
+    
+    // Check if avatar file exists before attempting to delete
+    if (fs.existsSync(avatarPath)) {
+      try {
+        fs.unlinkSync(avatarPath);
+        console.log(`Successfully deleted avatar file for userId: ${userId}`);
+      } catch (unlinkError) {
+        console.error(`Error deleting file: ${unlinkError.message}`);
+        // Continue processing even if file deletion fails
+      }
+    } else {
+      console.log(`Avatar file does not exist for userId: ${userId}`);
+      // No need to fail if file doesn't exist, just update database
+    }
+    
+    // Update user in database regardless of whether file existed
+    if (user.avatar) {
+      user.avatar = null;
+      await user.save();
+    }
+    
+    res.json({
+      success: true,
+      message: `Avatar của người dùng ${userId} đã được xóa thành công`,
+      code: 'AVATAR_DELETED'
+    });
+  } catch (error) {
+    console.error('Avatar delete error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi server trong quá trình xóa avatar',
+      error: error.message,
+      code: 'SERVER_ERROR'
+    });
+  }
+});
+
+/**
+ * @desc    Admin uploads avatar for a specific user
+ * @route   POST /api/avatar/admin/:userId
+ * @access  Private (Admin only)
+ */
+exports.adminUploadAvatar = [
+  // Admin check middleware
+  (req, res, next) => {
+    if (req.user.role.toLowerCase() !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Bạn không có quyền thực hiện chức năng này',
+        code: 'PERMISSION_DENIED'
+      });
+    }
+    next();
+  },
+  
+  // Use multer as middleware for single file upload with field name 'avatar'
+  adminUpload.single('avatar'),
+  
+  asyncHandler(async (req, res) => {
+    const targetUserId = req.params.userId;
+    
+    // If file upload fails, multer will throw an error
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng upload một file hình ảnh',
+        code: 'NO_FILE_UPLOADED'
+      });
+    }
+
+    try {
+      console.log("Admin avatar upload request:", {
+        adminId: req.user?.userId,
+        targetUserId: targetUserId
+      });
+      
+      // Find target user
+      const user = await UserAccount.findOne({ userId: targetUserId });
+      
+      if (!user) {
+        // Remove uploaded file if user not found
+        if (req.file.path && fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+        
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy người dùng',
+          code: 'USER_NOT_FOUND'
+        });
+      }
+      
+      console.log("Found target user in database:", {
+        userId: user.userId,
+        username: user.username,
+        role: user.role
+      });
+      
+      // Get the temporary file path
+      const tempFilePath = req.file.path;
+      
+      // Determine the correct target directory based on user role
+      const userRole = (user.role || 'student').toLowerCase();
+      const validRole = roles.includes(userRole) ? userRole : 'student';
+      
+      // Create the final path
+      const finalFilename = `${user.userId}.jpg`;
+      const finalDir = path.join(rootUploadDir, validRole);
+      const finalPath = path.join(finalDir, finalFilename);
+      
+      // Ensure the target directory exists
+      if (!fs.existsSync(finalDir)) {
+        fs.mkdirSync(finalDir, { recursive: true });
+      }
+      
+      // Process image with sharp
+      // Optimize and resize image to 400x400
+      await sharp(tempFilePath)
+        .resize(400, 400, { fit: 'cover' })
+        .jpeg({ quality: 80 })
+        .toFile(`${tempFilePath}.processed`);
+      
+      // Remove original uploaded temp file
+      fs.unlinkSync(tempFilePath);
+      
+      // Move processed file to correct location
+      if (fs.existsSync(finalPath)) {
+        fs.unlinkSync(finalPath); // Remove existing avatar if any
+      }
+      fs.renameSync(`${tempFilePath}.processed`, finalPath);
+      
+      // Create role-based relative path
+      const relativePath = `/avatars/${validRole}/${user.userId}.jpg`;
+      
+      // Get domain from request or default domain
+      const protocol = req.headers['x-forwarded-proto'] || 'http';
+      const host = req.headers.host || 'fams.io.vn';
+      const fullAvatarUrl = `${protocol}://${host}${relativePath}`;
+      
+      // Save full URL to database
+      user.avatar = fullAvatarUrl;
+      await user.save();
+      
+      res.json({
+        success: true,
+        message: `Avatar của người dùng ${targetUserId} đã được tải lên thành công`,
+        data: {
+          userId: user.userId,
+          avatar: user.avatar,
+          avatarUrl: user.avatar
+        },
+        code: 'AVATAR_UPLOADED_BY_ADMIN'
+      });
+    } catch (error) {
+      // Clean up uploaded file in case of error
+      if (req.file && req.file.path) {
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+        if (fs.existsSync(`${req.file.path}.processed`)) {
+          fs.unlinkSync(`${req.file.path}.processed`);
+        }
+      }
+      
+      console.error('Admin avatar upload error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi server trong quá trình upload avatar',
+        error: error.message,
+        code: 'SERVER_ERROR'
+      });
+    }
+  })
+]; 

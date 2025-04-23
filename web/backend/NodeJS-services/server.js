@@ -16,6 +16,8 @@ const adminRoutes = require('./routes/adminRoutes');
 const classRoutes = require('./routes/classRoutes');
 const rfidRoutes = require('./routes/rfidRoutes');
 const avatarRoutes = require('./routes/avatarRoutes');
+const classroomRoutes = require('./routes/classroomRoutes');
+const subjectRoutes = require('./routes/subjectRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -112,6 +114,8 @@ app.use('/api/classes', classRoutes);
 app.use('/api/rfid', rfidRoutes);
 app.use('/api/database', apiRouter);
 app.use('/api/avatar', avatarRoutes);
+app.use('/api/classrooms', classroomRoutes);
+app.use('/api/subjects', subjectRoutes);
 
 // Root route
 app.get('/', (req, res) => {

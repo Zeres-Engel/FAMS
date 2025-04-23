@@ -32,14 +32,7 @@ interface EnhancedTableProps {
   numSelected: number;
   onRequestSort: (
     event: React.MouseEvent<unknown>,
-    property:
-      | keyof Data
-      | keyof UserData
-      | keyof ClassData
-      | keyof AttendanceLog
-      | keyof ClassArrangementData
-      | keyof NotifyProps
-      | keyof RFIDData
+    property: string
   ) => void;
   onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
   order: Order;
@@ -99,9 +92,9 @@ function TableHeader(props: EnhancedTableProps): React.JSX.Element {
             />
           )}
         </TableCell>
-        {state?.headCellsData.map(headCell => (
+        {state?.headCellsData.map((headCell, index) => (
           <TableCell
-            key={headCell.id}
+            key={`header-cell-${headCell.id}-${index}`}
             align={headCell.numeric ? "right" : "left"}
             padding={headCell.disablePadding ? "none" : "normal"}
             sortDirection={orderBy === headCell.id ? order : false}

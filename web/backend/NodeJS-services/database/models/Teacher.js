@@ -18,20 +18,9 @@ const TeacherSchema = new mongoose.Schema({
     unique: true,
     ref: 'UserAccount'
   },
-  firstName: {
-    type: String,
-    required: true
-  },
-  lastName: {
-    type: String,
-    required: true
-  },
   fullName: {
     type: String,
-    required: true,
-    default: function() {
-      return `${this.lastName} ${this.firstName}`;
-    }
+    required: true
   },
   email: {
     type: String
@@ -77,8 +66,24 @@ const TeacherSchema = new mongoose.Schema({
 }, {
   timestamps: true,
   versionKey: false,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  toJSON: { 
+    virtuals: true,
+    transform: function(doc, ret) {
+      // Remove unnecessary fields from the response
+      delete ret.firstName;
+      delete ret.lastName;
+      return ret;
+    }
+  },
+  toObject: { 
+    virtuals: true,
+    transform: function(doc, ret) {
+      // Remove unnecessary fields from the response
+      delete ret.firstName;
+      delete ret.lastName;
+      return ret;
+    }
+  }
 });
 
 // Virtual for getting user info

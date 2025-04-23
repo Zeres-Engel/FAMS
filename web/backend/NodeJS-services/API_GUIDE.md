@@ -774,18 +774,18 @@ Base path: `/schedules`
       "subjectId": 2,
       "teacherId": 5,
       "classroomId": 10,
-      "WeekNumber": 1,
-      "DayNumber": 2,
-      "SessionDate": "2024-09-10",
-      "SlotID": 3,
+      "weekNumber": 1,
       "dayOfWeek": "Tuesday",
+      "sessionDate": "2024-09-10T00:00:00.000Z",
+      "sessionWeek": "09/09/2024 to 15/09/2024",
+      "slotId": 3,
       "startTime": "08:50",
       "endTime": "09:35",
-      "Topic": "Đại số",
-      "status": "scheduled",
-      "className": "10A3",
+      "topic": "Đại số",
       "subjectName": "Toán học",
-      "teacherName": "Tuấn Phạm Văn"
+      "teacherName": "Tuấn Phạm Văn",
+      "classroomNumber": "101",
+      "teacherUserId": "tuanpv5"
     }
     // More schedules...
   ],
@@ -796,6 +796,8 @@ Base path: `/schedules`
   }
 }
 ```
+
+**Note**: All schedule responses include `teacherUserId` which is the user ID of the teacher, in addition to `teacherId` and `teacherName`.
 
 #### Get Schedules by Class Name
 - **URL**: `http://fams.io.vn/api-nodejs/schedules/class/:className`
@@ -857,152 +859,233 @@ Base path: `/schedules`
 }
 ```
 
-#### Get All Schedules
-- **URL**: `http://fams.io.vn/api-nodejs/schedules`
-- **Method**: `GET`
-- **Auth Required**: Yes
-
-#### Get Schedule by ID
-- **URL**: `http://fams.io.vn/api-nodejs/schedules/:id`
-- **Method**: `GET`
-- **Auth Required**: Yes
-
 #### Create Schedule
-- **URL**: `http://fams.io.vn/api-nodejs/schedules/create`
+- **URL**: `http://fams.io.vn/api-nodejs/schedules`
 - **Method**: `POST`
-- **Auth Required**: Yes (Admin or Teacher only)
-- **Body**: 
+- **Auth Required**: Yes
+- **Body**:
 ```json
 {
-  "date": "2024-09-10",               // Required - Format: YYYY-MM-DD
-  "slotNumber": 3,                    // Required - Slot number (1-10)
-  
-  // Cách 1: Sử dụng ID (phương thức truyền thống)
-  "classId": 3,                       // ID của lớp học
-  "teacherId": 5,                     // ID của giáo viên
-  "subjectId": 2,                     // ID của môn học
-  
-  // Cách 2: Sử dụng tên (phương thức thân thiện hơn)
-  "className": "10A3",                // Tên lớp học (thay thế cho classId)
-  "teacherUserId": "tuanpv5",         // UserID của giáo viên (thay thế cho teacherId)
-  "subjectName": "Toán học",          // Tên môn học (thay thế cho subjectId)
-  
-  // Các thông tin khác
-  "topic": "Đại số",                  // Optional - Chủ đề buổi học
-  "roomName": "Room 101",             // Optional - Tên phòng học
-  "classroomId": 10,                  // Optional - ID phòng học
-  "weekNumber": 1,                    // Optional - Số tuần trong học kỳ
-  "semesterId": "1"                   // Optional - ID học kỳ
+  "semesterId": 6,
+  "semesterNumber": 1,
+  "classId": 18,
+  "subjectId": 10,
+  "teacherId": 7,        // Either teacherId or teacherUserId must be provided
+  "classroomId": 3,
+  "slotId": 14,
+  "topic": "Cầu Lông - Tuần 16",
+  "sessionDate": "2025-04-19",
+  "isActive": true
 }
 ```
 
-**Ví dụ tạo lịch học đơn giản**:
+**Alternative using teacherUserId instead of teacherId**:
 ```json
 {
-  "date": "2024-10-15",
-  "slotNumber": 3,
-  "className": "10A2", 
-  "teacherUserId": "tuanpv5",
-  "subjectName": "Toán học",
-  "topic": "Đại số",
-  "roomName": "B203"
+  "semesterId": 6,
+  "semesterNumber": 1,
+  "classId": 18,
+  "subjectId": 10,
+  "teacherUserId": "buihuukhanh",  // Can use teacher's userId instead of teacherId
+  "classroomId": 3,
+  "slotId": 14,
+  "topic": "Cầu Lông - Tuần 16",
+  "sessionDate": "2025-04-19",
+  "isActive": true
 }
 ```
 
-**Lưu ý về kiểm tra xung đột lịch học:**
-
-Khi tạo lịch học mới, hệ thống sẽ kiểm tra ba loại xung đột có thể xảy ra:
-
-1. **Xung đột lớp học**: Nếu lớp đã có lịch học vào ngày và tiết đó
-   ```json
-   {
-     "success": false,
-     "message": "Lớp 10A3 đã có lịch học môn Toán học vào ngày 10/09/2024 tiết 3 (08:50-09:35) với giáo viên Tuấn Phạm Văn",
-     "code": "CLASS_SCHEDULE_CONFLICT",
-     "conflict": {
-       // Chi tiết về lịch học xung đột
-     }
-   }
-   ```
-
-2. **Xung đột giáo viên**: Nếu giáo viên đã dạy lớp khác vào ngày và tiết đó
-   ```json
-   {
-     "success": false,
-     "message": "Giáo viên đã có lịch dạy lớp 10A1 môn Toán học vào ngày 10/09/2024 tiết 3 (08:50-09:35)",
-      "message": "Bạn không có quyền cập nhật lịch học",
-      "code": "PERMISSION_DENIED"
-    }
-    ```
-  - `404` - Schedule not found:
-    ```json
-    {
-      "success": false,
-      "message": "Không tìm thấy lịch học với ID 650d1f4c8d43e21234567890",
-      "code": "SCHEDULE_NOT_FOUND"
-    }
-    ```
-  - `409` - Schedule already exists:
-    ```json
-    {
-      "success": false,
-      "message": "Đã tồn tại lịch học cho lớp 3 vào ngày 12/09/2024 tiết 4",
-      "code": "SCHEDULE_EXISTS"
-    }
-    ```
-
-#### Delete Schedule
-- **URL**: `http://fams.io.vn/api-nodejs/schedules/:id`
-- **Method**: `DELETE`
-- **Auth Required**: Yes (Admin or Teacher only)
-- **URL Parameters**:
-  - `id`: Schedule ID to delete
+- **Required Fields**: `semesterId`, `classId`, `subjectId`, `teacherId` (or `teacherUserId`), `classroomId`, `slotId`, `sessionDate`
 - **Response**:
 ```json
 {
   "success": true,
-  "message": "Đã xóa lịch học Toán học cho lớp 10A3 vào ngày 12/09/2024 tiết 4",
+  "message": "Schedule created successfully",
   "data": {
-    "deletedSchedule": {
-      "scheduleId": "650d1f4c8d43e21234567890",
-      "classId": 3,
-      "subjectId": 2,
-      "teacherId": 5,
-      "slotId": "4",
-      "dayOfWeek": "Thursday",
-      "topic": "Hình học không gian",
-      "className": "10A3",
-      "teacherName": "Tuấn Phạm Văn",
-      "subjectName": "Toán học"
-    }
-  }
+    "scheduleId": 3978,
+    "semesterId": 6,
+    "semesterNumber": 1,
+    "classId": 18,
+    "subjectId": 10,
+    "teacherId": 7,
+    "classroomId": 3,
+    "slotId": 14,
+    "topic": "Cầu Lông - Tuần 16",
+    "sessionDate": "2025-04-19T00:00:00.000Z",
+    "sessionWeek": "14/04/2025 to 20/04/2025",
+    "dayOfWeek": "Saturday",
+    "createdAt": "2025-04-22T09:15:36.789Z",
+    "updatedAt": "2025-04-22T09:15:36.789Z",
+    "isActive": true,
+    "startTime": "15:30",
+    "endTime": "16:15"
+  },
+  "code": "SCHEDULE_CREATED"
 }
 ```
 - **Error Responses**:
-  - `403` - Unauthorized:
+  - `400` - Missing required fields:
     ```json
     {
       "success": false,
-      "message": "Bạn không có quyền xóa lịch học",
-      "code": "PERMISSION_DENIED"
+      "message": "Missing required fields",
+      "code": "MISSING_FIELDS"
     }
     ```
-  - `403` - Teacher permission denied:
+  - `400` - Invalid date format:
     ```json
     {
       "success": false,
-      "message": "Bạn không có quyền xóa lịch học của giáo viên khác",
-      "code": "PERMISSION_DENIED_TEACHER"
+      "message": "Invalid date format",
+      "code": "INVALID_DATE"
     }
     ```
+  - `500` - Server error:
+    ```json
+    {
+      "success": false,
+      "message": "Error message details",
+      "code": "SCHEDULE_CREATE_ERROR"
+    }
+    ```
+
+#### Update Schedule
+- **URL**: `http://fams.io.vn/api-nodejs/schedules/:scheduleId`
+- **Method**: `PUT`
+- **Auth Required**: Yes
+- **URL Parameters**:
+  - `scheduleId`: ID of the schedule to update
+- **Body**:
+```json
+{
+  "semesterId": 6,
+  "semesterNumber": 1,
+  "classId": 18,
+  "subjectId": 7,
+  "teacherId": 8,        // Either teacherId or teacherUserId can be provided
+  "classroomId": 3,
+  "slotId": 11,
+  "topic": "Dã Ngoại - Tuần 16 (Updated)",
+  "sessionDate": "2025-04-20",
+  "isActive": true
+}
+```
+
+**Alternative using teacherUserId**:
+```json
+{
+  "teacherUserId": "buixuanbinh",  // Can use teacher's userId instead of teacherId
+  "topic": "Dã Ngoại - Tuần 16 (Updated)",
+  "sessionDate": "2025-04-20"
+}
+```
+
+- **Note**: Only include fields you want to update. All fields are optional. You can use either `teacherId` or `teacherUserId` to update the teacher.
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Schedule updated successfully",
+  "data": {
+    "scheduleId": 3968,
+    "semesterId": 6,
+    "semesterNumber": 1,
+    "classId": 18,
+    "subjectId": 7,
+    "teacherId": 8,
+    "classroomId": 3,
+    "sessionDate": "2025-04-20T00:00:00.000Z",
+    "sessionWeek": "14/04/2025 to 20/04/2025",
+    "slotId": 11,
+    "dayOfWeek": "Sunday",
+    "topic": "Dã Ngoại - Tuần 16 (Updated)",
+    "subjectName": "Dã ngoại",
+    "teacherName": "Bùi Xuân Bình",
+    "classroomNumber": "101",
+    "startTime": "09:40",
+    "endTime": "10:25",
+    "updatedAt": "2025-04-22T09:17:23.456Z",
+    "isActive": true
+  },
+  "code": "SCHEDULE_UPDATED"
+}
+```
+- **Error Responses**:
   - `404` - Schedule not found:
     ```json
     {
       "success": false,
-      "message": "Không tìm thấy lịch học với ID 650d1f4c8d43e21234567890",
+      "message": "Schedule with ID 9999 not found",
       "code": "SCHEDULE_NOT_FOUND"
     }
     ```
+  - `400` - Invalid date format:
+    ```json
+    {
+      "success": false,
+      "message": "Invalid date format",
+      "code": "INVALID_DATE"
+    }
+    ```
+  - `400` - No changes made:
+    ```json
+    {
+      "success": false,
+      "message": "No changes made to the schedule",
+      "code": "NO_CHANGES"
+    }
+    ```
+  - `500` - Server error:
+    ```json
+    {
+      "success": false,
+      "message": "Error message details",
+      "code": "SCHEDULE_UPDATE_ERROR"
+    }
+    ```
+
+#### Delete Schedule
+- **URL**: `http://fams.io.vn/api-nodejs/schedules/:scheduleId`
+- **Method**: `DELETE`
+- **Auth Required**: Yes
+- **URL Parameters**:
+  - `scheduleId`: ID of the schedule to delete
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Schedule with ID 3968 deleted successfully",
+  "code": "SCHEDULE_DELETED"
+}
+```
+- **Error Responses**:
+  - `404` - Schedule not found:
+    ```json
+    {
+      "success": false,
+      "message": "Schedule with ID 9999 not found",
+      "code": "SCHEDULE_NOT_FOUND"
+    }
+    ```
+  - `400` - Delete failed:
+    ```json
+    {
+      "success": false,
+      "message": "Failed to delete schedule",
+      "code": "DELETE_FAILED"
+    }
+    ```
+  - `500` - Server error:
+    ```json
+    {
+      "success": false,
+      "message": "Error message details",
+      "code": "SCHEDULE_DELETE_ERROR"
+    }
+    ```
+
+**Note on Schedule Times**: 
+Each schedule is associated with a slot (slotId) that has predefined start and end times. The API will automatically include these times in the response when available.
 
 ### Admin API
 Base path: `/admin`
