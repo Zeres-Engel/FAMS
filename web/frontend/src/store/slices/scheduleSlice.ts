@@ -9,9 +9,9 @@ export interface Schedule {
   scheduleId: string;
   semesterId: string | null;
   classId: number;
-  subjectId: string;
+  subjectId: number;
   teacherId: string;
-  classroomId: string;
+  classroomId: number;
   weekNumber: number;
   dayNumber: number;
   sessionDate: string; // ISO string
@@ -40,9 +40,9 @@ export interface ScheduleAction {
   semesterId?: string;      
   semesterNumber?: string;  
   classId?: string;    
-  subjectId?: string;       
+  subjectId?: number;       
   teacherId?: string;      
-  classroomId?: string;    
+  classroomId?: number;    
   slotId?: string;         
   topic?: string;           
   sessionDate?: string;     
@@ -126,7 +126,7 @@ export const createSchedule = createAsyncThunk(
     try {
       thunkAPI.dispatch(showLoading());
 
-      const response = await axiosInstance.post("/api-nodejs/schedules", {
+      const response = await axiosInstance.post("/schedules", {
         semesterId: newSchedule.semesterId,
         semesterNumber: newSchedule.semesterNumber,
         classId: newSchedule.classId,
@@ -171,7 +171,7 @@ export const updateSchedule = createAsyncThunk(
       thunkAPI.dispatch(showLoading());
 
       const response = await axiosInstance.put(
-        `/api-nodejs/schedules/${updatedSchedule.scheduleId}`,
+        `/schedules/${updatedSchedule.scheduleId}`,
         {
           semesterId: updatedSchedule.semesterId,
           semesterNumber: updatedSchedule.semesterNumber,

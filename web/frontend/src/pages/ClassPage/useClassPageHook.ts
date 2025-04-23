@@ -1,14 +1,45 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/useStoreHook";
-import { fetchUser } from "../../store/slices/userSlice";
-import { Data, HeadCell } from "../../model/tableModels/tableDataModels.model";
+import {
+  ClassPageList,
+  ClassStudent,
+  ClassStudentHeadCell,
+} from "../../model/tableModels/tableDataModels.model";
+import { SearchFilters } from "../../model/userModels/userDataModels.model";
+import { fetchClassesByUserId } from "../../store/slices/classByIdSlice";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/store";
+import { getClassUsers } from "../../store/slices/classUserSlice";
 
 function useClassPageHook() {
   const dispatch = useAppDispatch();
   const role = useAppSelector(state => state.authUser.role);
-  const userState = useAppSelector(state => state.users);
-  const [userMainData, setUserMainData] = useState<Data[]>([]);
-  const headCellsData: HeadCell[] = [
+  const userData = useAppSelector(state => state.login.loginData);
+  const classList = useSelector((state: RootState) => state.classById.classes);
+  const classOptions = classList?.map(c => c.className) || [];
+  const classPageList: ClassPageList[] = classList.map(item => ({
+    classId: item.classId,
+    className: `${item.className} - ${item.academicYear}`,
+  }));
+  const hoomroomTeacherList = classList.map(item => ({
+    homeroomTeacherId: item.homeroomTeacherId,
+    className: `${item.className} - ${item.academicYear}`,
+  }));
+  const classPageData = useSelector((state:RootState) => state.classUser.students)
+  const [filters, setFiltersClassPage] = useState<number>(0);
+  useEffect(() => {
+    if (userData && classList.length === 0) {
+      dispatch(fetchClassesByUserId(userData?.userId));
+    }
+  }, [dispatch, userData, classList]);
+  useEffect(() => {
+    if (filters) {
+      dispatch(getClassUsers(filters));
+    }
+  }, [filters, dispatch]);
+
+  const [userMainData, setUserMainData] = useState<ClassStudent[]>([]);
+  const headCellsData: ClassStudentHeadCell[] = [
     {
       id: "id",
       numeric: false,
@@ -16,10 +47,10 @@ function useClassPageHook() {
       label: "ID",
     },
     {
-      id: "name",
+      id: "fullName",
       numeric: false,
       disablePadding: true,
-      label: "Name",
+      label: "Full name",
     },
     {
       id: "avatar",
@@ -28,16 +59,16 @@ function useClassPageHook() {
       label: "Avatar",
     },
     {
-      id: "creationAt",
-      numeric: false,
-      disablePadding: false,
-      label: "CreationAt",
-    },
-    {
       id: "email",
       numeric: false,
       disablePadding: false,
       label: "Email",
+    },
+    {
+      id: "phone",
+      numeric: false,
+      disablePadding: false,
+      label: "Phone",
     },
     {
       id: "role",
@@ -45,24 +76,21 @@ function useClassPageHook() {
       disablePadding: false,
       label: "Role",
     },
-    {
-      id: "updatedAt",
-      numeric: false,
-      disablePadding: false,
-      label: "UpdatedAt",
-    },
   ];
   const isCheckBox = false;
   const tableTitle = "Student Data";
-  useEffect(() => {  
-    if (!userState.user) {
-      dispatch(fetchUser());
-    } else {
-      // setUserMainData(userState?.user);
-    }
-  }, [dispatch, userState.user]);
-  const state = { headCellsData, userMainData, tableTitle, isCheckBox,role };
-  const handler = {};
+  const state = {
+    headCellsData,
+    userMainData,
+    tableTitle,
+    isCheckBox,
+    role,
+    classOptions,
+    classPageList,
+    classPageData,
+    hoomroomTeacherList
+  };
+  const handler = { setFiltersClassPage };
 
   return { state, handler };
 }

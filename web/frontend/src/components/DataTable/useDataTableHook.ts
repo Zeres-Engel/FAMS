@@ -3,6 +3,7 @@ import {
   AddUserForm,
   AttendanceLog,
   ClassArrangementData,
+  ClassStudent,
   Data,
   EditAttendanceFormProps,
   editClassForm,
@@ -32,7 +33,8 @@ interface UseDataTableHookProps {
     | AttendanceLog[]
     | ClassArrangementData[]
     | NotifyProps[]
-    | RFIDData[];
+    | RFIDData[]
+    | ClassStudent[];
 }
 function useDataTableHook(props: UseDataTableHookProps) {
   const { tableMainData } = props;
@@ -83,6 +85,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
     | keyof ClassArrangementData
     | keyof NotifyProps
     | keyof RFIDData
+    | keyof ClassStudent
   >("id");
   const [gradeError, setGradeError] = React.useState(false);
   const [selected, setSelected] = React.useState<readonly string[]>([]);
@@ -92,8 +95,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
     React.useState<EditUserForm>(editUserDefault);
   const [editingClass, setEditingClass] =
     React.useState<editClassForm>(editClassDefaul);
-  const [editingClassID, setEditingClassID] =
-    React.useState<string>('');
+  const [editingClassID, setEditingClassID] = React.useState<string>("");
   const [editingAttendance, setEditingAttendance] =
     React.useState<EditAttendanceFormProps>(editAttendanceDefault);
   const [page, setPage] = React.useState(0);
@@ -106,7 +108,9 @@ function useDataTableHook(props: UseDataTableHookProps) {
     undefined
   );
   const [isShowNotifyOpen, setIsShowNotifyOpen] = useState(false);
-  const [selectedNotify, setSelectedNotify] = useState<NotifyProps | null>(null);
+  const [selectedNotify, setSelectedNotify] = useState<NotifyProps | null>(
+    null
+  );
 
   const allUsers = useSelector((state: RootState) => state.users.user);
   const handleRequestSort = (
@@ -119,6 +123,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
       | keyof ClassArrangementData
       | keyof NotifyProps
       | keyof RFIDData
+      | keyof ClassStudent
   ) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
@@ -131,7 +136,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
         classId: user?.classTeacher || [],
         firstName: user?.teacherFirstName || "",
         lastName: user?.teacherLastName || "",
-        fullName: user?.name || '',
+        fullName: user?.name || "",
         dob: user?.TeacherDOB
           ? new Date(user?.TeacherDOB).toISOString().split("T")[0] // format yyyy-mm-dd
           : "",
@@ -162,7 +167,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
       gender: user.gender === "Male" ? true : false,
       address: user.details?.address || "",
       phone: user.details?.phone || user.phoneSub,
-      career: user.parentCareer || "", 
+      career: user.parentCareer || "",
       email: user.parentEmail || "",
       parentNames: user.Parent?.map((p: any) => p.fullName) || ["", ""],
       parentCareers: user.Parent?.map((p: any) => p.career) || ["", ""],
@@ -193,14 +198,14 @@ function useDataTableHook(props: UseDataTableHookProps) {
   const handleEditClick = (user: EditUserForm, userId?: string) => {
     const userEdit = allUsers?.find(u => u.id === userId);
     // Lọc tại đây nếu cần'
-    console.log("Editing user:", userEdit); 
-    
+    console.log("Editing user:", userEdit);
+
     console.log(formatUserToEditUserForm(userEdit));
     setEditingUserId(userEdit?.id);
     setEditingUser(formatUserToEditUserForm(userEdit));
     setIsEditOpen(true);
   };
-  const handleEditClassClick = (classData: editClassForm,editID:string) => {
+  const handleEditClassClick = (classData: editClassForm, editID: string) => {
     setEditingClass(classData);
     setIsEditOpen(true);
     setEditingClassID(editID);
@@ -220,7 +225,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
     setSelectedNotify({
       id: row.id,
       sender: row.sender,
-      receiver: row.receiver || '',
+      receiver: row.receiver || "",
       message: row.message,
       sendDate: row.sendDate,
     });
@@ -267,7 +272,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
     };
     console.log("Saving edited class:", classFormData);
     console.log("Saving edited class ID:", editingClassID);
-    dispatch(editClass({ id: editingClassID, ...payload }))
+    dispatch(editClass({ id: editingClassID, ...payload }));
     setIsEditOpen(false);
   };
   const handleEditAttendanceSave = (
@@ -361,7 +366,7 @@ function useDataTableHook(props: UseDataTableHookProps) {
     gradeError,
     isShowNotifyOpen,
     selectedNotify,
-    editingUserId
+    editingUserId,
   };
   const handler = {
     handleRequestSort,

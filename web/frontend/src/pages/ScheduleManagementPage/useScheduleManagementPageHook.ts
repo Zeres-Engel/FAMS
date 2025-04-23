@@ -144,7 +144,6 @@ function useScheduleManagementPageHook() {
 
   const handleSelectEvent = (event: ScheduleEvent = defaultEvent) => {
     console.log(event);
-
     setEventShow(event);
   };
 
@@ -163,19 +162,20 @@ function useScheduleManagementPageHook() {
       (schedules.find(
         schedule => String(schedule.scheduleId) === String(eventShow.id)
       ) as Schedule) || ({} as Schedule);
-    console.log("Saving event", currentSchedule);
     const updatedSchedule: ScheduleAction = {
       scheduleId: currentSchedule.scheduleId,
       semesterId: currentSchedule.semesterId || undefined,
       classId: String(currentSchedule.classId),
-      subjectId: currentSchedule.subjectId,
-      classroomId: currentSchedule.classroomId,
+      subjectId: eventShow.subjectId,
+      classroomId: eventShow.classroomId,
       teacherId: eventShow.teacher,
       topic: eventShow.title,
       sessionDate: new Date(currentSchedule?.sessionDate)
         .toISOString()
         .split("T")[0],
     };
+    console.log("updatedSchedule", updatedSchedule);
+    
     dispatch(updateSchedule(updatedSchedule));
     setIsEditing(false);
   };

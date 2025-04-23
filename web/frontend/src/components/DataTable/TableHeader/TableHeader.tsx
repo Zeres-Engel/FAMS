@@ -14,6 +14,8 @@ import {
   ClassArrangementData,
   ClassArrangementHeadCellProps,
   ClassHeadCell,
+  ClassStudent,
+  ClassStudentHeadCell,
   Data,
   HeadCell,
   NotifyHeadCell,
@@ -40,6 +42,7 @@ interface EnhancedTableProps {
       | keyof ClassArrangementData
       | keyof NotifyProps
       | keyof RFIDData
+      | keyof ClassStudent
   ) => void;
   onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
   order: Order;
@@ -52,7 +55,8 @@ interface EnhancedTableProps {
     | AttendanceHeadCell[]
     | ClassArrangementHeadCellProps[]
     | NotifyHeadCell[]
-    | RFIDHeadCell[];
+    | RFIDHeadCell[]
+    | ClassStudentHeadCell[];
   isCheckBox: boolean;
   isAdmin?: boolean;
   isTeacher?: boolean;

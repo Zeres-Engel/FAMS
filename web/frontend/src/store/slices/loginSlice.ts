@@ -11,8 +11,15 @@ import { saveTokens } from "../../services/tokenServices";
 import axiosInstance from "../../services/axiosInstance";
 import { addNotify } from "./notifySlice";
 
+interface LoginResponse {
+  userId: string;
+  accessToken: string;
+  refreshToken: string;
+  role: string;
+  email: string;
+}
 interface loginState {
-  loginData: null | AuthTokens;
+  loginData: null | LoginResponse;
   loading: boolean;
   error: string | null;
 }
@@ -35,8 +42,6 @@ export const loginRequest = createAsyncThunk(
         refreshToken: response.data.data?.refreshToken,
         accessToken: response?.data.data?.accessToken,
       };
-      console.log(formatLoginData);
-      
       const sampleRole = response?.data.data?.role || "user" 
       saveTokens(formatLoginData.accessToken, formatLoginData.refreshToken)
       thunkAPI.dispatch(setRole(sampleRole))
@@ -48,7 +53,7 @@ export const loginRequest = createAsyncThunk(
         })
       );
 
-      return formatLoginData;
+      return response.data.data;
     } catch (error: any) {
       thunkAPI.dispatch(hideLoading())
       console.log(error);

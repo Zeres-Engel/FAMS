@@ -24,6 +24,7 @@ import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import { SearchFilters } from "../../../model/userModels/userDataModels.model";
 import { SearchClassFilters } from "../../../model/classModels/classModels.model";
+import { ClassPageList } from "../../../model/tableModels/tableDataModels.model";
 
 interface EnhancedTableToolbarProps {
   isTeacher?: boolean;
@@ -35,10 +36,12 @@ interface EnhancedTableToolbarProps {
   isUserManagement?: boolean;
   setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
   setFiltersClass?: React.Dispatch<React.SetStateAction<SearchClassFilters>>;
+  setFiltersClassPage?: React.Dispatch<React.SetStateAction<number>>;
   isClassArrangement?: boolean;
   isNewSemester?: boolean;
   isTeacherView?: boolean;
   classOptions?: string[];
+  classPageList?: ClassPageList[];
   defaultClass?: string;
   isRoleStudent?: boolean;
   isNotifyPage?: boolean;
@@ -60,6 +63,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
     isUserManagement = false,
     setFiltersUser,
     setFiltersClass,
+    setFiltersClassPage,
     isTeacher = false,
     isClassArrangement = false,
     isNewSemester = false,
@@ -70,6 +74,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
     isRoleStudent = false,
     isNotifyPage = false,
     isRFIDPage = false,
+    classPageList = [],
   } = props;
 
   const { state, handler } = useTableToolBarHook({
@@ -78,12 +83,14 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
     isUserManagement,
     setFiltersUser,
     setFiltersClass,
+    setFiltersClassPage,
     isClassArrangement,
     isNewSemester,
     defaultClass,
     isRoleStudent,
     isNotifyPage,
     isRFIDPage,
+    isTeacherView
   });
   const { filters } = state;
   const { handleFilterChange, onSubmit } = handler;
@@ -164,16 +171,18 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
           <InputLabel id="class-select-label">Class</InputLabel>
           <Select
             labelId="class-select-label"
-            value={filters.class}
+            value={filters.classId}
             label="Class"
-            onChange={e => handleFilterChange("class", e.target.value)}
+            onChange={e => handleFilterChange("classId", e.target.value)}
           >
             <MenuItem value="">None</MenuItem>
-            {classOptions?.map((option,index) => (
-              <MenuItem key={index} value={option}>
-                {option}
-              </MenuItem>
-            ))}
+            {classPageList?.map((option, index) => {
+              return (
+                <MenuItem key={index} value={option.classId}>
+                  {option.className}
+                </MenuItem>
+              );
+            })}
           </Select>
         </FormControl>
       );
@@ -204,7 +213,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
               onChange={e => handleFilterChange("class", e.target.value)}
             >
               <MenuItem value="">None</MenuItem>
-              {classOptions?.map((option,index) => (
+              {classOptions?.map((option, index) => (
                 <MenuItem key={index} value={option}>
                   {option}
                 </MenuItem>
@@ -291,7 +300,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
               label="Class"
               onChange={e => handleFilterChange("class", e.target.value)}
             >
-              {classOptions?.map((option,index) => (
+              {classOptions?.map((option, index) => (
                 <MenuItem key={index} value={option}>
                   {option}
                 </MenuItem>
@@ -333,25 +342,25 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
     if (isClassManagement) {
       return (
         <>
-        <FormControl
-          fullWidth={isMobile}
-          sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
-        >
-          <InputLabel id="class-select-label">Class</InputLabel>
-          <Select
-            labelId="class-select-label"
-            value={filters.class}
-            label="Class"
-            onChange={e => handleFilterChange("class", e.target.value)}
+          <FormControl
+            fullWidth={isMobile}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
           >
-            <MenuItem value="">None</MenuItem>
-            {classOptions?.map((option,index) => (
-              <MenuItem key={index} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+            <InputLabel id="class-select-label">Class</InputLabel>
+            <Select
+              labelId="class-select-label"
+              value={filters.class}
+              label="Class"
+              onChange={e => handleFilterChange("class", e.target.value)}
+            >
+              <MenuItem value="">None</MenuItem>
+              {classOptions?.map((option, index) => (
+                <MenuItem key={index} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <FormControl
             fullWidth={isMobile}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
@@ -458,7 +467,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             onChange={e => handleFilterChange("class", e.target.value)}
           >
             <MenuItem value="">None</MenuItem>
-            {classOptions?.map((option,index) => (
+            {classOptions?.map((option, index) => (
               <MenuItem key={index} value={option}>
                 {option}
               </MenuItem>
