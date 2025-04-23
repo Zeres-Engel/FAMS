@@ -39,27 +39,32 @@ interface UseDataTableHookProps {
 const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const [order, setOrder] = useState<Order>("asc");
-  const [orderBy, setOrderBy] = useState<string>("name");
-  const [selected, setSelected] = useState<string[]>([]);
+  const [orderBy, setOrderBy] = useState<
+    | keyof Data
+    | keyof UserData
+    | keyof ClassData
+    | keyof AttendanceLog
+    | keyof ClassArrangementData
+    | keyof NotifyProps
+    | keyof RFIDData
+  >("id");
+  const [selected, setSelected] = useState<readonly string[]>([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [rows, setRows] = useState<typeof tableMainData>([]);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<EditUserForm | null>(null);
-  const [editingUserId, setEditingUserId] = useState<string>("");
-  const [selectedUserToDelete, setSelectedUserToDelete] =
-    useState<UserData | null>(null);
+  const [editingUserId, setEditingUserId] = useState<string | undefined>(undefined);
+  const [selectedUserToDelete, setSelectedUserToDelete] = useState<Data | UserData | ClassData | null>(null);
   const [isCreateUser, setIsCreateUser] = useState(false);
   const [selectedGrade, setSelectedGrade] = useState<string>("");
   const [gradeError, setGradeError] = useState(false);
   const [isShowNotifyOpen, setIsShowNotifyOpen] = useState(false);
-  const [selectedNotify, setSelectedNotify] = useState<NotifyProps | null>(
-    null
-  );
+  const [selectedNotify, setSelectedNotify] = useState<NotifyProps | null>(null);
   const [editingClass, setEditingClass] = useState<editClassForm | null>(null);
-  const [editingAttendance, setEditingAttendance] =
-    useState<EditAttendanceFormProps | null>(null);
+  const [editingClassID, setEditingClassID] = useState<string>('');
+  const [editingAttendance, setEditingAttendance] = useState<EditAttendanceFormProps | null>(null);
 
   // Cập nhật rows khi tableMainData thay đổi
   useEffect(() => {
@@ -74,6 +79,7 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
     academicYear: "",
     grade: "10",
   };
+  
   const editAttendanceDefault: EditAttendanceFormProps = {
     attendanceId: 0,
     scheduleId: 0,
@@ -85,6 +91,7 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
     note: "",
     checkinFace: "",
   };
+  
   const editUserDefault: EditUserForm = {
     classId: [],
     firstName: "",
@@ -103,42 +110,6 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
     weeklyCapacity: "",
     role: "",
   };
-  const dispatch = useDispatch<AppDispatch>();
-  const rows = React.useMemo(() => [...tableMainData], [tableMainData]);
-  const [isCreateUser, setIsCreateUser] = useState<boolean>(false);
-  const [order, setOrder] = React.useState<Order>("asc");
-  const [orderBy, setOrderBy] = React.useState<
-    | keyof Data
-    | keyof UserData
-    | keyof ClassData
-    | keyof AttendanceLog
-    | keyof ClassArrangementData
-    | keyof NotifyProps
-    | keyof RFIDData
-  >("id");
-  const [gradeError, setGradeError] = React.useState(false);
-  const [selected, setSelected] = React.useState<readonly string[]>([]);
-  const [selectedGrade, setSelectedGrade] = React.useState<string>("");
-  const [isEditOpen, setIsEditOpen] = React.useState(false);
-  const [editingUser, setEditingUser] =
-    React.useState<EditUserForm>(editUserDefault);
-  const [editingClass, setEditingClass] =
-    React.useState<editClassForm>(editClassDefaul);
-  const [editingClassID, setEditingClassID] =
-    React.useState<string>('');
-  const [editingAttendance, setEditingAttendance] =
-    React.useState<EditAttendanceFormProps>(editAttendanceDefault);
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedUserToDelete, setSelectedUserToDelete] = useState<
-    Data | UserData | ClassData | null
-  >(null);
-  const [editingUserId, setEditingUserId] = useState<string | undefined>(
-    undefined
-  );
-  const [isShowNotifyOpen, setIsShowNotifyOpen] = useState(false);
-  const [selectedNotify, setSelectedNotify] = useState<NotifyProps | null>(null);
 
   const allUsers = useSelector((state: RootState) => state.users.user);
 
@@ -148,7 +119,7 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
   ) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
-    setOrderBy(property);
+    setOrderBy(property as keyof Data | keyof UserData | keyof ClassData | keyof AttendanceLog | keyof ClassArrangementData | keyof NotifyProps | keyof RFIDData);
   };
 
   function formatUserToEditUserForm(user: any): EditUserForm {
@@ -305,7 +276,7 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
       
       updatePromise = dispatch(
         updateTeacher({
-          id: userEdit?.id || teacherEdit?.id || editingUserId,
+          id: userEdit?.id || teacherEdit?.id || (editingUserId || ""),
           data: formattedData,
         })
       );

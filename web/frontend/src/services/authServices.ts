@@ -3,28 +3,37 @@ import { getRefreshToken, setAccessToken, setRefreshToken } from "./tokenService
 import { logout, setRole } from "../store/slices/authSlice";
 import { Dispatch } from "redux";
 
-const API_URL = "http://fams.io.vn/api-nodejs/auth/refresh-token"; // 🔁 Thay bằng URL thật
-
 // Gọi API để lấy accessToken mới
 export const refreshAccessToken = async (dispatch: Dispatch) => {
   const refreshToken = getRefreshToken();
   if (!refreshToken) return null;
 
   try {
-    const response = await axios.post(`${API_URL}`, {
+    // Sử dụng URL đầy đủ và tham số đúng
+    const response = await axios.post("http://fams.io.vn/api-nodejs/auth/refresh-token", {
       refreshToken: refreshToken,
+    }, {
+      withCredentials: true, // Bao gồm cookies nếu cần
+      headers: {
+        'Content-Type': 'application/json',
+      }
     });
 
-    const { accessToken, refreshToken: newRefreshToken, role } = response.data.data;
+    // Kiểm tra cấu trúc phản hồi
+    if (response.data && response.data.data) {
+      const { accessToken, refreshToken: newRefreshToken, role } = response.data.data;
 
-    // Lưu token
-    setAccessToken(accessToken);
-    setRefreshToken(newRefreshToken);
-    if (role) {
-      dispatch(setRole(role.toLowerCase())); // sử dụng dispatch truyền vào
+      // Lưu token
+      setAccessToken(accessToken);
+      setRefreshToken(newRefreshToken);
+      if (role) {
+        dispatch(setRole(role.toLowerCase())); // sử dụng dispatch truyền vào
+      }
+
+      return accessToken;
+    } else {
+      throw new Error("Invalid response structure");
     }
-
-    return accessToken;
   } catch (error) {
     console.error("Refresh token failed", error);
     clearAuth(dispatch);
