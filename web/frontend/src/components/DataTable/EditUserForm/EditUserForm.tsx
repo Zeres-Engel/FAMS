@@ -101,27 +101,45 @@ export default function EditUserModal({
 
     setAvatarPreview(formData.avatar || null);
 
-    const parsedClassIDs =
-      Array.isArray(formData.classId) &&
-      formData.classId.every(cls => typeof cls === "object")
-        ? (formData.classId as ClassID[])
-        : [];
+    // Xử lý classIds một cách an toàn hơn
+    let parsedClassIDs: ClassID[] = [];
+    
+    // Kiểm tra xem classId có phải là mảng và có các phần tử là đối tượng không
+    if (Array.isArray(formData.classId)) {
+      parsedClassIDs = formData.classId
+        .filter((cls: any) => cls && typeof cls === 'object') // Lọc các giá trị hợp lệ
+        .map((cls: any) => ({
+          academicYear: (cls as ClassID).academicYear || state.currentAcademicYear,
+          classId: (cls as ClassID).classId || "",
+          className: (cls as ClassID).className || "",
+          grade: (cls as ClassID).grade || "10",
+          isHomeroom: (cls as ClassID).isHomeroom || false
+        }));
+    }
     
     // Set academic year to the current one
-    const updatedClassIDs = parsedClassIDs.map(cls => ({
-      ...cls,
-      academicYear: state.currentAcademicYear
-    }));
+    const updatedClassIDs = parsedClassIDs.length > 0 
+      ? parsedClassIDs
+      : [
+        {
+          academicYear: state.currentAcademicYear,
+          classId: "",
+          className: "",
+          grade: "10", // Grade as string
+          isHomeroom: false,
+        }
+      ];
 
-    setClassIDs(updatedClassIDs.length > 0 ? updatedClassIDs : [
-      {
-        academicYear: state.currentAcademicYear,
-        classId: "",
-        className: "",
-        grade: "10", // Grade as string
-        isHomeroom: false,
-      }
-    ]);
+    console.log("Initializing form with classIDs:", updatedClassIDs);
+    setClassIDs(updatedClassIDs);
+    
+    // Lấy grade từ class đầu tiên của user và khởi tạo tìm kiếm
+    if (updatedClassIDs.length > 0 && updatedClassIDs[0].grade) {
+      const userGrade = updatedClassIDs[0].grade.toString();
+      console.log("Initializing class search with grade:", userGrade);
+      // Gọi hàm khởi tạo tìm kiếm với grade đã chọn
+      handler.initializeClassSearch(userGrade);
+    }
   }, [formData, reset, state.currentAcademicYear]);
 
   const handleClassIDChange = (
@@ -146,8 +164,14 @@ export default function EditUserModal({
   const handleGradeChange = (grade: string, index: number) => {
     // Update the grade in the class data
     handleClassIDChange("grade", grade, index);
-    // Update the search filter grade
-    handler.setSelectedGrade(grade);
+    
+    // Xóa className và classId vì chúng không còn hợp lệ với grade mới
+    handleClassIDChange("className", "", index);
+    handleClassIDChange("classId", "", index);
+    
+    // Gọi hàm khởi tạo tìm kiếm với grade mới
+    console.log("Grade changed to:", grade);
+    handler.initializeClassSearch(grade);
   };
 
   // Handle class selection
@@ -162,24 +186,56 @@ export default function EditUserModal({
   };
 
   const onSubmit = (data: EditUserForm) => {
-    const finalClassID = userType === "teacher" ? classIDs : classIDs[0];
     console.log("Submitting user ID:", idUser);
-
-    // Extract classIds for the API request
-    const classIds = Array.isArray(finalClassID) 
-      ? finalClassID.map(cls => Number(cls.classId))
-      : [Number(finalClassID.classId)];
+    
+    // Chuẩn bị dữ liệu lớp học
+    let finalClassIDs = [];
+    let classIds = [];
+    
+    if (userType === "teacher") {
+      // Giáo viên có thể dạy nhiều lớp
+      finalClassIDs = classIDs;
+      classIds = classIDs.map(cls => Number(cls.classId));
+    } else {
+      // Học sinh vẫn giữ lại các lớp hiện có
+      // Lấy lớp mới/đang chỉnh sửa (lớp cuối cùng trong mảng classIDs)
+      const newClass = classIDs[classIDs.length - 1];
+      
+      // Lấy tất cả các lớp từ formData ban đầu (dữ liệu gốc)
+      const existingClasses = Array.isArray(formData.classId) 
+        ? formData.classId 
+        : (formData.classId ? [formData.classId] : []);
+        
+      // Kết hợp các lớp hiện có với lớp mới
+      // Nếu đang sửa lớp cuối, thay thế nó; nếu không, thêm vào
+      if (existingClasses.length > 0 && classIDs.length > 0) {
+        finalClassIDs = [...existingClasses.slice(0, -1), newClass];
+      } else {
+        finalClassIDs = [newClass];
+      }
+      
+      // Chuyển đổi classIds thành mảng số để API xử lý
+      classIds = finalClassIDs.map((cls: any) => 
+        typeof cls === 'object' && cls.classId ? Number(cls.classId) : Number(cls)
+      );
+      
+      // Log để debug
+      console.log("Original formData.classId:", formData.classId);
+      console.log("New class being edited:", newClass);
+      console.log("Combined finalClassIDs:", finalClassIDs);
+      console.log("Extracted numeric classIds:", classIds);
+    }
       
     // Prepare data for API submission - KHÔNG thay đổi kiểu dữ liệu của gender
     const userData: EditUserForm = {
       ...data,
-      classId: Array.isArray(finalClassID) ? finalClassID : [finalClassID],
+      classId: finalClassIDs, // Đảm bảo classId được cập nhật chính xác
     };
     
     // Chuẩn bị dữ liệu bổ sung để gửi cho API
     const apiData = {
       ...data,
-      classIds: classIds,
+      classIds: classIds, // Gửi đúng danh sách classIds
       dateOfBirth: data.dob,
       gender: data.gender === true ? "Male" : "Female",
       phone: data.phone?.replace(/^0/, "")
@@ -505,6 +561,11 @@ export default function EditUserModal({
                                 </React.Fragment>
                               ),
                             }}
+                            onFocus={() => {
+                              if (classItem.grade && state.classOptions.length === 0) {
+                                handler.fetchClassSuggestions("", classItem.grade.toString());
+                              }
+                            }}
                           />
                         )}
                         renderOption={(props, option) => (
@@ -513,6 +574,7 @@ export default function EditUserModal({
                           </li>
                         )}
                         disabled={!isEditable}
+                        open={state.classOptions.length > 0 && isEditable}
                       />
                       
                       {/* Academic Year (disabled) */}
@@ -709,6 +771,25 @@ export default function EditUserModal({
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
+          {userType === "student" && (
+            <Button 
+              onClick={async () => {
+                if (idUser) {
+                  const result = await handler.cleanStudentData(idUser);
+                  if (result.success) {
+                    alert("Dữ liệu học sinh đã được làm sạch thành công!");
+                    // Refresh form data
+                    onClose();
+                  } else {
+                    alert("Không thể làm sạch dữ liệu: " + result.message);
+                  }
+                }
+              }}
+              color="secondary"
+            >
+              Làm sạch dữ liệu
+            </Button>
+          )}
           <Button type="submit" variant="contained" color="primary">
             Save
           </Button>

@@ -380,7 +380,15 @@ module.exports = async (req, res) => {
       
       // Handle classIds separately - accept both classId and classIds
       if (userData.classIds !== undefined && Array.isArray(userData.classIds)) {
-        student.classIds = userData.classIds;
+        // Kiểm tra xem classIds có dữ liệu và hợp lệ không
+        const validClassIds = userData.classIds.filter(id => id && !isNaN(Number(id)));
+        if (validClassIds.length > 0) {
+          // Chỉ cập nhật nếu có dữ liệu hợp lệ
+          console.log("Updating student classIds from:", student.classIds, "to:", validClassIds);
+          student.classIds = validClassIds;
+        } else {
+          console.log("Received invalid classIds, keeping existing:", student.classIds);
+        }
       } else if (userData.classId !== undefined) {
         // If only a single classId is provided, make it an array
         if (!Array.isArray(student.classIds)) {
@@ -393,14 +401,54 @@ module.exports = async (req, res) => {
       
       // Remove unnecessary fields that might cause unwanted data
       if (student) {
-        // Remove empty parent arrays to avoid data bloat
-        const fieldsToRemove = ['parentCareers', 'parentEmails', 'parentGenders', 'parentIds', 'parentNames', 'parentPhones'];
-        fieldsToRemove.forEach(field => {
-          // Only remove if not explicitly provided in update data
-          if (!userData[field]) {
-            student[field] = undefined;
+        // Dùng markModified để báo cho Mongoose biết trường đã thay đổi
+        if (student.classIds) {
+          student.markModified('classIds');
+        }
+        
+        // Xóa các trường parent rỗng hoặc không được sử dụng
+        const fieldsToDelete = {};
+        const fieldsToCheck = ['parentCareers', 'parentEmails', 'parentGenders', 'parentIds', 'parentNames', 'parentPhones'];
+        
+        // Luôn xóa các trường này nếu chúng rỗng hoặc không được sử dụng
+        fieldsToCheck.forEach(field => {
+          // Xóa trường nếu rỗng hoặc không tồn tại trong dữ liệu cập nhật
+          if (
+            // Trường không tồn tại trong dữ liệu cập nhật
+            !userData[field] || 
+            // Trường tồn tại nhưng là mảng rỗng
+            (Array.isArray(userData[field]) && userData[field].length === 0) ||
+            // Trường tồn tại trong student và là mảng rỗng
+            (Array.isArray(student[field]) && student[field].length === 0)
+          ) {
+            fieldsToDelete[field] = 1;
+            console.log(`Marking field ${field} for deletion`);
           }
         });
+        
+        // Luôn xóa các trường này khỏi database
+        if (Object.keys(fieldsToDelete).length > 0) {
+          // Sử dụng updateOne với $unset để xóa các trường này khỏi document
+          console.log(`Removing empty fields: ${Object.keys(fieldsToDelete).join(', ')}`);
+          await Student.updateOne(
+            { _id: student._id },
+            { $unset: fieldsToDelete }
+          );
+          
+          // Cập nhật lại đối tượng student để đồng bộ
+          fieldsToCheck.forEach(field => {
+            if (fieldsToDelete[field]) {
+              delete student[field];
+            }
+          });
+        }
+        
+        // Đảm bảo xóa khỏi Model object
+        for (const field of fieldsToCheck) {
+          if (!userData[field] || (Array.isArray(userData[field]) && userData[field].length === 0)) {
+            delete student[field];
+          }
+        }
       }
       
       // Save student changes

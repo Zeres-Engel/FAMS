@@ -80,9 +80,9 @@ interface DataTableProps {
   isClassManagement?: boolean;
   isAttendance?: boolean;
   isUserManagement?: boolean;
+  isRoleTeacher?: boolean;
   setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
   setFiltersClass?: React.Dispatch<React.SetStateAction<SearchClassFilters>>;
-  isRoleTeacher?: boolean;
   isClassArrangement?: boolean;
   isNewSemester?: boolean;
   isTeacherView?: boolean;
@@ -91,10 +91,17 @@ interface DataTableProps {
   isNotifyRole?: string;
   isRFIDPage?: boolean;
   classOptions?: string[];
-  // Thêm props mới cho pagination
-  pagination?: PaginationProps;
-  onPageChange?: (newPage: number) => void;
-  onRowsPerPageChange?: (newLimit: number) => void;
+  classOptionsData?: Array<{className: string, id: string}>;
+  searchClass?: string;
+  onClassSearchChange?: (value: string) => void;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+  onPageChange?: (page: number) => void;
+  onRowsPerPageChange?: (rowsPerPage: number) => void;
 }
 
 export default function DataTable({
@@ -117,6 +124,9 @@ export default function DataTable({
   isNotifyRole,
   isRFIDPage,
   classOptions,
+  classOptionsData,
+  searchClass,
+  onClassSearchChange,
   pagination,
   onPageChange,
   onRowsPerPageChange
@@ -363,6 +373,9 @@ export default function DataTable({
           isNotifyPage={isNotifyPage}
           isRFIDPage={isRFIDPage}
           classOptions={classOptions}
+          classOptionsData={classOptionsData}
+          searchClass={searchClass}
+          onClassSearchChange={onClassSearchChange}
         />
         <TableContainer>
           <Table sx={{ minWidth: 850 }} aria-labelledby="tableTitle">

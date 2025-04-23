@@ -9,6 +9,13 @@ import InitUserDataSection from "../../components/InitUserDataSection/InitUserDa
 
 function UserManagementPage(): React.JSX.Element {
   const { state, handler } = useUserManagementPageHook();
+  
+  // Debug logs
+  console.log("UserManagementPage rendering with state:", {
+    classOptions: state.classOptions,
+    classOptionsData: state.classOptionsData,
+    searchClass: state.searchClass
+  });
 
   return (
     <LayoutComponent pageHeader="User Management">
@@ -24,6 +31,9 @@ function UserManagementPage(): React.JSX.Element {
               isUserManagement={true}
               setFiltersUser={handler.setFiltersUser}
               classOptions={state.classOptions}
+              classOptionsData={state.classOptionsData}
+              searchClass={state.searchClass}
+              onClassSearchChange={handler.handleClassSearchChange}
               pagination={state.pagination}
               onPageChange={handler.handlePageChange}
             />

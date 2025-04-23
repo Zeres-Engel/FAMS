@@ -5,7 +5,13 @@ const { protect } = require('../middleware/authMiddleware');
 
 // Routes for class management
 // GET /api/classes - Get all classes
-router.get('/', protect, classController.getAllClasses);
+router.get('/', classController.getAllClasses);
+
+// GET /api/classes/user/:userId - Get classes by userId (student or teacher)
+router.get('/user/:userId', protect, classController.getClassesByUserId);
+
+// GET /api/classes/:id/students - Get all students in a class
+router.get('/:classId/students', protect, classController.getStudentsByClassId);
 
 // GET /api/classes/:id - Get class by ID
 router.get('/:id', protect, classController.getClassById);
