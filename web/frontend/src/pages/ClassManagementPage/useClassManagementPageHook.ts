@@ -58,7 +58,6 @@ function useClassManagementPageHook() {
       dispatch(fetchClasses());
     } else {
       setClassMainData(classState?.classes);
-      console.log("đây là hook", classState?.classes);
     }
   }, [dispatch, classState.classes]);
   useEffect(() => {

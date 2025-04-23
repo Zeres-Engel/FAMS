@@ -23,6 +23,7 @@ import {
 } from "../../store/slices/userSlice";
 import { ClassData } from "../../model/classModels/classModels.model";
 import { fetchUserPaginated } from "../../store/slices/userSlice";
+import { deleteClass, editClass } from "../../store/slices/classSlice";
 
 interface UseDataTableHookProps {
   tableMainData:
@@ -102,6 +103,42 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
     weeklyCapacity: "",
     role: "",
   };
+  const dispatch = useDispatch<AppDispatch>();
+  const rows = React.useMemo(() => [...tableMainData], [tableMainData]);
+  const [isCreateUser, setIsCreateUser] = useState<boolean>(false);
+  const [order, setOrder] = React.useState<Order>("asc");
+  const [orderBy, setOrderBy] = React.useState<
+    | keyof Data
+    | keyof UserData
+    | keyof ClassData
+    | keyof AttendanceLog
+    | keyof ClassArrangementData
+    | keyof NotifyProps
+    | keyof RFIDData
+  >("id");
+  const [gradeError, setGradeError] = React.useState(false);
+  const [selected, setSelected] = React.useState<readonly string[]>([]);
+  const [selectedGrade, setSelectedGrade] = React.useState<string>("");
+  const [isEditOpen, setIsEditOpen] = React.useState(false);
+  const [editingUser, setEditingUser] =
+    React.useState<EditUserForm>(editUserDefault);
+  const [editingClass, setEditingClass] =
+    React.useState<editClassForm>(editClassDefaul);
+  const [editingClassID, setEditingClassID] =
+    React.useState<string>('');
+  const [editingAttendance, setEditingAttendance] =
+    React.useState<EditAttendanceFormProps>(editAttendanceDefault);
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedUserToDelete, setSelectedUserToDelete] = useState<
+    Data | UserData | ClassData | null
+  >(null);
+  const [editingUserId, setEditingUserId] = useState<string | undefined>(
+    undefined
+  );
+  const [isShowNotifyOpen, setIsShowNotifyOpen] = useState(false);
+  const [selectedNotify, setSelectedNotify] = useState<NotifyProps | null>(null);
 
   const allUsers = useSelector((state: RootState) => state.users.user);
 
@@ -214,9 +251,10 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
     setEditingUser(formatUserToEditUserForm(userEdit));
     setIsEditOpen(true);
   };
-  const handleEditClassClick = (classData: editClassForm) => {
+  const handleEditClassClick = (classData: editClassForm,editID:string) => {
     setEditingClass(classData);
     setIsEditOpen(true);
+    setEditingClassID(editID);
   };
   const handleEditAttendanceClick = (
     attendanceStatus: EditAttendanceFormProps
@@ -245,8 +283,8 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
       dispatch(deleteUser(selectedUserToDelete.id));
     }
     if (selectedUserToDelete && typeDelete === "classDelete") {
-      console.log("Deleting user:", selectedUserToDelete.id);
-      // dispatch(deleteUser(selectedUserToDelete.id));
+      console.log("Deleting Class:", selectedUserToDelete.id);
+      dispatch(deleteClass(String(selectedUserToDelete.id)));
     }
     setIsDeleteDialogOpen(false);
     setSelectedUserToDelete(null);
@@ -309,7 +347,15 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
     setIsEditOpen(false);
   };
   const handleEditClassSave = (classFormData: editClassForm) => {
+    const payload = {
+      className: classFormData.className,
+      homeroomTeacherId: classFormData.teacherId,
+      grade: classFormData.grade,
+      academicYear: classFormData.academicYear,
+    };
     console.log("Saving edited class:", classFormData);
+    console.log("Saving edited class ID:", editingClassID);
+    dispatch(editClass({ id: editingClassID, ...payload }))
     setIsEditOpen(false);
   };
   const handleEditAttendanceSave = (

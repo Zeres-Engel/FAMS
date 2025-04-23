@@ -2,9 +2,17 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { View } from "react-big-calendar";
 import { ScheduleEvent } from "../../model/scheduleModels/scheduleModels.model";
-import { fetchSchedules, Schedule } from "../../store/slices/scheduleSlice";
+import {
+  fetchSchedules,
+  Schedule,
+  ScheduleAction,
+  updateSchedule,
+} from "../../store/slices/scheduleSlice";
 import { AppDispatch, RootState } from "../../store/store";
 import { fetchClasses } from "../../store/slices/classSlice";
+import { searchTeachers } from "../../store/slices/teacherSlice";
+import { fetchClassrooms } from "../../store/slices/classroomSlice";
+import { fetchSubjects } from "../../store/slices/subjectSlice";
 
 const defaultEvent: ScheduleEvent = {
   id: 0,
@@ -13,93 +21,130 @@ const defaultEvent: ScheduleEvent = {
   end: new Date(),
   subject: "",
   teacher: "",
-  classroomNumber: "", 
+  classroomNumber: "",
 };
-function useScheduleManagementPageHook() {
-  const {lichThuHai, lichThuTu,lichThuSau} = require("./ScheduleSampleData")
-  const fakeEvent: ScheduleEvent[] = [...lichThuHai, ...lichThuTu, ...lichThuSau];
 
+function useScheduleManagementPageHook() {
   const dispatch = useDispatch<AppDispatch>();
 
   const [eventShow, setEventShow] = useState<ScheduleEvent>(defaultEvent);
   const [view, setView] = useState<View>("month");
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isEditing, setIsEditing] = useState(false);
-  const [filters, setFilters] = useState({ class: "", userId: "" ,academicYear: ""});
+  const classrooms = useSelector(
+    (state: RootState) => state.classroom.classrooms
+  );
+  useEffect(() => {
+    if (!classrooms || classrooms.length === 0) {
+      dispatch(fetchClassrooms() as any);
+    }
+  }, [dispatch, classrooms]);
+  const [filters, setFilters] = useState({
+    class: "",
+    userId: "",
+    // academicYear: "",
+    dateFrom: "",
+    dateTo: "",
+  });
 
   const schedules = useSelector((state: RootState) => state.schedule.schedules);
   const loading = useSelector((state: RootState) => state.schedule.loading);
   const error = useSelector((state: RootState) => state.schedule.error);
-  const classes = useSelector((state: RootState) => state.class.classes);
-  // const [events, setEvents] = useState<ScheduleEvent[]>([]);
-  const [events, setEvents] = useState<ScheduleEvent[]>(fakeEvent); // hiển thị tạm thời từ Redux
+  const classes = useSelector((state: RootState) => state.class.allClasses);
+  const [events, setEvents] = useState<ScheduleEvent[]>([]);
+  const teachers = useSelector((state: RootState) => state.teacher.teachers);
+  const subjectState = useSelector((state: RootState) => state.subject.subjects);
 
-  // const classOptions = ["10A1", "10A2", "11B1", "12C1"];
-  const classOptions = classes?.map(c => c.className) || [];
+  useEffect(() => {
+    if (!subjectState || subjectState.length === 0) {
+      dispatch(fetchSubjects() as any);
+    }
+  }, [dispatch,subjectState]);
+
+  useEffect(() => {
+    if (!teachers || teachers.length === 0) {
+      dispatch(searchTeachers({ search: "", page: 1, limit: 100 }));
+    }
+  }, [teachers, dispatch]);
+
+  const classOptions =
+    classes?.map(c => ({
+      label: `${c.className} - ${c.academicYear}`,
+      value: c.id,
+    })) || [];
+
   useEffect(() => {
     if (!classes) {
       dispatch(fetchClasses());
     }
+    console.log("classes", classes);
   }, [dispatch, classes]);
-  // 👇 Handler để gọi API
   const handleSearch = () => {
-    const fromDate = new Date();
-    const toDate = new Date();
-    toDate.setDate(toDate.getDate() + 14); // ví dụ: lấy 2 tuần tới
-    console.log(filters);
-    
+    const currentYear = new Date().getFullYear();
+
+    const fromDate = filters.dateFrom || "";
+    // new Date(`${currentYear}-01-01`).toISOString().split("T")[0];
+
+    const toDate = filters.dateTo || "";
+    // new Date(`${currentYear + 1}-12-31`).toISOString().split("T")[0];
+
     dispatch(
       fetchSchedules({
-        className: filters.class,
+        classId: filters.class,
         userId: filters.userId,
-        fromDate: fromDate.toISOString().split("T")[0],
-        toDate: toDate.toISOString().split("T")[0],
+        fromDate,
+        toDate,
       })
     );
   };
+
+  // function combineDateAndTime(dateString: string, timeString: string): Date {
+  //   const datePart = new Date(dateString).toISOString().split("T")[0];
+  //   return new Date(`${datePart}T${timeString}:00`);
+  // }
   function combineDateAndTime(dateString: string, timeString: string): Date {
-    const datePart = new Date(dateString).toISOString().split("T")[0]; // "2025-04-18"
-    return new Date(`${datePart}T${timeString}:00`); // ISO string: "2025-04-18T13:50:00"
+    const localDate = new Date(dateString); // vẫn giữ nguyên Date
+    const [hours, minutes] = timeString.split(":").map(Number);
+
+    localDate.setHours(hours);
+    localDate.setMinutes(minutes);
+    localDate.setSeconds(0);
+    localDate.setMilliseconds(0);
+
+    return new Date(localDate); // trả ra Local Time
   }
-  // 👇 Log & set lại khi dữ liệu từ API thay đổi
   const getAcademicYears = (range = 2) => {
     const currentYear = new Date().getFullYear();
     const startYear = currentYear - range;
     const endYear = currentYear + range;
-  
+
     const years: string[] = [];
-  
     for (let year = startYear; year <= endYear; year++) {
       years.push(`${year}-${year + 1}`);
     }
-  
     return years;
   };
   useEffect(() => {
     if (schedules.length) {
-      console.log("Fetched schedules: ", schedules);
-
       const mappedEvents: ScheduleEvent[] = schedules.map((item: Schedule) => ({
-        id: Number(item.slotId), // nếu cần duy nhất có thể dùng: Number(item.slotId + item.classId)
-        title: item.topic || `${item.subjectName} - slot ${item.slotId}`,
-        start: combineDateAndTime(
-          item.sessionDate || item.sessionDate,
-          item.startTime
-        ),
-        end: combineDateAndTime(
-          item.sessionDate || item.sessionDate,
-          item.endTime
-        ),
+        id: Number(item.scheduleId),
+        title: item.topic || `${item.subjectName} - slot ${item.SlotID}`,
+        start: combineDateAndTime(item.sessionDate, item.startTime),
+        end: combineDateAndTime(item.sessionDate, item.endTime),
+        subjectName: item.subjectName || "",
         subject: item.subjectName || "",
-        teacher: item.teacherId || "",
-        classroomNumber:item.classroomNumber
+        teacher: item.teacherUserId || "",
+        classroomNumber: item.classroomNumber,
+        classroomId: item.classroomId,
+        subjectId: item.subjectId,
       }));
-
       setEvents(mappedEvents);
     }
   }, [schedules]);
 
   const handleSelectEvent = (event: ScheduleEvent = defaultEvent) => {
+    console.log(event);
+
     setEventShow(event);
   };
 
@@ -114,6 +159,24 @@ function useScheduleManagementPageHook() {
     setEvents(prev =>
       prev.map(ev => (ev.id === eventShow.id ? { ...eventShow } : ev))
     );
+    const currentSchedule =
+      (schedules.find(
+        schedule => String(schedule.scheduleId) === String(eventShow.id)
+      ) as Schedule) || ({} as Schedule);
+    console.log("Saving event", currentSchedule);
+    const updatedSchedule: ScheduleAction = {
+      scheduleId: currentSchedule.scheduleId,
+      semesterId: currentSchedule.semesterId || undefined,
+      classId: String(currentSchedule.classId),
+      subjectId: currentSchedule.subjectId,
+      classroomId: currentSchedule.classroomId,
+      teacherId: eventShow.teacher,
+      topic: eventShow.title,
+      sessionDate: new Date(currentSchedule?.sessionDate)
+        .toISOString()
+        .split("T")[0],
+    };
+    dispatch(updateSchedule(updatedSchedule));
     setIsEditing(false);
   };
 
@@ -133,6 +196,9 @@ function useScheduleManagementPageHook() {
       classOptions,
       loading,
       error,
+      teachers,
+      classrooms,
+      subjectState
     },
     handler: {
       setEventShow,

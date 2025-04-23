@@ -16,20 +16,8 @@ export default function AddClassForm(): React.JSX.Element {
   const { state, handler } = useAddClassFormHook();
 
   return (
-    <Box
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      sx={{ mt: 4, px: 2 }}
-    >
-      <Paper
-        elevation={3}
-        sx={{
-          p: 4,
-          width: "100%",
-          maxWidth: 800,
-        }}
-      >
+    <Box display="flex" justifyContent="center" alignItems="center" sx={{ mt: 4, px: 2 }}>
+      <Paper elevation={3} sx={{ p: 4, width: "100%", maxWidth: 800 }}>
         <Typography variant="h5" gutterBottom>
           Create Class
         </Typography>
@@ -45,13 +33,14 @@ export default function AddClassForm(): React.JSX.Element {
               label="academicYear"
               onChange={handler.handleSelectChange}
             >
-              {handler.getAcademicYears(4).map(year => (
+              {handler.getAcademicYears(4).map((year) => (
                 <MenuItem key={year} value={year}>
                   {year}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
+
           <FormControl fullWidth>
             <InputLabel id="grade-select-label">Grade</InputLabel>
             <Select
@@ -67,6 +56,7 @@ export default function AddClassForm(): React.JSX.Element {
               <MenuItem value="12">12</MenuItem>
             </Select>
           </FormControl>
+
           <TextField
             fullWidth
             label="Class Name"
@@ -77,15 +67,24 @@ export default function AddClassForm(): React.JSX.Element {
             helperText={state.formErrors.className}
           />
 
-          <TextField
-            fullWidth
-            label="Teacher ID"
-            name="teacherId"
-            value={state.form.teacherId}
-            onChange={handler.handleInputChange}
-            error={Boolean(state.formErrors.teacherId)}
-            helperText={state.formErrors.teacherId}
-          />
+          <FormControl fullWidth error={Boolean(state.formErrors.teacherId)}>
+            <InputLabel id="teacher-select-label">Teacher</InputLabel>
+            <Select
+              labelId="teacher-select-label"
+              id="teacher-select"
+              name="teacherId"
+              value={state.form.teacherId}
+              label="Teacher"
+              onChange={handler.handleSelectChange}
+            >
+              {state.teachers.map((teacher) => (
+                <MenuItem key={teacher.userId} value={teacher.userId}>
+                  {teacher.fullName} - {teacher.userId}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
           <Button
             variant="contained"
             color="primary"
