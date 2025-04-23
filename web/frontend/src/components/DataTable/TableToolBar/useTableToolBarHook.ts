@@ -12,13 +12,14 @@ function useTableToolBarHook({
   isTeacher,
   setFiltersUser,
   setFiltersClass,
+  setFiltersClassPage,
   isClassArrangement,
   isNewSemester,
   isTeacherView,
   defaultClass,
   isRoleStudent,
   isNotifyPage,
-  isRFIDPage
+  isRFIDPage,
 }: {
   isAttendance: boolean;
   isClassManagement: boolean;
@@ -26,6 +27,7 @@ function useTableToolBarHook({
   isTeacher?: boolean;
   setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
   setFiltersClass?: React.Dispatch<React.SetStateAction<SearchClassFilters>>;
+  setFiltersClassPage?: React.Dispatch<React.SetStateAction<number>>;
   isClassArrangement?: boolean;
   isNewSemester?: boolean;
   isTeacherView?: boolean;
@@ -55,6 +57,7 @@ function useTableToolBarHook({
     date: "",
     message: "",
     academicYear: "",
+    classId: 0,
   });
   
   // Debug
@@ -62,19 +65,25 @@ function useTableToolBarHook({
 
   const handleFilterChange = (
     key: keyof typeof filters,
-    value: string | string[]
+    value: string | string[] | number
   ) => {
     setFilters(prev => ({ ...prev, [key]: value }));
-    
-    // Apply the filter immediately after changing a value
-    setTimeout(() => {
-      applyFilters();
-    }, 0);
   };
-  
-  // Add a separate function for applying filters
-  const applyFilters = () => {
-    if(isRFIDPage){
+  const getAcademicYears = (range = 2) => {
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear - range;
+    const endYear = currentYear + range;
+
+    const years: string[] = [];
+
+    for (let year = startYear; year <= endYear; year++) {
+      years.push(`${year}-${year + 1}`);
+    }
+
+    return years;
+  };
+  const handleFilterSubmit = () => {
+    if (isRFIDPage) {
       const rfidSearch = {
         userID: filters.userID,
       };
@@ -86,7 +95,7 @@ function useTableToolBarHook({
       };
       console.log("Notify Filter applied:", notifyFilters);
     }
-    if(isRoleStudent) {
+    if (isRoleStudent) {
       const studentAttendance = {
         slotID: filters.slotID,
         date: filters.date,
@@ -94,12 +103,10 @@ function useTableToolBarHook({
       console.log("Student Attendance Filter applied:", studentAttendance);
     }
     if (isTeacherView) {
-      const teacherClassFilters = {
-        className: filters.className,
-      };
-      console.log("Teacher Class Filter applied:", teacherClassFilters);
-    } else
-    if (isTeacher) {
+      if(setFiltersClassPage){
+        setFiltersClassPage(filters.classId)
+      }
+    } else if (isTeacher) {
       const teacherFilters = {
         slotID: filters.slotID,
         date: filters.date,
@@ -140,14 +147,15 @@ function useTableToolBarHook({
       if (setFiltersUser) {
         setFiltersUser(adminFilters);
       }
-    }
-    else if (isClassArrangement) {
+    } else if (isClassArrangement) {
       const classArrangementFilters = {
         name: filters.name,
       };
-      console.log("Class Arrangement Filter applied:", classArrangementFilters);
-    }
-    else if (isNewSemester) {
+      console.log(
+        "Class Arrangement Filter submitted:",
+        classArrangementFilters
+      );
+    } else if (isNewSemester) {
       const newSemesterFilters = {
         name: filters.name,
         className: filters.class,
@@ -179,7 +187,7 @@ function useTableToolBarHook({
     handler: {
       handleFilterChange,
       onSubmit: handleFilterSubmit,
-      getAcademicYears
+      getAcademicYears,
     },
   };
 }

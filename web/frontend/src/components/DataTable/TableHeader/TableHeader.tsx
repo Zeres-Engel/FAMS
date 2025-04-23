@@ -14,6 +14,8 @@ import {
   ClassArrangementData,
   ClassArrangementHeadCellProps,
   ClassHeadCell,
+  ClassStudent,
+  ClassStudentHeadCell,
   Data,
   HeadCell,
   NotifyHeadCell,
@@ -32,7 +34,15 @@ interface EnhancedTableProps {
   numSelected: number;
   onRequestSort: (
     event: React.MouseEvent<unknown>,
-    property: string
+    property:
+      | keyof Data
+      | keyof UserData
+      | keyof ClassData
+      | keyof AttendanceLog
+      | keyof ClassArrangementData
+      | keyof NotifyProps
+      | keyof RFIDData
+      | keyof ClassStudent
   ) => void;
   onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
   order: Order;
@@ -45,7 +55,8 @@ interface EnhancedTableProps {
     | AttendanceHeadCell[]
     | ClassArrangementHeadCellProps[]
     | NotifyHeadCell[]
-    | RFIDHeadCell[];
+    | RFIDHeadCell[]
+    | ClassStudentHeadCell[];
   isCheckBox: boolean;
   isAdmin?: boolean;
   isTeacher?: boolean;

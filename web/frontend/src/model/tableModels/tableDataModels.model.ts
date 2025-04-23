@@ -35,6 +35,24 @@ interface AttendanceLog {
   fullName?: string;
   note?: string;
 }
+interface ClassPageList{
+  classId: number;
+  className: string;
+}
+interface ClassStudent {
+  id: string;
+  fullName: string;
+  avatar: string;
+  email: string;
+  phone: string;
+  role: string;
+}
+interface ClassStudentHeadCell{
+  disablePadding: boolean;
+  id: keyof ClassStudent;
+  label: string;
+  numeric: boolean;
+}
 interface HeadCell {
   disablePadding: boolean;
   id: keyof Data;
@@ -194,4 +212,7 @@ export type {
   SystemRole,
   RFIDHeadCell,
   RFIDData,
+  ClassStudent,
+  ClassStudentHeadCell,
+  ClassPageList
 };

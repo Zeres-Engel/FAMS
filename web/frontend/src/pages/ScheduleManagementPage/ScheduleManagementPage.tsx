@@ -37,7 +37,7 @@ const ScheduleManagementPage: React.FC = () => {
   const [newEvent, setNewEvent] = useState({
     id: 0,
     subject: "",
-    subjectId: "",
+    subjectId: 0,
     title: "",
     start: new Date(),
     end: new Date(),
@@ -373,14 +373,18 @@ const ScheduleManagementPage: React.FC = () => {
                     <Select
                       labelId="subject-select-label"
                       id="subject-select"
-                      value={String(state.eventShow?.subjectId || "")}
+                      value={state.eventShow?.subjectId || ""}
                       label="Subject"
-                      onChange={e =>
+                      onChange={e => {
+                        const selectedSubject = state.subjectState.find(
+                          s => s.subjectId === e.target.value
+                        );
                         handler.setEventShow({
                           ...state.eventShow,
-                          subject: e.target.value,
-                        })
-                      }
+                          subjectId: selectedSubject?.subjectId,
+                          subject: selectedSubject?.subjectName || "",
+                        });
+                      }}
                     >
                       {state.subjectState.map(subject => (
                         <MenuItem
@@ -443,14 +447,18 @@ const ScheduleManagementPage: React.FC = () => {
                     <Select
                       labelId="classroom-select-label"
                       id="classroom-select"
-                      value={String(state.eventShow?.classroomId || "")}
+                      value={state.eventShow?.classroomId}
                       label="Classroom"
-                      onChange={e =>
+                      onChange={e => {
+                        const selectedRoom = state.classrooms.find(
+                          room => room.classroomId === e.target.value
+                        );
                         handler.setEventShow({
                           ...state.eventShow,
-                          classroomNumber: e.target.value,
-                        })
-                      }
+                          classroomNumber: selectedRoom?.classroomName,
+                          classroomId: selectedRoom?.classroomId,
+                        });
+                      }}
                     >
                       {state.classrooms.map(room => (
                         <MenuItem
@@ -578,10 +586,13 @@ const ScheduleManagementPage: React.FC = () => {
                 <Select
                   labelId="subject-select-label"
                   id="subject-select"
-                  value={String(newEvent.subjectId || "")}
+                  value={newEvent.subjectId}
                   label="Subject"
                   onChange={e =>
-                    setNewEvent({ ...newEvent, subjectId: e.target.value })
+                    setNewEvent({
+                      ...newEvent,
+                      subjectId: Number(e.target.value),
+                    })
                   }
                 >
                   {state.subjectState.map(subject => (
@@ -660,7 +671,7 @@ const ScheduleManagementPage: React.FC = () => {
                   setNewEvent({
                     id: 0,
                     subject: "",
-                    subjectId: "",
+                    subjectId: 0,
                     title: "",
                     start: new Date(),
                     end: new Date(),
