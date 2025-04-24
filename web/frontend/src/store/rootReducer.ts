@@ -12,6 +12,7 @@ import classroomSlice from './slices/classroomSlice';
 import subjectSlice from './slices/subjectSlice';
 import classByIdSlice from './slices/classByIdSlice';
 import classUserSlice from './slices/classUserSlice';
+import attendanceSlice from './slices/attendanceSlice';
 // Kết hợp tất cả reducers lại
 const appReducer = combineReducers({
   users: userSlice,
@@ -25,7 +26,8 @@ const appReducer = combineReducers({
   classroom: classroomSlice,
   subject: subjectSlice,
   classById: classByIdSlice,
-  classUser:classUserSlice
+  classUser:classUserSlice,
+  attendanceData:attendanceSlice,
 });
 export const rootReducer = (state: any, action: any) => {
   if (action.type === logout.type) {

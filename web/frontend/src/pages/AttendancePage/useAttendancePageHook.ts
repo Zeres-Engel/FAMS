@@ -4,77 +4,65 @@ import { useAppDispatch, useAppSelector } from "../../store/useStoreHook";
 import {
   AttendanceHeadCell,
   AttendanceLog,
+  AttendanceSearchParam,
+  ClassPageList,
   Data,
   HeadCell,
 } from "../../model/tableModels/tableDataModels.model";
+import { RootState } from "../../store/store";
+import { useSelector } from "react-redux";
+import { fetchClassesByUserId } from "../../store/slices/classByIdSlice";
+import { fetchAttendanceByUser } from "../../store/slices/attendanceSlice";
 
 function useAttendancePageHook() {
-  const role = useAppSelector((state) => state.authUser.role);
-  const attendanceLogs: AttendanceLog[] = [
-    {
-      id: "1",
-      attendanceId: 1,
-      scheduleId: 101,
-      userId: 1001,
-      fullName: "Nguyen Van A",
-      face: null,
-      checkin: "2025-04-16T07:05:00",
-      status: "Present",
-      checkinFace: "",
-      note: "Đến đúng giờ.",
-    },
-    {
-      id: "2",
-      attendanceId: 2,
-      scheduleId: 101,
-      userId: 1002,
-      fullName: "Tran Thi B",
-      face: null,
-      checkin: "2025-04-16T07:15:00",
-      status: "Late",
-      checkinFace: "",
-      note: "Đến trễ 15 phút do kẹt xe.",
-    },
-    {
-      id: "3",
-      attendanceId: 3,
-      scheduleId: 101,
-      userId: 1003,
-      fullName: "Le Van C",
-      face: null,
-      checkin: null,
-      status: "Absent",
-      checkinFace: "",
-      note: "Vắng không phép.",
-    },
-    {
-      id: "4",
-      attendanceId: 4,
-      scheduleId: 102,
-      userId: 1001,
-      fullName: "Nguyen Van A",
-      face: null,
-      checkin: "2025-04-16T13:00:00",
-      status: "Present",
-      checkinFace: "",
-      note: "Có mặt đầy đủ.",
-    },
-    {
-      id: "5",
-      attendanceId: 5,
-      scheduleId: 102,
-      userId: 1002,
-      fullName: "Tran Thi B",
-      face: null,
-      checkin: "2025-04-16T13:10:00",
-      status: "Late",
-      checkinFace: "",
-      note: "Đến trễ do lý do cá nhân.",
-    },
-  ];
+  const dispatch = useAppDispatch();
+  const role = useAppSelector(state => state.authUser.role);
+  const userData = useAppSelector(state => state.login.loginData);
+  const classList = useSelector((state: RootState) => state.classById.classes);
+  const classAttendanceList: ClassPageList[] = classList.map(item => ({
+    classId: item.classId,
+    className: `${item.className} - ${item.academicYear}`,
+  }));
+  useEffect(() => {
+    if (userData && classList.length === 0) {
+      dispatch(fetchClassesByUserId(userData?.userId));
+    }
+  }, [dispatch, userData, classList]);
+  const attendanceMainData = useSelector(
+    (state: RootState) => state.attendanceData.attendances
+  );
+  const attendanceFormattedData: AttendanceLog[] = attendanceMainData.map(
+    e => ({
+      id: `${e.attendanceId}`,
+      attendanceId: e.attendanceId,
+      scheduleId: e.scheduleId,
+      userId: e.userId,
+      face: e.avatar,
+      checkin: e.checkIn,
+      status: e.status,
+      checkinFace: e.checkInFace,
+      fullName: e.studentName
+    })
+  );
+  console.log(attendanceMainData);
   
-  const [userMainData, setUserMainData] =
-    useState<AttendanceLog[]>(attendanceLogs);
+  const [filters, setFiltersAttendancePage] = useState<AttendanceSearchParam>({
+    userId: "",
+    subjectId: "",
+    classId: "",
+    teacherName: "",
+    status: "",
+    date: "",
+    slotNumber: "1",
+  });
+  const [userMainData, setUserMainData] = useState<AttendanceLog[]>([]);
+  useEffect(() => {
+    if (filters) {
+      dispatch(
+        fetchAttendanceByUser({ ...filters, userId: userData?.userId || "" })
+      );
+    }
+  }, [filters, dispatch,userData]);
 
   const headCellsData: AttendanceHeadCell[] = [
     {
@@ -142,8 +130,16 @@ function useAttendancePageHook() {
   //   }
   // }, [dispatch, userState.user]);
 
-  const state = { headCellsData, userMainData, tableTitle, isCheckBox,role };
-  const handler = {};
+  const state = {
+    headCellsData,
+    userMainData,
+    tableTitle,
+    isCheckBox,
+    role,
+    classAttendanceList,
+    attendanceFormattedData
+  };
+  const handler = { setFiltersAttendancePage };
   return { state, handler };
 }
 export default useAttendancePageHook;

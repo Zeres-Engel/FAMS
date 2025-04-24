@@ -79,7 +79,7 @@ function useEditClassFormHook(formData: editClassForm) {
     const errors: FormErrors = {};
     if (!editingClass.className.trim()) errors.className = "Class Name is required";
     if (!editingClass.teacherId.trim()) errors.teacherId = "Teacher is required";
-    if (!editingClass.grade.trim()) errors.grade = "Grade is required";
+    if (!editingClass.grade) errors.grade = "Grade is required";
     if (!editingClass.academicYear.trim()) errors.academicYear = "Academic Year is required";
 
     setFormErrors(errors);

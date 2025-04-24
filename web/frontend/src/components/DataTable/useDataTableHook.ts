@@ -25,6 +25,7 @@ import {
 import { ClassData } from "../../model/classModels/classModels.model";
 import { fetchUserPaginated } from "../../store/slices/userSlice";
 import { deleteClass, editClass } from "../../store/slices/classSlice";
+import { editAttendance } from "../../store/slices/attendanceSlice";
 
 interface UseDataTableHookProps {
   tableMainData:
@@ -85,7 +86,7 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
   const editAttendanceDefault: EditAttendanceFormProps = {
     attendanceId: 0,
     scheduleId: 0,
-    userId: 0,
+    userId: '',
     fullName: "",
     face: null,
     checkin: "",
@@ -342,6 +343,13 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
   const handleEditAttendanceSave = (
     attendanceData: EditAttendanceFormProps
   ) => {
+    dispatch(
+      editAttendance({
+        userId: attendanceData.userId,
+        scheduleId: attendanceData.scheduleId,
+        status: attendanceData.status,
+        checkInFace: attendanceData.checkinFace,
+      }))
     console.log("Saving edited Attendance:", attendanceData);
     setIsEditOpen(false);
   };

@@ -80,10 +80,12 @@ const classByIdSlice = createSlice({
         state.loading = false;
       })
       .addCase(fetchClassesByUserId.rejected, (state, action) => {
+        state.classes = []; // reset classes
+        state.role = "";    // reset role
         state.loading = false;
         state.error = action.payload as string;
       });
-  },
+  }  
 });
 
 export default classByIdSlice.reducer;

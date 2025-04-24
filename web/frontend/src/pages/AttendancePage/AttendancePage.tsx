@@ -16,12 +16,14 @@ function AttendanceManagementPage(): React.JSX.Element {
           <Grid size={12} className="attendanceManagementPage-Header">
             <DataTable
               headCellsData={state.headCellsData}
-              tableMainData={state.userMainData}
+              tableMainData={state.attendanceFormattedData}
               tableTitle={state.tableTitle}
               isCheckBox={state.isCheckBox}
               isAttendance={true}
               isRoleTeacher={state.role === "teacher"}
               isRoleStudent={state.role === "student"}
+              setFiltersAttendancePage={handler.setFiltersAttendancePage}
+              classPageList={state.classAttendanceList}
             ></DataTable>
           </Grid>
         </Grid>

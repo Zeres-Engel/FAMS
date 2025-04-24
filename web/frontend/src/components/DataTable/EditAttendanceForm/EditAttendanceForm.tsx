@@ -23,7 +23,7 @@ interface AttendanceFormProps {
   formData: {
     attendanceId: number;
     scheduleId: number;
-    userId: number;
+    userId: string;
     fullName: string;
     face: string | null;
     checkin: string;
@@ -104,14 +104,16 @@ export default function EditAttendanceForm({
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Checkin:{" "}
-                {new Date(state.data.checkin).toLocaleString("en-GB", {
-                  hour12: false,
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {state.data.checkin
+                  ? new Date(state.data.checkin).toLocaleString("en-GB", {
+                      hour12: false,
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "None"}
               </Typography>
             </Box>
           </Box>
@@ -129,6 +131,7 @@ export default function EditAttendanceForm({
               <MenuItem value="Present">Present</MenuItem>
               <MenuItem value="Absent">Absent</MenuItem>
               <MenuItem value="Late">Late</MenuItem>
+              <MenuItem value="Not Now">Not Now</MenuItem>
             </Select>
           </FormControl>
           <TextField
