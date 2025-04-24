@@ -13,6 +13,8 @@ import { fetchClasses } from "../../store/slices/classSlice";
 import { searchTeachers } from "../../store/slices/teacherSlice";
 import { fetchClassrooms } from "../../store/slices/classroomSlice";
 import { fetchSubjects } from "../../store/slices/subjectSlice";
+import { useAppSelector } from "../../store/useStoreHook";
+import { fetchClassesByUserId } from "../../store/slices/classByIdSlice";
 
 const defaultEvent: ScheduleEvent = {
   id: 0,
@@ -53,13 +55,22 @@ function useScheduleManagementPageHook() {
   const classes = useSelector((state: RootState) => state.class.allClasses);
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
   const teachers = useSelector((state: RootState) => state.teacher.teachers);
-  const subjectState = useSelector((state: RootState) => state.subject.subjects);
+  const subjectState = useSelector(
+    (state: RootState) => state.subject.subjects
+  );
+  const userData = useAppSelector(state => state.login.loginData);
+  const classList = useSelector((state: RootState) => state.classById.classes);
+  useEffect(() => {
+    if (userData && classList.length === 0 && userData.role !== "admin") {
+      dispatch(fetchClassesByUserId(userData?.userId));
+    }
+  }, [dispatch, userData, classList]);
 
   useEffect(() => {
     if (!subjectState || subjectState.length === 0) {
       dispatch(fetchSubjects() as any);
     }
-  }, [dispatch,subjectState]);
+  }, [dispatch, subjectState]);
 
   useEffect(() => {
     if (!teachers || teachers.length === 0) {
@@ -67,18 +78,21 @@ function useScheduleManagementPageHook() {
     }
   }, [teachers, dispatch]);
 
-  const classOptions =
-    classes?.map(c => ({
-      label: `${c.className} - ${c.academicYear}`,
-      value: c.id,
-    })) || [];
-
   useEffect(() => {
-    if (!classes) {
+    if (!classes && userData && userData.role === "admin") {
       dispatch(fetchClasses());
     }
-    console.log("classes", classes);
-  }, [dispatch, classes]);
+  }, [dispatch, classes, userData]);
+  const classOptions =
+    userData?.role === "admin"
+      ? classes?.map(c => ({
+          label: `${c.className} - ${c.academicYear}`,
+          value: c.id,
+        })) || []
+      : classList?.map(c => ({
+          label: `${c.className} - ${c.academicYear}`,
+          value: `${c.classId}`,
+        })) || [];
   const handleSearch = () => {
     const currentYear = new Date().getFullYear();
 
@@ -143,7 +157,7 @@ function useScheduleManagementPageHook() {
   }, [schedules]);
 
   const handleSelectEvent = (event: ScheduleEvent = defaultEvent) => {
-    console.log(event);
+
     setEventShow(event);
   };
 
@@ -175,7 +189,7 @@ function useScheduleManagementPageHook() {
         .split("T")[0],
     };
     console.log("updatedSchedule", updatedSchedule);
-    
+
     dispatch(updateSchedule(updatedSchedule));
     setIsEditing(false);
   };
@@ -198,7 +212,7 @@ function useScheduleManagementPageHook() {
       error,
       teachers,
       classrooms,
-      subjectState
+      subjectState,
     },
     handler: {
       setEventShow,

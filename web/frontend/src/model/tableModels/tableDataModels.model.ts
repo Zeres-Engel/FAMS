@@ -13,6 +13,19 @@ interface Data {
   updatedAt: string;
   // action?:string
 }
+interface AttendanceSearchParam {
+  userId: string;
+  subjectId?: string;
+  classId?: string;
+  teacherName?: string;
+  status?: string;
+  date?: string;
+  dateFrom?:string;
+  dateTo?:string
+  slotNumber?: string;
+  page?: number;
+  limit?: number;
+}
 interface RFIDData {
   id: string;
   userid: string;
@@ -21,23 +34,27 @@ interface RFIDData {
   faceAttendance: string;
   role?: string;
 }
-type AttendanceStatus = "Present" | "Late" | "Absent";
+type AttendanceStatus = "Present" | "Late" | "Absent" | "Not now";
 interface AttendanceLog {
   id: string;
   attendanceId: number;
   scheduleId: number;
   userId: number;
-  face: string | null;
-  checkin: string | null;
-  status: AttendanceStatus;
+  face: string;
+  checkin: string;
+  status: string;
   checkinFace: string;
   role?: string;
   fullName?: string;
   note?: string;
 }
-interface ClassPageList{
+interface ClassPageList {
   classId: number;
   className: string;
+}
+interface SubjectList {
+  subjectId: number;
+  subjectName: string;
 }
 interface ClassStudent {
   id: string;
@@ -47,7 +64,7 @@ interface ClassStudent {
   phone: string;
   role: string;
 }
-interface ClassStudentHeadCell{
+interface ClassStudentHeadCell {
   disablePadding: boolean;
   id: keyof ClassStudent;
   label: string;
@@ -127,7 +144,7 @@ interface editClassForm {
 interface EditAttendanceFormProps {
   attendanceId: number;
   scheduleId: number;
-  userId: number;
+  userId: string;
   fullName: string;
   face: string | null;
   checkin: string;
@@ -214,5 +231,7 @@ export type {
   RFIDData,
   ClassStudent,
   ClassStudentHeadCell,
-  ClassPageList
+  ClassPageList,
+  SubjectList,
+  AttendanceSearchParam,
 };

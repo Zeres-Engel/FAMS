@@ -183,8 +183,7 @@ const ScheduleManagementPage: React.FC = () => {
                 </Button>
               </Box>
             )}
-
-            {role === "teacher" && (
+            {role === "student" && (
               <Box
                 sx={{
                   display: "flex",
@@ -216,35 +215,45 @@ const ScheduleManagementPage: React.FC = () => {
                     fullWidth
                   />
                 </Box>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handler.handleSearch}
+                >
+                  Search
+                </Button>
+              </Box>
+            )}
+            {role === "teacher" && (
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 2,
+                  mb: 2,
+                  alignItems: "center",
+                }}
+              >
                 <Box sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}>
-                  <TextField
-                    label="Date From"
-                    type="date"
-                    InputLabelProps={{ shrink: true }}
-                    fullWidth
-                    value={state.filters.dateFrom || ""}
-                    onChange={e =>
+                  <Autocomplete
+                    disablePortal
+                    options={state.classOptions}
+                    getOptionLabel={option => option.label}
+                    value={
+                      state.classOptions.find(
+                        opt => opt.value === state.filters.class
+                      ) || null
+                    }
+                    onChange={(event, newValue) =>
                       handler.setFilters({
                         ...state.filters,
-                        dateFrom: e.target.value,
+                        class: newValue?.value || "",
                       })
                     }
-                  />
-                </Box>
-
-                <Box sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}>
-                  <TextField
-                    label="Date To"
-                    type="date"
-                    InputLabelProps={{ shrink: true }}
+                    renderInput={params => (
+                      <TextField {...params} label="Class" />
+                    )}
                     fullWidth
-                    value={state.filters.dateTo || ""}
-                    onChange={e =>
-                      handler.setFilters({
-                        ...state.filters,
-                        dateTo: e.target.value,
-                      })
-                    }
                   />
                 </Box>
                 {/* <Box sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}> */}

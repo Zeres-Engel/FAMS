@@ -23,6 +23,7 @@ import TableHeader from "./TableHeader/TableHeader";
 import {
   AttendanceHeadCell,
   AttendanceLog,
+  AttendanceSearchParam,
   ClassArrangementData,
   ClassArrangementHeadCellProps,
   ClassHeadCell,
@@ -35,6 +36,7 @@ import {
   NotifyProps,
   RFIDData,
   RFIDHeadCell,
+  SubjectList,
   SystemRole,
   UserHeadCell,
 } from "../../model/tableModels/tableDataModels.model";
@@ -84,6 +86,7 @@ interface DataTableProps {
   setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
   setFiltersClass?: React.Dispatch<React.SetStateAction<SearchClassFilters>>;
   setFiltersClassPage?: React.Dispatch<React.SetStateAction<number>>;
+  setFiltersAttendancePage?: React.Dispatch<React.SetStateAction<AttendanceSearchParam>>;
   isRoleTeacher?: boolean;
   isClassArrangement?: boolean;
   isNewSemester?: boolean;
@@ -94,7 +97,8 @@ interface DataTableProps {
   isRFIDPage?: boolean;
   classOptions?: string[];
   isClassPage?: boolean;
-  classPageList?: ClassPageList[]
+  classPageList?: ClassPageList[];
+  subjectList?: SubjectList[];
 }
 
 export default function DataTable({
@@ -119,7 +123,9 @@ export default function DataTable({
   classOptions,
   isClassPage,
   classPageList,
-  setFiltersClassPage
+  setFiltersClassPage,
+  setFiltersAttendancePage,
+  subjectList
 }: DataTableProps) {
   const { state, handler } = useDataTableHook({ tableMainData });
 
@@ -337,7 +343,7 @@ export default function DataTable({
         />
       </TableCell>
       <TableCell align="left">{row.userId || "none"}</TableCell>
-      {row?.fullName && (
+      {(isRoleTeacher || isRoleStudent) && (
         <TableCell align="left">{row?.fullName || "none"}</TableCell>
       )}
       <TableCell align="left">{row.checkin || "none"}</TableCell>
@@ -378,7 +384,9 @@ export default function DataTable({
           isNotifyPage={isNotifyPage}
           isRFIDPage={isRFIDPage}
           classOptions={classOptions}
+          subjectList={subjectList}
           setFiltersClassPage={setFiltersClassPage}
+          setFiltersAttendancePage={setFiltersAttendancePage}
         />
         <TableContainer>
           <Table sx={{ minWidth: 850 }} aria-labelledby="tableTitle">
