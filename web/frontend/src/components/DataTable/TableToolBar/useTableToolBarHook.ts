@@ -166,7 +166,6 @@ function useTableToolBarHook({
         setFiltersAttendancePage(attendanceFilters);
       }
       return;
-      console.log("Teacher Filter applied:", teacherFilters);
     } else if (isAttendance) {
       const attendanceFilters: AttendanceSearchParam = {
         userId: filters.userID,

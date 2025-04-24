@@ -88,9 +88,7 @@ interface DataTableProps {
   isAdmin?: boolean;
   isClassManagement?: boolean;
   isAttendance?: boolean;
-  isUserManagement?: boolean;
-  isRoleTeacher?: boolean;
-  setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
+  isUserManagement?: boolean;  setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
   setFiltersClass?: React.Dispatch<React.SetStateAction<SearchClassFilters>>;
   setFiltersClassPage?: React.Dispatch<React.SetStateAction<number>>;
   setFiltersAttendancePage?: React.Dispatch<React.SetStateAction<AttendanceSearchParam>>;
