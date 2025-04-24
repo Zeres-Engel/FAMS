@@ -859,9 +859,41 @@ async def init_fams_with_sample_data():
                 
                 # Insert schedules into database
                 if cleaned_schedules:
-                    db.ClassSchedule.insert_many(cleaned_schedules)
-                    print(f"[INFO] Created {len(cleaned_schedules)} schedules for {sem_name}")
-                    schedules_count += len(cleaned_schedules)
+                    # Kiểm tra và cập nhật scheduleId để tránh trùng lặp
+                    try:
+                        # Tìm scheduleId lớn nhất hiện tại trong hệ thống
+                        last_schedule = db.ClassSchedule.find_one(sort=[("scheduleId", -1)])
+                        next_schedule_id = 1
+                        if last_schedule and "scheduleId" in last_schedule:
+                            next_schedule_id = int(last_schedule["scheduleId"]) + 1
+                        
+                        # Cập nhật scheduleId cho tất cả các lịch học mới
+                        for schedule in cleaned_schedules:
+                            schedule["scheduleId"] = next_schedule_id
+                            next_schedule_id += 1
+                        
+                        # Chèn dữ liệu vào CSDL
+                        db.ClassSchedule.insert_many(cleaned_schedules)
+                        print(f"[INFO] Created {len(cleaned_schedules)} schedules for {sem_name}")
+                        schedules_count += len(cleaned_schedules)
+                    except Exception as e:
+                        print(f"[ERROR] Failed to insert schedules for {sem_name}: {str(e)}")
+                        # Lưu log chi tiết lỗi để debug
+                        import traceback
+                        print(traceback.format_exc())
+                        
+                        # Thử chèn từng bản ghi để xác định lỗi cụ thể
+                        success_count = 0
+                        for schedule in cleaned_schedules:
+                            try:
+                                db.ClassSchedule.insert_one(schedule)
+                                success_count += 1
+                            except Exception as ins_err:
+                                print(f"[ERROR] Failed to insert schedule {schedule.get('scheduleId')}: {str(ins_err)}")
+                        
+                        if success_count > 0:
+                            print(f"[INFO] Successfully inserted {success_count}/{len(cleaned_schedules)} schedules individually")
+                            schedules_count += success_count
                 else:
                     print(f"[WARNING] No schedules were generated for {sem_name}. Please check for errors.")
                 
@@ -973,24 +1005,79 @@ async def init_fams_with_sample_data():
                             # Insert in batches of 1000 to avoid memory issues
                             if len(attendance_logs) >= 1000:
                                 try:
+                                    # Kiểm tra và cập nhật lại attendanceId trước khi insert
+                                    latest_attendance = db.AttendanceLog.find_one(sort=[("attendanceId", -1)])
+                                    if latest_attendance and "attendanceId" in latest_attendance:
+                                        current_max_id = int(latest_attendance["attendanceId"])
+                                        # Nếu ID trong DB đã lớn hơn ID chúng ta dự định sử dụng
+                                        if current_max_id >= next_attendance_id - len(attendance_logs):
+                                            print(f"[INFO] Updating batch attendance IDs to avoid conflicts. Current max: {current_max_id}")
+                                            for i, log in enumerate(attendance_logs):
+                                                log["attendanceId"] = current_max_id + i + 1
+                                            # Cập nhật next_attendance_id cho lô tiếp theo
+                                            next_attendance_id = current_max_id + len(attendance_logs) + 1
+                                    
                                     db.AttendanceLog.insert_many(attendance_logs)
                                     attendance_logs_count += len(attendance_logs)
                                     print(f"[INFO] Inserted batch of {len(attendance_logs)} attendance logs")
                                     attendance_logs = []
                                 except Exception as e:
                                     print(f"[ERROR] Failed to insert attendance logs batch: {str(e)}")
-                                    # Continue with empty batch
+                                    # Lưu log chi tiết lỗi để debug
+                                    import traceback
+                                    print(traceback.format_exc())
+                                    
+                                    # Thử chèn từng bản ghi một
+                                    success_count = 0
+                                    for log in attendance_logs:
+                                        try:
+                                            db.AttendanceLog.insert_one(log)
+                                            success_count += 1
+                                            attendance_logs_count += 1
+                                        except Exception as log_err:
+                                            print(f"[ERROR] Failed to insert attendance log {log.get('attendanceId')}: {str(log_err)}")
+                                    
+                                    if success_count > 0:
+                                        print(f"[INFO] Successfully inserted {success_count}/{len(attendance_logs)} attendance logs individually")
+                                    
+                                    # Reset batch sau khi xử lý
                                     attendance_logs = []
                 
-                # Insert any remaining attendance logs
+                # Insert any remaining attendance logs at the end
                 if attendance_logs:
                     try:
+                        # Kiểm tra lại attendanceId trước khi insert để tránh trùng lặp
+                        latest_attendance = db.AttendanceLog.find_one(sort=[("attendanceId", -1)])
+                        if latest_attendance and "attendanceId" in latest_attendance:
+                            current_max_id = int(latest_attendance["attendanceId"])
+                            # Chỉ cập nhật nếu ID hiện tại trong hệ thống lớn hơn ID dự kiến
+                            if current_max_id >= next_attendance_id - len(attendance_logs):
+                                print(f"[INFO] Updating final attendance IDs to avoid conflicts. Current max: {current_max_id}")
+                                # Cập nhật lại tất cả ID, bắt đầu từ max_id + 1
+                                for i, log in enumerate(attendance_logs):
+                                    log["attendanceId"] = current_max_id + i + 1
+                        
                         db.AttendanceLog.insert_many(attendance_logs)
                         attendance_logs_count += len(attendance_logs)
                         print(f"[INFO] Inserted final batch of {len(attendance_logs)} attendance logs for {sem_name}")
                     except Exception as e:
                         print(f"[ERROR] Failed to insert final batch of attendance logs: {str(e)}")
-                
+                        # Lưu log chi tiết lỗi để debug
+                        import traceback
+                        print(traceback.format_exc())
+                        
+                        # Thử chèn từng bản ghi một
+                        success_count = 0
+                        for log in attendance_logs:
+                            try:
+                                db.AttendanceLog.insert_one(log)
+                                success_count += 1
+                                attendance_logs_count += 1
+                            except Exception as log_err:
+                                print(f"[ERROR] Failed to insert attendance log {log.get('attendanceId')}: {str(log_err)}")
+                        
+                        if success_count > 0:
+                            print(f"[INFO] Successfully inserted {success_count}/{len(attendance_logs)} attendance logs individually")
             except Exception as e:
                 print(f"[ERROR] Failed to generate schedules for {sem_name}: {str(e)}")
                 import traceback
@@ -1195,6 +1282,77 @@ async def init_fams_with_sample_data():
     db.AttendanceLog.create_index([("userId", 1), ("scheduleId", 1)])
     db.AttendanceLog.create_index([("classId", 1), ("sessionDate", 1)])
     print("[INFO] Created additional indexes for AttendanceLog")
+    
+    # Cập nhật RFID_ID cho userId thanhnpst1
+    try:
+        # Kiểm tra xem user thanhnpst1 có tồn tại không
+        user = db.UserAccount.find_one({"userId": "thanhnpst1"})
+        if user:
+            # Kiểm tra xem đã có bản ghi RFID cho user này chưa
+            existing_rfid = db.RFID.find_one({"userId": "thanhnpst1"})
+            
+            if existing_rfid:
+                # Cập nhật RFID_ID nếu đã tồn tại
+                db.RFID.update_one(
+                    {"userId": "thanhnpst1"}, 
+                    {"$set": {
+                        "rfidId": "0005563074",
+                        "updatedAt": datetime.datetime.now()
+                    }}
+                )
+                print(f"[INFO] Updated RFID_ID 0005563074 for user thanhnpst1")
+            else:
+                # Tạo mới bản ghi RFID nếu chưa tồn tại
+                # Lấy ID cuối cùng
+                last_rfid = db.RFID.find_one(sort=[("rfidId", -1)])
+                rfid_record_id = 1
+                if last_rfid and "id" in last_rfid:
+                    rfid_record_id = int(last_rfid["id"]) + 1
+                
+                rfid_doc = {
+                    "id": rfid_record_id,
+                    "userId": "thanhnpst1",
+                    "rfidId": "0005563074",
+                    "isActive": True,
+                    "createdAt": datetime.datetime.now(),
+                    "updatedAt": datetime.datetime.now()
+                }
+                db.RFID.insert_one(rfid_doc)
+                print(f"[INFO] Created new RFID record with ID 0005563074 for user thanhnpst1")
+        else:
+            # Nếu user chưa tồn tại, tạo user mới với RFID
+            print(f"[WARNING] User thanhnpst1 not found in database. Creating new user with RFID 0005563074")
+            
+            # Tạo mới user
+            user_doc = {
+                "userId": "thanhnpst1",
+                "email": "thanhnpst1@fams.edu.vn",
+                "password": hash_password("123456"),  # Default password
+                "role": "student",
+                "createdAt": datetime.datetime.now(),
+                "updatedAt": datetime.datetime.now(),
+                "isActive": True
+            }
+            db.UserAccount.insert_one(user_doc)
+            
+            # Tạo mới bản ghi RFID
+            last_rfid = db.RFID.find_one(sort=[("rfidId", -1)])
+            rfid_record_id = 1
+            if last_rfid and "id" in last_rfid:
+                rfid_record_id = int(last_rfid["id"]) + 1
+            
+            rfid_doc = {
+                "id": rfid_record_id,
+                "userId": "thanhnpst1",
+                "rfidId": "0005563074",
+                "isActive": True,
+                "createdAt": datetime.datetime.now(),
+                "updatedAt": datetime.datetime.now()
+            }
+            db.RFID.insert_one(rfid_doc)
+            print(f"[INFO] Created new user thanhnpst1 with RFID ID 0005563074")
+    except Exception as e:
+        print(f"[ERROR] Failed to update RFID for thanhnpst1: {str(e)}")
     
     print("[INFO] Database initialization complete!")
     

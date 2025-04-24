@@ -112,44 +112,6 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
     weeklyCapacity: "",
     role: "",
   };
-  const dispatch = useDispatch<AppDispatch>();
-  const rows = React.useMemo(() => [...tableMainData], [tableMainData]);
-  const [isCreateUser, setIsCreateUser] = useState<boolean>(false);
-  const [order, setOrder] = React.useState<Order>("asc");
-  const [orderBy, setOrderBy] = React.useState<
-    | keyof Data
-    | keyof UserData
-    | keyof ClassData
-    | keyof AttendanceLog
-    | keyof ClassArrangementData
-    | keyof NotifyProps
-    | keyof RFIDData
-    | keyof ClassStudent
-  >("id");
-  const [gradeError, setGradeError] = React.useState(false);
-  const [selected, setSelected] = React.useState<readonly string[]>([]);
-  const [selectedGrade, setSelectedGrade] = React.useState<string>("");
-  const [isEditOpen, setIsEditOpen] = React.useState(false);
-  const [editingUser, setEditingUser] =
-    React.useState<EditUserForm>(editUserDefault);
-  const [editingClass, setEditingClass] =
-    React.useState<editClassForm>(editClassDefaul);
-  const [editingClassID, setEditingClassID] = React.useState<string>("");
-  const [editingAttendance, setEditingAttendance] =
-    React.useState<EditAttendanceFormProps>(editAttendanceDefault);
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedUserToDelete, setSelectedUserToDelete] = useState<
-    Data | UserData | ClassData | null
-  >(null);
-  const [editingUserId, setEditingUserId] = useState<string | undefined>(
-    undefined
-  );
-  const [isShowNotifyOpen, setIsShowNotifyOpen] = useState(false);
-  const [selectedNotify, setSelectedNotify] = useState<NotifyProps | null>(
-    null
-  );
 
   const allUsers = useSelector((state: RootState) => state.users.user);
 

@@ -47,7 +47,6 @@ import {
   SearchFilters,
   UserData,
 } from "../../model/userModels/userDataModels.model";
-import useState from "react";
 import {
   ClassData,
   SearchClassFilters,
@@ -92,7 +91,6 @@ interface DataTableProps {
   setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
   setFiltersClass?: React.Dispatch<React.SetStateAction<SearchClassFilters>>;
   setFiltersClassPage?: React.Dispatch<React.SetStateAction<number>>;
-  isRoleTeacher?: boolean;
   isClassArrangement?: boolean;
   isNewSemester?: boolean;
   isTeacherView?: boolean;
@@ -102,8 +100,8 @@ interface DataTableProps {
   isRFIDPage?: boolean;
   classOptions?: string[];
   classOptionsData?: Array<{className: string, id: string}>;
-  searchClass?: string;
-  onClassSearchChange?: (value: string) => void;
+  className?: string;
+  onClassChange?: (className: string) => void;
   pagination?: {
     page: number;
     limit: number;
@@ -114,6 +112,8 @@ interface DataTableProps {
   onRowsPerPageChange?: (rowsPerPage: number) => void;
   isClassPage?: boolean;
   classPageList?: ClassPageList[]
+  availableAcademicYears?: string[];
+  onAcademicYearChange?: (year: string) => void;
 }
 
 export default function DataTable({
@@ -137,14 +137,16 @@ export default function DataTable({
   isRFIDPage,
   classOptions,
   classOptionsData,
-  searchClass,
-  onClassSearchChange,
+  className,
+  onClassChange,
   pagination,
   onPageChange,
-  onRowsPerPageChange
+  onRowsPerPageChange,
   isClassPage,
   classPageList,
-  setFiltersClassPage
+  setFiltersClassPage,
+  availableAcademicYears,
+  onAcademicYearChange
 }: DataTableProps) {
   const { state, handler } = useDataTableHook({ tableMainData });
 
@@ -407,19 +409,21 @@ export default function DataTable({
           isAttendance={isAttendance}
           setFiltersUser={setFiltersUser}
           setFiltersClass={setFiltersClass}
-          isTeacher={isRoleTeacher}
+          setFiltersClassPage={setFiltersClassPage}
           isClassArrangement={isClassArrangement}
+          isTeacher={isRoleTeacher}
+          classOptions={classOptions}
+          classOptionsData={classOptionsData}
+          defaultClass={className ?? ""}
+          onClassChange={onClassChange}
           isNewSemester={isNewSemester}
           isTeacherView={isTeacherView}
           classPageList={classPageList}
           isRoleStudent={isRoleStudent}
           isNotifyPage={isNotifyPage}
           isRFIDPage={isRFIDPage}
-          classOptions={classOptions}
-          classOptionsData={classOptionsData}
-          searchClass={searchClass}
-          onClassSearchChange={onClassSearchChange}
-          setFiltersClassPage={setFiltersClassPage}
+          availableAcademicYears={availableAcademicYears}
+          onAcademicYearChange={onAcademicYearChange}
         />
         <TableContainer>
           <Table sx={{ minWidth: 850 }} aria-labelledby="tableTitle">

@@ -32,3 +32,352 @@
         }
     }
 }
+
+/* Tối ưu giao diện thanh tìm kiếm */
+.MuiAutocomplete-root, .MuiFormControl-root {
+    .MuiInputBase-root {
+        min-height: 56px;
+        border-radius: 8px;
+    }
+    
+    .MuiOutlinedInput-notchedOutline {
+        border-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    &:hover .MuiOutlinedInput-notchedOutline {
+        border-color: rgba(0, 0, 0, 0.2);
+    }
+}
+
+.MuiButton-contained {
+    text-transform: uppercase;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
+    border-radius: 8px;
+    
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+}
+
+/* Cải thiện bố cục chung */
+.MuiPaper-root {
+    border-radius: 12px !important;
+    overflow: hidden;
+}
+
+/* Tối ưu dropdown */
+.MuiSelect-select {
+    padding: 14px 12px !important;
+}
+
+.MuiMenuItem-root {
+    font-size: 15px;
+    padding: 12px 16px;
+}
+
+/* Subject dropdown styling */
+#subject-select-label, #subject-teacher-select-label {
+    background-color: rgba(255,255,255,0.7);
+    padding: 0 5px;
+}
+
+/* Tối ưu menu dropdown dài */
+.MuiMenu-paper {
+    max-height: 300px !important;
+}
+
+.MuiMenu-list {
+    padding: 8px 0;
+}
+
+/* Material Icons */
+.material-icons {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Nút thêm và sắp xếp */
+button[type="submit"].MuiButton-contained {
+    background-color: #1976d2;
+    
+    &:hover {
+        background-color: #1565c0;
+    }
+}
+
+/* Cải thiện giao diện lịch */
+.rbc-calendar {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    margin-top: 16px;
+    
+    .rbc-toolbar {
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+        
+        .rbc-toolbar-label {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #1976d2;
+        }
+        
+        button {
+            border-radius: 6px;
+            margin: 0 2px;
+            padding: 8px 12px;
+            font-weight: 500;
+            
+            &.rbc-active {
+                background-color: #1976d2;
+                color: white;
+                box-shadow: none;
+            }
+        }
+    }
+    
+    .rbc-header {
+        font-weight: 600;
+        padding: 10px 0;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .rbc-event {
+        border-radius: 6px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 4px 8px;
+        background-color: #1976d2;
+        
+        &:hover {
+            transform: scale(1.01);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+    }
+    
+    .rbc-today {
+        background-color: rgba(25, 118, 210, 0.05);
+    }
+    
+    .rbc-time-content {
+        border-top: 2px solid #e0e0e0;
+    }
+    
+    .rbc-time-slot {
+        min-height: 20px;
+    }
+    
+    .rbc-agenda-view table.rbc-agenda-table {
+        border: 1px solid #e0e0e0;
+        border-spacing: 0;
+        border-collapse: collapse;
+    }
+    
+    .rbc-agenda-view table.rbc-agenda-table tbody > tr > td {
+        padding: 10px;
+    }
+    
+    .rbc-agenda-view table.rbc-agenda-table .rbc-agenda-time-cell {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}
+
+/* Responsive trên mobile */
+@media (max-width: 600px) {
+    .MuiBox-root {
+        margin-bottom: 8px;
+    }
+    
+    .MuiButton-contained {
+        width: 100%;
+    }
+    
+    .rbc-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+        
+        .rbc-toolbar-label {
+            margin: 10px 0;
+        }
+        
+        .rbc-btn-group {
+            margin-bottom: 10px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+    }
+}
+
+/* Tùy chỉnh hiển thị cho thời khóa biểu */
+.rbc-event {
+  transition: all 0.2s ease;
+  min-height: 45px;
+  padding: 4px 5px !important;
+  margin-bottom: 2px;
+
+  &:hover {
+    transform: none;
+    z-index: 10;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.2) !important;
+  }
+}
+
+/* Tùy chỉnh hiển thị của event */
+.custom-event {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+
+  .event-title {
+    font-weight: bold;
+    font-size: 1rem;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .event-details {
+    font-size: 0.9rem;
+    overflow: hidden;
+    
+    div {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.5;
+    }
+  }
+}
+
+/* Chỉnh sửa hiển thị trong chế độ month */
+.rbc-month-view {
+  .rbc-event {
+    padding: 3px 4px !important;
+  }
+
+  .custom-event {
+    .event-title {
+      font-size: 0.85rem;
+    }
+    
+    .event-details {
+      font-size: 0.75rem;
+      div:first-child {
+        display: block;
+      }
+      div:nth-child(2) {
+        display: none;
+      }
+    }
+  }
+}
+
+/* Chỉnh sửa hiển thị trong chế độ week/day */
+.rbc-time-view {
+  .rbc-event {
+    padding: 4px 6px !important;
+  }
+
+  .custom-event {
+    .event-details {
+      div {
+        display: block;
+      }
+    }
+  }
+}
+
+/* Tăng kích thước và khoảng cách time slots */
+.rbc-timeslot-group {
+  min-height: 120px !important; /* Tăng chiều cao của mỗi ô giờ lên rất nhiều */
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.rbc-time-slot {
+  height: 120px !important;
+}
+
+/* Tăng kích thước header và độ rõ của các line */
+.rbc-header {
+  font-weight: bold;
+  font-size: 0.95rem;
+  padding: 12px 3px !important;
+}
+
+.rbc-time-header-content {
+  .rbc-header {
+    border-bottom: 1px solid #ddd;
+  }
+}
+
+.rbc-time-content {
+  > * + * > * {
+    border-left: 1px solid #e0e0e0;
+  }
+}
+
+.rbc-time-content {
+  .rbc-time-gutter {
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+}
+
+.rbc-day-slot .rbc-time-slot {
+  border-top: 1px dotted #f0f0f0;
+}
+
+/* Tùy chỉnh hiển thị chế độ week để hiện rõ hơn */
+.rbc-time-view {
+  .rbc-day-slot .rbc-time-slot {
+    border-top: 1px solid #f0f0f0;
+  }
+  
+  .rbc-label {
+    padding: 8px 4px;
+    font-size: 0.95rem;
+  }
+}
+
+/* Giảm padding trong view để có nhiều không gian hiển thị hơn */
+.rbc-time-view, .rbc-month-view {
+  .rbc-row, .rbc-time-content, .rbc-month-row {
+    margin: 0;
+  }
+}
+
+/* Tùy chỉnh hiển thị cho toolbar */
+.rbc-toolbar {
+  margin-bottom: 10px !important;
+  
+  .rbc-btn-group {
+    button {
+      padding: 5px 10px;
+    }
+  }
+}
+
+/* Hiệu ứng khi hover vào header */
+.rbc-header:hover {
+  background-color: #f5f5f5;
+}

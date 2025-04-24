@@ -27,9 +27,9 @@ function UserManagementPage(): React.JSX.Element {
   
   // Debug logs
   console.log("UserManagementPage rendering with state:", {
-    classOptions: state.classOptions,
-    classOptionsData: state.classOptionsData,
-    searchClass: state.searchClass
+    availableClassNames: state.availableClassNames,
+    className: state.className,
+    academicYear: state.academicYear
   });
 
   const handleOpenImportDialog = () => {
@@ -172,12 +172,13 @@ function UserManagementPage(): React.JSX.Element {
               isAdmin={true}
               isUserManagement={true}
               setFiltersUser={handler.setFiltersUser}
-              classOptions={state.classOptions}
-              classOptionsData={state.classOptionsData}
-              searchClass={state.searchClass}
-              onClassSearchChange={handler.handleClassSearchChange}
+              classOptions={state.availableClassNames}
+              className={state.className}
+              onClassChange={handler.handleClassChange}
               pagination={state.pagination}
               onPageChange={handler.handlePageChange}
+              availableAcademicYears={state.availableAcademicYears}
+              onAcademicYearChange={handler.handleAcademicYearChange}
             />
           </Box>
         </Box>

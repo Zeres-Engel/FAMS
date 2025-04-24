@@ -25,23 +25,39 @@ function useClassPageHook() {
     search: "",
     grade: "",
     phone: "",
-    roles: ["student", "teacher", "parent", "supervisor"], // Exclude admin accounts by default
-    academicYear: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`, // Current academic year
+    roles: ["student", "teacher", "parent"], // Đã loại bỏ "supervisor"
+    academicYear: "", // Trống ban đầu, sẽ được cập nhật sau khi lấy dữ liệu
     // Thêm page và limit vào filters
     page: 1,
-    limit: 5, // Đổi mặc định thành 5 dòng cố định
+    limit: 5, // Luôn cố định 5 dòng
   });
 
-  // State to hold class autocomplete options
-  const [classOptions, setClassOptions] = useState<Array<{className: string, id: string}>>([]);
-  const [searchClass, setSearchClass] = useState("");
+  // State để lưu trữ dữ liệu lớp học và năm học
+  const [classesData, setClassesData] = useState<any[]>([]); // Lưu toàn bộ dữ liệu classes
+  const [availableAcademicYears, setAvailableAcademicYears] = useState<string[]>([]); // Các năm học có sẵn
+  const [availableClassNames, setAvailableClassNames] = useState<string[]>([]); // Các lớp học có sẵn
+  const [classesGroupedByYear, setClassesGroupedByYear] = useState<Record<string, string[]>>({}); // Lớp học theo năm
 
   const dispatch = useAppDispatch();
-  const userState = useAppSelector(state => state.users);
+  const userState = useAppSelector((state: RootState) => state.users);
   const [userMainData, setUserMainData] = useState<UserData[]>([]);
   const [initUserFile, setInitUserFile] = useState<File | null>(null);
   const [uploadedUserData, setUploadedUserData] = useState<any[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  
+  // Biến mapping từ UI sang API - usando valores idênticos porque o formato é o mesmo
+  const academicYearMap: Record<string, string> = {
+    "2022-2023": "2022-2023",
+    "2023-2024": "2023-2024",
+    "2024-2025": "2024-2025"
+  };
+  
+  // Biến ngược từ API sang UI - usando valores idênticos porque o formato é o mesmo
+  const reverseAcademicYearMap: Record<string, string> = {
+    "2022-2023": "2022-2023",
+    "2023-2024": "2023-2024",
+    "2024-2025": "2024-2025"
+  };
   
   // 👇 NEW: Handle file upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,58 +120,160 @@ function useClassPageHook() {
     });
   };
   
-  // Function to fetch class data for autocomplete
-  const fetchClassOptions = async (searchTerm: string) => {
+  // Fetch classes data from API
+  const fetchClassesData = async () => {
     try {
-      console.log("Fetching class options with term:", searchTerm);
-      console.log("Using academic year:", filters.academicYear);
-      
-      // Sử dụng CORS headers
-      const requestHeaders = {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      };
-      
-      // URL với các tham số được mã hóa đúng cách
-      const encodedSearchTerm = encodeURIComponent(searchTerm);
-      const encodedAcademicYear = encodeURIComponent(filters.academicYear || '2024-2025');
-      
-      const url = `http://fams.io.vn/api-nodejs/classes?grade=&search=${encodedSearchTerm}&homeroomTeacherd=&academicYear=${encodedAcademicYear}`;
-      console.log("Calling API URL:", url);
-      
-      const response = await axios.get(url, { headers: requestHeaders });
-      
-      console.log("API response:", response.data);
-      
+      console.log("Fetching classes data from API");
+      const response = await axios.get('http://fams.io.vn/api-nodejs/classes', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        }
+      });
+
       if (response.data?.success) {
-        const classes = response.data.data.map((c: any) => ({
-          className: c.className,
-          id: c._id
-        }));
-        
-        console.log("Processed class options:", classes);
-        setClassOptions(classes);
+        const classes = response.data.data;
+        console.log(`Received ${classes.length} classes from API`);
+
+        // Lưu toàn bộ dữ liệu classes
+        setClassesData(classes);
+
+        // Nhóm các lớp học theo năm học
+        const groupedByYear = groupClassesByYear(classes);
+        setClassesGroupedByYear(groupedByYear);
+
+        // Lấy danh sách các năm học sắp xếp tăng dần (cũ nhất lên đầu)
+        const years = Object.keys(groupedByYear).sort((a, b) => {
+          return parseInt(a.split('-')[0]) - parseInt(b.split('-')[0]);
+        });
+        setAvailableAcademicYears(years);
+
+        // Nếu có năm học, chọn năm học đầu tiên làm mặc định
+        if (years.length > 0) {
+          const firstYear = years[0];
+          
+          // Cập nhật filters với năm học đầu tiên
+          setFiltersUser((prev: SearchFilters) => ({
+            ...prev,
+            academicYear: firstYear
+          }));
+
+          // Cập nhật danh sách lớp học sẵn có cho năm học này
+          setAvailableClassNames(groupedByYear[firstYear] || []);
+        } else {
+          // Nếu không có năm học nào, đặt mảng trống
+          setFiltersUser((prev: SearchFilters) => ({
+            ...prev,
+            academicYear: "",
+            className: ""
+          }));
+          setAvailableClassNames([]);
+        }
       } else {
-        console.error("API did not return success flag", response.data);
+        console.error("API did not return success or empty data", response.data);
+        // Đặt giá trị rỗng nếu API không trả về dữ liệu
+        setAvailableAcademicYears([]);
+        setFiltersUser((prev: SearchFilters) => ({
+          ...prev,
+          academicYear: "",
+          className: ""
+        }));
+        setAvailableClassNames([]);
       }
     } catch (error) {
-      console.error("Error fetching class options:", error);
+      console.error("Error fetching classes data:", error);
+      // Xử lý lỗi: đặt giá trị rỗng
+      setAvailableAcademicYears([]);
+      setFiltersUser((prev: SearchFilters) => ({
+        ...prev,
+        academicYear: "",
+        className: ""
+      }));
+      setAvailableClassNames([]);
     }
   };
 
-  // Handle class search input change
-  const handleClassSearchChange = (value: string) => {
-    console.log("Class search changed to:", value);
-    setSearchClass(value);
-    fetchClassOptions(value);
+  // Hàm nhóm lớp học theo năm học
+  const groupClassesByYear = (classes: any[]): Record<string, string[]> => {
+    const grouped: Record<string, string[]> = {};
     
-    // Update filters to include class search
+    if (!classes || classes.length === 0) {
+      return grouped;
+    }
+    
+    classes.forEach(classItem => {
+      const { academicYear, className } = classItem;
+      
+      if (!academicYear) return; // Bỏ qua nếu không có academicYear
+      
+      if (!grouped[academicYear]) {
+        grouped[academicYear] = [];
+      }
+      
+      // Chỉ thêm className nếu chưa có trong mảng
+      if (className && !grouped[academicYear].includes(className)) {
+        grouped[academicYear].push(className);
+      }
+    });
+    
+    // Sắp xếp tên lớp trong mỗi năm học theo khối và lớp
+    Object.keys(grouped).forEach(year => {
+      grouped[year].sort((a, b) => {
+        // Lấy ra khối (10, 11, 12) từ tên lớp
+        const classGradeA = a.match(/^(\d+)/);
+        const classGradeB = b.match(/^(\d+)/);
+        
+        // Nếu một trong hai không có khối thì so sánh theo string thông thường
+        if (!classGradeA || !classGradeB) return a.localeCompare(b);
+        
+        const gradeA = parseInt(classGradeA[1]);
+        const gradeB = parseInt(classGradeB[1]);
+        
+        // So sánh khối trước
+        if (gradeA !== gradeB) return gradeA - gradeB;
+        
+        // Nếu cùng khối, lấy phần chữ và số sau khối
+        const classNameA = a.substring(classGradeA[0].length);
+        const classNameB = b.substring(classGradeB[0].length);
+        
+        // So sánh phần còn lại theo thứ tự từ điển
+        return classNameA.localeCompare(classNameB);
+      });
+    });
+    
+    return grouped;
+  };
+
+  // Xử lý khi chọn năm học
+  const handleAcademicYearChange = (year: string) => {
+    console.log("Academic year changed to:", year);
+    
+    // Cập nhật filters với năm học mới và reset className
     setFiltersUser({
       ...filters,
-      className: value
+      academicYear: year || "",
+      className: "" // Reset class selection
     });
+    
+    // Cập nhật danh sách lớp học có sẵn dựa trên năm học đã chọn
+    setAvailableClassNames(classesGroupedByYear[year] || []);
   };
   
+  // Xử lý khi chọn lớp học
+  const handleClassChange = (className: string) => {
+    if (!className) return; // Không cập nhật nếu className không hợp lệ
+    
+    setFiltersUser({
+      ...filters,
+      className
+    });
+  };
+
+  // Fetch classes data when component mounts
+  useEffect(() => {
+    fetchClassesData();
+  }, []);
+
   const headCellsData: UserHeadCell[] = [
     {
       id: "id",
@@ -221,19 +339,6 @@ function useClassPageHook() {
     }));
   };
   
-  // Fetch classes on initial load and when academicYear changes
-  useEffect(() => {
-    console.log("useEffect triggered for academicYear:", filters.academicYear);
-    fetchClassOptions("");
-  }, [filters.academicYear]);
-  
-  // Thêm useEffect để load danh sách lớp ngay khi component mount
-  useEffect(() => {
-    console.log("Component mounted - loading initial class list");
-    // Gọi hàm fetchClassOptions với chuỗi rỗng để lấy tất cả các lớp
-    fetchClassOptions("");
-  }, []);
-  
   useEffect(() => {
     if (userState.user) {
       // Filter out admin users from the displayed data
@@ -272,7 +377,7 @@ function useClassPageHook() {
 
   // 👇 NEW: Toggle user selection status
   const toggleUserSelection = (index: number) => {
-    setUploadedUserData(prev => {
+    setUploadedUserData((prev: any[]) => {
       const newData = [...prev];
       // Đảm bảo chosen được set rõ ràng là true hoặc false
       const currentValue = newData[index].chosen;
@@ -289,7 +394,7 @@ function useClassPageHook() {
   // 👇 NEW: Import selected users
   const confirmImportUsers = async () => {
     // Filter only users with chosen=true or undefined (default is true)
-    const selectedUsers = uploadedUserData.filter(user => user.chosen !== false);
+    const selectedUsers = uploadedUserData.filter((user: any) => user.chosen !== false);
     
     if (selectedUsers.length === 0) {
       console.error("No users selected for import");
@@ -333,10 +438,11 @@ function useClassPageHook() {
     initUserFile,
     uploadedUserData,
     isUploading,
-    classOptions: classOptions.map(c => c.className), // For backward compatibility
-    classOptionsData: classOptions, // Full class data including id
-    pagination, // Thêm state pagination
-    searchClass,
+    pagination,
+    academicYear: filters.academicYear,
+    className: filters.className,
+    availableAcademicYears,
+    availableClassNames,
   };
   
   const handler = {
@@ -346,8 +452,9 @@ function useClassPageHook() {
     handleSubmitInitUserData,
     toggleUserSelection,
     confirmImportUsers,
-    handlePageChange, // Thêm handler cho phân trang
-    handleClassSearchChange,
+    handlePageChange,
+    handleAcademicYearChange,
+    handleClassChange,
   };
 
   return { state, handler };

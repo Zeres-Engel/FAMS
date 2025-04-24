@@ -6,9 +6,9 @@ const { searchTeachers } = require('../controllers/teacherSearchController');
 /**
  * @route   GET /api/teachers/search
  * @desc    Search teachers with minimal info (userId and name)
- * @access  Private
+ * @access  Public - no authentication required
  */
-router.get('/search', protect, searchTeachers);
+router.get('/search', searchTeachers);
 
 /**
  * Deprecated Routes - Redirects to User API

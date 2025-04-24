@@ -39,7 +39,7 @@ function useTableToolBarHook({
   const dispatch = useDispatch<AppDispatch>();
   
   // Tạo default roles để đảm bảo luôn có giá trị
-  const defaultRoles = isUserManagement ? ["student", "teacher", "parent", "supervisor"] : [];
+  const defaultRoles = isUserManagement ? ["student", "teacher", "parent"] : [];
   
   // Khởi tạo state với default roles
   const [filters, setFilters] = useState({
@@ -166,21 +166,21 @@ function useTableToolBarHook({
   };
   
   // Keep the original handleFilterSubmit for compatibility
-  const handleFilterSubmit = applyFilters;
+  // const handleFilterSubmit = applyFilters;
 
-  const getAcademicYears = (range = 3) => {
-    const currentYear = new Date().getFullYear();
-    const startYear = currentYear - range;
-    const endYear = currentYear + range;
+  // const getAcademicYears = (range = 3) => {
+  //   const currentYear = new Date().getFullYear();
+  //   const startYear = currentYear - range;
+  //   const endYear = currentYear + range;
   
-    const years: string[] = [];
+  //   const years: string[] = [];
   
-    for (let year = startYear; year <= endYear; year++) {
-      years.push(`${year}-${year + 1}`);
-    }
+  //   for (let year = startYear; year <= endYear; year++) {
+  //     years.push(`${year}-${year + 1}`);
+  //   }
   
-    return years;
-  };
+  //   return years;
+  // };
 
   return {
     state: { filters },

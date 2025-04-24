@@ -401,10 +401,12 @@ function ProfilePage(): React.JSX.Element {
                 { label: "User ID", key: "userId" },
                 { label: "Full name", key: "fullName" },
                 { label: "Email", key: "email" },
-                { label: "Date Of Birth", key: "dateOfBirth" },
-                { label: "Gender", key: "gender" },
-                { label: "Address", key: "address" },
-                { label: "Phone", key: "phone" },
+                ...(profileData.role !== "admin" ? [
+                  { label: "Date Of Birth", key: "dateOfBirth" },
+                  { label: "Gender", key: "gender" },
+                  { label: "Address", key: "address" },
+                  { label: "Phone", key: "phone" },
+                ] : [])
               ].map(({ label, key }) => {
                 if (key === 'classes') return null;
                 
@@ -754,11 +756,13 @@ function ProfilePage(): React.JSX.Element {
                 </>
               )}
 
-              <Box textAlign="right" mt={2}>
-                <Button variant="contained" onClick={handleEditOrSave}>
-                  {isEditing ? "Save" : "Edit"}
-                </Button>
-              </Box>
+              {profileData.role !== "admin" && (
+                <Box textAlign="right" mt={2}>
+                  <Button variant="contained" onClick={handleEditOrSave}>
+                    {isEditing ? "Save" : "Edit"}
+                  </Button>
+                </Box>
+              )}
             </Box>
           </Box>
         </Box>
