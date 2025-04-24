@@ -447,7 +447,7 @@ class RFIDAPIClient:
     Client for interacting with the RFID API on the backend server
     """
     
-    def __init__(self, api_url="http://localhost:3000/api", username=None, password=None):
+    def __init__(self, api_url="http://fams.io.vn/api-nodejs", username=None, password=None):
         """
         Initialize the RFID API Client
         
@@ -472,20 +472,27 @@ class RFIDAPIClient:
         try:
             auth_url = f"{self.api_url}/auth/login"
             auth_data = {
-                "userId": self.username,  # Dùng userId thay vì username
+                "userId": self.username,
                 "password": self.password
             }
             
             print(f"Authenticating with API: {auth_url}")
-            print(f"Auth data: {json.dumps(auth_data)}")
             
-            response = requests.post(auth_url, json=auth_data)
+            response = requests.post(
+                auth_url, 
+                json=auth_data,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
             
             print(f"Response status: {response.status_code}")
             if response.status_code == 200:
                 data = response.json()
-                print(f"Response data: {json.dumps(data)}")
-                self.auth_token = data.get("data", {}).get("accessToken")
+                self.auth_token = data.get("token")
+                if not self.auth_token:
+                    print("Token not found in response")
+                    return None
+                    
                 # Set token expiry (usually 24 hours)
                 self.token_expiry = datetime.now().timestamp() + 86400  # 24 hours in seconds
                 return self.auth_token
@@ -526,16 +533,17 @@ class RFIDAPIClient:
             return None
         
         try:
-            user_url = f"{self.api_url}/users/rfid/{card_id}"
+            # Updated endpoint to match the new API structure
+            rfid_url = f"{self.api_url}/rfid/{card_id}"
             headers = {
+                'Content-Type': 'application/json',
                 "Authorization": f"Bearer {self.auth_token}"
             }
             
-            response = requests.get(user_url, headers=headers)
+            response = requests.get(rfid_url, headers=headers, timeout=10)
             
             if response.status_code == 200:
-                user_data = response.json()
-                return user_data
+                return response.json()
             elif response.status_code == 404:
                 print(f"No user found with card ID: {card_id}")
                 return None
@@ -567,16 +575,17 @@ class RFIDAPIClient:
             if date:
                 date_param = f"?date={date}"
             
+            # Updated endpoint to match the new API structure
             attendance_url = f"{self.api_url}/attendance/user/{user_id}{date_param}"
             headers = {
+                'Content-Type': 'application/json',
                 "Authorization": f"Bearer {self.auth_token}"
             }
             
-            response = requests.get(attendance_url, headers=headers)
+            response = requests.get(attendance_url, headers=headers, timeout=10)
             
             if response.status_code == 200:
-                attendance_data = response.json()
-                return attendance_data
+                return response.json()
             elif response.status_code == 404:
                 print(f"No attendance records found for user: {user_id}")
                 return None
@@ -585,4 +594,58 @@ class RFIDAPIClient:
                 return None
         except Exception as e:
             print(f"Error getting user attendance: {e}")
+            return None
+            
+    def record_attendance(self, user_id, rfid_id, classroom_id=1, check_in_face=None):
+        """
+        Record attendance for a user
+        
+        Args:
+            user_id (str): User ID
+            rfid_id (str): RFID card ID
+            classroom_id (int): Classroom ID
+            check_in_face (str): Path to the face image
+            
+        Returns:
+            dict: Response data if successful, None otherwise
+        """
+        if not self._ensure_authenticated():
+            print("Failed to authenticate for attendance recording")
+            return None
+            
+        try:
+            # Prepare attendance data
+            check_in_time = datetime.now().isoformat()
+            attendance_data = {
+                "userId": user_id,
+                "rfidId": rfid_id,
+                "checkInTime": check_in_time,
+                "classroomId": classroom_id
+            }
+            
+            # Add check_in_face if provided
+            if check_in_face:
+                attendance_data["checkInFace"] = check_in_face
+                
+            # Updated endpoint to match the new API structure
+            attendance_url = f"{self.api_url}/attendance/jetson-check-in"
+            headers = {
+                'Content-Type': 'application/json',
+                "Authorization": f"Bearer {self.auth_token}"
+            }
+            
+            response = requests.post(
+                attendance_url,
+                json=attendance_data,
+                headers=headers,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                print(f"Error recording attendance: {response.status_code} - {response.text}")
+                return None
+        except Exception as e:
+            print(f"Error recording attendance: {e}")
             return None 
