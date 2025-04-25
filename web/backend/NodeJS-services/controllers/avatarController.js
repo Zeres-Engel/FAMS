@@ -150,74 +150,19 @@ exports.uploadAvatar = [
       const host = req.headers.host || 'fams.io.vn';
       const fullAvatarUrl = `${protocol}://${host}${relativePath}`;
       
-      // Save full URL to database
-      user.avatar = fullAvatarUrl;
-      
-      try {
-        // Make sure to preserve all required fields
-        if (!user.username) {
-          // If username is missing, set it to userId as a fallback
-          user.username = user.userId;
-        }
-        
-        await user.save();
-      } catch (saveError) {
-        console.error("Error saving user:", saveError);
-        // Try to handle validation errors
-        if (saveError.name === 'ValidationError') {
-          console.log("Validation error details:", saveError.errors);
-          
-          // Fix common validation errors
-          let needToSaveAgain = false;
-          
-          // Fix username
-          if (saveError.errors && saveError.errors.username) {
-            console.log("Fixing missing username");
-            user.username = user.userId; // Use userId as username
-            needToSaveAgain = true;
-          }
-          
-          // Fix role enum
-          if (saveError.errors && saveError.errors.role) {
-            console.log("Fixing role validation error");
-            // Map any role value to valid enum values but KEEP LOWERCASE
-            const roleMap = {
-              'admin': 'admin',
-              'teacher': 'teacher',
-              'parent': 'parent',
-              'student': 'student'
-            };
-            
-            if (user.role && roleMap[user.role.toLowerCase()]) {
-              // Keep it lowercase but ensure it's a valid value
-              user.role = roleMap[user.role.toLowerCase()];
-              console.log(`Setting role to "${user.role}"`);
-              needToSaveAgain = true;
-            } else {
-              // Default to student (lowercase) if role is invalid
-              user.role = 'student';
-              needToSaveAgain = true;
-            }
-          }
-          
-          // Try to save again with fixes
-          if (needToSaveAgain) {
-            await user.save();
-          } else {
-            throw saveError; // Re-throw if fixes didn't help
-          }
-        } else {
-          throw saveError; // Re-throw if it's not a validation error
-        }
-      }
+      // Update avatar directly with updateOne instead of save to avoid validation issues
+      await UserAccount.updateOne(
+        { userId: user.userId },
+        { avatar: fullAvatarUrl }
+      );
       
       res.json({
         success: true,
         message: 'Avatar đã được tải lên thành công',
         data: {
           userId: user.userId,
-          avatar: user.avatar,
-          avatarUrl: user.avatar // Sử dụng URL đã lưu trong DB
+          avatar: fullAvatarUrl,
+          avatarUrl: fullAvatarUrl
         },
         code: 'AVATAR_UPLOADED'
       });
@@ -361,8 +306,10 @@ exports.deleteAvatar = asyncHandler(async (req, res) => {
     
     // Update user in database regardless of whether file existed
     if (user.avatar) {
-      user.avatar = null;
-      await user.save();
+      await UserAccount.updateOne(
+        { userId: user.userId },
+        { avatar: null }
+      );
     }
     
     res.json({
@@ -434,8 +381,10 @@ exports.deleteAvatarByUserId = asyncHandler(async (req, res) => {
     
     // Update user in database regardless of whether file existed
     if (user.avatar) {
-      user.avatar = null;
-      await user.save();
+      await UserAccount.updateOne(
+        { userId: user.userId },
+        { avatar: null }
+      );
     }
     
     res.json({
@@ -556,38 +505,35 @@ exports.adminUploadAvatar = [
       const host = req.headers.host || 'fams.io.vn';
       const fullAvatarUrl = `${protocol}://${host}${relativePath}`;
       
-      // Save full URL to database
-      user.avatar = fullAvatarUrl;
-      await user.save();
+      // Update avatar directly with updateOne instead of save to avoid validation issues
+      await UserAccount.updateOne(
+        { userId: user.userId },
+        { avatar: fullAvatarUrl }
+      );
       
       res.json({
         success: true,
-        message: `Avatar của người dùng ${targetUserId} đã được tải lên thành công`,
+        message: `Avatar của người dùng ${targetUserId} đã được cập nhật thành công`,
         data: {
           userId: user.userId,
-          avatar: user.avatar,
-          avatarUrl: user.avatar
+          avatar: fullAvatarUrl,
+          avatarUrl: fullAvatarUrl
         },
-        code: 'AVATAR_UPLOADED_BY_ADMIN'
+        code: 'AVATAR_UPDATED'
       });
     } catch (error) {
       // Clean up uploaded file in case of error
-      if (req.file && req.file.path) {
-        if (fs.existsSync(req.file.path)) {
-          fs.unlinkSync(req.file.path);
-        }
-        if (fs.existsSync(`${req.file.path}.processed`)) {
-          fs.unlinkSync(`${req.file.path}.processed`);
-        }
+      if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
       }
       
-      console.error('Admin avatar upload error:', error);
+      console.error('Avatar upload error:', error);
       res.status(500).json({
         success: false,
-        message: 'Lỗi server trong quá trình upload avatar',
+        message: 'Lỗi server trong quá trình cập nhật avatar',
         error: error.message,
         code: 'SERVER_ERROR'
       });
     }
   })
-]; 
+];

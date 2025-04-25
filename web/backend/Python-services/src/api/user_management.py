@@ -11,6 +11,8 @@ from bson.objectid import ObjectId
 import datetime
 import re
 from pymongo import MongoClient
+from fastapi.responses import FileResponse
+from pathlib import Path
 
 from ..db import get_database, connect_to_mongodb
 from ..constants import COLLECTIONS
@@ -19,6 +21,68 @@ from .models import ResponseModel, ErrorResponseModel
 
 # Create main router
 router = APIRouter()
+
+@router.get("/download/template")
+async def download_user_template():
+    """
+    Download the FAMS user import template file
+    """
+    template_path = "src/data/xlsx/sample/FAMS.xlsx"
+    
+    # Check if file exists
+    if not os.path.exists(template_path):
+        # Create directories if they don't exist
+        os.makedirs(os.path.dirname(template_path), exist_ok=True)
+        
+        # If template doesn't exist, create a simple one
+        try:
+            # Create a simple template with pandas
+            student_df = pd.DataFrame({
+                'Họ và Tên': ['Học sinh mẫu 1', 'Học sinh mẫu 2'],
+                'Ngày sinh': ['01/01/2010', '02/02/2010'],
+                'Giới tính': ['Nam', 'Nữ'],
+                'Địa chỉ': ['Hồ Chí Minh', 'Hà Nội'],
+                'Số điện thoại': ['0987654321', '0123456789'],
+                'Tên Phụ huynh 1': ['Nguyễn Văn A', 'Trần Thị B'],
+                'Nghề nghiệp Phụ huynh 1': ['Kỹ sư', 'Giáo viên'],
+                'SĐT Phụ huynh 1': ['0912345678', '0987654321'],
+                'Giới tính Phụ huynh 1': ['Nam', 'Nữ'],
+                'Email Phụ huynh 1': ['nguyenvana@gmail.com', 'tranthib@gmail.com'],
+                'Tên Phụ huynh 2': ['Nguyễn Thị C', 'Trần Văn D'],
+                'Nghề nghiệp Phụ huynh 2': ['Bác sĩ', 'Kinh doanh'],
+                'SĐT Phụ huynh 2': ['0823456789', '0765432198'],
+                'Giới tính Phụ huynh 2': ['Nữ', 'Nam'],
+                'Email Phụ huynh 2': ['nguyenthic@gmail.com', 'tranvand@gmail.com']
+            })
+            
+            teacher_df = pd.DataFrame({
+                'Họ và Tên': ['Giáo viên mẫu 1', 'Giáo viên mẫu 2'],
+                'Ngày sinh': ['01/01/1985', '02/02/1990'],
+                'Giới tính': ['Nam', 'Nữ'],
+                'Địa chỉ': ['Hồ Chí Minh', 'Hà Nội'],
+                'Số điện thoại': ['0987654321', '0123456789'],
+                'Email': ['giaovien1@fams.edu.vn', 'giaovien2@fams.edu.vn'],
+                'Chuyên môn': ['Toán', 'Văn'],
+                'Bằng cấp': ['Thạc sĩ', 'Cử nhân']
+            })
+            
+            # Write to Excel file with multiple sheets
+            with pd.ExcelWriter(template_path) as writer:
+                student_df.to_excel(writer, sheet_name='Học sinh', index=False)
+                teacher_df.to_excel(writer, sheet_name='Giáo viên', index=False)
+                
+        except Exception as e:
+            return ErrorResponseModel(
+                "Template creation failed",
+                500,
+                f"Failed to create template file: {str(e)}"
+            )
+    
+    return FileResponse(
+        path=template_path,
+        filename="FAMS_template.xlsx",
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 @router.post("/upload/fams")
 async def upload_fams_excel(file: UploadFile = File(...)):

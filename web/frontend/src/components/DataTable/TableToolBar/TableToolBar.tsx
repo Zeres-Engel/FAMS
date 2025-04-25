@@ -24,6 +24,11 @@ import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import { SearchFilters } from "../../../model/userModels/userDataModels.model";
 import { SearchClassFilters } from "../../../model/classModels/classModels.model";
+import {
+  AttendanceSearchParam,
+  ClassPageList,
+  SubjectList,
+} from "../../../model/tableModels/tableDataModels.model";
 
 interface EnhancedTableToolbarProps {
   isTeacher?: boolean;
@@ -35,18 +40,28 @@ interface EnhancedTableToolbarProps {
   isUserManagement?: boolean;
   setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
   setFiltersClass?: React.Dispatch<React.SetStateAction<SearchClassFilters>>;
+  setFiltersClassPage?: React.Dispatch<React.SetStateAction<number>>;
+  setFiltersAttendancePage?: React.Dispatch<
+    React.SetStateAction<AttendanceSearchParam>
+  >;
   isClassArrangement?: boolean;
   isNewSemester?: boolean;
   isTeacherView?: boolean;
   classOptions?: string[];
+  subjectList?: SubjectList[];
   defaultClass?: string;
   isRoleStudent?: boolean;
   isNotifyPage?: boolean;
+  classOptionsData?: Array<{className: string, id: string}>;
   isRFIDPage?: boolean;
   onShowMyAttendance?: () => void;
+  onClassChange?: (className: string) => void;
+  classPageList?: ClassPageList[];
+  availableAcademicYears?: string[];
+  onAcademicYearChange?: (year: string) => void;
 }
 
-const roleOptions = ["teacher", "student", "parent"];
+const roleOptions = ["student", "teacher", "parent"];
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
@@ -60,17 +75,34 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
     isUserManagement = false,
     setFiltersUser,
     setFiltersClass,
+    setFiltersClassPage,
+    setFiltersAttendancePage,
     isTeacher = false,
     isClassArrangement = false,
     isNewSemester = false,
     isTeacherView = false,
     classOptions = [],
+    classOptionsData = [],
     defaultClass = "",
     onShowMyAttendance,
+    availableAcademicYears,
     isRoleStudent = false,
     isNotifyPage = false,
     isRFIDPage = false,
+    onClassChange,
+    onAcademicYearChange,
+    classPageList = [],
+    subjectList = [],
   } = props;
+  
+  // Debug logs for props
+  console.log("TableToolBar props:", {
+    isUserManagement,
+    classOptionsData,
+    defaultClass,
+    hasOnClassChange: !!onClassChange,
+    availableAcademicYears
+  });
 
   const { state, handler } = useTableToolBarHook({
     isAttendance,
@@ -78,12 +110,16 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
     isUserManagement,
     setFiltersUser,
     setFiltersClass,
+    setFiltersClassPage,
+    setFiltersAttendancePage,
     isClassArrangement,
     isNewSemester,
     defaultClass,
     isRoleStudent,
     isNotifyPage,
     isRFIDPage,
+    isTeacherView,
+    isTeacher,
   });
   const { filters } = state;
   const { handleFilterChange, onSubmit } = handler;
@@ -118,17 +154,28 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
       );
     }
     return (
-      <Typography
+      <Box
         sx={{
           width: "100%",
-          textAlign: "center",
-          fontWeight: 600,
-          marginTop: 1,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "10px 10px 0px 10px",
         }}
-        variant="h6"
       >
-        {tableTitle}
-      </Typography>
+        <Typography variant="h6" id="tableTitle" marginLeft={5}>
+          {tableTitle}
+        </Typography>
+        {(isAttendance || isTeacherView) && isRoleStudent && (
+          <Button
+            variant="outlined"
+            color="primary"
+            onClick={onShowMyAttendance}
+          >
+            Show my Attendance
+          </Button>
+        )}
+      </Box>
     );
   };
 
@@ -164,16 +211,18 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
           <InputLabel id="class-select-label">Class</InputLabel>
           <Select
             labelId="class-select-label"
-            value={filters.class}
+            value={filters.classId || ""}
             label="Class"
-            onChange={e => handleFilterChange("class", e.target.value)}
+            onChange={e => handleFilterChange("classId", e.target.value)}
           >
             <MenuItem value="">None</MenuItem>
-            {classOptions?.map((option, index) => (
-              <MenuItem key={`class-option-${option}-${index}`} value={option}>
-                {option}
-              </MenuItem>
-            ))}
+            {classPageList?.map((option, index) => {
+              return (
+                <MenuItem key={`class-option-${option}-${index}`} value={option.classId}>
+                  {option.className}
+                </MenuItem>
+              );
+            })}
           </Select>
         </FormControl>
       );
@@ -196,14 +245,47 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             fullWidth={isMobile}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
           >
+            <InputLabel id="academicYear-select-label">
+              Academic Year
+            </InputLabel>
+            <Select
+              labelId="academicYear-select-label"
+              value={filters.academicYear || ''}
+              label="Academic Year"
+              onChange={handleAcademicYearChangeInternal}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 48 * 7.5,
+                    width: 250,
+                  },
+                },
+              }}
+              displayEmpty={false}
+            >
+              {availableAcademicYears && availableAcademicYears.length > 0 
+                ? availableAcademicYears.map((year) => (
+                  <MenuItem key={year} value={year}>
+                    {year}
+                  </MenuItem>
+                ))
+                : <MenuItem value="" disabled>No academic years available</MenuItem>
+              }
+            </Select>
+          </FormControl>
+          <FormControl
+            fullWidth={isMobile}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+          >
             <InputLabel id="class-select-label">Class</InputLabel>
             <Select
               labelId="class-select-label"
-              value={filters.class}
+              value={filters.class || ''}
               label="Class"
               onChange={e => handleFilterChange("class", e.target.value)}
+              displayEmpty={false}
             >
-              <MenuItem value="">None</MenuItem>
+              <MenuItem value="">All Classes</MenuItem>
               {classOptions?.map((option, index) => (
                 <MenuItem key={`class-option-${option}-${index}`} value={option}>
                   {option}
@@ -211,32 +293,9 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
               ))}
             </Select>
           </FormControl>
-          <FormControl
-            fullWidth={isMobile}
-            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
-          >
-            <InputLabel id="academicYear-select-label">
-              Academic Year
-            </InputLabel>
-            <Select
-              labelId="academicYear-select-label"
-              id="academicYear-select"
-              name="academicYear"
-              value={filters.academicYear}
-              displayEmpty
-              label="academicYear"
-              onChange={e => handleFilterChange("academicYear", e.target.value)}
-            >
-              {handler.getAcademicYears(3).map((year, index) => (
-                <MenuItem key={`academic-year-${year}-${index}`} value={year}>
-                  {year === "" ? "None" : year}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
           <TextField
             label="Name"
-            value={filters.name}
+            value={filters.name || ''}
             onChange={e => handleFilterChange("name", e.target.value)}
             fullWidth={isMobile}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
@@ -258,6 +317,9 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
               label="Slot"
               onChange={e => handleFilterChange("slotID", e.target.value)}
             >
+              <MenuItem key={11} value={``}>
+                Slot None
+              </MenuItem>
               {[...Array(10)].map((_, index) => (
                 <MenuItem key={index + 1} value={`${index + 1}`}>
                   Slot {index + 1}
@@ -265,11 +327,22 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
               ))}
             </Select>
           </FormControl>
+
           <TextField
-            label="Date"
+            label="From Date"
             type="date"
-            value={filters.date}
-            onChange={e => handleFilterChange("date", e.target.value)}
+            value={filters.dateFrom}
+            onChange={e => handleFilterChange("dateFrom", e.target.value)}
+            fullWidth={isMobile}
+            InputLabelProps={{ shrink: true }}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+          />
+
+          <TextField
+            label="To Date"
+            type="date"
+            value={filters.dateTo}
+            onChange={e => handleFilterChange("dateTo", e.target.value)}
             fullWidth={isMobile}
             InputLabelProps={{ shrink: true }}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
@@ -287,15 +360,24 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             <InputLabel id="class-select-label">Class</InputLabel>
             <Select
               labelId="class-select-label"
-              value={filters.class}
+              value={filters.classId || ""}
               label="Class"
-              onChange={e => handleFilterChange("class", e.target.value)}
+              required
+              onChange={e => {
+                handleFilterChange("classId", e.target.value);
+                const selectedClass = classPageList.find(
+                  s => s.classId === e.target.value
+                );
+                handleFilterChange("className", selectedClass?.className || "");
+              }}
             >
-              {classOptions?.map((option, index) => (
-                <MenuItem key={`class-option-${option}-${index}`} value={option}>
-                  {option}
-                </MenuItem>
-              ))}
+              {classPageList?.map((option, index) => {
+                return (
+                  <MenuItem key={index} value={option.classId}>
+                    {option.className}
+                  </MenuItem>
+                );
+              })}
             </Select>
           </FormControl>
 
@@ -310,6 +392,9 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
               label="Slot"
               onChange={e => handleFilterChange("slotID", e.target.value)}
             >
+              <MenuItem key={11} value={``}>
+                Slot None
+              </MenuItem>
               {[...Array(10)].map((_, index) => (
                 <MenuItem key={index + 1} value={`${index + 1}`}>
                   Slot {index + 1}
@@ -333,25 +418,6 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
     if (isClassManagement) {
       return (
         <>
-        <FormControl
-          fullWidth={isMobile}
-          sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
-        >
-          <InputLabel id="class-select-label">Class</InputLabel>
-          <Select
-            labelId="class-select-label"
-            value={filters.class}
-            label="Class"
-            onChange={e => handleFilterChange("class", e.target.value)}
-          >
-            <MenuItem value="">None</MenuItem>
-            {classOptions?.map((option, index) => (
-              <MenuItem key={`class-option-${option}-${index}`} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
           <FormControl
             fullWidth={isMobile}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
@@ -361,15 +427,45 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             </InputLabel>
             <Select
               labelId="academicYear-select-label"
-              id="academicYear-select"
-              name="academicYear"
-              value={filters.academicYear}
-              label="academicYear"
-              onChange={e => handleFilterChange("academicYear", e.target.value)}
+              value={filters.academicYear || ''}
+              label="Academic Year"
+              onChange={handleAcademicYearChangeInternal}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 48 * 7.5,
+                    width: 250,
+                  },
+                },
+              }}
+              displayEmpty={false}
             >
-              {handler.getAcademicYears(3).map((year, index) => (
-                <MenuItem key={`academic-year-${year}-${index}`} value={year}>
-                  {year}
+              {availableAcademicYears && availableAcademicYears.length > 0 
+                ? availableAcademicYears.map((year) => (
+                  <MenuItem key={year} value={year}>
+                    {year}
+                  </MenuItem>
+                ))
+                : <MenuItem value="" disabled>No academic years available</MenuItem>
+              }
+            </Select>
+          </FormControl>
+          <FormControl
+            fullWidth={isMobile}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+          >
+            <InputLabel id="class-select-label">Class</InputLabel>
+            <Select
+              labelId="class-select-label"
+              value={filters.class || ''}
+              label="Class"
+              onChange={e => handleFilterChange("class", e.target.value)}
+              displayEmpty={false}
+            >
+              <MenuItem value="">All Classes</MenuItem>
+              {classOptions?.map((option, index) => (
+                <MenuItem key={index} value={option}>
+                  {option}
                 </MenuItem>
               ))}
             </Select>
@@ -381,19 +477,20 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             <InputLabel id="grade-select-label">Grade</InputLabel>
             <Select
               labelId="grade-select-label"
-              value={filters.grade || ""}
+              value={filters.grade || ''}
               label="Grade"
               onChange={e => handleFilterChange("grade", e.target.value)}
+              displayEmpty={false}
             >
-              <MenuItem value="">None</MenuItem>
-              <MenuItem value="10">10</MenuItem>
-              <MenuItem value="11">11</MenuItem>
-              <MenuItem value="12">12</MenuItem>
+              <MenuItem value="">All Grades</MenuItem>
+              <MenuItem value="10">Grade 10</MenuItem>
+              <MenuItem value="11">Grade 11</MenuItem>
+              <MenuItem value="12">Grade 12</MenuItem>
             </Select>
           </FormControl>
           <TextField
             label="User ID"
-            value={filters.userID}
+            value={filters.userID || ''}
             onChange={e => handleFilterChange("userID", e.target.value)}
             fullWidth={isMobile}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
@@ -405,9 +502,17 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
       return (
         <>
           <TextField
-            label="Class Name"
-            value={filters.className}
-            onChange={e => handleFilterChange("className", e.target.value)}
+            label="User ID"
+            value={filters.userID}
+            required
+            onChange={e => {
+              handleFilterChange("userID", e.target.value);
+            }}
+            onFocus={e => {
+              handleFilterChange("classId", "");
+              handleFilterChange("className", "");
+            }}
+            onBlur={handler.handleCallAPIClass}
             fullWidth={isMobile}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
           />
@@ -415,28 +520,101 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             fullWidth={isMobile}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
           >
-            <InputLabel id="academicYear-select-label">
-              Academic Year
-            </InputLabel>
+            <InputLabel id="class-select-label">Class</InputLabel>
             <Select
-              labelId="academicYear-select-label"
-              id="academicYear-select"
-              name="academicYear"
-              value={filters.academicYear}
-              label="academicYear"
-              onChange={e => handleFilterChange("academicYear", e.target.value)}
+              labelId="class-select-label"
+              value={filters.classId || ""}
+              label="Class"
+              required
+              disabled={
+                !filters?.userID || state.classAttendanceList.length === 0
+              }
+              onChange={e => {
+                handleFilterChange("classId", e.target.value);
+                const selectedClass = state.classAttendanceList.find(
+                  s => s.classId === e.target.value
+                );
+                handleFilterChange("className", selectedClass?.className || "");
+              }}
             >
-              {handler.getAcademicYears(3).map((year, index) => (
-                <MenuItem key={`academic-year-${year}-${index}`} value={year}>
-                  {year}
-                </MenuItem>
-              ))}
+              {state.classAttendanceList?.map((option, index) => {
+                return (
+                  <MenuItem key={index} value={option.classId}>
+                    {option.className}
+                  </MenuItem>
+                );
+              })}
             </Select>
           </FormControl>
+          <FormControl
+            fullWidth={isMobile}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+          >
+            <InputLabel id="class-select-label">Subject</InputLabel>
+            <Select
+              labelId="class-select-label"
+              value={filters.subjectId}
+              label="Subject"
+              onChange={e => {
+                handleFilterChange("subjectId", e.target.value);
+                const selectedSubject = subjectList.find(
+                  (s: SubjectList) => s.subjectId === e.target.value
+                );
+                handleFilterChange(
+                  "subjectName",
+                  selectedSubject?.subjectName || ""
+                );
+              }}
+            >
+              <MenuItem value={0}>None</MenuItem>
+              {subjectList?.map((option: SubjectList, index: number) => {
+                return (
+                  <MenuItem key={index} value={option.subjectId}>
+                    {option.subjectName}
+                  </MenuItem>
+                );
+              })}
+            </Select>
+          </FormControl>
+          {/* Status Select */}
+          <FormControl
+            fullWidth={isMobile}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+          >
+            <InputLabel id="status-select-label">Status</InputLabel>
+            <Select
+              labelId="status-select-label"
+              value={filters.status}
+              label="Status"
+              onChange={e => handleFilterChange("status", e.target.value)}
+            >
+              <MenuItem value="">None</MenuItem>
+              <MenuItem value="present">Present</MenuItem>
+              <MenuItem value="late">Late</MenuItem>
+              <MenuItem value="absent">Absent</MenuItem>
+              <MenuItem value="not now">Not now</MenuItem>
+            </Select>
+          </FormControl>
+
+          {/* Date */}
           <TextField
-            label="User ID"
-            value={filters.userID}
-            onChange={e => handleFilterChange("userID", e.target.value)}
+            label="Date"
+            type="date"
+            required
+            value={filters.date}
+            onChange={e => handleFilterChange("date", e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            fullWidth={isMobile}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+          />
+
+          {/* Slot Number */}
+          <TextField
+            label="Slot Number"
+            type="number"
+            value={filters.slotNumber}
+            onChange={e => handleFilterChange("slotNumber", e.target.value)}
+            inputProps={{ min: 1, max: 10 }}
             fullWidth={isMobile}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
           />
@@ -446,111 +624,184 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
 
     return (
       <>
+        {/* Academic Year luôn ở bên trái */}
         <FormControl
           fullWidth={isMobile}
           sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
         >
-          <InputLabel id="class-select-label">Class</InputLabel>
-          <Select
-            labelId="class-select-label"
-            value={filters.class}
-            label="Class"
-            onChange={e => handleFilterChange("class", e.target.value)}
-          >
-            <MenuItem value="">None</MenuItem>
-            {classOptions?.map((option, index) => (
-              <MenuItem key={`class-option-${option}-${index}`} value={option}>
-                {option}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <FormControl
-          fullWidth={isMobile}
-          sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
-        >
-          <InputLabel id="academicYear-select-label">Academic Year</InputLabel>
+          <InputLabel id="academicYear-select-label">
+            Academic Year
+          </InputLabel>
           <Select
             labelId="academicYear-select-label"
-            id="academicYear-select"
-            name="academicYear"
-            value={filters.academicYear}
-            label="academicYear"
-            onChange={e => handleFilterChange("academicYear", e.target.value)}
+            value={filters.academicYear || ''}
+            label="Academic Year"
+            onChange={handleAcademicYearChangeInternal}
+            MenuProps={{
+              PaperProps: {
+                style: {
+                  maxHeight: 48 * 7.5,
+                  width: 250,
+                },
+              },
+            }}
+            displayEmpty={false}
           >
-            {handler.getAcademicYears(3).map((year, index) => (
-              <MenuItem key={`academic-year-${year}-${index}`} value={year}>
-                {year}
-              </MenuItem>
-            ))}
+            {availableAcademicYears && availableAcademicYears.length > 0 
+              ? availableAcademicYears.map((year) => (
+                <MenuItem key={year} value={year}>
+                  {year}
+                </MenuItem>
+              ))
+              : <MenuItem value="" disabled>No academic years available</MenuItem>
+            }
           </Select>
         </FormControl>
-        <TextField
-          label="Name"
-          value={filters.name}
-          onChange={e => handleFilterChange("name", e.target.value)}
-          fullWidth={isMobile}
-          sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
-        />
-        {isUserManagement && (
+
+        {/* Class ở bên phải */}
+        {isUserManagement ? (
           <FormControl
             fullWidth={isMobile}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
           >
-            <InputLabel id="grade-select-label">Grade</InputLabel>
+            <InputLabel id="class-select-label">Class</InputLabel>
             <Select
-              labelId="grade-select-label"
-              value={filters.grade || ""}
-              label="Grade"
-              onChange={e => handleFilterChange("grade", e.target.value)}
+              labelId="class-select-label"
+              value={filters.className || ''}
+              label="Class"
+              onChange={(e) => {
+                console.log("Class selection changed to:", e.target.value);
+                if (onClassChange) {
+                  onClassChange(e.target.value as string);
+                }
+                handleFilterChange("className", e.target.value as string);
+              }}
+              MenuProps={{
+                PaperProps: {
+                  style: {
+                    maxHeight: 300,
+                    width: 250,
+                  },
+                },
+              }}
+              displayEmpty={false}
             >
-              <MenuItem value="">None</MenuItem>
-              <MenuItem value="10">10</MenuItem>
-              <MenuItem value="11">11</MenuItem>
-              <MenuItem value="12">12</MenuItem>
+              <MenuItem value="">All Classes</MenuItem>
+              {classOptions?.map((option, index) => (
+                <MenuItem key={`class-option-${option}-${index}`} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        ) : (
+          <FormControl
+            fullWidth={isMobile}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+          >
+            <InputLabel id="class-select-label">Class</InputLabel>
+            <Select
+              labelId="class-select-label"
+              value={filters.class || ''}
+              label="Class"
+              onChange={e => handleFilterChange("class", e.target.value)}
+              displayEmpty={false}
+            >
+              <MenuItem value="">All Classes</MenuItem>
+              {classOptions?.map((option, index) => (
+                <MenuItem key={`class-option-${option}-${index}`} value={option}>
+                  {option}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         )}
+     
+        <TextField
+          label="Name"
+          value={filters.name || ''}
+          onChange={e => handleFilterChange("name", e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              onSubmit();
+            }
+          }}
+          fullWidth={isMobile}
+          sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+        />
+        
         <TextField
           label="Phone"
-          value={filters.phone}
+          value={filters.phone || ''}
           onChange={e => handleFilterChange("phone", e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              onSubmit();
+            }
+          }}
           fullWidth={isMobile}
           sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
         />
         <Box sx={{ flex: isMobile ? "1 1 100%" : "1 1 250px" }}>
           <Autocomplete
             multiple
-            id="multi-role-select"
             options={roleOptions}
             disableCloseOnSelect
-            getOptionLabel={option => option}
-            value={filters.roles}
-            onChange={(event, value) => handleFilterChange("roles", value)}
-            renderOption={(props, option, { selected }) => {
-              const { key, ...optionProps } = props;
-              return (
-                <li key={key} {...optionProps}>
-                  <Checkbox
-                    icon={icon}
-                    checkedIcon={checkedIcon}
-                    style={{ marginRight: 8 }}
-                    checked={selected}
-                  />
-                  {option}
-                </li>
-              );
-            }}
-            renderInput={params => (
-              <TextField {...params} label="Roles" placeholder="Select roles" />
+            value={filters.roles || []}
+            onChange={(_, newValue) => handleFilterChange("roles", newValue)}
+            renderOption={(props, option, { selected }) => (
+              <li {...props}>
+                <Checkbox
+                  icon={icon}
+                  checkedIcon={checkedIcon}
+                  style={{ marginRight: 8 }}
+                  checked={selected}
+                />
+                {option}
+              </li>
             )}
-            fullWidth
+            renderInput={(params) => (
+              <TextField {...params} variant="outlined" label="Roles" placeholder="Select" />
+            )}
+            fullWidth={isMobile}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
           />
         </Box>
       </>
     );
   };
+  const handleAcademicYearChangeInternal = (e: any) => {
+    const newAcademicYear = e.target.value as string;
+    
+    // Cập nhật filters nội bộ
+    handleFilterChange("academicYear", newAcademicYear);
+    
+    // Reset class khi thay đổi năm học
+    handleFilterChange("className", "");
+    handleFilterChange("class", "");
+    
+    // Thông báo ra bên ngoài về sự thay đổi
+    if (onAcademicYearChange) {
+      onAcademicYearChange(newAcademicYear);
+    }
+    
+    // Submit filter ngay sau khi đổi năm học
+    setTimeout(() => onSubmit(), 100);
+  };
 
+  // Xử lý khi chọn Class thay đổi
+  const handleClassChangeSelect = (className: string) => {
+    // Cập nhật filters nội bộ
+    handleFilterChange("className", className);
+    
+    // Thông báo ra bên ngoài về sự thay đổi
+    if (onClassChange) {
+      onClassChange(className);
+    }
+    
+    // Submit filter ngay sau khi đổi lớp
+    setTimeout(() => onSubmit(), 100);
+  }
   return (
     <Toolbar
       sx={[

@@ -435,23 +435,33 @@ export const searchUsers = createAsyncThunk(
     try {
       thunkAPI.dispatch(showLoading());
 
+      // Đảm bảo luôn loại bỏ supervisor khỏi roles 
+      // Không quan tâm có filter hay không, luôn chỉ sử dụng student, teacher, parent
+      const validRoles = ["student", "teacher", "parent"];
+      const roles = filters.roles?.filter(role => validRoles.includes(role)) || validRoles;
+
+      // Use explicit empty string instead of default year to respect API behavior
       const params = {
         page: (filters.page || 1).toString(),
-        academicYear: filters.academicYear || "",
+        academicYear: filters.academicYear || "", // Changed to empty string instead of default
         search: filters.search || "",
         grade: filters.grade || "",
-        roles: filters.roles?.join(",") || "",
+        roles: roles.join(","),
         className: filters.className || "",
         limit: (filters.limit || 10).toString(),
         phone: filters.phone || "",
       };
 
+      console.log("Search users API call with params:", params);
       const query = new URLSearchParams(params).toString();
       const response = await axiosInstance.get(`/users?${query}`);
       
+      // Filter out any admin users that might still be returned
+      const filteredUsers = response.data.data.filter((user: any) => user.role !== "admin");
+      
       // Trả về cả dữ liệu users và thông tin phân trang
       return {
-        users: formatUsersFromResponse(response.data.data),
+        users: formatUsersFromResponse(filteredUsers),
         pagination: response.data.pagination
       };
     } catch (error: any) {
@@ -511,23 +521,37 @@ export const fetchUserPaginated = createAsyncThunk(
     try {
       thunkAPI.dispatch(showLoading());
 
-      const params = {
-        page: (filters.page || 1).toString(),
-        academicYear: filters.academicYear || "",
-        search: filters.search || "",
-        grade: filters.grade || "",
-        roles: filters.roles?.join(",") || "",
-        className: filters.className || "",
-        limit: "5", // Cố định 5 dòng mỗi trang bất kể giá trị limit trong filters
-        phone: filters.phone || "",
+      // Đảm bảo luôn loại bỏ supervisor khỏi roles
+      // Không quan tâm có filter hay không, luôn chỉ sử dụng student, teacher, parent
+      const validRoles = ["student", "teacher", "parent"];
+      const roles = filters.roles?.filter(role => validRoles.includes(role)) || validRoles;
+
+      const params: Record<string, string> = {
+        page: (filters.page || 1).toString()
       };
 
+      // Chỉ thêm params khi có giá trị
+      if (filters.academicYear) params.academicYear = filters.academicYear;
+      if (filters.search) params.search = filters.search;
+      if (filters.grade) params.grade = filters.grade;
+      if (filters.className) params.className = filters.className;
+      if (filters.limit) params.limit = filters.limit.toString();
+      if (filters.phone) params.phone = filters.phone;
+
+      // Roles luôn được thêm nhưng chỉ bao gồm student, teacher, parent
+      params.roles = roles.join(",");
+
       const query = new URLSearchParams(params).toString();
+
+      console.log("Fetch paginated users API call with params:", params);
       const response = await axiosInstance.get(`/users?${query}`);
+      
+      // Filter out any admin users that might still be returned
+      const filteredUsers = response.data.data.filter((user: any) => user.role !== "admin");
       
       // Không hiển thị thông báo thành công khi phân trang để tránh spam
       return {
-        users: formatUsersFromResponse(response.data.data),
+        users: formatUsersFromResponse(filteredUsers),
         pagination: response.data.pagination // Lấy thông tin phân trang từ response
       };
     } catch (error: any) {

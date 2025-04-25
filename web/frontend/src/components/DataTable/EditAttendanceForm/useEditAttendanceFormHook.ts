@@ -4,7 +4,7 @@ import { useState } from "react";
 export default function useEditAttendanceFormHook(initialData: {
   attendanceId: number;
   scheduleId: number;
-  userId: number;
+  userId: string;
   fullName: string;
   face: string | null;
   checkin: string;

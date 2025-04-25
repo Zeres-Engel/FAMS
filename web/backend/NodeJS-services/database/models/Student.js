@@ -148,4 +148,18 @@ StudentSchema.statics.generateUserId = function(fullName, batchId, studentId) {
   return `${firstName}${lastNameInitials}st${batchId}${studentId}`;
 };
 
+// Middleware to remove empty parent arrays before saving
+StudentSchema.pre('save', function(next) {
+  const fieldsToCleanup = ['parentCareers', 'parentEmails', 'parentGenders', 'parentIds', 'parentNames', 'parentPhones'];
+  
+  fieldsToCleanup.forEach(field => {
+    // Xóa trường nếu là mảng rỗng
+    if (Array.isArray(this[field]) && this[field].length === 0) {
+      this[field] = undefined;
+    }
+  });
+  
+  next();
+});
+
 module.exports = mongoose.model('Student', StudentSchema, COLLECTIONS.STUDENT); 

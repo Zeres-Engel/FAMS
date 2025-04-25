@@ -46,6 +46,47 @@ const formatPhoneNumber = (phone) => {
 };
 
 /**
+ * Remove Vietnamese accents from a string
+ * @param {string} str - The string to process
+ * @returns {string} - String without accents
+ */
+const removeVietnameseAccents = (str) => {
+  if (!str) return '';
+  
+  // Mapping of Vietnamese characters with accents to non-accented equivalents
+  const map = {
+    'à': 'a', 'á': 'a', 'ả': 'a', 'ã': 'a', 'ạ': 'a',
+    'ă': 'a', 'ằ': 'a', 'ắ': 'a', 'ẳ': 'a', 'ẵ': 'a', 'ặ': 'a',
+    'â': 'a', 'ầ': 'a', 'ấ': 'a', 'ẩ': 'a', 'ẫ': 'a', 'ậ': 'a',
+    'đ': 'd',
+    'è': 'e', 'é': 'e', 'ẻ': 'e', 'ẽ': 'e', 'ẹ': 'e',
+    'ê': 'e', 'ề': 'e', 'ế': 'e', 'ể': 'e', 'ễ': 'e', 'ệ': 'e',
+    'ì': 'i', 'í': 'i', 'ỉ': 'i', 'ĩ': 'i', 'ị': 'i',
+    'ò': 'o', 'ó': 'o', 'ỏ': 'o', 'õ': 'o', 'ọ': 'o',
+    'ô': 'o', 'ồ': 'o', 'ố': 'o', 'ổ': 'o', 'ỗ': 'o', 'ộ': 'o',
+    'ơ': 'o', 'ờ': 'o', 'ớ': 'o', 'ở': 'o', 'ỡ': 'o', 'ợ': 'o',
+    'ù': 'u', 'ú': 'u', 'ủ': 'u', 'ũ': 'u', 'ụ': 'u',
+    'ư': 'u', 'ừ': 'u', 'ứ': 'u', 'ử': 'u', 'ữ': 'u', 'ự': 'u',
+    'ỳ': 'y', 'ý': 'y', 'ỷ': 'y', 'ỹ': 'y', 'ỵ': 'y',
+    'À': 'A', 'Á': 'A', 'Ả': 'A', 'Ã': 'A', 'Ạ': 'A',
+    'Ă': 'A', 'Ằ': 'A', 'Ắ': 'A', 'Ẳ': 'A', 'Ẵ': 'A', 'Ặ': 'A',
+    'Â': 'A', 'Ầ': 'A', 'Ấ': 'A', 'Ẩ': 'A', 'Ẫ': 'A', 'Ậ': 'A',
+    'Đ': 'D',
+    'È': 'E', 'É': 'E', 'Ẻ': 'E', 'Ẽ': 'E', 'Ẹ': 'E',
+    'Ê': 'E', 'Ề': 'E', 'Ế': 'E', 'Ể': 'E', 'Ễ': 'E', 'Ệ': 'E',
+    'Ì': 'I', 'Í': 'I', 'Ỉ': 'I', 'Ĩ': 'I', 'Ị': 'I',
+    'Ò': 'O', 'Ó': 'O', 'Ỏ': 'O', 'Õ': 'O', 'Ọ': 'O',
+    'Ô': 'O', 'Ồ': 'O', 'Ố': 'O', 'Ổ': 'O', 'Ỗ': 'O', 'Ộ': 'O',
+    'Ơ': 'O', 'Ờ': 'O', 'Ớ': 'O', 'Ở': 'O', 'Ỡ': 'O', 'Ợ': 'O',
+    'Ù': 'U', 'Ú': 'U', 'Ủ': 'U', 'Ũ': 'U', 'Ụ': 'U',
+    'Ư': 'U', 'Ừ': 'U', 'Ứ': 'U', 'Ử': 'U', 'Ữ': 'U', 'Ự': 'U',
+    'Ỳ': 'Y', 'Ý': 'Y', 'Ỷ': 'Y', 'Ỹ': 'Y', 'Ỵ': 'Y'
+  };
+  
+  return str.replace(/[^\u0000-\u007E]/g, char => map[char] || char);
+};
+
+/**
  * Lấy danh sách người dùng với phân trang và lọc
  * @param {Object} options - Các option tìm kiếm
  * @returns {Promise<Object>} Danh sách người dùng
@@ -59,14 +100,68 @@ exports.getUsers = async (options = {}) => {
     
     // Xử lý tham số search nếu có
     if (search && search !== 'none') {
-      query = {
-        $or: [
-          { userId: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } },
-          { backup_email: { $regex: search, $options: 'i' } },
-          { username: { $regex: search, $options: 'i' } }
-        ]
+      // Tìm tất cả các người dùng dựa trên userId
+      const userIdQuery = { userId: { $regex: search, $options: 'i' } };
+      
+      const Student = require('../database/models/Student');
+      const Teacher = require('../database/models/Teacher');
+      const Parent = require('../database/models/Parent');
+      
+      // Tìm kiếm không phân biệt có dấu hoặc không dấu
+      const searchLower = search.toLowerCase();
+      const searchWithoutAccent = removeVietnameseAccents(searchLower);
+      
+      // Tìm kiếm không phân biệt dấu
+      // Chỉ tìm người có firstName là "Thanh" (không phải có chứa từ "thanh" trong tên)
+      const isExactFirstNameMatch = (fullName) => {
+        if (!fullName) return false;
+        
+        // Tách tên thành các phần
+        const parts = removeVietnameseAccents(fullName.toLowerCase()).split(' ');
+        
+        // Thường tên (firstName) ở vị trí cuối cùng trong chuỗi tên tiếng Việt
+        if (parts.length > 0) {
+          // Nếu là Nguyễn Phước Thanh thì firstName là "Thanh"
+          return parts[parts.length - 1] === searchWithoutAccent;
+        }
+        return false;
       };
+      
+      // Student
+      const studentsWithoutAccent = await Student.find().then(students => 
+        students.filter(student => isExactFirstNameMatch(student.fullName))
+      );
+      
+      // Teacher
+      const teachersWithoutAccent = await Teacher.find().then(teachers => 
+        teachers.filter(teacher => isExactFirstNameMatch(teacher.fullName))
+      );
+      
+      // Parent
+      const parentsWithoutAccent = await Parent.find().then(parents => 
+        parents.filter(parent => isExactFirstNameMatch(parent.fullName))
+      );
+      
+      // Gộp các userId từ tất cả các nguồn tìm kiếm
+      const studentUserIds = studentsWithoutAccent.map(s => s.userId);
+      const teacherUserIds = teachersWithoutAccent.map(t => t.userId);
+      const parentUserIds = parentsWithoutAccent.map(p => p.userId);
+      
+      // Loại bỏ trùng lặp
+      const userIdsWithName = [...new Set([...studentUserIds, ...teacherUserIds, ...parentUserIds])];
+      
+      // Xây dựng query cuối cùng
+      query = { 
+        $or: [
+          userIdQuery,
+          { userId: { $in: userIdsWithName } }
+        ] 
+      };
+      
+      // Log thông tin tìm kiếm để dễ theo dõi
+      console.log(`Search term: "${search}"`);
+      console.log(`Search without accent: "${searchWithoutAccent}"`);
+      console.log(`Found ${userIdsWithName.length} users matching name search`);
     }
     
     // Xử lý lọc theo nhiều roles
@@ -97,21 +192,80 @@ exports.getUsers = async (options = {}) => {
     
     // Xử lý lọc theo số điện thoại
     if (phone && phone !== 'none') {
-      if (query.$and || query.$or) {
-        // Có điều kiện phức tạp, thêm điều kiện AND
-        if (query.$and) {
-          query.$and.push({ phone: { $regex: phone, $options: 'i' } });
+      // Chuẩn hóa số điện thoại để tìm kiếm
+      const formattedPhone = formatPhoneNumber(phone);
+      console.log(`Searching for phone: ${phone}, formatted: ${formattedPhone}`);
+      
+      // Tìm kiếm học sinh, giáo viên, phụ huynh có số điện thoại tương ứng
+      const Student = require('../database/models/Student');
+      const Teacher = require('../database/models/Teacher');
+      const Parent = require('../database/models/Parent');
+      
+      try {
+        // Lọc theo tiền tố số điện thoại
+        const phonePrefix = formattedPhone;
+        
+        // Tìm học sinh có số điện thoại bắt đầu bằng prefix
+        const students = await Student.find().then(students => 
+          students.filter(student => 
+            formatPhoneNumber(student.phone).startsWith(phonePrefix)
+          )
+        );
+        
+        // Tìm giáo viên có số điện thoại bắt đầu bằng prefix
+        const teachers = await Teacher.find().then(teachers => 
+          teachers.filter(teacher => 
+            formatPhoneNumber(teacher.phone).startsWith(phonePrefix)
+          )
+        );
+        
+        // Tìm phụ huynh có số điện thoại bắt đầu bằng prefix
+        const parents = await Parent.find().then(parents => 
+          parents.filter(parent => 
+            formatPhoneNumber(parent.phone).startsWith(phonePrefix)
+          )
+        );
+        
+        // Lấy danh sách userId
+        const studentUserIds = students.map(s => s.userId);
+        const teacherUserIds = teachers.map(t => t.userId);
+        const parentUserIds = parents.map(p => p.userId);
+        
+        // Gộp và loại bỏ trùng lặp
+        const userIdsWithPhone = [...new Set([...studentUserIds, ...teacherUserIds, ...parentUserIds])];
+        
+        console.log(`Found ${userIdsWithPhone.length} users with phone number matching "${phonePrefix}"`);
+        
+        // Thêm điều kiện tìm kiếm
+        if (userIdsWithPhone.length > 0) {
+          if (query.$and) {
+            query.$and.push({ userId: { $in: userIdsWithPhone } });
+          } else if (query.$or) {
+            query = {
+              $and: [
+                query,
+                { userId: { $in: userIdsWithPhone } }
+              ]
+            };
+          } else {
+            query.userId = { $in: userIdsWithPhone };
+          }
         } else {
-          query = {
-            $and: [
-              query,
-              { phone: { $regex: phone, $options: 'i' } }
-            ]
+          // Nếu không tìm thấy user nào, trả về kết quả rỗng
+          return {
+            success: true,
+            data: [],
+            count: 0,
+            pagination: {
+              total: 0,
+              page,
+              limit,
+              pages: 0
+            }
           };
         }
-      } else {
-        // Chưa có điều kiện, thêm trực tiếp
-        query.phone = { $regex: phone, $options: 'i' };
+      } catch (error) {
+        console.error('Error searching by phone:', error);
       }
     }
     

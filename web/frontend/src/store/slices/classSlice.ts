@@ -54,6 +54,7 @@ export const fetchClasses = createAsyncThunk(
           academicYear: element.academicYear,
           batchId: element.batchId,
           name: element.className,
+          classId: element.classId,
         });
       }
       return formattedData;

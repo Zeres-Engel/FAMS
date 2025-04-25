@@ -5,9 +5,13 @@ interface ScheduleEvent {
     end: Date;
     subject: string;
     classroomNumber?:string;
-    classroomId?:string;
-    subjectId?:string;
+    classroomId?:number;
+    subjectId?:number;
     teacher: string;
+    classId?: string;
+    scheduleDate?: Date;
+    slotId?: string | number;
+    academicYear?: string;
 }
 export type{
     ScheduleEvent

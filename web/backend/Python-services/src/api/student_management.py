@@ -639,7 +639,7 @@ async def assign_temp_class(user_ids: List[str] = Body(...), grade: int = Body(.
         client.close()
 
 @router.post("/distribute-classes")
-async def distribute_classes(class_capacity: int = Body(40)):
+async def distribute_classes(class_capacity: int = Body(20)):
     """
     Distribute students from temporary classes to permanent classes
     Each class will have up to class_capacity students

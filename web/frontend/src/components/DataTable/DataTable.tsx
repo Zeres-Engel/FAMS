@@ -23,15 +23,20 @@ import TableHeader from "./TableHeader/TableHeader";
 import {
   AttendanceHeadCell,
   AttendanceLog,
+  AttendanceSearchParam,
   ClassArrangementData,
   ClassArrangementHeadCellProps,
   ClassHeadCell,
+  ClassPageList,
+  ClassStudent,
+  ClassStudentHeadCell,
   Data,
   HeadCell,
   NotifyHeadCell,
   NotifyProps,
   RFIDData,
   RFIDHeadCell,
+  SubjectList,
   SystemRole,
   UserHeadCell,
 } from "../../model/tableModels/tableDataModels.model";
@@ -44,8 +49,10 @@ import {
   SearchFilters,
   UserData,
 } from "../../model/userModels/userDataModels.model";
-import useState from "react";
-import { ClassData, SearchClassFilters } from "../../model/classModels/classModels.model";
+import {
+  ClassData,
+  SearchClassFilters,
+} from "../../model/classModels/classModels.model";
 import EditAttendanceForm from "./EditAttendanceForm/EditAttendanceForm";
 import CreateNotifyForm from "./CreateNotifyForm/CreateNotifyForm";
 import ShowNotify from "./ShowNotify/ShowNotify";
@@ -65,7 +72,8 @@ interface DataTableProps {
     | AttendanceHeadCell[]
     | ClassArrangementHeadCellProps[]
     | NotifyHeadCell[]
-    | RFIDHeadCell[];
+    | RFIDHeadCell[]
+    | ClassStudentHeadCell[];
   tableMainData:
     | UserData[]
     | Data[]
@@ -73,15 +81,17 @@ interface DataTableProps {
     | AttendanceLog[]
     | ClassArrangementData[]
     | NotifyProps[]
-    | RFIDData[];
+    | RFIDData[]
+    | ClassStudent[];
   tableTitle: string;
   isCheckBox: boolean;
   isAdmin?: boolean;
   isClassManagement?: boolean;
   isAttendance?: boolean;
-  isUserManagement?: boolean;
-  setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
+  isUserManagement?: boolean;  setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
   setFiltersClass?: React.Dispatch<React.SetStateAction<SearchClassFilters>>;
+  setFiltersClassPage?: React.Dispatch<React.SetStateAction<number>>;
+  setFiltersAttendancePage?: React.Dispatch<React.SetStateAction<AttendanceSearchParam>>;
   isRoleTeacher?: boolean;
   isClassArrangement?: boolean;
   isNewSemester?: boolean;
@@ -91,10 +101,22 @@ interface DataTableProps {
   isNotifyRole?: string;
   isRFIDPage?: boolean;
   classOptions?: string[];
-  // Thêm props mới cho pagination
-  pagination?: PaginationProps;
-  onPageChange?: (newPage: number) => void;
-  onRowsPerPageChange?: (newLimit: number) => void;
+  classOptionsData?: Array<{className: string, id: string}>;
+  className?: string;
+  onClassChange?: (className: string) => void;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+  onPageChange?: (page: number) => void;
+  onRowsPerPageChange?: (rowsPerPage: number) => void;
+  isClassPage?: boolean;
+  classPageList?: ClassPageList[];
+  subjectList?: SubjectList[];
+  availableAcademicYears?: string[];
+  onAcademicYearChange?: (year: string) => void;
 }
 
 export default function DataTable({
@@ -117,9 +139,19 @@ export default function DataTable({
   isNotifyRole,
   isRFIDPage,
   classOptions,
+  classOptionsData,
+  className,
+  onClassChange,
   pagination,
   onPageChange,
-  onRowsPerPageChange
+  onRowsPerPageChange,
+  isClassPage,
+  classPageList,
+  setFiltersClassPage,
+  availableAcademicYears,
+  onAcademicYearChange,
+  setFiltersAttendancePage,
+  subjectList
 }: DataTableProps) {
   const { state, handler } = useDataTableHook({ tableMainData });
 
@@ -133,12 +165,15 @@ export default function DataTable({
           e.stopPropagation();
           e.preventDefault();
           if (isClassManagement) {
-            handler.handleEditClassClick({
-              className: row.className,
-              grade: row.grade,
-              teacherId: row.homeroomTeacherd,
-              academicYear: row.academicYear,
-            },row.id);
+            handler.handleEditClassClick(
+              {
+                className: row.className,
+                grade: row.grade,
+                teacherId: row.homeroomTeacherd,
+                academicYear: row.academicYear,
+              },
+              row.id
+            );
           } else if (isAttendance && isRoleTeacher) {
             handler.handleEditAttendanceClick({
               attendanceId: row.attendanceId,
@@ -229,6 +264,30 @@ export default function DataTable({
       <TableCell align="left">{row.updatedAt}</TableCell>
     </>
   );
+  const renderClassPageCells = (row: any) => (
+    <>
+          <TableCell align="left">{row.fullName}</TableCell>
+      <TableCell align="left">
+        <img
+          src={
+            row.avatar
+              ? row.avatar
+              : `https://www.pngplay.com/wp-content/uploads/12/User-Avatar-Profile-Transparent-Clip-Art-PNG.png`
+          }
+          alt="User Avatar"
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            objectFit: "cover",
+          }}
+        />
+      </TableCell>
+      <TableCell align="left">{row.email}</TableCell>
+      <TableCell align="left">{row.phone}</TableCell>
+      <TableCell align="left">{row.role}</TableCell>
+    </>
+  );
   const renderClassManagementCells = (row: any) => (
     <>
       <TableCell align="left">{row.className}</TableCell>
@@ -310,7 +369,7 @@ export default function DataTable({
         />
       </TableCell>
       <TableCell align="left">{row.userId || "none"}</TableCell>
-      {row?.fullName && (
+      {(isRoleTeacher || isRoleStudent) && (
         <TableCell align="left">{row?.fullName || "none"}</TableCell>
       )}
       <TableCell align="left">{row.checkin || "none"}</TableCell>
@@ -355,14 +414,23 @@ export default function DataTable({
           isAttendance={isAttendance}
           setFiltersUser={setFiltersUser}
           setFiltersClass={setFiltersClass}
-          isTeacher={isRoleTeacher}
+          setFiltersClassPage={setFiltersClassPage}
           isClassArrangement={isClassArrangement}
+          isTeacher={isRoleTeacher}
+          classOptions={classOptions}
+          classOptionsData={classOptionsData}
+          defaultClass={className ?? ""}
+          onClassChange={onClassChange}
           isNewSemester={isNewSemester}
           isTeacherView={isTeacherView}
+          classPageList={classPageList}
           isRoleStudent={isRoleStudent}
           isNotifyPage={isNotifyPage}
           isRFIDPage={isRFIDPage}
-          classOptions={classOptions}
+          availableAcademicYears={availableAcademicYears}
+          subjectList={subjectList}
+          onAcademicYearChange={onAcademicYearChange}
+          setFiltersAttendancePage={setFiltersAttendancePage}
         />
         <TableContainer>
           <Table sx={{ minWidth: 850 }} aria-labelledby="tableTitle">
@@ -416,6 +484,7 @@ export default function DataTable({
                     {isNotifyPage && renderNotifyNewCells(row)}
                     {isNotifyPage && renderActionCell(row)}
                     {isRFIDPage && renderRFIDNewCells(row)}
+                    {isClassPage && renderClassPageCells(row)}
                   </TableRow>
                 );
               })}

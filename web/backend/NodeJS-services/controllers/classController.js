@@ -460,10 +460,187 @@ const deleteClass = async (req, res) => {
   }
 };
 
+/**
+ * Get classes by userId - for both students and teachers
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ */
+const getClassesByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required',
+        code: 'MISSING_USER_ID'
+      });
+    }
+    
+    console.log(`Getting classes for user ID: ${userId}`);
+    
+    // Find user's classes as a student
+    const student = await mongoose.model('Student').findOne({ userId });
+    
+    // Find user's classes as a teacher (both homeroom and teaching classes)
+    const teacher = await mongoose.model('Teacher').findOne({ userId });
+    
+    let classes = [];
+    let role = null;
+    
+    if (student) {
+      // User is a student, get their classes
+      role = 'student';
+      const studentClasses = await Class.find({ 
+        classId: { $in: student.classIds } 
+      });
+      classes = [...studentClasses];
+    }
+    
+    if (teacher) {
+      // User is a teacher, get classes where they are homeroom teacher
+      role = role ? 'both' : 'teacher';
+      
+      // Get classes where the teacher is homeroom teacher
+      const homeroomClasses = await Class.find({ 
+        homeroomTeacherId: userId 
+      });
+      
+      // Get classes where the teacher teaches (from schedules)
+      const scheduleModel = mongoose.model('ClassSchedule');
+      const teachingSchedules = await scheduleModel.find({ 
+        teacherId: teacher.teacherId 
+      }).distinct('classId');
+      
+      const teachingClasses = await Class.find({
+        classId: { $in: teachingSchedules }
+      });
+      
+      // Add to classes array, avoiding duplicates
+      const existingClassIds = new Set(classes.map(c => c.classId));
+      
+      [...homeroomClasses, ...teachingClasses].forEach(cls => {
+        if (!existingClassIds.has(cls.classId)) {
+          classes.push(cls);
+          existingClassIds.add(cls.classId);
+        }
+      });
+    }
+    
+    if (!student && !teacher) {
+      return res.status(404).json({
+        success: false,
+        error: 'No student or teacher found with this user ID',
+        code: 'USER_NOT_FOUND'
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      count: classes.length,
+      role,
+      data: classes
+    });
+  } catch (error) {
+    console.error('Error fetching classes by user ID:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'An error occurred while fetching classes',
+      code: 'SERVER_ERROR'
+    });
+  }
+};
+
+/**
+ * Get all students in a class by classId
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ */
+const getStudentsByClassId = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    
+    if (!classId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Class ID is required',
+        code: 'MISSING_CLASS_ID'
+      });
+    }
+    
+    console.log(`Getting students for class ID: ${classId}`);
+    
+    // Validate class exists
+    const classRecord = await Class.findOne({ classId: Number(classId) });
+    if (!classRecord) {
+      return res.status(404).json({
+        success: false,
+        error: 'Class not found',
+        code: 'CLASS_NOT_FOUND'
+      });
+    }
+    
+    // Find all students in this class
+    const Student = mongoose.model('Student');
+    const students = await Student.find({ 
+      classIds: Number(classId) 
+    }).populate('user');
+    
+    // Format the response with only required fields
+    const formattedStudents = students.map(student => {
+      return {
+        id: student.userId,
+        fullName: student.fullName,
+        avatar: student.user ? student.user.avatar : null,
+        email: student.user ? student.user.email : null,
+        phone: student.phone,
+        role: 'student'
+      };
+    });
+    
+    // Retrieve teacher information if homeroomTeacherId exists
+    let homeroomTeacher = null;
+    if (classRecord.homeroomTeacherId) {
+      const Teacher = mongoose.model('Teacher');
+      homeroomTeacher = await Teacher.findOne({ userId: classRecord.homeroomTeacherId }).populate('user');
+    }
+    
+    // Include full class information in the response
+    const classInfo = {
+      _id: classRecord._id,
+      className: classRecord.className,
+      grade: classRecord.grade,
+      homeroomTeacherId: classRecord.homeroomTeacherId,
+      academicYear: classRecord.academicYear,
+      createdAt: classRecord.createdAt,
+      isActive: classRecord.isActive,
+      classId: classRecord.classId,
+      // Add teacher name if available
+      homeroomTeacherName: homeroomTeacher ? homeroomTeacher.fullName : null
+    };
+    
+    return res.status(200).json({
+      success: true,
+      count: formattedStudents.length,
+      classInfo: classInfo,
+      data: formattedStudents
+    });
+  } catch (error) {
+    console.error('Error fetching students by class ID:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'An error occurred while fetching students',
+      code: 'SERVER_ERROR'
+    });
+  }
+};
+
 module.exports = {
   createClass,
   getAllClasses,
   getClassById,
   updateClass,
-  deleteClass
+  deleteClass,
+  getClassesByUserId,
+  getStudentsByClassId
 }; 

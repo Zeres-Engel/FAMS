@@ -66,6 +66,60 @@ router.post('/create', protect, authorize('Admin', 'admin'), upload.single('avat
 // Example: { rfid: { RFID_ID: "RFID12345", ExpiryDate: "3y" } }
 router.put('/update/:userId', protect, require('../controllers/unifiedUpdateController'));
 
+// API để làm sạch dữ liệu học sinh, xóa các trường rỗng
+router.post('/clean-student/:userId', protect, authorize('Admin', 'admin'), async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const Student = require('../database/models/Student');
+    
+    // Tìm học sinh theo userId
+    const student = await Student.findOne({ userId });
+    
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: `Student not found with userId: ${userId}`
+      });
+    }
+    
+    // Các trường cần làm sạch
+    const fieldsToClean = ['parentCareers', 'parentEmails', 'parentGenders', 'parentIds', 'parentNames', 'parentPhones'];
+    
+    // Tạo object $unset để xóa các trường
+    const unsetFields = {};
+    fieldsToClean.forEach(field => {
+      if (student[field] !== undefined) {
+        unsetFields[field] = 1;
+      }
+    });
+    
+    // Thực hiện xóa nếu có trường cần xóa
+    if (Object.keys(unsetFields).length > 0) {
+      await Student.updateOne(
+        { _id: student._id },
+        { $unset: unsetFields }
+      );
+      
+      return res.status(200).json({
+        success: true,
+        message: `Successfully cleaned student data for ${userId}`,
+        cleaned_fields: Object.keys(unsetFields)
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      message: `No fields needed cleaning for student ${userId}`
+    });
+  } catch (error) {
+    console.error('Error cleaning student data:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
 // Manage single user
 router.route('/:id')
   .get(protect, authorize('Admin', 'admin'), getUser)

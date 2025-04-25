@@ -3,6 +3,7 @@ import {
   AddUserForm,
   AttendanceLog,
   ClassArrangementData,
+  ClassStudent,
   Data,
   EditAttendanceFormProps,
   editClassForm,
@@ -24,6 +25,7 @@ import {
 import { ClassData } from "../../model/classModels/classModels.model";
 import { fetchUserPaginated } from "../../store/slices/userSlice";
 import { deleteClass, editClass } from "../../store/slices/classSlice";
+import { editAttendance } from "../../store/slices/attendanceSlice";
 
 interface UseDataTableHookProps {
   tableMainData:
@@ -33,7 +35,8 @@ interface UseDataTableHookProps {
     | AttendanceLog[]
     | ClassArrangementData[]
     | NotifyProps[]
-    | RFIDData[];
+    | RFIDData[]
+    | ClassStudent[];
 }
 
 const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
@@ -83,7 +86,7 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
   const editAttendanceDefault: EditAttendanceFormProps = {
     attendanceId: 0,
     scheduleId: 0,
-    userId: 0,
+    userId: '',
     fullName: "",
     face: null,
     checkin: "",
@@ -115,7 +118,15 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
 
   const handleRequestSort = (
     event: React.MouseEvent<unknown>,
-    property: string
+    property:
+      | keyof Data
+      | keyof UserData
+      | keyof ClassData
+      | keyof AttendanceLog
+      | keyof ClassArrangementData
+      | keyof NotifyProps
+      | keyof RFIDData
+      | keyof ClassStudent
   ) => {
     const isAsc = orderBy === property && order === "asc";
     setOrder(isAsc ? "desc" : "asc");
@@ -129,7 +140,7 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
         classId: user?.classTeacher || [],
         firstName: user?.teacherFirstName || "",
         lastName: user?.teacherLastName || "",
-        fullName: user?.name || '',
+        fullName: user?.name || "",
         dob: user?.TeacherDOB
           ? new Date(user?.TeacherDOB).toISOString().split("T")[0] // format yyyy-mm-dd
           : "",
@@ -184,7 +195,7 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
       gender: user.gender === "Male" ? true : false,
       address: user.details?.address || "",
       phone: user.details?.phone || user.phoneSub,
-      career: user.parentCareer || "", 
+      career: user.parentCareer || "",
       email: user.parentEmail || "",
       parentNames: user.Parent?.map((p: any) => p.fullName) || ["", ""],
       parentCareers: user.Parent?.map((p: any) => p.career) || ["", ""],
@@ -215,14 +226,14 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
   const handleEditClick = (user: EditUserForm, userId?: string) => {
     const userEdit = allUsers?.find(u => u.id === userId);
     // Lọc tại đây nếu cần'
-    console.log("Editing user:", userEdit); 
-    
+    console.log("Editing user:", userEdit);
+
     console.log(formatUserToEditUserForm(userEdit));
     setEditingUserId(userEdit?.id || "");
     setEditingUser(formatUserToEditUserForm(userEdit));
     setIsEditOpen(true);
   };
-  const handleEditClassClick = (classData: editClassForm,editID:string) => {
+  const handleEditClassClick = (classData: editClassForm, editID: string) => {
     setEditingClass(classData);
     setIsEditOpen(true);
     setEditingClassID(editID);
@@ -242,7 +253,7 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
     setSelectedNotify({
       id: row.id,
       sender: row.sender,
-      receiver: row.receiver || '',
+      receiver: row.receiver || "",
       message: row.message,
       sendDate: row.sendDate,
     });
@@ -326,12 +337,19 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
     };
     console.log("Saving edited class:", classFormData);
     console.log("Saving edited class ID:", editingClassID);
-    dispatch(editClass({ id: editingClassID, ...payload }))
+    dispatch(editClass({ id: editingClassID, ...payload }));
     setIsEditOpen(false);
   };
   const handleEditAttendanceSave = (
     attendanceData: EditAttendanceFormProps
   ) => {
+    dispatch(
+      editAttendance({
+        userId: attendanceData.userId,
+        scheduleId: attendanceData.scheduleId,
+        status: attendanceData.status,
+        checkInFace: attendanceData.checkinFace,
+      }))
     console.log("Saving edited Attendance:", attendanceData);
     setIsEditOpen(false);
   };
@@ -423,7 +441,7 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
     gradeError,
     isShowNotifyOpen,
     selectedNotify,
-    editingUserId
+    editingUserId,
   };
   const handler = {
     handleRequestSort,
