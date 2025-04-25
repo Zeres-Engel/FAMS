@@ -1,10 +1,10 @@
-from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QLabel, QGroupBox, QSizePolicy)
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QImage, QPixmap, QFocusEvent
+from PySide6.QtGui import QImage, QPixmap
 import cv2
-import numpy as np
-from .zensys import ZenSys
+
+from src.core.zensys import ZenSys
 from utils.config_utils import config
 import os
 

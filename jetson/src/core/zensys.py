@@ -11,7 +11,7 @@ project_root = str(Path(__file__).parent.parent)
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-from src.zenface import ZenFace
+from src.core.zenface import ZenFace
 import pickle
 import time
 from utils.config_utils import config

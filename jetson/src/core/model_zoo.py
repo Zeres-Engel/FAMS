@@ -2,20 +2,11 @@ import os
 import os.path as osp
 import glob
 import onnxruntime
-import sys
-
-# Add model directory to Python path
-current_dir = os.path.dirname(os.path.abspath(__file__))
-base_dir = os.path.dirname(current_dir)
-model_dir = os.path.join(base_dir, 'model')
-sys.path.append(model_dir)
-sys.path.append(base_dir)  # Add base directory to path
 
 from model.AdaFace.adaface_onnx import AdaFace
 from model.RetinaFace.retinaface import RetinaFace
 
 class PickableInferenceSession(onnxruntime.InferenceSession): 
-    # This is a wrapper to make the current InferenceSession class pickable.
     def __init__(self, model_path, **kwargs):
         super().__init__(model_path, **kwargs)
         self.model_path = model_path
