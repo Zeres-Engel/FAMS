@@ -8,6 +8,8 @@ weights:
 data:
   gallery: "data/gallery"
   database: "assets/database"
+  rfid_file: "assets/database/rfid.json"
+  attendance_dir: "data/attendance"
 
 # Model parameters
 detection:
@@ -27,3 +29,9 @@ anti_spoofing:
   min_depth_thresh: 50.0
   max_depth_thresh: 200.0
   normalize_method: "min_max"
+
+# Logging parameters
+logging:
+  classroom_id: 1
+  log_interval: 5  # Số giây tối thiểu giữa các lần log điểm danh
+  simplified: true

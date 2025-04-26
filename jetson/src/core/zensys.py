@@ -4,16 +4,19 @@ import faiss
 import os
 import glob
 import sys
+import json
+import datetime
+import time
 from pathlib import Path
 
 # Add project root to Python path
-project_root = str(Path(__file__).parent.parent)
+project_root = str(Path(__file__).parent.parent.parent)
 if project_root not in sys.path:
     sys.path.append(project_root)
 
 from src.core.zenface import ZenFace
+from src.core.logger import AttendanceLogger
 import pickle
-import time
 from utils.config_utils import config
 from model.MiDaS.DepthModel import DepthPredictor
 from model.RFID.rfid import RFID
@@ -48,6 +51,10 @@ class ZenSys:
         self.face_anti = FaceAntiSpoofing()
         self.depth_face_crop = None
         self.anti_spoofing_result = None
+        
+        # Thêm Attendance Logger
+        self.attendance_logger = AttendanceLogger()
+        self.last_log_time = 0  # Để tránh log quá nhiều lần
         
     def process_gallery(self):
         """Convert all gallery images to face embeddings and store in FAISS"""
@@ -223,6 +230,7 @@ class ZenSys:
         3. Lưu khuôn mặt đã crop và align
         4. Xác thực danh tính với ID từ RFID
         5. Thực hiện kiểm tra anti-spoofing nếu có depth map
+        6. Log attendance nếu xác thực thành công
         """
         if self.current_rfid and face:
             # Lấy embedding đã được tạo từ ZenFace.get()
@@ -238,7 +246,7 @@ class ZenSys:
                     # Face alignment sử dụng 5 điểm landmarks
                     self.current_face_crop = face_align.norm_crop(img, landmark=face.kps, image_size=112)
                 except Exception as e:
-                    print(f"Error in face alignment: {e}")
+                    print(f"Error in face alignment: {e}", flush=True)
                     # Fallback: Crop đơn giản nếu có lỗi
                     x1, y1, x2, y2 = [int(b) for b in face.bbox]
                     crop_img = img[max(0, y1):min(img.shape[0], y2), max(0, x1):min(img.shape[1], x2)]
@@ -250,6 +258,32 @@ class ZenSys:
             # Xác thực danh tính
             self.verification_result = self.rfid_system.verify_identity(
                 self.current_rfid, face_name)
+            
+            # Kiểm tra anti-spoofing
+            current_time = time.time()
+            is_live_face = True
+            
+            # Kiểm tra anti-spoofing nếu được bật
+            if self.face_anti.enable and self.anti_spoofing_result is not None:
+                is_live_face = self.anti_spoofing_result == "LIVE"
+            
+            # LUÔN tạo JSON response bất kể kết quả xác thực
+            # Lưu khuôn mặt nếu có, dù xác thực thành công hay không
+            user_id = face_name
+            rfid_id = self.current_rfid
+            rfid_name = self.verification_result["rfid_name"]
+            
+            # Tạo tên thư mục dựa trên người được nhận diện
+            attendance_record = self.attendance_logger.log_attendance(
+                user_id=user_id,
+                rfid_id=rfid_id,
+                face_image=self.current_face_crop,
+                status="SUCCESS" if self.verification_result["match"] and is_live_face else "FAILED"
+            )
+            
+            # Cập nhật thời gian log cuối nếu xác thực thành công
+            if self.verification_result["match"] and is_live_face:
+                self.last_log_time = current_time
             
             return self.verification_result
         return None

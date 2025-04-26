@@ -1,5 +1,16 @@
 import time
 import threading
+import json
+import os
+import sys
+from pathlib import Path
+
+# Add project root to Python path
+project_root = str(Path(__file__).parent.parent.parent)
+if project_root not in sys.path:
+    sys.path.append(project_root)
+
+from utils.config_utils import config
 
 class RFID:
     def __init__(self):
@@ -7,10 +18,8 @@ class RFID:
         self.current_id = None
         self.id_callback = None
         
-        # Database ánh xạ RFID ID -> Tên người dùng
-        self.rfid_database = {
-            "0005563074": "thanhnpst1"
-        }
+        # Đọc database từ file JSON
+        self.rfid_database = self._load_rfid_database()
         
         # Cấu hình listener
         self.listening = True
@@ -18,6 +27,34 @@ class RFID:
         self.last_key_time = 0
         self.listener_thread = None
         self.timeout = 0.3  # Giảm timeout để nhận diện nhanh hơn
+    
+    def _load_rfid_database(self):
+        """Đọc database RFID từ file JSON"""
+        try:
+            rfid_file = config.data.rfid_file
+            if os.path.exists(rfid_file):
+                with open(rfid_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            else:
+                print(f"Warning: RFID database file not found at {rfid_file}")
+                return {}
+        except Exception as e:
+            print(f"Error loading RFID database: {e}")
+            return {"0005563074": "thanhnpst1"}  # Fallback database
+    
+    def _save_rfid_database(self):
+        """Lưu database RFID vào file JSON"""
+        try:
+            rfid_file = config.data.rfid_file
+            os.makedirs(os.path.dirname(rfid_file), exist_ok=True)
+            
+            with open(rfid_file, 'w', encoding='utf-8') as f:
+                json.dump(self.rfid_database, f, indent=4, ensure_ascii=False)
+            
+            return True
+        except Exception as e:
+            print(f"Error saving RFID database: {e}")
+            return False
     
     def start_listening(self):
         """Bắt đầu lắng nghe input RFID từ keyboard"""
@@ -91,11 +128,11 @@ class RFID:
         rfid_code = self.input_buffer.strip()
         if rfid_code.lower().endswith("enter"):
             rfid_code = rfid_code[:-5]
-            
-        print(f"Đã nhận mã RFID: {rfid_code}")
         
-        # Lưu mã hiện tại và gọi callback
+        # Lưu mã hiện tại
         self.current_id = rfid_code
+        
+        # Gọi callback để tiếp tục quy trình xác thực
         if self.id_callback:
             self.id_callback(self.current_id)
             
@@ -121,5 +158,6 @@ class RFID:
     def add_rfid_user(self, rfid_id, name):
         """Thêm người dùng mới vào database RFID"""
         self.rfid_database[rfid_id] = name
+        self._save_rfid_database()  # Lưu lại vào file
         print(f"Đã thêm người dùng: {name} với ID RFID: {rfid_id}")
         return True

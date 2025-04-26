@@ -49,6 +49,36 @@ class ZenConfig:
         os.makedirs(self.db_path, exist_ok=True)
         os.makedirs(self.gallery_path, exist_ok=True)
         
+        # Create attendance directory if specified in config
+        attendance_dir = self.get_nested_value(['data', 'attendance_dir'], None)
+        if attendance_dir:
+            attendance_path = os.path.join(self.base_path, attendance_dir)
+            os.makedirs(attendance_path, exist_ok=True)
+    
+    def get_nested_value(self, keys, default=None):
+        """Safely get nested value from config_data dictionary"""
+        data = self.config_data
+        for key in keys:
+            if isinstance(data, dict) and key in data:
+                data = data[key]
+            else:
+                return default
+        return data
+    
+    @property
+    def data(self):
+        """Get data namespace with attendance_dir and rfid_file added"""
+        # Default values if not in config
+        attendance_dir = self.get_nested_value(['data', 'attendance_dir'], 'data/attendance')
+        rfid_file = self.get_nested_value(['data', 'rfid_file'], 'assets/database/rfid.json')
+        
+        return SimpleNamespace(
+            gallery=self.gallery_path,
+            database=self.db_path,
+            attendance_dir=os.path.join(self.base_path, attendance_dir),
+            rfid_file=os.path.join(self.base_path, rfid_file)
+        )
+        
     @property
     def det_size(self):
         return tuple(self.config_data['detection']['input_size'])
@@ -64,6 +94,15 @@ class ZenConfig:
     @property
     def embedding_dim(self):
         return self.config_data['recognition']['embedding_dim']
+        
+    @property
+    def logging(self):
+        """Get logging namespace with all parameters"""
+        return SimpleNamespace(**{
+            'classroom_id': self.get_nested_value(['logging', 'classroom_id'], 1),
+            'log_interval': self.get_nested_value(['logging', 'log_interval'], 5),
+            'simplified': self.get_nested_value(['logging', 'simplified'], True)
+        })
         
     @property
     def anti_spoofing(self):

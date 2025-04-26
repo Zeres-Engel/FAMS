@@ -3,6 +3,7 @@ from .model_zoo import model_zoo
 
 import numpy as np
 from utils.config_utils import config
+from .face_operator import Face
 
 class ZenFace:
     def __init__(self, allowed_modules=None, **kwargs):
