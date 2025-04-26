@@ -26,6 +26,7 @@ function useTableToolBarHook({
   isRoleStudent,
   isNotifyPage,
   isRFIDPage,
+  classYears
 }: {
   isAttendance: boolean;
   isClassManagement: boolean;
@@ -38,6 +39,7 @@ function useTableToolBarHook({
     React.SetStateAction<AttendanceSearchParam>
   >;
   isClassArrangement?: boolean;
+  classYears?: Array<{className: string, academicYear: string}>
   isNewSemester?: boolean;
   isTeacherView?: boolean;
   defaultClass?: string;
@@ -83,8 +85,30 @@ function useTableToolBarHook({
   const handleCallAPIClass = () => {
     dispatch(fetchClassesByUserId(filters.userID));
   };  
-  // Debug
-  console.log("TableToolBarHook initialized with roles:", filters.roles);
+  const [academicYearsForClass, setAcademicYearsForClass] = useState<string[]>([]);
+  const [classNamesFiltered, setClassNamesFiltered] = useState<string[]>([]);
+  useEffect(() => {
+    if(classYears && isClassManagement){
+      const uniqueAcademicYears = Array.from(
+        new Set((classYears ?? []).map((item) => item.academicYear))
+      );
+      const uniqueClassNames = Array.from( 
+        new Set((classYears ?? []).map((item) => item.className))
+      );
+      setAcademicYearsForClass(uniqueAcademicYears);
+      setClassNamesFiltered(uniqueClassNames);
+    }
+  }, [classYears,isClassManagement]);
+
+  const filterClassNamesByYear = (year: string) => {
+    const filteredClassNames = (classYears ?? [])
+      .filter((item) => item.academicYear === year)
+      .map((item) => item.className);
+
+    const uniqueClassNames = Array.from(new Set(filteredClassNames));
+
+    setClassNamesFiltered(uniqueClassNames);
+  };
 
   const handleFilterChange = (
     key: keyof typeof filters,
@@ -247,14 +271,15 @@ function useTableToolBarHook({
   // };
 
   return {
-    state: { filters, classAttendanceList, showTeacherAttendance },
+    state: { filters, classAttendanceList, showTeacherAttendance,academicYearsForClass,classNamesFiltered },
     handler: {
       handleFilterChange,
       onSubmit: handleFilterSubmit,
       getAcademicYears,
       handleCallAPIClass,
       setShowTeacherAttendance,
-      getYears
+      getYears,
+      filterClassNamesByYear
     },
   };
 }

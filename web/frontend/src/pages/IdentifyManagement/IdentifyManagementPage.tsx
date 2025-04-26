@@ -246,7 +246,7 @@ function IdentifyManagementPage(): React.JSX.Element {
           gap={2}
           minWidth={300}
         >
-          <Box
+          {/* <Box
             sx={{
               width: "100%",
               height: "100%",
@@ -265,7 +265,7 @@ function IdentifyManagementPage(): React.JSX.Element {
               isRFIDPage={true}
               isAdmin={true}
             ></DataTable>
-          </Box>
+          </Box> */}
         </Box>
       </Box>
     </LayoutComponent>

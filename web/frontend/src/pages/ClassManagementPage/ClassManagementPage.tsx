@@ -53,6 +53,10 @@ function ClassManagementPage(): React.JSX.Element {
                 tableTitle={state.tableTitle}
                 isCheckBox={state.isCheckBox}
                 isAdmin={true}
+                classYears={state.classYears.map((year) => ({
+                  className: year.className|| "",
+                  academicYear: year.academicYear || "",
+                }))}
                 isClassManagement={true}
                 setFiltersClass={handler.setFiltersClass}
                 classOptions={state.classOptions}
