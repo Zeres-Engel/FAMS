@@ -30,7 +30,7 @@ class RFIDLogger:
         else:
             self.log_dir = log_dir
             
-        self.classroom_id = config.logging.classroom_id if hasattr(config, 'logging') else 1
+        self.device_id = config.logging.device_id if hasattr(config, 'logging') else 1
         self._ensure_directories()
         
     def _ensure_directories(self):
@@ -55,7 +55,7 @@ class RFIDLogger:
             "timestamp": timestamp.strftime("%Y-%m-%d %H:%M:%S"),
             "RFID_ID": rfid_id,
             "registered_name": registered_name,
-            "classroomId": self.classroom_id
+            "deviceId": self.device_id
         }
         
         # Lưu vào file
@@ -87,7 +87,7 @@ class RFIDLogger:
             "is_match": is_match,
             "face_score": face_score,
             "is_live_face": is_live_face,
-            "classroomId": self.classroom_id
+            "deviceId": self.device_id
         }
         
         # Lưu vào file

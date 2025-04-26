@@ -99,7 +99,7 @@ class ZenConfig:
     def logging(self):
         """Get logging namespace with all parameters"""
         return SimpleNamespace(**{
-            'classroom_id': self.get_nested_value(['logging', 'classroom_id'], 1),
+            'device_id': self.get_nested_value(['logging', 'device_id'], 1),
             'log_interval': self.get_nested_value(['logging', 'log_interval'], 5),
             'simplified': self.get_nested_value(['logging', 'simplified'], True)
         })

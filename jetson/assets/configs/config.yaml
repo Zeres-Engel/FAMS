@@ -32,6 +32,6 @@ anti_spoofing:
 
 # Logging parameters
 logging:
-  classroom_id: 1
+  device_id: 1
   log_interval: 5  # Số giây tối thiểu giữa các lần log điểm danh
   simplified: true

@@ -1,0 +1,32 @@
+# GUI
+PySide6>=6.4.0
+
+# OpenCV
+opencv-python>=4.7.0
+opencv-contrib-python>=4.7.0
+
+# Numerical Processing
+numpy>=1.22.0
+scipy>=1.9.0
+
+# Deep Learning
+torch>=1.13.0
+torchvision>=0.14.0
+onnx>=1.12.0
+onnxruntime>=1.13.0
+timm>=0.6.0  # For MiDaS depth estimation
+
+# Vector Database
+faiss-cpu>=1.7.0  # or faiss-gpu for GPU support
+
+# API Communication
+requests>=2.28.0
+python-dotenv>=0.21.0
+
+# Kafka Messaging
+confluent-kafka>=2.0.0
+
+# Utilities
+Pillow>=9.3.0
+tqdm>=4.64.0
+pyyaml>=6.0 

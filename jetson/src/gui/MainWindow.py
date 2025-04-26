@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QImage, QPixmap
 import cv2
 
-from src.core.zensys import ZenSys
+from src.core.zensys_factory import get_default_instance
 from utils.config_utils import config
 import os
 
@@ -14,11 +14,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Face Recognition & Depth Estimation with RFID")
         self.setMinimumSize(1280, 720)
         
-        # Initialize face recognition system
-        self.face_system = ZenSys()
-        if not os.path.exists(os.path.join(config.db_path, "face_index.faiss")):
-            self.face_system.process_gallery()
-        self.face_system.load_database()
+        # Initialize face recognition system using the default instance
+        self.face_system = get_default_instance()
         
         # Create main widget with no margins
         main_widget = QWidget()
@@ -118,9 +115,6 @@ class MainWindow(QMainWindow):
         self.reset_timer = QTimer()
         self.reset_timer.setSingleShot(True)  # Single shot timer
         self.reset_timer.timeout.connect(self.reset_verification)
-        
-        # Start RFID listening after UI setup
-        self.face_system.start_rfid_listening()
         
         # Ensure window doesn't have focus indicators
         self.setFocusPolicy(Qt.NoFocus)

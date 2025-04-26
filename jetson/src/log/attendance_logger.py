@@ -27,7 +27,7 @@ class AttendanceLogger:
             base_path: Base directory to save attendance data and face images
         """
         self.base_path = base_path or config.data.attendance_dir
-        self.classroom_id = config.logging.classroom_id if hasattr(config, 'logging') else 1
+        self.device_id = config.logging.device_id if hasattr(config, 'logging') else 1
         self._ensure_directories()
         
     def _ensure_directories(self):
@@ -40,7 +40,7 @@ class AttendanceLogger:
         Path(user_dir).mkdir(exist_ok=True)
         return user_dir
         
-    def log_attendance(self, user_id, rfid_id, face_image=None, classroom_id=None, status="SUCCESS"):
+    def log_attendance(self, user_id, rfid_id, face_image=None, device_id=None, status="SUCCESS"):
         """
         Log a user attendance event and save face image
         
@@ -48,14 +48,14 @@ class AttendanceLogger:
             user_id: User identifier (name)
             rfid_id: RFID card ID
             face_image: Face image as numpy array (optional)
-            classroom_id: Classroom identifier (default=from config)
+            device_id: Device identifier (default=from config)
             status: Status of verification (SUCCESS or FAILED)
             
         Returns:
             dict: Attendance record information
         """
-        # Use classroom_id from parameter or from config
-        classroom_id = classroom_id or self.classroom_id
+        # Use device_id from parameter or from config
+        device_id = device_id or self.device_id
         
         # Create timestamp
         timestamp = datetime.datetime.now()
@@ -76,7 +76,7 @@ class AttendanceLogger:
         
         # Create attendance record - chính xác định dạng mà người dùng muốn
         attendance_record = {
-            "classroomId": classroom_id,
+            "deviceId": device_id,
             "userId": user_id,
             "RFID_ID": rfid_id,
             "CheckIn": timestamp.strftime("%Y-%m-%d %H:%M:%S"),
