@@ -1,0 +1,20 @@
+2025-04-28 00:40:05,667 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 00:40:15,243 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 00:40:15,248 - zensys - INFO - Loaded database with 4 faces from C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 00:40:15,249 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 00:42:39,342 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 00:42:48,054 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 00:42:48,057 - zensys - INFO - Loaded database with 4 faces from C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 00:42:48,058 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 01:52:47,718 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 01:52:56,720 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 01:52:56,724 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 01:52:56,725 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 02:00:22,532 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 02:00:29,711 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 02:00:29,714 - zensys - INFO - Loaded database with 4 faces from C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 02:00:29,715 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 02:02:07,639 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 02:02:14,676 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 02:02:14,678 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 02:02:14,679 - zensys - INFO - ZenSys initialized successfully
