@@ -437,6 +437,33 @@ const ScheduleManagementPage: React.FC = () => {
                   alignItems: "center",
                 }}
               >
+                {/* <Box
+                  sx={{
+                    flex: isMobile ? "1 1 100%" : "auto",
+                    minWidth: "180px",
+                  }}
+                >
+                  <Autocomplete
+                    disablePortal
+                    options={state.studentOptions} // bạn cần chuẩn bị mảng này
+                    getOptionLabel={option => option.label}
+                    value={
+                      state.studentOptions.find(
+                        opt => opt.value === state.filters.studentId
+                      ) || null
+                    }
+                    onChange={(event, newValue) =>
+                      handler.setFilters({
+                        ...state.filters,
+                        studentId: newValue?.value || "",
+                      })
+                    }
+                    renderInput={params => (
+                      <TextField {...params} label="Student ID" />
+                    )}
+                    fullWidth
+                  />
+                </Box> */}
                 <Box
                   sx={{
                     flex: isMobile ? "1 1 100%" : "auto",

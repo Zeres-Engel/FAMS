@@ -56,6 +56,7 @@ import {
 import EditAttendanceForm from "./EditAttendanceForm/EditAttendanceForm";
 import CreateNotifyForm from "./CreateNotifyForm/CreateNotifyForm";
 import ShowNotify from "./ShowNotify/ShowNotify";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 
 // Thêm interface cho pagination
 interface PaginationProps {
@@ -119,9 +120,11 @@ interface DataTableProps {
   classPageList?: ClassPageList[];
   subjectList?: SubjectList[];
   availableAcademicYears?: string[];
+  onShowMyAttendance?: () => void;
   onAcademicYearChange?: (year: string) => void;
   classYears?: Array<{ className: string; academicYear: string }>;
   isRoleParent?: boolean;
+  importUsersButton?: React.ReactNode;
 }
 
 export default function DataTable({
@@ -150,6 +153,7 @@ export default function DataTable({
   pagination,
   onPageChange,
   onRowsPerPageChange,
+  onShowMyAttendance,
   isClassPage,
   classPageList,
   setFiltersClassPage,
@@ -159,6 +163,7 @@ export default function DataTable({
   subjectList,
   classYears,
   isRoleParent,
+  importUsersButton,
 }: DataTableProps) {
   const { state, handler } = useDataTableHook({ tableMainData });
 
@@ -415,10 +420,11 @@ export default function DataTable({
         className="dataTable-Table"
       >
         <TableToolBar
+          onShowMyAttendance={onShowMyAttendance}
           classYears={classYears}
           isUserManagement={isUserManagement}
           numSelected={state.selected.length}
-          tableTitle={tableTitle}
+          // tableTitle={tableTitle}
           isAdmin={isAdmin}
           isClassManagement={isClassManagement}
           isAttendance={isAttendance}
@@ -549,10 +555,15 @@ export default function DataTable({
               class distribution
             </Button>
           )}
+          
+          {/* Display import users button if provided and if we're in user management */}
+          {isUserManagement && importUsersButton && importUsersButton}
+          
           {isAdmin && !isAttendance && (
             <Button
               variant="contained"
               color="primary"
+              startIcon={isUserManagement ? <PersonAddIcon /> : undefined}
               onClick={() => {
                 if (isClassArrangement) {
                   handler.handleSubmitClassArrangement(isClassArrangement);
@@ -611,6 +622,13 @@ export default function DataTable({
             page={state.page}
             onPageChange={handler.handleChangePage}
             onRowsPerPageChange={handler.handleChangeRowsPerPage}
+            labelRowsPerPage="Rows per page:"
+            SelectProps={{
+              sx: {
+                minWidth: '64px', 
+                paddingRight: '15px', 
+              }
+            }}
           />
         )}
       </Paper>

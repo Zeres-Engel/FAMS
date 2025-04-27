@@ -1,5 +1,10 @@
 .userManagementPage-Container{
     margin-top: 20px;
+    & .userManagementPageTable{
+        box-shadow: rgba(0, 0, 0, 0.164) 0px 6px 50px;
+        padding-bottom: 5px;
+        border-radius: 10px;
+    }
     & .userManagementPage-Grid{
         // box-shadow: rgba(0, 0, 0, 0.164) 0px 6px 50px;
         margin: auto;

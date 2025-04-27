@@ -114,11 +114,13 @@ export const editAttendance = createAsyncThunk(
       userId,
       scheduleId,
       status,
+      note,
       checkInFace,
     }: {
       userId: string;
       scheduleId: number;
       status: string;
+      note:string;
       checkInFace: string;
     },
     thunkAPI
@@ -126,10 +128,11 @@ export const editAttendance = createAsyncThunk(
     try {
       thunkAPI.dispatch(showLoading());
 
-      const response = await axiosInstance.post(`/attendance/check-in`, {
+      const response = await axiosInstance.put(`/attendance/check-in`, {
         userId,
         scheduleId,
         status,
+        note,
         checkInFace,
       });
 
