@@ -348,6 +348,7 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
         userId: attendanceData.userId,
         scheduleId: attendanceData.scheduleId,
         status: attendanceData.status,
+        note:attendanceData.note,
         checkInFace: attendanceData.checkinFace,
       }))
     console.log("Saving edited Attendance:", attendanceData);

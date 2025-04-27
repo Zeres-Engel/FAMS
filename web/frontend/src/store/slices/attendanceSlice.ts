@@ -114,11 +114,13 @@ export const editAttendance = createAsyncThunk(
       userId,
       scheduleId,
       status,
+      note,
       checkInFace,
     }: {
       userId: string;
       scheduleId: number;
       status: string;
+      note:string;
       checkInFace: string;
     },
     thunkAPI
@@ -130,6 +132,7 @@ export const editAttendance = createAsyncThunk(
         userId,
         scheduleId,
         status,
+        note,
         checkInFace,
       });
 
