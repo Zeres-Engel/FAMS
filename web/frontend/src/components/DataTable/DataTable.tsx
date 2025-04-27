@@ -117,7 +117,8 @@ interface DataTableProps {
   subjectList?: SubjectList[];
   availableAcademicYears?: string[];
   onAcademicYearChange?: (year: string) => void;
-  classYears?: Array<{className: string, academicYear: string}>
+  classYears?: Array<{className: string, academicYear: string}>;
+  isRoleParent?:boolean;
 }
 
 export default function DataTable({
@@ -153,7 +154,8 @@ export default function DataTable({
   onAcademicYearChange,
   setFiltersAttendancePage,
   subjectList,
-  classYears
+  classYears,
+  isRoleParent
 }: DataTableProps) {
   const { state, handler } = useDataTableHook({ tableMainData });
 
@@ -425,6 +427,7 @@ export default function DataTable({
           defaultClass={className ?? ""}
           onClassChange={onClassChange}
           isNewSemester={isNewSemester}
+          isRoleParent={isRoleParent}
           isTeacherView={isTeacherView}
           classPageList={classPageList}
           isRoleStudent={isRoleStudent}

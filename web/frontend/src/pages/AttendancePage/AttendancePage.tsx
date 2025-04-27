@@ -21,7 +21,8 @@ function AttendanceManagementPage(): React.JSX.Element {
               isCheckBox={state.isCheckBox}
               isAttendance={true}
               isRoleTeacher={state.role === "teacher"}
-              isRoleStudent={state.role === "student"}
+              isRoleStudent={state.role === "student" || state.role ==="parent"}
+              isRoleParent={state.role ==="parent"}
               setFiltersAttendancePage={handler.setFiltersAttendancePage}
               classPageList={state.classAttendanceList}
             ></DataTable>

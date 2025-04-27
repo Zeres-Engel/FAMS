@@ -33,14 +33,14 @@ const localizer = momentLocalizer(moment);
 
 // Thêm định dạng hiển thị mới cho lịch
 const calendarFormats = {
-  monthHeaderFormat: 'MMMM YYYY',
-  dayHeaderFormat: 'dddd, D MMMM YYYY',
-  dayRangeHeaderFormat: ({ start, end }: { start: Date, end: Date }) => 
-    `${moment(start).format('D MMMM')} - ${moment(end).format('D MMMM YYYY')}`,
-  agendaHeaderFormat: ({ start, end }: { start: Date, end: Date }) =>
-    `${moment(start).format('D MMMM')} - ${moment(end).format('D MMMM YYYY')}`,
-  eventTimeRangeFormat: ({ start, end }: { start: Date, end: Date }) =>
-    `${moment(start).format('HH:mm')} - ${moment(end).format('HH:mm')}`
+  monthHeaderFormat: "MMMM YYYY",
+  dayHeaderFormat: "dddd, D MMMM YYYY",
+  dayRangeHeaderFormat: ({ start, end }: { start: Date; end: Date }) =>
+    `${moment(start).format("D MMMM")} - ${moment(end).format("D MMMM YYYY")}`,
+  agendaHeaderFormat: ({ start, end }: { start: Date; end: Date }) =>
+    `${moment(start).format("D MMMM")} - ${moment(end).format("D MMMM YYYY")}`,
+  eventTimeRangeFormat: ({ start, end }: { start: Date; end: Date }) =>
+    `${moment(start).format("HH:mm")} - ${moment(end).format("HH:mm")}`,
 };
 
 // Định nghĩa components tùy chỉnh cho events
@@ -56,15 +56,15 @@ const calendarComponents: Components<ScheduleEvent, object> = {
         </div>
       </div>
     );
-  }
+  },
 };
 
 const ScheduleManagementPage: React.FC = () => {
   const { state, handler } = useScheduleManagementPageHook();
-  
+
   // Add this line to debug teachers list
   console.log("Component received teachers:", state.teachers);
-  
+
   const isMobile = useMediaQuery("(max-width:600px)");
   const role = useSelector((state: RootState) => state.authUser.role);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
@@ -81,7 +81,7 @@ const ScheduleManagementPage: React.FC = () => {
     classId: "",
     scheduleDate: new Date(),
     slotId: "",
-    academicYear: ""
+    academicYear: "",
   });
   const [semester, setSemester] = useState("Semester 1");
   const [semesterDateFrom, setSemesterDateFrom] = useState("");
@@ -92,41 +92,50 @@ const ScheduleManagementPage: React.FC = () => {
   const [academicYearError, setAcademicYearError] = useState(false);
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 10 }, (_, i) => currentYear - 5 + i); // Từ 5 năm trước đến 5 năm sau
-  
+
   // Add state for teachers from direct API call
-  const [directTeachers, setDirectTeachers] = useState<{userId: string, fullName: string}[]>([]);
+  const [directTeachers, setDirectTeachers] = useState<
+    { userId: string; fullName: string }[]
+  >([]);
 
   // Get access to all classes for filtering
   const { allClasses } = state;
-  
+
   // Load Material Icons and fetch teachers directly
   useEffect(() => {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/icon?family=Material+Icons';
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://fonts.googleapis.com/icon?family=Material+Icons";
     document.head.appendChild(link);
-    
+
     // Fetch teachers directly
     const fetchTeachers = async () => {
       try {
         console.log("Directly fetching teachers...");
-        const response = await fetch("http://fams.io.vn/api-nodejs/teachers/search?search=&page=1&limit=100", {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
+        const response = await fetch(
+          "http://fams.io.vn/api-nodejs/teachers/search?search=&page=1&limit=100",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
           }
-        });
-        
+        );
+
         if (!response.ok) {
-          console.error("Teacher API response not OK:", response.status, response.statusText);
+          console.error(
+            "Teacher API response not OK:",
+            response.status,
+            response.statusText
+          );
           const errorText = await response.text();
           console.error("Error response:", errorText);
           return;
         }
-        
+
         const data = await response.json();
         console.log("Directly fetched teachers API response:", data);
-        
+
         if (data.success) {
           console.log("Directly fetched teachers count:", data.data.length);
           setDirectTeachers(data.data);
@@ -137,32 +146,39 @@ const ScheduleManagementPage: React.FC = () => {
         console.error("Error directly fetching teachers:", error);
       }
     };
-    
+
     fetchTeachers();
-    
+
     return () => {
       document.head.removeChild(link);
     };
   }, []);
-  
+
   // Function to fetch all teachers for fallback
   const fetchAllTeachers = async () => {
     try {
       console.log("Fetching all teachers as fallback...");
-      const response = await fetch("http://fams.io.vn/api-nodejs/teachers/search?search=&page=1&limit=100", {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        "http://fams.io.vn/api-nodejs/teachers/search?search=&page=1&limit=100",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
-      });
-      
+      );
+
       if (!response.ok) {
-        console.error("Teacher API response not OK:", response.status, response.statusText);
+        console.error(
+          "Teacher API response not OK:",
+          response.status,
+          response.statusText
+        );
         return;
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success && data.data) {
         console.log("Fallback: loaded all teachers, count:", data.data.length);
         setDirectTeachers(data.data);
@@ -173,7 +189,7 @@ const ScheduleManagementPage: React.FC = () => {
       console.error("Error fetching all teachers as fallback:", error);
     }
   };
-  
+
   // Thêm eventPropGetter để định dạng sự kiện
   const eventPropGetter = (event: ScheduleEvent) => {
     // Khởi tạo một giá trị dựa trên subject hoặc event.id để tạo màu nhất quán
@@ -182,16 +198,16 @@ const ScheduleManagementPage: React.FC = () => {
     const hue = (colorBase * 137) % 360; // Sử dụng phép nhân với số nguyên tố để tạo sự phân bố đều
     const saturation = 65;
     const lightness = 75;
-    
+
     return {
       style: {
         backgroundColor: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
-        color: '#333',
-        borderRadius: '4px',
-        border: '1px solid rgba(0,0,0,0.1)',
-        boxShadow: 'none',
-        padding: '4px 6px'
-      }
+        color: "#333",
+        borderRadius: "4px",
+        border: "1px solid rgba(0,0,0,0.1)",
+        boxShadow: "none",
+        padding: "4px 6px",
+      },
     };
   };
 
@@ -210,19 +226,35 @@ const ScheduleManagementPage: React.FC = () => {
                   gap: 2,
                   mb: 2,
                   alignItems: "center",
-                  justifyContent: "space-between"
+                  justifyContent: "space-between",
                 }}
               >
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
-                  <Box sx={{ flex: isMobile ? "1 1 100%" : "auto", minWidth: "180px" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 2,
+                    alignItems: "center",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      flex: isMobile ? "1 1 100%" : "auto",
+                      minWidth: "180px",
+                    }}
+                  >
                     <FormControl fullWidth>
-                      <InputLabel id="academic-year-select-label">Academic Year</InputLabel>
+                      <InputLabel id="academic-year-select-label">
+                        Academic Year
+                      </InputLabel>
                       <Select
                         labelId="academic-year-select-label"
                         id="academic-year-select"
                         value={state.selectedAcademicYear}
                         label="Academic Year"
-                        onChange={e => handler.handleAcademicYearChange(e.target.value)}
+                        onChange={e =>
+                          handler.handleAcademicYearChange(e.target.value)
+                        }
                       >
                         {state.academicYears.map(year => (
                           <MenuItem key={year} value={year}>
@@ -233,7 +265,12 @@ const ScheduleManagementPage: React.FC = () => {
                     </FormControl>
                   </Box>
 
-                  <Box sx={{ flex: isMobile ? "1 1 100%" : "auto", minWidth: "180px" }}>
+                  <Box
+                    sx={{
+                      flex: isMobile ? "1 1 100%" : "auto",
+                      minWidth: "180px",
+                    }}
+                  >
                     <Autocomplete
                       disablePortal
                       options={state.classOptions}
@@ -256,7 +293,12 @@ const ScheduleManagementPage: React.FC = () => {
                     />
                   </Box>
 
-                  <Box sx={{ flex: isMobile ? "1 1 100%" : "auto", minWidth: "180px" }}>
+                  <Box
+                    sx={{
+                      flex: isMobile ? "1 1 100%" : "auto",
+                      minWidth: "180px",
+                    }}
+                  >
                     <FormControl fullWidth>
                       <InputLabel id="subject-select-label">Subject</InputLabel>
                       <Select
@@ -265,13 +307,19 @@ const ScheduleManagementPage: React.FC = () => {
                         value={state.filters.subjectId || ""}
                         label="Subject"
                         onChange={e => {
-                          const value = e.target.value === "" ? null : Number(e.target.value);
+                          const value =
+                            e.target.value === ""
+                              ? null
+                              : Number(e.target.value);
                           handler.handleSubjectChange(value);
                         }}
                       >
                         <MenuItem value="">All Subjects</MenuItem>
                         {state.allSubjects.map(subject => (
-                          <MenuItem key={subject.subjectId} value={subject.subjectId}>
+                          <MenuItem
+                            key={subject.subjectId}
+                            value={subject.subjectId}
+                          >
                             {subject.subjectName}
                           </MenuItem>
                         ))}
@@ -281,13 +329,17 @@ const ScheduleManagementPage: React.FC = () => {
                 </Box>
 
                 {role === "admin" && (
-                  <Box sx={{ display: 'flex', gap: 2, mt: isMobile ? 2 : 0 }}>
+                  <Box sx={{ display: "flex", gap: 2, mt: isMobile ? 2 : 0 }}>
                     <Button
                       variant="contained"
                       color="primary"
                       onClick={() => setOpenCreateDialog(true)}
                       startIcon={<span className="material-icons">add</span>}
-                      sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 500 }}
+                      sx={{
+                        borderRadius: "8px",
+                        textTransform: "none",
+                        fontWeight: 500,
+                      }}
                     >
                       Add Schedule
                     </Button>
@@ -296,7 +348,11 @@ const ScheduleManagementPage: React.FC = () => {
                       color="primary"
                       onClick={() => setOpenArrangementDialog(true)}
                       startIcon={<span className="material-icons">event</span>}
-                      sx={{ borderRadius: '8px', textTransform: 'none', fontWeight: 500 }}
+                      sx={{
+                        borderRadius: "8px",
+                        textTransform: "none",
+                        fontWeight: 500,
+                      }}
                     >
                       Arrange Schedule
                     </Button>
@@ -304,8 +360,7 @@ const ScheduleManagementPage: React.FC = () => {
                 )}
               </Box>
             )}
-
-            {role === "teacher" && (
+            {role === "student" && (
               <Box
                 sx={{
                   display: "flex",
@@ -315,15 +370,24 @@ const ScheduleManagementPage: React.FC = () => {
                   alignItems: "center",
                 }}
               >
-                <Box sx={{ flex: isMobile ? "1 1 100%" : "auto", minWidth: "180px" }}>
+                <Box
+                  sx={{
+                    flex: isMobile ? "1 1 100%" : "auto",
+                    minWidth: "180px",
+                  }}
+                >
                   <FormControl fullWidth>
-                    <InputLabel id="academic-year-teacher-select-label">Academic Year</InputLabel>
+                    <InputLabel id="academic-year-student-select-label">
+                      Academic Year
+                    </InputLabel>
                     <Select
-                      labelId="academic-year-teacher-select-label"
-                      id="academic-year-teacher-select"
+                      labelId="academic-year-student-select-label"
+                      id="academic-year-student-select"
                       value={state.selectedAcademicYear}
                       label="Academic Year"
-                      onChange={e => handler.handleAcademicYearChange(e.target.value)}
+                      onChange={e =>
+                        handler.handleAcademicYearChange(e.target.value)
+                      }
                     >
                       {state.academicYears.map(year => (
                         <MenuItem key={year} value={year}>
@@ -334,7 +398,146 @@ const ScheduleManagementPage: React.FC = () => {
                   </FormControl>
                 </Box>
 
-                <Box sx={{ flex: isMobile ? "1 1 100%" : "auto", minWidth: "180px" }}>
+                <Box
+                  sx={{
+                    flex: isMobile ? "1 1 100%" : "auto",
+                    minWidth: "180px",
+                  }}
+                >
+                  <Autocomplete
+                    disablePortal
+                    options={state.classOptions}
+                    getOptionLabel={option => option.label}
+                    value={
+                      state.classOptions.find(
+                        opt => opt.value === state.filters.class
+                      ) || null
+                    }
+                    onChange={(event, newValue) =>
+                      handler.setFilters({
+                        ...state.filters,
+                        class: newValue?.value || "",
+                      })
+                    }
+                    renderInput={params => (
+                      <TextField {...params} label="Class" />
+                    )}
+                    fullWidth
+                  />
+                </Box>
+              </Box>
+            )}
+            {role === "parent" && (
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 2,
+                  mb: 2,
+                  alignItems: "center",
+                }}
+              >
+                <Box
+                  sx={{
+                    flex: isMobile ? "1 1 100%" : "auto",
+                    minWidth: "180px",
+                  }}
+                >
+                  <FormControl fullWidth>
+                    <InputLabel id="academic-year-student-select-label">
+                      Academic Year
+                    </InputLabel>
+                    <Select
+                      labelId="academic-year-student-select-label"
+                      id="academic-year-student-select"
+                      value={state.selectedAcademicYear}
+                      label="Academic Year"
+                      onChange={e =>
+                        handler.handleAcademicYearChange(e.target.value)
+                      }
+                    >
+                      {state.academicYears.map(year => (
+                        <MenuItem key={year} value={year}>
+                          {year}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+
+                <Box
+                  sx={{
+                    flex: isMobile ? "1 1 100%" : "auto",
+                    minWidth: "180px",
+                  }}
+                >
+                  <Autocomplete
+                    disablePortal
+                    options={state.classOptions}
+                    getOptionLabel={option => option.label}
+                    value={
+                      state.classOptions.find(
+                        opt => opt.value === state.filters.class
+                      ) || null
+                    }
+                    onChange={(event, newValue) =>
+                      handler.setFilters({
+                        ...state.filters,
+                        class: newValue?.value || "",
+                      })
+                    }
+                    renderInput={params => (
+                      <TextField {...params} label="Class" />
+                    )}
+                    fullWidth
+                  />
+                </Box>
+              </Box>
+            )}
+            {role === "teacher" && (
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 2,
+                  mb: 2,
+                  alignItems: "center",
+                }}
+              >
+                <Box
+                  sx={{
+                    flex: isMobile ? "1 1 100%" : "auto",
+                    minWidth: "180px",
+                  }}
+                >
+                  <FormControl fullWidth>
+                    <InputLabel id="academic-year-teacher-select-label">
+                      Academic Year
+                    </InputLabel>
+                    <Select
+                      labelId="academic-year-teacher-select-label"
+                      id="academic-year-teacher-select"
+                      value={state.selectedAcademicYear}
+                      label="Academic Year"
+                      onChange={e =>
+                        handler.handleAcademicYearChange(e.target.value)
+                      }
+                    >
+                      {state.academicYears.map(year => (
+                        <MenuItem key={year} value={year}>
+                          {year}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+
+                <Box
+                  sx={{
+                    flex: isMobile ? "1 1 100%" : "auto",
+                    minWidth: "180px",
+                  }}
+                >
                   <Autocomplete
                     disablePortal
                     options={state.classOptions}
@@ -357,22 +560,33 @@ const ScheduleManagementPage: React.FC = () => {
                   />
                 </Box>
 
-                <Box sx={{ flex: isMobile ? "1 1 100%" : "auto", minWidth: "180px" }}>
+                <Box
+                  sx={{
+                    flex: isMobile ? "1 1 100%" : "auto",
+                    minWidth: "180px",
+                  }}
+                >
                   <FormControl fullWidth>
-                    <InputLabel id="subject-teacher-select-label">Subject</InputLabel>
+                    <InputLabel id="subject-teacher-select-label">
+                      Subject
+                    </InputLabel>
                     <Select
                       labelId="subject-teacher-select-label"
                       id="subject-teacher-select"
                       value={state.filters.subjectId || ""}
                       label="Subject"
                       onChange={e => {
-                        const value = e.target.value === "" ? null : Number(e.target.value);
+                        const value =
+                          e.target.value === "" ? null : Number(e.target.value);
                         handler.handleSubjectChange(value);
                       }}
                     >
                       <MenuItem value="">All Subjects</MenuItem>
                       {state.allSubjects.map(subject => (
-                        <MenuItem key={subject.subjectId} value={subject.subjectId}>
+                        <MenuItem
+                          key={subject.subjectId}
+                          value={subject.subjectId}
+                        >
                           {subject.subjectName}
                         </MenuItem>
                       ))}
@@ -384,7 +598,12 @@ const ScheduleManagementPage: React.FC = () => {
                   variant="outlined"
                   onClick={handler.handleShowTeacherSchedule}
                   startIcon={<span className="material-icons">person</span>}
-                  sx={{ height: "56px", borderRadius: '8px', textTransform: 'none', fontWeight: 500 }}
+                  sx={{
+                    height: "56px",
+                    borderRadius: "8px",
+                    textTransform: "none",
+                    fontWeight: 500,
+                  }}
                 >
                   My Schedule
                 </Button>
@@ -413,7 +632,14 @@ const ScheduleManagementPage: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
-            <Box sx={{ mt: 2, height: 'calc(100vh - 150px)', minHeight: '900px', overflowY: 'auto' }}>
+            <Box
+              sx={{
+                mt: 2,
+                height: "calc(100vh - 150px)",
+                minHeight: "900px",
+                overflowY: "auto",
+              }}
+            >
               <Calendar
                 localizer={localizer}
                 view={state.view}
@@ -424,7 +650,7 @@ const ScheduleManagementPage: React.FC = () => {
                 min={new Date(0, 0, 0, 7, 0)} // 7:00 AM
                 max={new Date(0, 0, 0, 19, 0)} // 7:00 PM
                 views={["month", "week", "day"]}
-                style={{ height: '100%', width: "100%" }}
+                style={{ height: "100%", width: "100%" }}
                 onSelectEvent={handler.handleSelectEvent}
                 onView={handler.handleSetView}
                 onNavigate={handler.handleSetDate}
@@ -636,11 +862,15 @@ const ScheduleManagementPage: React.FC = () => {
                     >
                       Edit
                     </Button>
-                    <Button 
-                      variant="contained" 
+                    <Button
+                      variant="contained"
                       color="error"
                       onClick={() => {
-                        if (window.confirm(`Bạn có chắc chắn muốn xóa lịch học này không?`)) {
+                        if (
+                          window.confirm(
+                            `Bạn có chắc chắn muốn xóa lịch học này không?`
+                          )
+                        ) {
                           handler.deleteEvent(state.eventShow?.id);
                           handler.handleSelectEvent();
                         }
@@ -679,7 +909,9 @@ const ScheduleManagementPage: React.FC = () => {
             <DialogTitle>Add new Schedule</DialogTitle>
             <DialogContent dividers>
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel id="academic-year-select-label">Academic Year</InputLabel>
+                <InputLabel id="academic-year-select-label">
+                  Academic Year
+                </InputLabel>
                 <Select
                   labelId="academic-year-select-label"
                   id="academic-year-select"
@@ -692,28 +924,38 @@ const ScheduleManagementPage: React.FC = () => {
                       academicYear: selectedYear,
                       classId: "", // Reset class when year changes
                     });
-                    
+
                     // Fetch classes for this academic year
-                    fetch(`http://fams.io.vn/api-nodejs/classes?academicYear=${selectedYear}`, {
-                      method: 'GET',
-                      headers: {
-                        'Content-Type': 'application/json'
+                    fetch(
+                      `http://fams.io.vn/api-nodejs/classes?academicYear=${selectedYear}`,
+                      {
+                        method: "GET",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
                       }
-                    })
+                    )
                       .then(response => {
                         if (!response.ok) {
-                          throw new Error(`HTTP error! Status: ${response.status}`);
+                          throw new Error(
+                            `HTTP error! Status: ${response.status}`
+                          );
                         }
                         return response.json();
                       })
                       .then(data => {
                         if (data.success) {
-                          console.log(`Loaded ${data.data.length} classes for year ${selectedYear}`);
+                          console.log(
+                            `Loaded ${data.data.length} classes for year ${selectedYear}`
+                          );
                           // We will filter classes in the component based on this academicYear
                         }
                       })
                       .catch(error => {
-                        console.error("Error fetching classes for academic year:", error);
+                        console.error(
+                          "Error fetching classes for academic year:",
+                          error
+                        );
                       });
                   }}
                 >
@@ -724,7 +966,7 @@ const ScheduleManagementPage: React.FC = () => {
                   ))}
                 </Select>
               </FormControl>
-              
+
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel id="class-select-label">Class</InputLabel>
                 <Select
@@ -743,18 +985,25 @@ const ScheduleManagementPage: React.FC = () => {
                   {state.classOptions
                     .filter(classOption => {
                       // Only show classes for selected academic year
-                      const classData = allClasses.find(c => c.classId.toString() === classOption.value);
-                      return classData && classData.academicYear === newEvent.academicYear;
+                      const classData = allClasses.find(
+                        c => c.classId.toString() === classOption.value
+                      );
+                      return (
+                        classData &&
+                        classData.academicYear === newEvent.academicYear
+                      );
                     })
                     .map(classOption => (
-                      <MenuItem key={classOption.value} value={classOption.value}>
+                      <MenuItem
+                        key={classOption.value}
+                        value={classOption.value}
+                      >
                         {classOption.label}
                       </MenuItem>
-                    ))
-                  }
+                    ))}
                 </Select>
               </FormControl>
-              
+
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel id="subject-select-label">Subject</InputLabel>
                 <Select
@@ -768,28 +1017,47 @@ const ScheduleManagementPage: React.FC = () => {
                       ...newEvent,
                       subjectId: subjectId,
                     });
-                    
+
                     // Fetch teachers for this subject
                     if (subjectId) {
-                      fetch(`http://fams.io.vn/api-nodejs/schedules/teachers-by-subject/${subjectId}`, {
-                        method: 'GET',
-                        headers: {
-                          'Content-Type': 'application/json'
+                      fetch(
+                        `http://fams.io.vn/api-nodejs/schedules/teachers-by-subject/${subjectId}`,
+                        {
+                          method: "GET",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
                         }
-                      })
+                      )
                         .then(response => {
                           if (!response.ok) {
-                            console.error("Teacher API by subject response not OK:", response.status, response.statusText);
-                            throw new Error(`HTTP error! Status: ${response.status}`);
+                            console.error(
+                              "Teacher API by subject response not OK:",
+                              response.status,
+                              response.statusText
+                            );
+                            throw new Error(
+                              `HTTP error! Status: ${response.status}`
+                            );
                           }
                           return response.json();
                         })
                         .then(data => {
-                          if (data.success && data.data && data.data.length > 0) {
-                            console.log("Loaded teachers for subject:", data.data.length);
+                          if (
+                            data.success &&
+                            data.data &&
+                            data.data.length > 0
+                          ) {
+                            console.log(
+                              "Loaded teachers for subject:",
+                              data.data.length
+                            );
                             setDirectTeachers(data.data);
                           } else {
-                            console.error("API returned success: false or empty data", data);
+                            console.error(
+                              "API returned success: false or empty data",
+                              data
+                            );
                             // Fallback to using all teachers
                             console.log("Falling back to all teachers");
                             if (state.teachers && state.teachers.length > 0) {
@@ -800,9 +1068,14 @@ const ScheduleManagementPage: React.FC = () => {
                           }
                         })
                         .catch(error => {
-                          console.error("Error fetching teachers for subject:", error);
+                          console.error(
+                            "Error fetching teachers for subject:",
+                            error
+                          );
                           // Fallback to using all teachers
-                          console.log("Error occurred, falling back to all teachers");
+                          console.log(
+                            "Error occurred, falling back to all teachers"
+                          );
                           if (state.teachers && state.teachers.length > 0) {
                             setDirectTeachers(state.teachers);
                           } else {
@@ -824,9 +1097,14 @@ const ScheduleManagementPage: React.FC = () => {
                 <TextField
                   type="date"
                   fullWidth
-                  value={moment(newEvent.scheduleDate || new Date()).format("YYYY-MM-DD")}
+                  value={moment(newEvent.scheduleDate || new Date()).format(
+                    "YYYY-MM-DD"
+                  )}
                   onChange={e =>
-                    setNewEvent({ ...newEvent, scheduleDate: new Date(e.target.value) })
+                    setNewEvent({
+                      ...newEvent,
+                      scheduleDate: new Date(e.target.value),
+                    })
                   }
                   InputLabelProps={{
                     shrink: true,
@@ -886,7 +1164,10 @@ const ScheduleManagementPage: React.FC = () => {
                     setNewEvent({ ...newEvent, teacher: e.target.value })
                   }
                 >
-                  {(directTeachers.length > 0 ? directTeachers : state.teachers).map(teacher => (
+                  {(directTeachers.length > 0
+                    ? directTeachers
+                    : state.teachers
+                  ).map(teacher => (
                     <MenuItem key={teacher.userId} value={teacher.userId}>
                       {teacher.fullName} - {teacher.userId}
                     </MenuItem>
@@ -912,7 +1193,7 @@ const ScheduleManagementPage: React.FC = () => {
                     classId: "",
                     scheduleDate: new Date(),
                     slotId: "",
-                    academicYear: ""
+                    academicYear: "",
                   });
                 }}
               >
@@ -947,17 +1228,19 @@ const ScheduleManagementPage: React.FC = () => {
                   select
                   label="Academic Year"
                   value={state.selectedAcademicYear}
-                  onChange={(e) => {
+                  onChange={e => {
                     handler.handleAcademicYearChange(e.target.value);
                     setAcademicYearError(false);
                   }}
                   required
                   error={academicYearError}
-                  helperText={academicYearError ? "Please select an academic year" : ""}
+                  helperText={
+                    academicYearError ? "Please select an academic year" : ""
+                  }
                   sx={{ width: "100%" }}
                 >
                   <option value="">-- Select --</option>
-                  {state.academicYears.map((year) => (
+                  {state.academicYears.map(year => (
                     <option key={year} value={year}>
                       {year}
                     </option>
@@ -1017,7 +1300,10 @@ const ScheduleManagementPage: React.FC = () => {
                 variant="outlined"
                 onClick={async () => {
                   const hasError =
-                    !semester || !semesterDateFrom || !semesterDateTo || !state.selectedAcademicYear;
+                    !semester ||
+                    !semesterDateFrom ||
+                    !semesterDateTo ||
+                    !state.selectedAcademicYear;
                   setSemesterError(!semester);
                   setDateFromError(!semesterDateFrom);
                   setDateToError(!semesterDateTo);
@@ -1027,36 +1313,43 @@ const ScheduleManagementPage: React.FC = () => {
 
                   // Parse semester number from the semester string
                   const semesterNumber = semester === "Semester 1" ? 1 : 2;
-                  
+
                   // Format dates from yyyy-MM-dd to dd/MM/yyyy for the API
                   const formatDateForAPI = (dateString: string) => {
-                    const [year, month, day] = dateString.split('-');
+                    const [year, month, day] = dateString.split("-");
                     return `${day}/${month}/${year}`;
                   };
 
                   try {
                     // Call the Python API to generate schedules
                     const response = await axios.post(
-                      "http://fams.io.vn/api-python/api/schedules/generate", 
+                      "http://fams.io.vn/api-python/api/schedules/generate",
                       {
                         semesterNumber,
                         startDate: formatDateForAPI(semesterDateFrom),
                         endDate: formatDateForAPI(semesterDateTo),
-                        academicYear: state.selectedAcademicYear
+                        academicYear: state.selectedAcademicYear,
                       }
                     );
 
                     if (response.data.success) {
                       // Show success message
-                      alert(`${response.data.message}. The schedule generation is processing in the background.`);
+                      alert(
+                        `${response.data.message}. The schedule generation is processing in the background.`
+                      );
                     } else {
                       // Show error message
                       alert(`Failed: ${response.data.message}`);
                       console.error("API Error:", response.data);
                     }
                   } catch (error) {
-                    console.error("Error calling schedule generation API:", error);
-                    alert("An error occurred while arranging the schedule. Please try again later.");
+                    console.error(
+                      "Error calling schedule generation API:",
+                      error
+                    );
+                    alert(
+                      "An error occurred while arranging the schedule. Please try again later."
+                    );
                   }
 
                   setOpenArrangementDialog(false);

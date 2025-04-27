@@ -26,6 +26,7 @@ function useTableToolBarHook({
   isRoleStudent,
   isNotifyPage,
   isRFIDPage,
+  isRoleParent,
   classYears
 }: {
   isAttendance: boolean;
@@ -44,6 +45,7 @@ function useTableToolBarHook({
   isTeacherView?: boolean;
   defaultClass?: string;
   isRoleStudent?: boolean;
+  isRoleParent?:boolean;
   isNotifyPage?: boolean;
   isRFIDPage?: boolean;
 }) {
@@ -155,6 +157,22 @@ function useTableToolBarHook({
       };
       console.log("Notify Filter submitted:", notifyFilters);
     }
+    if (isRoleStudent && isRoleParent) {
+      const attendanceFilters: AttendanceSearchParam = {
+        userId: filters.userID,
+        subjectId: '',
+        classId: '',
+        teacherName: "",
+        status: filters.status,
+        dateFrom:filters.dateFrom,
+        dateTo:filters.dateTo,
+        slotNumber: `${filters.slotNumber}`,
+      };
+      if (setFiltersAttendancePage) {
+        setFiltersAttendancePage(attendanceFilters);
+      }
+      return;
+    }
     if (isRoleStudent) {
       const attendanceFilters: AttendanceSearchParam = {
         userId: '',
@@ -184,7 +202,7 @@ function useTableToolBarHook({
         teacherName: "",
         status: filters.status,
         date: filters.date,
-        slotNumber: '',
+        slotNumber: `${filters.slotID}`,
       };
       if (setFiltersAttendancePage) {
         setFiltersAttendancePage(attendanceFilters);

@@ -46,6 +46,7 @@ interface EnhancedTableToolbarProps {
   >;
   isClassArrangement?: boolean;
   isNewSemester?: boolean;
+  isRoleParent?: boolean;
   isTeacherView?: boolean;
   classOptions?: string[];
   subjectList?: SubjectList[];
@@ -84,6 +85,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
     isTeacherView = false,
     classOptions = [],
     classOptionsData = [],
+    isRoleParent,
     defaultClass = "",
     onShowMyAttendance,
     availableAcademicYears,
@@ -109,6 +111,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
     isNewSemester,
     defaultClass,
     isRoleStudent,
+    isRoleParent,
     isNotifyPage,
     isRFIDPage,
     isTeacherView,
@@ -306,6 +309,98 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
         </>
       );
     }
+    if (isRoleParent) {
+      return (
+        <>
+          <TextField
+            label="User ID"
+            value={filters.userID}
+            required
+            onChange={e => {
+              handleFilterChange("userID", e.target.value);
+            }}
+            onFocus={e => {
+              handleFilterChange("classId", "");
+              handleFilterChange("className", "");
+            }}
+            onBlur={handler.handleCallAPIClass}
+            fullWidth={isMobile}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+          />
+          <FormControl
+            fullWidth={isMobile}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+          >
+            <InputLabel id="class-select-label">Class</InputLabel>
+            <Select
+              labelId="class-select-label"
+              value={filters.classId || ""}
+              label="Class"
+              required
+              disabled={
+                !filters?.userID || state.classAttendanceList.length === 0
+              }
+              onChange={e => {
+                handleFilterChange("classId", e.target.value);
+                const selectedClass = state.classAttendanceList.find(
+                  s => s.classId === e.target.value
+                );
+                handleFilterChange("className", selectedClass?.className || "");
+              }}
+            >
+              {state.classAttendanceList?.map((option, index) => {
+                return (
+                  <MenuItem key={index} value={option.classId}>
+                    {option.className}
+                  </MenuItem>
+                );
+              })}
+            </Select>
+          </FormControl>
+          <FormControl
+            fullWidth={isMobile}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+          >
+            <InputLabel id="slot-id-select-label">Slot</InputLabel>
+            <Select
+              labelId="slot-id-select-label"
+              value={filters.slotID}
+              label="Slot"
+              onChange={e => handleFilterChange("slotID", e.target.value)}
+            >
+              <MenuItem key={11} value={``}>
+                Slot None
+              </MenuItem>
+              {[...Array(10)].map((_, index) => (
+                <MenuItem key={index + 1} value={`${index + 1}`}>
+                  Slot {index + 1}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <TextField
+            label="From Date"
+            type="date"
+            value={filters.dateFrom}
+            onChange={e => handleFilterChange("dateFrom", e.target.value)}
+            fullWidth={isMobile}
+            InputLabelProps={{ shrink: true }}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+          />
+
+          <TextField
+            label="To Date"
+            type="date"
+            value={filters.dateTo}
+            onChange={e => handleFilterChange("dateTo", e.target.value)}
+            fullWidth={isMobile}
+            InputLabelProps={{ shrink: true }}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+          />
+        </>
+      );
+    }
     if (isRoleStudent) {
       return (
         <>
@@ -434,7 +529,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
               label="Academic Year"
               onChange={e => {
                 handler.filterClassNamesByYear(e.target.value);
-                handleFilterChange("academicYear",e.target.value)
+                handleFilterChange("academicYear", e.target.value);
               }}
               MenuProps={{
                 PaperProps: {
@@ -878,7 +973,12 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
                 color="primary"
                 onClick={onSubmit}
                 size="small"
-                disabled={isAttendance && (!filters?.userID || !filters?.className)}
+                disabled={
+                  isAttendance &&
+                  !isRoleStudent &&
+                  (!filters?.userID || !filters?.className) &&
+                  !isTeacher
+                }
                 sx={{ px: 2, py: 1, minWidth: 100 }}
               >
                 Search

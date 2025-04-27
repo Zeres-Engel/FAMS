@@ -24,10 +24,10 @@ function useAttendancePageHook() {
     className: `${item.className} - ${item.academicYear}`,
   }));
   useEffect(() => {
-    if (userData && classList.length === 0) {
+    if (userData && classList.length === 0 && role !=='parent') {
       dispatch(fetchClassesByUserId(userData?.userId));
     }
-  }, [dispatch, userData, classList]);
+  }, [dispatch, userData, classList,role]);
   const attendanceMainData = useSelector(
     (state: RootState) => state.attendanceData.attendances
   );
@@ -58,6 +58,12 @@ function useAttendancePageHook() {
   const [userMainData, setUserMainData] = useState<AttendanceLog[]>([]);
   useEffect(() => {
     if (filters) {
+      if (userData?.role === "parent"){
+        dispatch(
+          fetchAttendanceByUser({ ...filters})
+        );
+        return;
+      }
       dispatch(
         fetchAttendanceByUser({ ...filters, userId: userData?.userId || "" })
       );
