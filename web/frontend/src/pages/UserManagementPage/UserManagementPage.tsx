@@ -10,6 +10,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import FileOpenIcon from "@mui/icons-material/FileOpen";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 
 function UserManagementPage(): React.JSX.Element {
   const { state, handler } = useUserManagementPageHook();
@@ -50,7 +51,7 @@ function UserManagementPage(): React.JSX.Element {
 
   const handleDownloadTemplate = () => {
     // Download template from API
-    const downloadUrl = 'http://14.225.204.42:3001/api/users/download/template';
+    const downloadUrl = 'http://fams.io.vn/api/users/download/template';
     
     // Create a temporary link element
     const link = document.createElement('a');
@@ -151,17 +152,7 @@ function UserManagementPage(): React.JSX.Element {
     <LayoutComponent pageHeader="User Management">
       <Container maxWidth={false} className="userManagementPage-Container">
         <Box className="userManagementPage-Box">
-          {/* Action buttons row */}
-          <Box className="import-button-container">
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<CloudUploadIcon />}
-              onClick={handleOpenImportDialog}
-            >
-              Import Users
-            </Button>
-          </Box>
+          {/* Removing the import button container from here */}
           
           <Box mb={4} className="userManagementPageTable">
             <DataTable
@@ -179,6 +170,16 @@ function UserManagementPage(): React.JSX.Element {
               onPageChange={handler.handlePageChange}
               availableAcademicYears={state.availableAcademicYears}
               onAcademicYearChange={handler.handleAcademicYearChange}
+              importUsersButton={
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<CloudUploadIcon />}
+                  onClick={handleOpenImportDialog}
+                >
+                  Import Users
+                </Button>
+              }
             />
           </Box>
         </Box>

@@ -56,6 +56,7 @@ import {
 import EditAttendanceForm from "./EditAttendanceForm/EditAttendanceForm";
 import CreateNotifyForm from "./CreateNotifyForm/CreateNotifyForm";
 import ShowNotify from "./ShowNotify/ShowNotify";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 
 // Thêm interface cho pagination
 interface PaginationProps {
@@ -123,6 +124,7 @@ interface DataTableProps {
   onAcademicYearChange?: (year: string) => void;
   classYears?: Array<{ className: string; academicYear: string }>;
   isRoleParent?: boolean;
+  importUsersButton?: React.ReactNode;
 }
 
 export default function DataTable({
@@ -161,6 +163,7 @@ export default function DataTable({
   subjectList,
   classYears,
   isRoleParent,
+  importUsersButton,
 }: DataTableProps) {
   const { state, handler } = useDataTableHook({ tableMainData });
 
@@ -552,10 +555,15 @@ export default function DataTable({
               class distribution
             </Button>
           )}
+          
+          {/* Display import users button if provided and if we're in user management */}
+          {isUserManagement && importUsersButton && importUsersButton}
+          
           {isAdmin && !isAttendance && (
             <Button
               variant="contained"
               color="primary"
+              startIcon={isUserManagement ? <PersonAddIcon /> : undefined}
               onClick={() => {
                 if (isClassArrangement) {
                   handler.handleSubmitClassArrangement(isClassArrangement);
