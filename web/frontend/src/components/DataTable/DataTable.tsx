@@ -88,10 +88,13 @@ interface DataTableProps {
   isAdmin?: boolean;
   isClassManagement?: boolean;
   isAttendance?: boolean;
-  isUserManagement?: boolean;  setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
+  isUserManagement?: boolean;
+  setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
   setFiltersClass?: React.Dispatch<React.SetStateAction<SearchClassFilters>>;
   setFiltersClassPage?: React.Dispatch<React.SetStateAction<number>>;
-  setFiltersAttendancePage?: React.Dispatch<React.SetStateAction<AttendanceSearchParam>>;
+  setFiltersAttendancePage?: React.Dispatch<
+    React.SetStateAction<AttendanceSearchParam>
+  >;
   isRoleTeacher?: boolean;
   isClassArrangement?: boolean;
   isNewSemester?: boolean;
@@ -101,7 +104,7 @@ interface DataTableProps {
   isNotifyRole?: string;
   isRFIDPage?: boolean;
   classOptions?: string[];
-  classOptionsData?: Array<{className: string, id: string}>;
+  classOptionsData?: Array<{ className: string; id: string }>;
   className?: string;
   onClassChange?: (className: string) => void;
   pagination?: {
@@ -117,8 +120,8 @@ interface DataTableProps {
   subjectList?: SubjectList[];
   availableAcademicYears?: string[];
   onAcademicYearChange?: (year: string) => void;
-  classYears?: Array<{className: string, academicYear: string}>;
-  isRoleParent?:boolean;
+  classYears?: Array<{ className: string; academicYear: string }>;
+  isRoleParent?: boolean;
 }
 
 export default function DataTable({
@@ -155,7 +158,7 @@ export default function DataTable({
   setFiltersAttendancePage,
   subjectList,
   classYears,
-  isRoleParent
+  isRoleParent,
 }: DataTableProps) {
   const { state, handler } = useDataTableHook({ tableMainData });
 
@@ -270,7 +273,7 @@ export default function DataTable({
   );
   const renderClassPageCells = (row: any) => (
     <>
-          <TableCell align="left">{row.fullName}</TableCell>
+      <TableCell align="left">{row.fullName}</TableCell>
       <TableCell align="left">
         <img
           src={
@@ -389,7 +392,9 @@ export default function DataTable({
     }
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     if (onRowsPerPageChange) {
       onRowsPerPageChange(parseInt(event.target.value, 10));
     }
@@ -410,7 +415,7 @@ export default function DataTable({
         className="dataTable-Table"
       >
         <TableToolBar
-          classYears ={classYears}
+          classYears={classYears}
           isUserManagement={isUserManagement}
           numSelected={state.selected.length}
           tableTitle={tableTitle}
@@ -583,7 +588,7 @@ export default function DataTable({
         )}
 
         {/* Pagination */}
-        {pagination && (
+        {pagination && isUserManagement && (
           <TablePagination
             rowsPerPageOptions={[]}
             component="div"
@@ -595,6 +600,17 @@ export default function DataTable({
               const totalPages = Math.ceil(count / 5);
               return `${from}–${to} of ${count} (Page ${pagination.page} of ${totalPages})`;
             }}
+          />
+        )}
+        {!isUserManagement && (
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={state.rows.length}
+            rowsPerPage={state.rowsPerPage}
+            page={state.page}
+            onPageChange={handler.handleChangePage}
+            onRowsPerPageChange={handler.handleChangeRowsPerPage}
           />
         )}
       </Paper>
