@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import requests
 from typing import Dict, Any, Callable, Optional
 from threading import Thread, Event
 from confluent_kafka import Producer, Consumer, KafkaError
@@ -13,7 +14,7 @@ load_dotenv(dotenv_path)
 
 class MessageManager:
     """
-    Message manager class for handling Kafka messaging
+    Message manager class for handling messaging via Kafka or HTTP API
     """
     
     # Default Kafka configuration
@@ -22,10 +23,31 @@ class MessageManager:
     KAFKA_SYSTEM_TOPIC = os.getenv('KAFKA_SYSTEM_TOPIC', 'system_events')
     KAFKA_GROUP_ID = os.getenv('KAFKA_GROUP_ID', 'face_recognition_group')
     
-    def __init__(self):
+    # API configuration
+    API_ENDPOINT = os.getenv('API_CHECK_ATTENDANCE', '')
+    API_TOKEN = os.getenv('ACCESS_TOKEN', '')
+    
+    def __init__(self, use_kafka=False, use_api=True):
+        """
+        Initialize Message Manager
+        
+        Args:
+            use_kafka: Whether to use Kafka for messaging
+            use_api: Whether to use HTTP API for messaging
+        """
         self.logger = logging.getLogger("MessageManager")
         self.consumer_thread = None
         self.stop_event = Event()
+        
+        # Set message sending method
+        self.use_kafka = use_kafka
+        self.use_api = use_api
+        
+        if not self.use_kafka and not self.use_api:
+            self.logger.warning("Both Kafka and API are disabled. Messages will only be logged.")
+        
+        # Log configuration
+        self.logger.info(f"Message Manager initialized with: Kafka={use_kafka}, API={use_api}")
         
         # Configure Kafka producer
         self.producer_config = {
@@ -42,41 +64,80 @@ class MessageManager:
             'enable.auto.commit': True
         }
         
-        # Initialize producer
-        self._initialize_producer()
+        # Initialize producer if using Kafka
+        if self.use_kafka:
+            self._initialize_kafka_producer()
+        else:
+            self.producer = None
+            self.logger.info("Kafka producer disabled")
     
-    def _initialize_producer(self):
+    def _initialize_kafka_producer(self):
         """Initialize Kafka producer"""
         try:
             self.producer = Producer(self.producer_config)
-            self.logger.info("Kafka producer initialized successfully")
+            self.logger.info(f"Kafka producer initialized with servers: {self.KAFKA_BOOTSTRAP_SERVERS}")
         except Exception as e:
-            self.logger.error(f"Failed to initialize Kafka producer: {str(e)}")
+            self.logger.error(f"Failed to initialize Kafka producer: {e}")
             self.producer = None
+            self.use_kafka = False
     
     def send_attendance_event(self, attendance_data: Dict[str, Any]) -> bool:
         """
-        Send attendance data to Kafka
+        Send attendance data via configured channels (Kafka and/or API)
         
         Args:
             attendance_data: Dictionary containing attendance information
             
         Returns:
-            bool: True if message was sent successfully
+            bool: Success status
         """
-        return self._send_message(self.KAFKA_ATTENDANCE_TOPIC, attendance_data)
+        success = True
+        
+        # Always log the data
+        self.logger.info(f"ATTENDANCE DATA: {json.dumps(attendance_data)}")
+        
+        # Send via Kafka if enabled
+        if self.use_kafka and self.producer:
+            try:
+                kafka_success = self._send_message(self.KAFKA_ATTENDANCE_TOPIC, attendance_data)
+                if not kafka_success:
+                    self.logger.warning("Failed to send attendance data to Kafka")
+                    success = False
+            except Exception as e:
+                self.logger.error(f"Error sending to Kafka: {e}")
+                success = False
+        
+        # Send via API if enabled
+        if self.use_api:
+            try:
+                api_success = self._send_via_api(attendance_data)
+                if not api_success:
+                    self.logger.warning("Failed to send attendance data via API")
+                    success = False
+            except Exception as e:
+                self.logger.error(f"Error sending via API: {e}")
+                success = False
+        
+        return success
     
     def send_system_event(self, event_data: Dict[str, Any]) -> bool:
         """
-        Send system event to Kafka
+        Send system event via configured channels
         
         Args:
             event_data: Dictionary containing system event information
             
         Returns:
-            bool: True if message was sent successfully
+            bool: Success status
         """
-        return self._send_message(self.KAFKA_SYSTEM_TOPIC, event_data)
+        # Always log the data
+        self.logger.info(f"SYSTEM EVENT: {json.dumps(event_data)}")
+        
+        # Only send system events to Kafka, not to API
+        if self.use_kafka and self.producer:
+            return self._send_message(self.KAFKA_SYSTEM_TOPIC, event_data)
+        
+        return True
     
     def _send_message(self, topic: str, data: Dict[str, Any]) -> bool:
         """
@@ -87,39 +148,67 @@ class MessageManager:
             data: Message data
             
         Returns:
-            bool: True if message was sent successfully
+            bool: Success status
         """
-        if self.producer is None:
-            self._initialize_producer()
-            if self.producer is None:
-                self.logger.error(f"Failed to send message to topic {topic}: Producer not available")
-                return False
+        if not self.producer:
+            self.logger.warning("Kafka producer not available")
+            return False
         
         try:
             # Convert data to JSON string
-            message = json.dumps(data).encode('utf-8')
+            message_value = json.dumps(data).encode('utf-8')
             
             # Send message
-            self.producer.produce(
-                topic=topic,
-                value=message,
-                callback=self._delivery_callback
-            )
-            
-            # Flush to ensure delivery
-            self.producer.flush()
-            
+            self.producer.produce(topic, value=message_value)
+            self.producer.flush(timeout=5)
+            self.logger.info(f"Sent message to Kafka topic: {topic}")
             return True
         except Exception as e:
-            self.logger.error(f"Failed to send message to topic {topic}: {str(e)}")
+            self.logger.error(f"Error sending message to Kafka: {e}")
             return False
     
-    def _delivery_callback(self, err, msg):
-        """Callback function for message delivery"""
-        if err:
-            self.logger.error(f"Message delivery failed: {err}")
-        else:
-            self.logger.debug(f"Message delivered to {msg.topic()} [{msg.partition()}]")
+    def _send_via_api(self, data: Dict[str, Any]) -> bool:
+        """
+        Send data via HTTP API
+        
+        Args:
+            data: Data to send
+            
+        Returns:
+            bool: Success status
+        """
+        if not self.API_ENDPOINT:
+            self.logger.warning("API endpoint not configured")
+            return False
+        
+        try:
+            headers = {
+                'Authorization': f'Bearer {self.API_TOKEN}',
+                'Content-Type': 'application/json'
+            }
+            
+            # Send using PUT request
+            response = requests.put(
+                self.API_ENDPOINT,
+                headers=headers,
+                json=data,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                self.logger.info(f"Successfully sent data to API: {self.API_ENDPOINT}")
+                return True
+            else:
+                self.logger.error(f"API request failed with status code: {response.status_code}")
+                try:
+                    error_data = response.json()
+                    self.logger.error(f"API error response: {json.dumps(error_data)}")
+                except:
+                    self.logger.error(f"API response: {response.text}")
+                return False
+        except Exception as e:
+            self.logger.error(f"Error sending data to API: {e}")
+            return False
     
     def start_consumer(self, topic: str, message_handler: Callable[[Dict[str, Any]], None]):
         """
@@ -129,6 +218,10 @@ class MessageManager:
             topic: Kafka topic to consume
             message_handler: Callback function to handle received messages
         """
+        if not self.use_kafka:
+            self.logger.warning("Kafka is disabled. Cannot start consumer.")
+            return
+            
         if self.consumer_thread and self.consumer_thread.is_alive():
             self.logger.warning("Consumer already running")
             return
@@ -196,8 +289,7 @@ class MessageManager:
             self.logger.error(f"Consumer error: {str(e)}")
     
     def close(self):
-        """Close Kafka connections"""
+        """Close connections"""
         self.stop_consumer()
         if self.producer:
-            self.producer.flush()
-            # Producer doesn't have a close method in confluent_kafka 
+            self.producer.flush() 

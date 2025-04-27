@@ -29,4 +29,8 @@ confluent-kafka>=2.0.0
 # Utilities
 Pillow>=9.3.0
 tqdm>=4.64.0
-pyyaml>=6.0 
+pyyaml>=6.0
+
+# For MiDaS Depth Extraction Tool
+matplotlib>=3.6.0  # Visualization
+einops>=0.6.0  # Used by some MiDaS models 

@@ -60,9 +60,13 @@ def get_attendance_service():
         default_attendance_service = AttendanceService()
     return default_attendance_service
 
-def get_message_manager():
+def get_message_manager(use_kafka=False, use_api=True):
     """
     Get the default MessageManager instance, creating it if needed.
+    
+    Args:
+        use_kafka: Có sử dụng Kafka hay không 
+        use_api: Có sử dụng API hay không
     
     Returns:
         The default MessageManager instance
@@ -70,13 +74,47 @@ def get_message_manager():
     global default_message_manager
     if default_message_manager is None:
         from src.core.messaging.message_manager import MessageManager
-        default_message_manager = MessageManager()
+        default_message_manager = MessageManager(use_kafka=use_kafka, use_api=use_api)
     return default_message_manager
 
-# Export public API
+# Thêm phương thức để lưu trạng thái và khởi động lại
+def restart_zensys():
+    """
+    Lưu trạng thái và khởi động lại ZenSys instance
+    
+    Returns:
+        Một ZenSys instance mới
+    """
+    global default_zensys
+    
+    # Lưu trạng thái của instance hiện tại (nếu cần)
+    if default_zensys is not None:
+        try:
+            print("Saving current ZenSys state...")
+            # Thực hiện việc lưu trạng thái nếu cần
+            # ...
+            
+            # Đóng tài nguyên
+            default_zensys.cleanup()
+            print("Previous ZenSys instance cleaned up")
+        except Exception as e:
+            print(f"Error closing previous ZenSys instance: {e}")
+    
+    # Tạo instance mới
+    try:
+        print("Creating new ZenSys instance...")
+        default_zensys = create_zensys_instance()
+        print("ZenSys restarted successfully")
+        return default_zensys
+    except Exception as e:
+        print(f"Error restarting ZenSys: {e}")
+        raise
+
+# Xuất thêm API mới
 __all__ = [
     'create_zensys_instance', 
     'get_default_instance',
     'get_attendance_service',
-    'get_message_manager'
+    'get_message_manager',
+    'restart_zensys'
 ] 

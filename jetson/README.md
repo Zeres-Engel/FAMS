@@ -178,3 +178,75 @@ The system employs a carefully designed module structure to prevent circular imp
 - FAISS for efficient similarity search
 - ZenFace for face detection and recognition
 - ONNX Runtime for optimized inference 
+
+# MiDaS Depth Model Checker
+
+Script để trích xuất và hiển thị thông tin từ mô hình MiDaS cho phân tích độ sâu khuôn mặt và kiểm tra liveness.
+
+## Cách sử dụng
+
+1. Đảm bảo các thư viện cần thiết đã được cài đặt:
+   ```
+   pip install torch numpy opencv-python matplotlib einops
+   ```
+
+2. **Tải đầy đủ mô hình MiDaS và các phụ thuộc để sử dụng hoàn toàn offline:**
+   ```
+   python download_full_model.py
+   ```
+   Script này sẽ:
+   - Tải mô hình MiDaS Small từ torch hub
+   - Sao chép tất cả các file checkpoint cần thiết
+   - Sao chép các repo được sử dụng
+   - Lưu tất cả vào thư mục `assets/weights/`
+
+3. Chạy script chính:
+   ```
+   python extract_depth_checkin.py
+   ```
+   Script sẽ tự động sử dụng các tệp đã được tải về và cấu hình PyTorch để sử dụng repo local, không cần kết nối internet.
+
+## Tính năng
+
+- Hiển thị ảnh gốc, bản đồ độ sâu màu và bản đồ độ sâu grayscale
+- Đánh dấu vùng khuôn mặt giả định (có thể tích hợp bộ phát hiện khuôn mặt thực tế)
+- Phân tích và hiển thị các thông số liveness dựa trên thông tin độ sâu
+- Hiển thị kết quả "LIVE FACE" hoặc "FAKE FACE" dựa trên ngưỡng đã cài đặt
+
+## Phím tắt (khi chạy webcam)
+
+- `q` - Thoát chương trình
+- `t` - Hiển thị các ngưỡng hiện tại trong console
+- `+` - Tăng ngưỡng variance (tăng độ nhạy phát hiện fake)
+- `-` - Giảm ngưỡng variance (giảm độ nhạy phát hiện fake)
+
+## Tùy chỉnh
+
+- Thay đổi biến `use_webcam = False` trong script để sử dụng ảnh tĩnh thay vì webcam
+- Điều chỉnh đường dẫn ảnh test tại biến `img_path`
+- Đặt `set_custom_thresholds = True` và điều chỉnh giá trị trong phương thức `depth_manager.set_thresholds()` để thay đổi các ngưỡng mặc định
+
+## Các thông số depth được sử dụng
+
+Script sẽ hiển thị các thông số độ sâu như:
+- Variance (độ biến thiên độ sâu)
+- Mean (độ sâu trung bình) 
+- Median (giá trị độ sâu trung vị)
+- Min/Max (giá trị độ sâu nhỏ nhất/lớn nhất)
+- Depth Range (phạm vi độ sâu)
+
+## Tiêu chí đánh giá liveness
+
+Một khuôn mặt được coi là "LIVE" khi thỏa mãn tất cả các điều kiện sau:
+- Variance > depth_variance_threshold (mặc định: 5000.0)
+- Depth Range > depth_range_threshold (mặc định: 30.0)
+- Min Depth > min_depth_threshold (mặc định: 50.0)
+- Max Depth < max_depth_threshold (mặc định: 200.0)
+
+## Các loại mô hình hỗ trợ
+
+1. **MidasSmall**: Tải mô hình trực tiếp từ torch hub (cần kết nối internet)
+2. **CustomFile**: Sử dụng file `.pt` đã lưu chỉ chứa state_dict của mô hình
+3. **FullModel**: Sử dụng mô hình đầy đủ đã lưu (hoạt động hoàn toàn offline)
+
+Các thông số này được sử dụng để đánh giá tính chân thực của khuôn mặt. 

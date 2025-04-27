@@ -3,10 +3,13 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout,
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QImage, QPixmap
 import cv2
+import os
+import time
+import numpy as np
+import threading
 
 from src.core.zensys_factory import get_default_instance
 from utils.config_utils import config
-import os
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -14,8 +17,18 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Face Recognition & Depth Estimation with RFID")
         self.setMinimumSize(1280, 720)
         
+        # Thêm biến cache cho hình ảnh khuôn mặt
+        self.cached_face_crop = None
+        self.cached_face_image = None  # Thêm cache cho numpy array hình ảnh
+        
+        # Lock cho các hoạt động đồng bộ
+        self.image_lock = threading.Lock()
+        
         # Initialize face recognition system using the default instance
         self.face_system = get_default_instance()
+        
+        # Register UI callback
+        self.face_system.set_ui_callback(self.on_system_callback)
         
         # Create main widget with no margins
         main_widget = QWidget()
@@ -128,9 +141,18 @@ class MainWindow(QMainWindow):
             # Lưu frame hiện tại vào face_system để sử dụng cho face cropping
             self.face_system._last_frame = frame.copy()
             
-            # Process depth estimation 
-            depth_result = self.face_system.depth_predictor.predict_depth(frame)
-            depth_map = depth_result['colored_depth']
+            # Process depth estimation - chỉ cập nhật nếu không trong trạng thái paused
+            if not hasattr(self.face_system, 'depth_display_paused') or not self.face_system.depth_display_paused:
+                depth_result = self.face_system.depth_predictor.predict_depth(frame)
+                depth_map = depth_result['colored_depth']
+            else:
+                # Nếu đang tạm dừng, sử dụng depth map đã lưu
+                if hasattr(self.face_system, 'last_depth_result') and self.face_system.last_depth_result:
+                    depth_map = self.face_system.last_depth_result.get('colored_depth')
+                else:
+                    depth_result = self.face_system.depth_predictor.predict_depth(frame)
+                    depth_map = depth_result['colored_depth']
+                    self.face_system.last_depth_result = depth_result
             
             # Thực hiện face detection - ZenFace.get() đã được tối ưu để chỉ trả về khuôn mặt lớn nhất
             faces = self.face_system.face_analyzer.get(display_frame)
@@ -143,100 +165,96 @@ class MainWindow(QMainWindow):
                 x1, y1, x2, y2 = [int(b) for b in bbox]
                 cv2.rectangle(display_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 
-                # Xử lý depth map cho anti-spoofing
-                depth_map_raw = cv2.cvtColor(depth_map, cv2.COLOR_BGR2GRAY) 
-                anti_spoof_result = self.face_system.process_depth_anti_spoofing(
-                    depth_map_raw, face)
-                
-                # Hiển thị kết quả anti-spoofing
-                if anti_spoof_result is not None:
-                    result_text = anti_spoof_result["detection_result"].upper()
-                    color = (0, 255, 0) if result_text == "LIVE" else (0, 0, 255)
+                # Xử lý depth map cho anti-spoofing chỉ khi không trong trạng thái paused
+                if not hasattr(self.face_system, 'depth_display_paused') or not self.face_system.depth_display_paused:
+                    depth_map_raw = cv2.cvtColor(depth_map, cv2.COLOR_BGR2GRAY) 
+                    anti_spoof_result = self.face_system.process_depth_anti_spoofing(
+                        depth_map_raw, face)
                     
-                    # Hiển thị trạng thái của tính năng anti-spoofing
-                    if self.face_system.face_anti.enable:
-                        status_text = f"Face: {result_text}"
-                    else:
-                        status_text = "Face Anti-Spoofing: DISABLED"
+                    # Hiển thị kết quả anti-spoofing
+                    if anti_spoof_result is not None:
+                        result_text = anti_spoof_result["detection_result"].upper()
+                        color = (0, 255, 0) if result_text == "LIVE" else (0, 0, 255)
                         
-                    cv2.putText(display_frame, status_text, (x1, y2+25), 
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
-                    
-                    # Hiển thị giá trị variance và mean_gradient với màu khác
-                    variance_text = f"Variance: {anti_spoof_result['depth_variance']:.2f}"
-                    mean_grad_text = f"Mean Gradient: {anti_spoof_result['mean_gradient']:.2f}"
-                    
-                    # Sử dụng màu cam cho variance
-                    cv2.putText(display_frame, variance_text, (x1, y2+50), 
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 165, 255), 2)
-                    
-                    # Sử dụng màu tím cho mean_gradient
-                    cv2.putText(display_frame, mean_grad_text, (x1, y2+75), 
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2)
-                    
-                    # Hiển thị min/max depth
-                    min_depth_text = f"Min Depth: {anti_spoof_result['min_depth']:.2f}"
-                    max_depth_text = f"Max Depth: {anti_spoof_result['max_depth']:.2f}"
-                    depth_range_text = f"Depth Range: {anti_spoof_result['depth_range']:.2f}"
-                    
-                    # Sử dụng màu xanh lá cho min depth
-                    cv2.putText(display_frame, min_depth_text, (x1, y2+100), 
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-                    
-                    # Sử dụng màu đỏ cho max depth
-                    cv2.putText(display_frame, max_depth_text, (x1, y2+125), 
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-                    
-                    # Sử dụng màu vàng cho depth range
-                    cv2.putText(display_frame, depth_range_text, (x1, y2+150), 
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
-                    
-                    # Hiển thị giá trị ngưỡng
-                    thresh_var = f"Var Thresh: {self.face_system.face_anti.var_thresh:.2f}"
-                    thresh_grad = f"Grad Thresh: {self.face_system.face_anti.grad_thresh:.2f}"
-                    thresh_range = f"Range Thresh: {self.face_system.face_anti.depth_range_thresh:.2f}"
-                    thresh_min = f"Min Thresh: {self.face_system.face_anti.min_depth_thresh:.2f}"
-                    thresh_max = f"Max Thresh: {self.face_system.face_anti.max_depth_thresh:.2f}"
-                    
-                    # Hiển thị thông tin về ngưỡng ở bên phải ảnh
-                    right_x = x2 + 10
-                    cv2.putText(display_frame, thresh_var, (right_x, y1+25), 
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
-                    cv2.putText(display_frame, thresh_grad, (right_x, y1+50), 
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
-                    cv2.putText(display_frame, thresh_range, (right_x, y1+75), 
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
-                    cv2.putText(display_frame, thresh_min, (right_x, y1+100), 
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
-                    cv2.putText(display_frame, thresh_max, (right_x, y1+125), 
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
-                    
-                    # Hiển thị phương pháp chuẩn hóa
-                    norm_method = self.face_system.face_anti.normalize_method
-                    cv2.putText(display_frame, f"Normalize: {norm_method}", (right_x, y1+150), 
-                              cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
-                    
-                    # Hiển thị lý do phát hiện spoofing nếu kết quả là spoofing
-                    if result_text == "SPOOF" and "criteria_status" in anti_spoof_result:
-                        criteria = anti_spoof_result["criteria_status"]
-                        failed_criteria = [key.replace("_pass", "") for key, value in criteria.items() if not value]
+                        # Hiển thị trạng thái của tính năng anti-spoofing
+                        if self.face_system.face_anti.enable:
+                            status_text = f"Face: {result_text}"
+                        else:
+                            status_text = "Face Anti-Spoofing: DISABLED"
+                            
+                        cv2.putText(display_frame, status_text, (x1, y2+25), 
+                                  cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
                         
-                        if failed_criteria:
-                            fail_text = f"Failed: {', '.join(failed_criteria)}"
-                            cv2.putText(display_frame, fail_text, (x1, y2+175), 
-                                      cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-                    
-                    # Hiển thị depth face crop
-                    if self.face_system.depth_face_crop is not None:
-                        depth_face = self.face_system.depth_face_crop
-                        if depth_face.size > 0:
-                            depth_face_rgb = cv2.cvtColor(depth_face, cv2.COLOR_BGR2RGB)
-                            depth_face_h, depth_face_w, depth_face_ch = depth_face_rgb.shape
-                            depth_face_bytes_per_line = depth_face_ch * depth_face_w
-                            depth_face_qt_image = QImage(depth_face_rgb.data, depth_face_w, depth_face_h, 
-                                                  depth_face_bytes_per_line, QImage.Format_RGB888)
-                            self.depth_face_label.setPixmap(QPixmap.fromImage(depth_face_qt_image).scaled(
-                                self.depth_face_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                        # Hiển thị giá trị variance và mean_gradient với màu khác
+                        variance_text = f"Variance: {anti_spoof_result['depth_variance']:.2f}"
+                        mean_grad_text = f"Mean Gradient: {anti_spoof_result['mean_gradient']:.2f}"
+                        
+                        # Sử dụng màu cam cho variance
+                        cv2.putText(display_frame, variance_text, (x1, y2+50), 
+                                  cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 165, 255), 2)
+                        
+                        # Sử dụng màu tím cho mean_gradient
+                        cv2.putText(display_frame, mean_grad_text, (x1, y2+75), 
+                                  cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 255), 2)
+                        
+                        # Hiển thị min/max depth
+                        min_depth_text = f"Min Depth: {anti_spoof_result['min_depth']:.2f}"
+                        max_depth_text = f"Max Depth: {anti_spoof_result['max_depth']:.2f}"
+                        depth_range_text = f"Depth Range: {anti_spoof_result['depth_range']:.2f}"
+                        
+                        # Sử dụng màu xanh lá cho min depth
+                        cv2.putText(display_frame, min_depth_text, (x1, y2+100), 
+                                  cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                        
+                        # Sử dụng màu đỏ cho max depth
+                        cv2.putText(display_frame, max_depth_text, (x1, y2+125), 
+                                  cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                        
+                        # Sử dụng màu vàng cho depth range
+                        cv2.putText(display_frame, depth_range_text, (x1, y2+150), 
+                                  cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+                        
+                        # Hiển thị giá trị ngưỡng
+                        thresh_var = f"Var Thresh: {self.face_system.face_anti.var_thresh:.2f}"
+                        thresh_grad = f"Grad Thresh: {self.face_system.face_anti.grad_thresh:.2f}"
+                        thresh_range = f"Range Thresh: {self.face_system.face_anti.depth_range_thresh:.2f}"
+                        thresh_min = f"Min Thresh: {self.face_system.face_anti.min_depth_thresh:.2f}"
+                        thresh_max = f"Max Thresh: {self.face_system.face_anti.max_depth_thresh:.2f}"
+                        
+                        # Hiển thị thông tin về ngưỡng ở bên phải ảnh
+                        right_x = x2 + 10
+                        cv2.putText(display_frame, thresh_var, (right_x, y1+25), 
+                                  cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                        cv2.putText(display_frame, thresh_grad, (right_x, y1+50), 
+                                  cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                        cv2.putText(display_frame, thresh_range, (right_x, y1+75), 
+                                  cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                        cv2.putText(display_frame, thresh_min, (right_x, y1+100), 
+                                  cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                        cv2.putText(display_frame, thresh_max, (right_x, y1+125), 
+                                  cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                        
+                        # Hiển thị phương pháp chuẩn hóa
+                        norm_method = self.face_system.face_anti.normalize_method
+                        cv2.putText(display_frame, f"Normalize: {norm_method}", (right_x, y1+150), 
+                                  cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                        
+                        # Hiển thị lý do phát hiện spoofing nếu kết quả là spoofing
+                        if result_text == "SPOOF" and "criteria_status" in anti_spoof_result:
+                            criteria = anti_spoof_result["criteria_status"]
+                            failed_criteria = [key.replace("_pass", "") for key, value in criteria.items() if not value]
+                            
+                            if failed_criteria:
+                                fail_text = f"Failed: {', '.join(failed_criteria)}"
+                                cv2.putText(display_frame, fail_text, (x1, y2+175), 
+                                          cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+                        
+                        # Hiển thị depth face crop
+                        if self.face_system.depth_face_crop is not None:
+                            depth_face = self.face_system.depth_face_crop
+                            if depth_face.size > 0:
+                                # Trực tiếp hiển thị depth face từ numpy array
+                                self.display_image_from_array(depth_face, self.depth_face_label)
             
             # Xử lý RFID và face recognition khi có RFID đã quét
             if self.face_system.current_rfid and faces:
@@ -254,6 +272,16 @@ class MainWindow(QMainWindow):
                     # Xử lý xác thực với khuôn mặt lớn nhất
                     verification_result = self.face_system.process_verification(face)
                     
+                    # Lấy và lưu hình ảnh khuôn mặt trực tiếp từ kết quả xác thực nếu có
+                    if verification_result and "face_crop" in verification_result:
+                        with self.image_lock:
+                            self.cached_face_image = verification_result["face_crop"].copy()
+                    elif verification_result and "face_crop_path" in verification_result:
+                        self.cached_face_crop_path = verification_result["face_crop_path"]
+                        # Nếu chỉ có đường dẫn, tải hình ảnh vào bộ nhớ trong một luồng riêng
+                        threading.Thread(target=self.load_image_from_path_async, 
+                                      args=(verification_result["face_crop_path"],)).start()
+            
                     if verification_result:
                         # Hiển thị kết quả xác thực
                         match = verification_result["match"]
@@ -283,20 +311,33 @@ class MainWindow(QMainWindow):
                         self.verification_label.setText(result_text)
                         self.verification_label.setStyleSheet(f"font-size: 16px; font-weight: bold; {color}")
                         
-                        # Bắt đầu đếm ngược 3 giây để reset và chờ quẹt RFID tiếp theo
-                        self.reset_timer.start(3000)  # 3 seconds
+                        # Bắt đầu đếm ngược để reset và chờ quẹt RFID tiếp theo
+                        self.reset_timer.start(10000)  # 10 giây
                 
-                # Hiển thị ảnh khuôn mặt đã crop và align (nếu có)
-                if self.face_system.current_face_crop is not None:
-                    face_crop = self.face_system.current_face_crop
-                    if face_crop.size > 0:
-                        face_crop_rgb = cv2.cvtColor(face_crop, cv2.COLOR_BGR2RGB)
-                        face_crop_h, face_crop_w, face_crop_ch = face_crop_rgb.shape
-                        face_crop_bytes_per_line = face_crop_ch * face_crop_w
-                        face_crop_qt_image = QImage(face_crop_rgb.data, face_crop_w, face_crop_h, 
-                                              face_crop_bytes_per_line, QImage.Format_RGB888)
-                        self.face_crop_label.setPixmap(QPixmap.fromImage(face_crop_qt_image).scaled(
-                            self.face_crop_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+                # Hiển thị ảnh khuôn mặt, ưu tiên sử dụng dữ liệu ảnh trực tiếp nếu có
+                with self.image_lock:
+                    if hasattr(self.face_system, "current_face_image") and self.face_system.current_face_image is not None:
+                        # Hiển thị trực tiếp từ numpy array
+                        self.display_image_from_array(self.face_system.current_face_image.copy(), self.face_crop_label)
+                    elif hasattr(self, "cached_face_image") and self.cached_face_image is not None:
+                        # Hiển thị từ cached numpy array
+                        self.display_image_from_array(self.cached_face_image.copy(), self.face_crop_label)
+                    else:
+                        # Fallback sang phương thức cũ sử dụng đường dẫn ảnh
+                        face_crop_path_to_display = None
+                        if hasattr(self.face_system, "current_face_crop_path") and self.face_system.current_face_crop_path:
+                            face_crop_path_to_display = self.face_system.current_face_crop_path
+                        elif hasattr(self, "cached_face_crop_path") and self.cached_face_crop_path:
+                            face_crop_path_to_display = self.cached_face_crop_path
+                        
+                        if face_crop_path_to_display:
+                            if os.path.exists(face_crop_path_to_display):
+                                # Vẫn sử dụng phương thức cũ nhưng đã được tối ưu hóa
+                                self.display_image_from_path(face_crop_path_to_display, self.face_crop_label)
+                            else:
+                                self.face_crop_label.setText("Image file not found")
+                        else:
+                            self.face_crop_label.setText("No face image")
             
             # Hiển thị frame đã xử lý detection
             face_rgb = cv2.cvtColor(display_frame, cv2.COLOR_BGR2RGB)
@@ -315,13 +356,38 @@ class MainWindow(QMainWindow):
             self.depth_label.setPixmap(QPixmap.fromImage(depth_qt_image).scaled(
                 self.depth_label.width(), self.depth_label.height(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
     
+    def load_image_from_path_async(self, image_path):
+        """
+        Tải hình ảnh từ đường dẫn vào bộ nhớ trong một luồng riêng
+        """
+        if not image_path or not os.path.exists(image_path):
+            return
+            
+        try:
+            # Đọc hình ảnh từ file
+            image = cv2.imread(image_path)
+            if image is not None and image.size > 0:
+                # Lưu vào cache
+                with self.image_lock:
+                    self.cached_face_image = image.copy()
+        except Exception as e:
+            print(f"Error loading image asynchronously: {e}")
+
     def reset_verification(self):
-        """Reset verification after timer expires (3 seconds)"""
+        """Reset verification after timer expires"""
+        # Lưu bản sao đường dẫn ảnh và dữ liệu ảnh vào cache trước khi reset
+        if hasattr(self.face_system, "current_face_crop_path") and self.face_system.current_face_crop_path:
+            self.cached_face_crop_path = self.face_system.current_face_crop_path
+        
+        with self.image_lock:
+            if hasattr(self.face_system, "current_face_image") and self.face_system.current_face_image is not None:
+                self.cached_face_image = self.face_system.current_face_image.copy()
+        
+        # Reset trạng thái RFID trong hệ thống
         self.face_system.current_rfid = None
-        self.face_system.current_face_crop = None
+        
+        # Reset các thông tin kết quả xác thực
         self.face_system.verification_result = None
-        self.face_system.depth_face_crop = None
-        self.face_system.anti_spoofing_result = None
         
         # Reset các giá trị thống kê
         if hasattr(self.face_system, 'depth_variance'):
@@ -337,11 +403,22 @@ class MainWindow(QMainWindow):
         if hasattr(self.face_system, 'criteria_status'):
             self.face_system.criteria_status = None
         
+        # Cập nhật giao diện người dùng
         self.rfid_label.setText("Waiting for RFID scan...")
         self.verification_label.setText("No verification yet")
         self.verification_label.setStyleSheet("font-size: 16px; font-weight: bold;")
-        self.face_crop_label.clear()
+        
+        # Reset depth face image label
         self.depth_face_label.clear()
+        self.depth_face_label.setText("")
+        
+        # Reset face crop label
+        self.face_crop_label.clear()
+        self.face_crop_label.setText("")
+        
+        # Bật lại hiển thị depth map trong ZenSys
+        if hasattr(self.face_system, 'depth_display_paused'):
+            self.face_system.depth_display_paused = False
     
     def keyPressEvent(self, event):
         # Reset xác thực khi nhấn phím R
@@ -362,4 +439,106 @@ class MainWindow(QMainWindow):
     def showEvent(self, event):
         super().showEvent(event)
         # Ensure no widget has focus when window is shown
-        self.clearFocus() 
+        self.clearFocus()
+
+    def display_image_from_array(self, image_array, label, keep_aspect_ratio=True):
+        """
+        Hiển thị ảnh trực tiếp từ numpy array lên QLabel
+        
+        Args:
+            image_array: Numpy array hình ảnh (BGR format từ OpenCV)
+            label: QLabel để hiển thị ảnh
+            keep_aspect_ratio: Giữ tỉ lệ khung hình
+        """
+        if image_array is None or image_array.size == 0:
+            label.setText("No image available")
+            return False
+        
+        try:
+            # Chuyển từ BGR sang RGB
+            rgb_image = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
+            h, w, ch = rgb_image.shape
+            bytes_per_line = ch * w
+            
+            # Tạo QImage và QPixmap
+            qt_image = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
+            pixmap = QPixmap.fromImage(qt_image)
+            
+            # Hiển thị ảnh lên label
+            if keep_aspect_ratio:
+                label.setPixmap(pixmap.scaled(
+                    label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation))
+            else:
+                label.setPixmap(pixmap.scaled(
+                    label.size(), Qt.IgnoreAspectRatio, Qt.SmoothTransformation))
+            
+            return True
+        except Exception as e:
+            label.setText(f"Error displaying image")
+            return False
+
+    def display_image_from_path(self, image_path, label, keep_aspect_ratio=True):
+        """
+        Hiển thị ảnh từ đường dẫn lên QLabel
+        
+        Args:
+            image_path: Đường dẫn đến file ảnh
+            label: QLabel để hiển thị ảnh
+            keep_aspect_ratio: Giữ tỉ lệ khung hình
+        """
+        if not image_path or not os.path.exists(image_path):
+            label.setText("No image available")
+            return False
+        
+        try:
+            # Đọc ảnh từ file
+            image = cv2.imread(image_path)
+            if image is None or image.size == 0:
+                # Đọc thất bại, thử đọc bằng cách khác
+                try:
+                    with open(image_path, 'rb') as f:
+                        image_array = np.asarray(bytearray(f.read()), dtype=np.uint8)
+                        image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
+                except Exception:
+                    pass
+                
+                if image is None:
+                    label.setText("Failed to load image")
+                    return False
+            
+            # Sử dụng phương thức hiển thị ảnh từ array
+            return self.display_image_from_array(image, label, keep_aspect_ratio)
+        except Exception as e:
+            label.setText(f"Error loading image")
+            return False
+
+    def on_system_callback(self, action, data):
+        """Xử lý callback từ hệ thống ZenSys"""
+        if action == "reset_verification":
+            self.reset_verification()
+        elif action == "rfid_updated":
+            self.rfid_label.setText(f"ID: {data.get('rfid_id', '')}")
+        elif action == "verification_result":
+            # Xử lý kết quả xác thực
+            result = data.get("result", {})
+            match = result.get("match", False)
+            face_name = data.get("face_name", "Unknown")
+            
+            # Kiểm tra nếu có dữ liệu ảnh trực tiếp từ callback
+            if "face_image" in data:
+                with self.image_lock:
+                    self.cached_face_image = data["face_image"].copy()
+                    if hasattr(self.face_system, "current_face_image"):
+                        self.face_system.current_face_image = data["face_image"].copy()
+                # Hiển thị ảnh trực tiếp
+                self.display_image_from_array(data["face_image"].copy(), self.face_crop_label)
+            
+            if match:
+                result_text = f"AUTHENTICATION SUCCESSFUL\nName: {face_name}"
+                color = "color: green;"
+            else:
+                result_text = f"AUTHENTICATION FAILED"
+                color = "color: red;"
+            
+            self.verification_label.setText(result_text)
+            self.verification_label.setStyleSheet(f"font-size: 16px; font-weight: bold; {color}") 

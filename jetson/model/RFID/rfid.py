@@ -45,7 +45,6 @@ class RFID:
                 return {}
         except Exception as e:
             print(f"Error loading RFID database: {e}")
-            return {"0005563074": "thanhnpst1"}  # Fallback database
     
     def _save_rfid_database(self):
         """Lưu database RFID vào file JSON"""
