@@ -119,6 +119,7 @@ interface DataTableProps {
   classPageList?: ClassPageList[];
   subjectList?: SubjectList[];
   availableAcademicYears?: string[];
+  onShowMyAttendance?: () => void;
   onAcademicYearChange?: (year: string) => void;
   classYears?: Array<{ className: string; academicYear: string }>;
   isRoleParent?: boolean;
@@ -150,6 +151,7 @@ export default function DataTable({
   pagination,
   onPageChange,
   onRowsPerPageChange,
+  onShowMyAttendance,
   isClassPage,
   classPageList,
   setFiltersClassPage,
@@ -415,10 +417,11 @@ export default function DataTable({
         className="dataTable-Table"
       >
         <TableToolBar
+          onShowMyAttendance={onShowMyAttendance}
           classYears={classYears}
           isUserManagement={isUserManagement}
           numSelected={state.selected.length}
-          tableTitle={tableTitle}
+          // tableTitle={tableTitle}
           isAdmin={isAdmin}
           isClassManagement={isClassManagement}
           isAttendance={isAttendance}
@@ -611,6 +614,13 @@ export default function DataTable({
             page={state.page}
             onPageChange={handler.handleChangePage}
             onRowsPerPageChange={handler.handleChangeRowsPerPage}
+            labelRowsPerPage="Rows per page:"
+            SelectProps={{
+              sx: {
+                minWidth: '64px', 
+                paddingRight: '15px', 
+              }
+            }}
           />
         )}
       </Paper>

@@ -33,7 +33,7 @@ import {
 interface EnhancedTableToolbarProps {
   isTeacher?: boolean;
   numSelected: number;
-  tableTitle: string;
+  tableTitle?: string;
   isAdmin?: boolean;
   isClassManagement?: boolean;
   isAttendance?: boolean;

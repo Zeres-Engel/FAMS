@@ -69,7 +69,11 @@ function useAttendancePageHook() {
       );
     }
   }, [filters, dispatch,userData]);
-
+  const onShowMyAttendance = ()=>{
+    dispatch(
+      fetchAttendanceByUser({ userId: userData?.userId || "" })
+    );
+  }
   const headCellsData: AttendanceHeadCell[] = [
     {
       id: "id",
@@ -143,9 +147,9 @@ function useAttendancePageHook() {
     isCheckBox,
     role,
     classAttendanceList,
-    attendanceFormattedData
+    attendanceFormattedData,
   };
-  const handler = { setFiltersAttendancePage };
+  const handler = { setFiltersAttendancePage,onShowMyAttendance };
   return { state, handler };
 }
 export default useAttendancePageHook;

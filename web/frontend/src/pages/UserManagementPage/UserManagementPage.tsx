@@ -163,7 +163,7 @@ function UserManagementPage(): React.JSX.Element {
             </Button>
           </Box>
           
-          <Box mb={4}>
+          <Box mb={4} className="userManagementPageTable">
             <DataTable
               headCellsData={state.headCellsData}
               tableMainData={state.userMainData}
