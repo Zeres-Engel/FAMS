@@ -17,3 +17,10 @@ class Functions:
         path = os.path.join(app_path, folder)
         image = os.path.normpath(os.path.join(path, icon_name))
         return image
+    
+    def set_png_image(icon_name):
+        app_path = os.path.abspath(os.getcwd())
+        folder = "./gui/images/images/"
+        path = os.path.join(app_path, folder)
+        image = os.path.normpath(os.path.join(path, icon_name))
+        return image

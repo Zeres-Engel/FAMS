@@ -5,5 +5,33 @@
     "RFID_ID": "0005563074",
     "registered_name": "thanhnpst1",
     "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-04-28 03:22:01",
+    "RFID_ID": "ctrlv",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-04-28 03:27:32",
+    "RFID_ID": "ctrlv",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-04-28 03:40:50",
+    "RFID_ID": "backspacebackspacebackspace2",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-04-28 03:44:23",
+    "RFID_ID": "ctrl",
+    "registered_name": "Unknown",
+    "deviceId": 1
   }
 ]

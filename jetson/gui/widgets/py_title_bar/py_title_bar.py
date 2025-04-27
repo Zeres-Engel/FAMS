@@ -1,5 +1,5 @@
 from PySide6.QtCore import QSize, Signal
-from PySide6.QtGui import QCursor, Qt
+from PySide6.QtGui import QCursor, Qt, QPixmap
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame
 from PySide6.QtSvgWidgets import QSvgWidget
 from gui.core.functions import *
@@ -15,8 +15,8 @@ class PyTitleBar(QWidget):
         self,
         parent,
         app_parent,
-        logo_image = "logo_top_100x22.svg",
-        logo_width = 100,
+        logo_image = "logo_top_80x22.svg",
+        logo_width = 80,
         buttons = None,
         dark_one = "#1b1e23",
         bg_color = "#343b48",
@@ -169,9 +169,19 @@ class PyTitleBar(QWidget):
         self.top_logo = QLabel()
         self.top_logo_layout = QVBoxLayout(self.top_logo)
         self.top_logo_layout.setContentsMargins(0,0,0,0)
-        self.logo_svg = QSvgWidget()
-        self.logo_svg.load(Functions.set_svg_image(self._logo_image))
-        self.top_logo_layout.addWidget(self.logo_svg, Qt.AlignCenter, Qt.AlignCenter)
+        
+        # Thay đổi SVG widget sang QLabel để hiển thị hình PNG
+        logo_path = os.path.join("gui", "images", "images", self._logo_image)
+        if os.path.exists(logo_path):
+            self.logo_pixmap = QPixmap(logo_path)
+            self.top_logo.setPixmap(self.logo_pixmap)
+            self.top_logo.setAlignment(Qt.AlignCenter)
+        else:
+            # Fallback to SVG if PNG not found
+            self.logo_svg = QSvgWidget()
+            self.logo_svg.load(Functions.set_svg_image(self._logo_image))
+            self.top_logo_layout.addWidget(self.logo_svg, Qt.AlignCenter, Qt.AlignCenter)
+        
         self.title_label = QLabel()
         self.title_label.setAlignment(Qt.AlignVCenter)
         self.title_label.setStyleSheet(f'font: {self._title_size}pt "{self._font_family}"')
