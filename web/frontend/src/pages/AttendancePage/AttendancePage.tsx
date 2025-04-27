@@ -25,6 +25,7 @@ function AttendanceManagementPage(): React.JSX.Element {
               isRoleParent={state.role ==="parent"}
               setFiltersAttendancePage={handler.setFiltersAttendancePage}
               classPageList={state.classAttendanceList}
+              onShowMyAttendance={handler.onShowMyAttendance}
             ></DataTable>
           </Grid>
         </Grid>

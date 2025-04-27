@@ -41,7 +41,8 @@ function useAttendancePageHook() {
       checkin: e.checkIn,
       status: e.status,
       checkinFace: e.checkInFace,
-      fullName: e.studentName
+      fullName: e.studentName,
+      note:e.note
     })
   );
   console.log(attendanceMainData);
@@ -69,7 +70,11 @@ function useAttendancePageHook() {
       );
     }
   }, [filters, dispatch,userData]);
-
+  const onShowMyAttendance = ()=>{
+    dispatch(
+      fetchAttendanceByUser({ userId: userData?.userId || "" })
+    );
+  }
   const headCellsData: AttendanceHeadCell[] = [
     {
       id: "id",
@@ -143,9 +148,9 @@ function useAttendancePageHook() {
     isCheckBox,
     role,
     classAttendanceList,
-    attendanceFormattedData
+    attendanceFormattedData,
   };
-  const handler = { setFiltersAttendancePage };
+  const handler = { setFiltersAttendancePage,onShowMyAttendance };
   return { state, handler };
 }
 export default useAttendancePageHook;
