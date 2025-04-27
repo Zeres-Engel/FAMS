@@ -20,6 +20,10 @@ const DeviceSchema = new mongoose.Schema({
     type: String,
     default: 'Jetson Nano'
   },
+  classroomId: {
+    type: Number,
+    ref: 'Classroom'
+  },
   location: {
     type: String
   },

@@ -10,6 +10,7 @@ import { fetchClassesByUserId } from "../../store/slices/classByIdSlice";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
 import { getClassUsers } from "../../store/slices/classUserSlice";
+import { searchUsers } from "../../store/slices/userSlice";
 
 function useClassPageHook() {
   const dispatch = useAppDispatch();
@@ -25,19 +26,25 @@ function useClassPageHook() {
     homeroomTeacherId: item.homeroomTeacherId,
     className: `${item.className} - ${item.academicYear}`,
   }));
-  const classPageData = useSelector((state:RootState) => state.classUser.students)
+  const classPageData = useSelector(
+    (state: RootState) => state.classUser.students
+  );
   const [filters, setFiltersClassPage] = useState<number>(0);
   useEffect(() => {
-    if (userData && classList.length === 0) {
+    if (userData && classList.length === 0 && role !== "parent") {
       dispatch(fetchClassesByUserId(userData?.userId));
     }
-  }, [dispatch, userData, classList]);
+  }, [dispatch, userData, classList,role]);
   useEffect(() => {
     if (filters) {
       dispatch(getClassUsers(filters));
     }
   }, [filters, dispatch]);
-
+  useEffect(()=>{
+    if(role === "parent"){
+      dispatch(searchUsers({search:userData?.userId}))
+    }
+  },[dispatch, role, userData?.userId])
   const [userMainData, setUserMainData] = useState<ClassStudent[]>([]);
   const headCellsData: ClassStudentHeadCell[] = [
     {
@@ -88,7 +95,7 @@ function useClassPageHook() {
     classOptions,
     classPageList,
     classPageData,
-    hoomroomTeacherList
+    hoomroomTeacherList,
   };
   const handler = { setFiltersClassPage };
 

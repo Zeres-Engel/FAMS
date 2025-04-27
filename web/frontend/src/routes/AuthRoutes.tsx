@@ -27,7 +27,7 @@ export default function AuthWrapper({ element, mode }: AuthWrapperProps) {
       <Navigate
         to="/login"
         replace
-        state={{ from: location.pathname, message: "Bạn cần đăng nhập để tiếp tục" }}
+        state={{ from: location.pathname, message: "You need to login again to continue" }}
       />
     );
   }
@@ -39,7 +39,7 @@ export default function AuthWrapper({ element, mode }: AuthWrapperProps) {
       <Navigate
         to="/login"
         replace
-        state={{ from: location.pathname, message: "Bạn cần đăng nhập để tiếp tục" }}
+        state={{ from: location.pathname, message: "You need to login again to continue" }}
       />
     );
   }

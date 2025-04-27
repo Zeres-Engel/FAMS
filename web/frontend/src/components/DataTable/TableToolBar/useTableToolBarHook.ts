@@ -26,6 +26,8 @@ function useTableToolBarHook({
   isRoleStudent,
   isNotifyPage,
   isRFIDPage,
+  isRoleParent,
+  classYears
 }: {
   isAttendance: boolean;
   isClassManagement: boolean;
@@ -38,10 +40,12 @@ function useTableToolBarHook({
     React.SetStateAction<AttendanceSearchParam>
   >;
   isClassArrangement?: boolean;
+  classYears?: Array<{className: string, academicYear: string}>
   isNewSemester?: boolean;
   isTeacherView?: boolean;
   defaultClass?: string;
   isRoleStudent?: boolean;
+  isRoleParent?:boolean;
   isNotifyPage?: boolean;
   isRFIDPage?: boolean;
 }) {
@@ -83,8 +87,30 @@ function useTableToolBarHook({
   const handleCallAPIClass = () => {
     dispatch(fetchClassesByUserId(filters.userID));
   };  
-  // Debug
-  console.log("TableToolBarHook initialized with roles:", filters.roles);
+  const [academicYearsForClass, setAcademicYearsForClass] = useState<string[]>([]);
+  const [classNamesFiltered, setClassNamesFiltered] = useState<string[]>([]);
+  useEffect(() => {
+    if(classYears && isClassManagement){
+      const uniqueAcademicYears = Array.from(
+        new Set((classYears ?? []).map((item) => item.academicYear))
+      );
+      const uniqueClassNames = Array.from( 
+        new Set((classYears ?? []).map((item) => item.className))
+      );
+      setAcademicYearsForClass(uniqueAcademicYears);
+      setClassNamesFiltered(uniqueClassNames);
+    }
+  }, [classYears,isClassManagement]);
+
+  const filterClassNamesByYear = (year: string) => {
+    const filteredClassNames = (classYears ?? [])
+      .filter((item) => item.academicYear === year)
+      .map((item) => item.className);
+
+    const uniqueClassNames = Array.from(new Set(filteredClassNames));
+
+    setClassNamesFiltered(uniqueClassNames);
+  };
 
   const handleFilterChange = (
     key: keyof typeof filters,
@@ -131,6 +157,22 @@ function useTableToolBarHook({
       };
       console.log("Notify Filter submitted:", notifyFilters);
     }
+    if (isRoleStudent && isRoleParent) {
+      const attendanceFilters: AttendanceSearchParam = {
+        userId: filters.userID,
+        subjectId: '',
+        classId: '',
+        teacherName: "",
+        status: filters.status,
+        dateFrom:filters.dateFrom,
+        dateTo:filters.dateTo,
+        slotNumber: `${filters.slotNumber}`,
+      };
+      if (setFiltersAttendancePage) {
+        setFiltersAttendancePage(attendanceFilters);
+      }
+      return;
+    }
     if (isRoleStudent) {
       const attendanceFilters: AttendanceSearchParam = {
         userId: '',
@@ -160,7 +202,7 @@ function useTableToolBarHook({
         teacherName: "",
         status: filters.status,
         date: filters.date,
-        slotNumber: '',
+        slotNumber: `${filters.slotID}`,
       };
       if (setFiltersAttendancePage) {
         setFiltersAttendancePage(attendanceFilters);
@@ -247,14 +289,15 @@ function useTableToolBarHook({
   // };
 
   return {
-    state: { filters, classAttendanceList, showTeacherAttendance },
+    state: { filters, classAttendanceList, showTeacherAttendance,academicYearsForClass,classNamesFiltered },
     handler: {
       handleFilterChange,
       onSubmit: handleFilterSubmit,
       getAcademicYears,
       handleCallAPIClass,
       setShowTeacherAttendance,
-      getYears
+      getYears,
+      filterClassNamesByYear
     },
   };
 }

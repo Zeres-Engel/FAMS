@@ -10,10 +10,10 @@ const FaceVectorSchema = new mongoose.Schema({
     type: Number,
     required: true,
     unique: true,
-    auto: true
+    default: () => Math.floor(Date.now() / 1000)
   },
   userId: {
-    type: Number,
+    type: String,
     required: true,
     ref: 'UserAccount'
   },
@@ -21,13 +21,26 @@ const FaceVectorSchema = new mongoose.Schema({
     type: Number,
     ref: 'ModelVersion'
   },
+  vectorType: {
+    type: String,
+    enum: ['front', 'up', 'down', 'left', 'right'],
+    required: true
+  },
   vector: {
     type: mongoose.Schema.Types.Mixed,
     required: true
   },
+  score: {
+    type: Number,
+    default: 0
+  },
   capturedDate: {
     type: Date,
     default: Date.now
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, {
   timestamps: true,
@@ -35,6 +48,9 @@ const FaceVectorSchema = new mongoose.Schema({
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
+
+// Create compound index for unique face vector per user and type
+FaceVectorSchema.index({ userId: 1, vectorType: 1 }, { unique: true });
 
 // Virtual for getting user info
 FaceVectorSchema.virtual('user', {

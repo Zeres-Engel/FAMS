@@ -34,7 +34,8 @@ const ScheduleFormatSchema = new mongoose.Schema({
   timestamps: true,
   versionKey: false,
   toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  toObject: { virtuals: true },
+  collection: 'ScheduleFormat'
 });
 
 // Virtual for getting schedules using this slot
@@ -45,4 +46,4 @@ ScheduleFormatSchema.virtual('schedules', {
   justOne: false
 });
 
-module.exports = mongoose.model('ScheduleFormat', ScheduleFormatSchema, COLLECTIONS.SLOT); 
+module.exports = mongoose.model('ScheduleFormat', ScheduleFormatSchema); 
