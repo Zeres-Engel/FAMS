@@ -327,37 +327,6 @@ router.get('/:id', isAuthenticated, async (req, res) => {
 });
 
 /**
- * @route   PUT /api/attendance/:id
- * @desc    Update attendance log status
- * @access  Private
- */
-router.put('/:id', isAuthenticated, async (req, res) => {
-  try {
-    const { status, note, checkIn, checkInFace } = req.body;
-    
-    // Update attendance log
-    const updatedLog = await attendanceService.updateAttendanceLog(
-      req.params.id,
-      { status, note, checkIn, checkInFace }
-    );
-
-    res.status(200).json({
-      success: true,
-      message: 'Attendance log updated successfully',
-      data: updatedLog
-    });
-  } catch (error) {
-    console.error('Error updating attendance log:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while updating attendance log',
-      error: error.message,
-      code: 'ATTENDANCE_UPDATE_ERROR'
-    });
-  }
-});
-
-/**
  * @route   GET /api/attendance/class/:classId/date/:date/slot/:slotNumber
  * @desc    Get attendance logs for a specific class, date and slot
  * @access  Private
@@ -564,125 +533,56 @@ router.put('/class/:classId/date/:date/slot/:slotNumber', isAuthenticated, async
 });
 
 /**
- * @route   POST /api/attendance/check-in
- * @desc    Check-in for a schedule (create or update attendance log)
+ * @route   PUT /api/attendance/check-in
+ * @desc    Unified API for all attendance methods (teacher & Jetson Nano)
  * @access  Private
  */
-router.post('/check-in', isAuthenticated, async (req, res) => {
+router.put('/check-in', isAuthenticated, async (req, res) => {
   try {
-    const { userId, scheduleId, status, checkInFace } = req.body;
-    
-    // Validate request body
-    if (!userId || !scheduleId) {
-      return res.status(400).json({
-        success: false,
-        message: 'userId and scheduleId are required',
-        code: 'MISSING_REQUIRED_FIELDS'
-      });
-    }
-    
-    // Process check-in
-    const attendanceLog = await attendanceService.checkInAttendance({
+    const {
       userId,
       scheduleId,
+      deviceId,
       status,
-      checkInFace
-    });
+      checkIn,
+      checkInFace,
+      faceVectorList
+    } = req.body;
     
-    // Return success response
-    res.status(200).json({
-      success: true,
-      message: 'Check-in successful',
-      data: attendanceLog
-    });
-  } catch (error) {
-    console.error('Error processing check-in:', error);
-    
-    // Handle specific errors
-    if (error.message.includes('not found')) {
-      return res.status(404).json({
-        success: false,
-        message: error.message,
-        code: 'RESOURCE_NOT_FOUND'
-      });
-    }
-    
-    // General error
-    res.status(500).json({
-      success: false,
-      message: 'Server error while processing check-in',
-      error: error.message,
-      code: 'CHECK_IN_ERROR'
-    });
-  }
-});
-
-/**
- * @route   POST /api/attendance/jetson-check-in
- * @desc    Process check-in from Jetson Nano with facial recognition
- * @access  Private
- */
-router.post('/jetson-check-in', isAuthenticated, async (req, res) => {
-  try {
-    const { userId, rfidId, checkInTime, classroomId, checkInFace } = req.body;
-    
-    // Validate required fields
-    if (!userId || !rfidId || !checkInTime || !classroomId) {
+    // Validate userId là bắt buộc cho mọi phương thức check-in
+    if (!userId) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: userId, rfidId, checkInTime, and classroomId are required',
-        code: 'MISSING_REQUIRED_FIELDS'
+        message: 'userId is required',
+        code: 'MISSING_USER_ID'
       });
     }
     
-    // Log request details for debugging
-    console.log(`Processing Jetson check-in: User=${userId}, RFID=${rfidId}, Room=${classroomId}, Time=${checkInTime}`);
-    
-    // Process check-in using the service
-    const result = await attendanceService.processJetsonCheckIn({
+    // Gọi smartCheckIn để phân luồng xử lý dựa vào tham số đầu vào
+    const result = await attendanceService.smartCheckIn({
       userId,
-      rfidId,
-      checkInTime,
-      classroomId,
-      checkInFace
+      scheduleId,
+      deviceId,
+      status,
+      checkIn,
+      checkInFace,
+      faceVectorList
     });
     
-    // Return appropriate response based on result
-    if (result.success) {
-      return res.status(200).json(result);
-    } else {
-      // Determine appropriate status code based on error code
-      let statusCode = 500;
-      
-      switch (result.code) {
-        case 'MISSING_REQUIRED_FIELDS':
-        case 'INVALID_TIME_FORMAT':
-          statusCode = 400; // Bad Request
-          break;
-        case 'RFID_VERIFICATION_FAILED':
-        case 'USER_NOT_FOUND':
-          statusCode = 401; // Unauthorized
-          break;
-        case 'NO_SLOTS_FOUND':
-        case 'NO_APPLICABLE_SLOT':
-        case 'NO_SCHEDULE_FOUND':
-        case 'USER_NOT_SCHEDULED':
-          statusCode = 404; // Not Found
-          break;
-        default:
-          statusCode = 500; // Server Error
-      }
-      
-      return res.status(statusCode).json(result);
+    // Nếu có lỗi, trả về thông báo lỗi
+    if (!result.success) {
+      return res.status(400).json(result);
     }
-  } catch (error) {
-    console.error('Error processing Jetson check-in:', error);
     
+    // Trả về kết quả thành công
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('[ERROR] Error processing attendance check-in:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error while processing Jetson check-in',
+      message: 'Server error processing attendance check-in',
       error: error.message,
-      code: 'JETSON_CHECKIN_ERROR'
+      code: 'CHECKIN_ERROR'
     });
   }
 });

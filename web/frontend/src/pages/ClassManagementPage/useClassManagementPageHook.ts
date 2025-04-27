@@ -48,6 +48,10 @@ function useClassManagementPageHook() {
   >(generateFakeClassArrangementData(50));
   const classes = useSelector((state: RootState) => state.class.allClasses);
   const classOptions = classes?.map(c => c.className) || [];
+  const classYears =
+    classes?.map(c => {
+      return { className: c.className, academicYear: c.academicYear };
+    }) || [];
   useEffect(() => {
     if (!classes) {
       dispatch(fetchClasses());
@@ -217,7 +221,8 @@ function useClassManagementPageHook() {
     classArrangementHeadCell,
     classArrangementMainData,
     newSemesterHeadCell,
-    classOptions
+    classOptions,
+    classYears,
   };
   const handler = { handleModeChange, setFiltersClass };
 

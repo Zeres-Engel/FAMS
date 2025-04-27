@@ -5,36 +5,78 @@ const mongoose = require('mongoose');
  * Represents attendance records for scheduled classes
  */
 const AttendanceLogSchema = new mongoose.Schema({
-  userId: {
-    type: String,
-    required: [true, 'User ID is required'],
-    index: true
-  },
-  rfidId: {
-    type: String,
-    required: [true, 'RFID ID is required'],
-    index: true
-  },
-  userId: {
+  attendanceId: {
     type: Number,
+    required: true,
+    unique: true,
+    default: () => Math.floor(Date.now() / 1000)
+  },
+  userId: {
+    type: String,
     required: true,
     ref: 'UserAccount'
   },
+  rfidId: {
+    type: String,
+    index: true
+  },
+  scheduleId: {
+    type: Number,
+    ref: 'ClassSchedule'
+  },
   checkInFace: {
-    type: Buffer
+    type: String // Path to face image
   },
   checkIn: {
     type: Date
   },
   status: {
     type: String,
-    enum: ['Present', 'Late', 'Absent'],
-    default: 'Absent'
+    enum: ['Present', 'Late', 'Absent', 'Not Now'],
+    default: 'Not Now'
+  },
+  deviceId: {
+    type: Number,
+    ref: 'Device'
+  },
+  classId: {
+    type: Number,
+    ref: 'Class'
+  },
+  className: String,
+  subjectId: {
+    type: Number,
+    ref: 'Subject'
+  },
+  subjectName: String,
+  teacherId: {
+    type: Number,
+    ref: 'Teacher'
+  },
+  teacherName: String,
+  classroomId: {
+    type: Number,
+    ref: 'Classroom'
+  },
+  classroomName: String,
+  semesterNumber: {
+    type: Number
+  },
+  userRole: {
+    type: String,
+    enum: ['student', 'teacher', 'admin']
+  },
+  note: String,
+  checkedBy: {
+    type: String,
+    enum: ['teacher', 'jetson', 'rfid', 'manual'],
+    default: 'manual'
   }
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  toObject: { virtuals: true },
+  collection: 'AttendanceLog'
 });
 
 // Index for efficient queries
@@ -44,7 +86,7 @@ AttendanceLogSchema.index({ classId: 1, scheduleId: 1, timestamp: -1 });
 
 // Virtual for getting user information
 AttendanceLogSchema.virtual('user', {
-  ref: 'User',
+  ref: 'UserAccount',
   localField: 'userId',
   foreignField: 'userId',
   justOne: true
@@ -55,6 +97,7 @@ AttendanceLogSchema.index({ userId: 1, scheduleId: 1 });
 AttendanceLogSchema.index({ classId: 1, date: 1 });
 AttendanceLogSchema.index({ subjectId: 1 });
 AttendanceLogSchema.index({ semesterNumber: 1 });
+AttendanceLogSchema.index({ deviceId: 1 });
 
 // Virtual for getting rfid information
 AttendanceLogSchema.virtual('rfid', {
@@ -76,7 +119,15 @@ AttendanceLogSchema.virtual('class', {
 AttendanceLogSchema.virtual('schedule', {
   ref: 'ClassSchedule',
   localField: 'scheduleId',
-  foreignField: '_id',
+  foreignField: 'scheduleId',
+  justOne: true
+});
+
+// Virtual for getting device information
+AttendanceLogSchema.virtual('device', {
+  ref: 'Device',
+  localField: 'deviceId',
+  foreignField: 'deviceId',
   justOne: true
 });
 
