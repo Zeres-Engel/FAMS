@@ -73,6 +73,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Đặc biệt cấu hình đường dẫn cho avatars để đảm bảo chúng luôn được phục vụ với đường dẫn tương đối đúng
 app.use('/avatars', express.static(path.join(__dirname, 'public/avatars')));
+// Cấu hình đường dẫn cho faces 
+app.use('/faces', express.static(path.join(__dirname, 'public/faces')));
 
 // Test route để kiểm tra kết nối
 app.get('/api/test', (req, res) => {
