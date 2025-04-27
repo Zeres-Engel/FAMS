@@ -18,3 +18,8 @@
 2025-04-28 02:02:14,676 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
 2025-04-28 02:02:14,678 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
 2025-04-28 02:02:14,679 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 02:21:59,369 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 02:22:08,313 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 02:22:08,315 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 02:22:08,316 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 02:22:17,445 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}

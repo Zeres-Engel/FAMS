@@ -1,0 +1,9 @@
+[
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-04-28 02:22:17",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  }
+]
