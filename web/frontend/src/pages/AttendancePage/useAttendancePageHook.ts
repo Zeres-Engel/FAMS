@@ -41,7 +41,8 @@ function useAttendancePageHook() {
       checkin: e.checkIn,
       status: e.status,
       checkinFace: e.checkInFace,
-      fullName: e.studentName
+      fullName: e.studentName,
+      note:e.note
     })
   );
   console.log(attendanceMainData);
