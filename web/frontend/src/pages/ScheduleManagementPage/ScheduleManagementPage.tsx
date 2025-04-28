@@ -437,7 +437,7 @@ const ScheduleManagementPage: React.FC = () => {
                   alignItems: "center",
                 }}
               >
-                {/* <Box
+                <Box
                   sx={{
                     flex: isMobile ? "1 1 100%" : "auto",
                     minWidth: "180px",
@@ -463,7 +463,7 @@ const ScheduleManagementPage: React.FC = () => {
                     )}
                     fullWidth
                   />
-                </Box> */}
+                </Box>
                 <Box
                   sx={{
                     flex: isMobile ? "1 1 100%" : "auto",

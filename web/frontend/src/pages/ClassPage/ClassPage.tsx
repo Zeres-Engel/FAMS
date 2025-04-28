@@ -69,6 +69,7 @@ function ClassPage(): React.JSX.Element {
               isCheckBox={false}
               isTeacherView={true}
               // classOptions={state.classOptions}
+              isRoleParent={state.role === "parent"}
               classPageList={state.classPageList}
               setFiltersClassPage={handler.setFiltersClassPage}
             ></DataTable>

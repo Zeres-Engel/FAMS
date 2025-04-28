@@ -420,6 +420,7 @@ export default function DataTable({
         className="dataTable-Table"
       >
         <TableToolBar
+          isClassPage={isClassPage}
           onShowMyAttendance={onShowMyAttendance}
           classYears={classYears}
           isUserManagement={isUserManagement}
@@ -555,10 +556,10 @@ export default function DataTable({
               class distribution
             </Button>
           )}
-          
+
           {/* Display import users button if provided and if we're in user management */}
           {isUserManagement && importUsersButton && importUsersButton}
-          
+
           {isAdmin && !isAttendance && (
             <Button
               variant="contained"
@@ -625,9 +626,9 @@ export default function DataTable({
             labelRowsPerPage="Rows per page:"
             SelectProps={{
               sx: {
-                minWidth: '64px', 
-                paddingRight: '15px', 
-              }
+                minWidth: "64px",
+                paddingRight: "15px",
+              },
             }}
           />
         )}
