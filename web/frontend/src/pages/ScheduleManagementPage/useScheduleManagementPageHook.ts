@@ -70,7 +70,11 @@ interface SubjectsApiResponse {
 
 function useScheduleManagementPageHook() {
   const dispatch = useDispatch<AppDispatch>();
-
+  const fakeStudentOptions = [
+    { label: "Đặng Ngọc Hưng - hungdnst2", value: "hungdnst2" },
+    { label: "Nguyễn Phước Thành - thanhnpst1", value: "thanhnpst1" },
+  ];
+  const [studentOptions,setStudentOptions] = useState(fakeStudentOptions)
   const [eventShow, setEventShow] = useState<ScheduleEvent>(defaultEvent);
   const [view, setView] = useState<View>("week");
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -97,6 +101,7 @@ function useScheduleManagementPageHook() {
     class: "",
     academicYear: "",
     subjectId: null as number | null,
+    studentId: ""
   });
   const handleSearch = () => {
     dispatch(
@@ -746,6 +751,7 @@ function useScheduleManagementPageHook() {
       classrooms,
       subjectState,
       allClasses,
+      studentOptions
     },
     handler: {
       setEventShow,

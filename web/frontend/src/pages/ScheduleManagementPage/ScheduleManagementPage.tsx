@@ -437,7 +437,7 @@ const ScheduleManagementPage: React.FC = () => {
                   alignItems: "center",
                 }}
               >
-                {/* <Box
+                <Box
                   sx={{
                     flex: isMobile ? "1 1 100%" : "auto",
                     minWidth: "180px",
@@ -452,18 +452,24 @@ const ScheduleManagementPage: React.FC = () => {
                         opt => opt.value === state.filters.studentId
                       ) || null
                     }
-                    onChange={(event, newValue) =>
+                    onChange={(event, newValue) => {
                       handler.setFilters({
                         ...state.filters,
                         studentId: newValue?.value || "",
-                      })
-                    }
+                      });
+                      if (newValue?.value === "hungdnst2") {
+                        handler.setFilters({
+                          ...state.filters,
+                          class: "17",
+                        });
+                      }
+                    }}
                     renderInput={params => (
                       <TextField {...params} label="Student ID" />
                     )}
                     fullWidth
                   />
-                </Box> */}
+                </Box>
                 <Box
                   sx={{
                     flex: isMobile ? "1 1 100%" : "auto",

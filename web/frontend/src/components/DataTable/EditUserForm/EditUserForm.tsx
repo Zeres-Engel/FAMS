@@ -64,7 +64,7 @@ export default function EditUserModal({
 
   // Use our custom hook for class suggestions
   const { state, handler } = useEditUserFormHook();
-  
+
   const [avatarPreview, setAvatarPreview] = useState<string | null>(
     formData.avatar || null
   );
@@ -92,7 +92,7 @@ export default function EditUserModal({
       }
     };
   }, [avatarPreview]);
-  
+
   useEffect(() => {
     reset({
       ...formData,
@@ -103,36 +103,38 @@ export default function EditUserModal({
 
     // Xử lý classIds một cách an toàn hơn
     let parsedClassIDs: ClassID[] = [];
-    
+
     // Kiểm tra xem classId có phải là mảng và có các phần tử là đối tượng không
     if (Array.isArray(formData.classId)) {
       parsedClassIDs = formData.classId
-        .filter((cls: any) => cls && typeof cls === 'object') // Lọc các giá trị hợp lệ
+        .filter((cls: any) => cls && typeof cls === "object") // Lọc các giá trị hợp lệ
         .map((cls: any) => ({
-          academicYear: (cls as ClassID).academicYear || state.currentAcademicYear,
+          academicYear:
+            (cls as ClassID).academicYear || state.currentAcademicYear,
           classId: (cls as ClassID).classId || "",
           className: (cls as ClassID).className || "",
           grade: (cls as ClassID).grade || "10",
-          isHomeroom: (cls as ClassID).isHomeroom || false
+          isHomeroom: (cls as ClassID).isHomeroom || false,
         }));
     }
-    
+
     // Set academic year to the current one
-    const updatedClassIDs = parsedClassIDs.length > 0 
-      ? parsedClassIDs
-      : [
-        {
-          academicYear: state.currentAcademicYear,
-          classId: "",
-          className: "",
-          grade: "10", // Grade as string
-          isHomeroom: false,
-        }
-      ];
+    const updatedClassIDs =
+      parsedClassIDs.length > 0
+        ? parsedClassIDs
+        : [
+            {
+              academicYear: state.currentAcademicYear,
+              classId: "",
+              className: "",
+              grade: "10", // Grade as string
+              isHomeroom: false,
+            },
+          ];
 
     console.log("Initializing form with classIDs:", updatedClassIDs);
     setClassIDs(updatedClassIDs);
-    
+
     // Lấy grade từ class đầu tiên của user và khởi tạo tìm kiếm
     if (updatedClassIDs.length > 0 && updatedClassIDs[0].grade) {
       const userGrade = updatedClassIDs[0].grade.toString();
@@ -160,23 +162,26 @@ export default function EditUserModal({
     handler.setSearchTerm(searchValue);
   };
 
-  // Handle grade change for class search
   const handleGradeChange = (grade: string, index: number) => {
-    // Update the grade in the class data
-    handleClassIDChange("grade", grade, index);
-    
-    // Xóa className và classId vì chúng không còn hợp lệ với grade mới
-    handleClassIDChange("className", "", index);
-    handleClassIDChange("classId", "", index);
-    
-    // Gọi hàm khởi tạo tìm kiếm với grade mới
+    const updated = [...classIDs];
+
+    updated[index] = {
+      ...updated[index],
+      grade: grade,
+      className: "",
+      classId: "",
+    };
+
     console.log("Grade changed to:", grade);
+    setClassIDs(updated);
+
+    // Gọi tìm kiếm class mới
     handler.initializeClassSearch(grade);
   };
 
   // Handle class selection
   const handleClassSelect = (selectedClass: any, index: number) => {
-    if (selectedClass && typeof selectedClass === 'object') {
+    if (selectedClass && typeof selectedClass === "object") {
       console.log("Selected class:", selectedClass);
       handleClassIDChange("className", selectedClass.className, index);
       handleClassIDChange("classId", selectedClass.classId.toString(), index);
@@ -187,11 +192,11 @@ export default function EditUserModal({
 
   const onSubmit = (data: EditUserForm) => {
     console.log("Submitting user ID:", idUser);
-    
+
     // Chuẩn bị dữ liệu lớp học
     let finalClassIDs = [];
     let classIds = [];
-    
+
     if (userType === "teacher") {
       // Giáo viên có thể dạy nhiều lớp
       finalClassIDs = classIDs;
@@ -200,12 +205,14 @@ export default function EditUserModal({
       // Học sinh vẫn giữ lại các lớp hiện có
       // Lấy lớp mới/đang chỉnh sửa (lớp cuối cùng trong mảng classIDs)
       const newClass = classIDs[classIDs.length - 1];
-      
+
       // Lấy tất cả các lớp từ formData ban đầu (dữ liệu gốc)
-      const existingClasses = Array.isArray(formData.classId) 
-        ? formData.classId 
-        : (formData.classId ? [formData.classId] : []);
-        
+      const existingClasses = Array.isArray(formData.classId)
+        ? formData.classId
+        : formData.classId
+        ? [formData.classId]
+        : [];
+
       // Kết hợp các lớp hiện có với lớp mới
       // Nếu đang sửa lớp cuối, thay thế nó; nếu không, thêm vào
       if (existingClasses.length > 0 && classIDs.length > 0) {
@@ -213,36 +220,38 @@ export default function EditUserModal({
       } else {
         finalClassIDs = [newClass];
       }
-      
+
       // Chuyển đổi classIds thành mảng số để API xử lý
-      classIds = finalClassIDs.map((cls: any) => 
-        typeof cls === 'object' && cls.classId ? Number(cls.classId) : Number(cls)
+      classIds = finalClassIDs.map((cls: any) =>
+        typeof cls === "object" && cls.classId
+          ? Number(cls.classId)
+          : Number(cls)
       );
-      
+
       // Log để debug
       console.log("Original formData.classId:", formData.classId);
       console.log("New class being edited:", newClass);
       console.log("Combined finalClassIDs:", finalClassIDs);
       console.log("Extracted numeric classIds:", classIds);
     }
-      
+
     // Prepare data for API submission - KHÔNG thay đổi kiểu dữ liệu của gender
     const userData: EditUserForm = {
       ...data,
       classId: finalClassIDs, // Đảm bảo classId được cập nhật chính xác
     };
-    
+
     // Chuẩn bị dữ liệu bổ sung để gửi cho API
     const apiData = {
       ...data,
       classIds: classIds, // Gửi đúng danh sách classIds
       dateOfBirth: data.dob,
       gender: data.gender === true ? "Male" : "Female",
-      phone: data.phone?.replace(/^0/, "")
+      phone: data.phone?.replace(/^0/, ""),
     };
 
     console.log("Prepared user data for API:", apiData);
-    
+
     // Call update user API with correct type for EditUserForm
     onSave(userData, idUser);
   };
@@ -302,10 +311,14 @@ export default function EditUserModal({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      backgroundColor: avatarPreview ? "transparent" : "#f0f0f0",
+                      backgroundColor: avatarPreview
+                        ? "transparent"
+                        : "#f0f0f0",
                     }}
                     onClick={() => {
-                      const fileInput = document.getElementById(`avatar-input-${idUser}`);
+                      const fileInput = document.getElementById(
+                        `avatar-input-${idUser}`
+                      );
                       if (fileInput) fileInput.click();
                     }}
                   >
@@ -324,7 +337,7 @@ export default function EditUserModal({
                         Click to choose
                       </Typography>
                     )}
-                    
+
                     <Box
                       className="avatar-overlay"
                       sx={{
@@ -342,10 +355,10 @@ export default function EditUserModal({
                       }}
                     >
                       <Tooltip title="Upload new avatar">
-                        <IconButton 
-                          color="primary" 
-                          aria-label="upload picture" 
-                          component="span" 
+                        <IconButton
+                          color="primary"
+                          aria-label="upload picture"
+                          component="span"
                           sx={{ color: "white" }}
                         >
                           <PhotoCameraIcon />
@@ -353,26 +366,32 @@ export default function EditUserModal({
                       </Tooltip>
                     </Box>
                   </Box>
-                  
+
                   <input
                     id={`avatar-input-${idUser}`}
                     type="file"
                     accept="image/*"
                     hidden
-                    onChange={async (e) => {
+                    onChange={async e => {
                       const file = e.target.files?.[0] || null;
                       setValue("avatar", file as any);
                       if (file) {
                         const previewURL = URL.createObjectURL(file);
                         setAvatarPreview(previewURL);
-                        
+
                         // Upload the avatar immediately when selected
-                        const uploadResult = await handler.uploadAvatar(idUser, file);
+                        const uploadResult = await handler.uploadAvatar(
+                          idUser,
+                          file
+                        );
                         if (uploadResult.success && uploadResult.avatarUrl) {
                           // Cập nhật giá trị form
                           setValue("avatar", uploadResult.avatarUrl);
                         } else {
-                          console.error("Failed to upload avatar:", uploadResult.message);
+                          console.error(
+                            "Failed to upload avatar:",
+                            uploadResult.message
+                          );
                           // Nếu tải lên thất bại, vẫn giữ preview local
                           // Don't set avatar to File object since it expects a string
                         }
@@ -398,7 +417,10 @@ export default function EditUserModal({
                             setAvatarPreview(null);
                             setValue("avatar", undefined);
                           } else {
-                            console.error("Failed to delete avatar:", result.message);
+                            console.error(
+                              "Failed to delete avatar:",
+                              result.message
+                            );
                             // Có thể hiển thị thông báo lỗi ở đây nếu cần
                           }
                         } else {
@@ -495,131 +517,154 @@ export default function EditUserModal({
             {userType !== "parent" && (
               <Box sx={{ width: "100%" }}>
                 <Typography variant="h6">Class Information</Typography>
-                {(userType === "teacher"
-                  ? classIDs
-                  : [classIDs[0], ...classIDs.slice(1)]
-                ).map((classItem, index) => {
-                  const isEditable =
-                    userType === "teacher" || index === classIDs.length - 1;
 
-                  return (
-                    <Box
-                      key={`class-${index}-${userType}-${idUser}`}
-                      sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}
-                    >
-                      {/* Grade Dropdown - Moved to top */}
-                      <FormControl fullWidth>
-                        <InputLabel>Grade</InputLabel>
-                        <Select
-                          label="Grade"
-                          value={classItem.grade}
-                          onChange={(e) => {
-                            const newGrade = e.target.value.toString();
-                            handleGradeChange(newGrade, index);
+                {classIDs.length > 0 ? (
+                  classIDs.map((classItem, index) => {
+                    const isEditable =
+                      userType === "teacher" || index === classIDs.length - 1;
+
+                    return (
+                      <Box
+                        key={`class-${index}-${userType}-${idUser}`}
+                        sx={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: 2,
+                          mb: 2,
+                        }}
+                      >
+                        {/* Grade Dropdown */}
+                        <FormControl fullWidth>
+                          <InputLabel>Grade</InputLabel>
+                          <Select
+                            label="Grade"
+                            value={classItem.grade}
+                            onChange={e => {
+                              const newGrade = e.target.value.toString();
+                              handleGradeChange(newGrade, index);
+                            }}
+                            disabled={!isEditable}
+                          >
+                            {state.gradeOptions.map((grade, gradeIndex) => (
+                              <MenuItem
+                                key={`grade-${grade}-${gradeIndex}-${index}`}
+                                value={grade.toString()}
+                              >
+                                {grade}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+
+                        {/* Class Name with Autocomplete */}
+                        <Autocomplete
+                          fullWidth
+                          freeSolo
+                          options={state.classOptions}
+                          getOptionLabel={option => {
+                            if (typeof option === "string") return option;
+                            if (option && option.className)
+                              return option.className;
+                            return "";
                           }}
+                          loading={state.loading}
+                          onInputChange={(_, value) => handleClassSearch(value)}
+                          onChange={(_, value) => {
+                            if (value && typeof value === "object") {
+                              handleClassSelect(value, index);
+                            } else if (typeof value === "string") {
+                              handleClassIDChange("className", value, index);
+                            }
+                          }}
+                          value={classItem.className || ""}
+                          renderInput={params => (
+                            <TextField
+                              {...params}
+                              label="Class Name"
+                              placeholder="Type to search classes"
+                              InputProps={{
+                                ...params.InputProps,
+                                endAdornment: (
+                                  <React.Fragment>
+                                    {state.loading ? (
+                                      <CircularProgress
+                                        color="inherit"
+                                        size={20}
+                                      />
+                                    ) : null}
+                                    {params.InputProps.endAdornment}
+                                  </React.Fragment>
+                                ),
+                              }}
+                              onFocus={() => {
+                                if (
+                                  classItem.grade &&
+                                  state.classOptions.length === 0
+                                ) {
+                                  handler.fetchClassSuggestions(
+                                    "",
+                                    classItem.grade.toString()
+                                  );
+                                }
+                              }}
+                            />
+                          )}
+                          renderOption={(props, option) => (
+                            <li {...props} key={option.classId}>
+                              {option.className}
+                            </li>
+                          )}
                           disabled={!isEditable}
-                        >
-                          {state.gradeOptions.map((grade, gradeIndex) => (
-                            <MenuItem key={`grade-${grade}-${gradeIndex}-${index}`} value={grade.toString()}>
-                              {grade}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                      
-                      {/* Class Name with Autocomplete - Moved below Grade */}
-                      <Autocomplete
-                        fullWidth
-                        freeSolo
-                        options={state.classOptions}
-                        getOptionLabel={(option) => {
-                          if (typeof option === 'string') return option;
-                          if (option && option.className) return option.className;
-                          return '';
-                        }}
-                        loading={state.loading}
-                        onInputChange={(_, value) => handleClassSearch(value)}
-                        onChange={(_, value) => {
-                          if (value && typeof value === 'object') {
-                            handleClassSelect(value, index);
-                          } else if (typeof value === 'string') {
-                            handleClassIDChange("className", value, index);
-                          }
-                        }}
-                        value={classItem.className || ''}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Class Name"
-                            placeholder="Type to search classes"
-                            InputProps={{
-                              ...params.InputProps,
-                              endAdornment: (
-                                <React.Fragment>
-                                  {state.loading ? <CircularProgress color="inherit" size={20} /> : null}
-                                  {params.InputProps.endAdornment}
-                                </React.Fragment>
-                              ),
-                            }}
-                            onFocus={() => {
-                              if (classItem.grade && state.classOptions.length === 0) {
-                                handler.fetchClassSuggestions("", classItem.grade.toString());
-                              }
-                            }}
+                        />
+
+                        {/* Academic Year */}
+                        <TextField
+                          fullWidth
+                          label="Academic Year"
+                          value={state.currentAcademicYear}
+                          disabled
+                        />
+
+                        {userType === "teacher" && (
+                          <FormControlLabel
+                            control={
+                              <Radio
+                                checked={classItem.isHomeroom}
+                                onChange={() =>
+                                  handleClassIDChange(
+                                    "isHomeroom",
+                                    !classItem.isHomeroom,
+                                    index
+                                  )
+                                }
+                              />
+                            }
+                            label="Homeroom"
                           />
                         )}
-                        renderOption={(props, option) => (
-                          <li {...props} key={option.classId}>
-                            {option.className}
-                          </li>
-                        )}
-                        disabled={!isEditable}
-                        open={state.classOptions.length > 0 && isEditable}
-                      />
-                      
-                      {/* Academic Year (disabled) */}
-                      <TextField
-                        fullWidth
-                        label="Academic Year"
-                        value={state.currentAcademicYear}
-                        disabled={true}
-                      />
-                      
-                      {userType === "teacher" && (
-                        <FormControlLabel
-                          control={
-                            <Radio
-                              checked={classItem.isHomeroom}
-                              onChange={() =>
-                                handleClassIDChange(
-                                  "isHomeroom",
-                                  !classItem.isHomeroom,
-                                  index
-                                )
-                              }
-                            />
-                          }
-                          label="Homeroom"
-                        />
-                      )}
 
-                      {userType === "teacher" && classIDs.length > 1 && (
-                        <Tooltip title="Remove">
-                          <IconButton
-                            color="error"
-                            onClick={() => {
-                              const updated = [...classIDs];
-                              updated.splice(index, 1);
-                              setClassIDs(updated);
-                            }}
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </Box>
-                  );
-                })}
+                        {userType === "teacher" && classIDs.length > 1 && (
+                          <Tooltip title="Remove">
+                            <IconButton
+                              color="error"
+                              onClick={() => {
+                                const updated = [...classIDs];
+                                updated.splice(index, 1);
+                                setClassIDs(updated);
+                              }}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </Box>
+                    );
+                  })
+                ) : (
+                  <Typography variant="body2" sx={{ mb: 2 }}>
+                    No classes added yet.
+                  </Typography>
+                )}
 
                 {userType === "teacher" && (
                   <Button
@@ -631,7 +676,7 @@ export default function EditUserModal({
                           academicYear: state.currentAcademicYear,
                           classId: "",
                           className: "",
-                          grade: "10", // Grade as string
+                          grade: "10", // Grade default
                           isHomeroom: false,
                         },
                       ])
@@ -642,6 +687,7 @@ export default function EditUserModal({
                 )}
               </Box>
             )}
+
             {userType === "student" && (
               <>
                 <Typography variant="h6" sx={{ mt: 2, width: "100%" }}>
@@ -697,7 +743,9 @@ export default function EditUserModal({
                       {...register(`parentCareers.${parentIndex}` as const)}
                     />
                     <Box sx={{ width: "100%" }}>
-                      <FormLabel>{`Parent ${parentIndex + 1} Gender`}</FormLabel>
+                      <FormLabel>{`Parent ${
+                        parentIndex + 1
+                      } Gender`}</FormLabel>
                       <Controller
                         control={control}
                         name={`parentGenders.${parentIndex}` as const}
@@ -750,15 +798,11 @@ export default function EditUserModal({
                 />
               </>
             )}
-            
+
             {/* Additional fields for teacher */}
             {userType === "teacher" && (
               <>
-                <TextField
-                  fullWidth
-                  label="Major"
-                  {...register("major")}
-                />
+                <TextField fullWidth label="Major" {...register("major")} />
                 <TextField
                   fullWidth
                   label="Weekly Capacity"
@@ -772,7 +816,7 @@ export default function EditUserModal({
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
           {userType === "student" && (
-            <Button 
+            <Button
               onClick={async () => {
                 if (idUser) {
                   const result = await handler.cleanStudentData(idUser);
