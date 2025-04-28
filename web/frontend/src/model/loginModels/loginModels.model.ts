@@ -2,7 +2,9 @@ interface LoginForm {
   userId: string;
   password: string;
   email?:string;
-  otp?:string
+  otp?:string;
+  newPassword?:string;
+  confirmNewPassword?:string;
 }
 interface LoginTest {
   email: string;

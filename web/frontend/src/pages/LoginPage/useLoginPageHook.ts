@@ -16,6 +16,7 @@ function useLoginPageHook() {
     handleSubmit,
     control,
     setFocus,
+    resetField,
     formState: { errors },
   } = useForm<LoginForm>({
     defaultValues: {
@@ -37,6 +38,7 @@ function useLoginPageHook() {
   const { loginData, loading, error } = useSelector(
     (state: RootState) => state.login
   );
+  const [isOtpVerified, setIsOtpVerified] = useState(false);
   const watchUserName = useWatch({ control, name: "userId" });
   const watchPassword = useWatch({ control, name: "password" });
   const watchEmail = useWatch({ control, name: "email" });
@@ -83,25 +85,54 @@ function useLoginPageHook() {
     await dispatch(loginRequest(formData));
   };
 
-  const handleSubmitForgotPassword = handleSubmit(async data => {
+  const handleSubmitForgotPassword = handleSubmit(async (data) => {
     if (!watchEmail || !watchOtp) {
       setIsError([1, 2]);
       watchEmail ? setFocus("otp") : setFocus("email");
     } else {
-      // // Gửi yêu cầu reset mật khẩu với email và OTP
-      // const response = await sendOtpRequest(data.email, data.otp);
-      // if (response.success) {
-      //   // Nếu OTP hợp lệ, chuyển sang màn hình đăng nhập hoặc thay đổi mật khẩu
-      //   setAlertMessage("OTP verified successfully!");
-      //   setNotifyID(prev => prev + 1);
-      // } else {
-      //   // Nếu OTP không hợp lệ, hiển thị thông báo lỗi
-      //   setAlertMessage("Invalid OTP!");
-      //   setNotifyID(prev => prev + 1);
-      // }
+      try {
+        // Giả lập xác minh OTP
+        console.log("Verifying OTP:", watchOtp);
+        // Nếu OTP hợp lệ
+        setIsOtpVerified(true); // Chuyển sang bước nhập mật khẩu mới
+        setAlertMessage("OTP verified successfully!");
+        setNotifyID((prev) => prev + 1);
+  
+        // Clear dữ liệu của các trường "New Password" và "Confirm New Password"
+        resetField("newPassword");
+        resetField("confirmNewPassword");
+      } catch (error) {
+        console.error("Error verifying OTP:", error);
+        setAlertMessage("Invalid OTP. Please try again.");
+        setNotifyID((prev) => prev + 1);
+      }
     }
   });
+  const handleSubmitNewPassword = handleSubmit(async (data) => {
+    if (!data.newPassword || !data.confirmNewPassword) {
+      setIsError([3, 4]); // Đánh dấu lỗi nếu trường mật khẩu trống
+      return;
+    }
+  
+    if (data.newPassword !== data.confirmNewPassword) {
+      setAlertMessage("Passwords do not match!");
+      setNotifyID((prev) => prev + 1);
+      return;
+    }
+  
+    try {
+      // Logic cập nhật mật khẩu mới
+      console.log("Updating password:", data.newPassword);
+      setAlertMessage("Password updated successfully!");
+      setNotifyID((prev) => prev + 1);
 
+      resetToLogin(); // Reset toàn bộ logic sau khi cập nhật thành công
+    } catch (error) {
+      console.error("Error updating password:", error);
+      setAlertMessage("Failed to update password. Please try again.");
+      setNotifyID((prev) => prev + 1);
+    }
+  });
   const handleResendOtp = async () => {
     if (watchEmail && resendTime === 0) {
       // Gửi OTP mới cho email
@@ -131,7 +162,21 @@ function useLoginPageHook() {
     }
   };
   const toggleForgotMode = () => {
+    resetField("email"); // Xóa dữ liệu email
+    resetField("otp"); // Xóa dữ liệu OTP
+    resetField("newPassword"); // Xóa dữ liệu mật khẩu mới
+    resetField("confirmNewPassword"); // Xóa dữ liệu xác nhận mật khẩu
     setIsForgotMode(prev => !prev);
+  };
+
+  const resetToLogin = () => {
+    setIsForgotMode(false); // Quay lại chế độ đăng nhập
+    setIsOtpVerified(false); // Reset trạng thái OTP
+    setIsError([]); // Xóa lỗi
+    resetField("email"); // Xóa dữ liệu email
+    resetField("otp"); // Xóa dữ liệu OTP
+    resetField("newPassword"); // Xóa dữ liệu mật khẩu mới
+    resetField("confirmNewPassword"); // Xóa dữ liệu xác nhận mật khẩu
   };
 
   const state = {
@@ -148,15 +193,18 @@ function useLoginPageHook() {
     notifyID,
     isForgotMode,
     resendTime,
+    isOtpVerified
   };
 
   const handler = {
     register,
     handleSubmitLogin,
+    resetToLogin,
     handleSubmitForgotPassword,
     handleResendOtp,
     toggleForgotMode,
     handleSubmitEmail,
+    handleSubmitNewPassword,
     handleBlurUsername: (e: React.FocusEvent<HTMLInputElement>) => {
       if (!e.target.value) setIsError([1]);
       else setIsError(prev => prev.filter(i => i !== 1));
