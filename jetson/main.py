@@ -11,6 +11,7 @@ from gui.uis.windows.main_window.functions_main_window import *
 from src.core.zensys_factory import get_default_instance
 
 os.environ["QT_FONT_DPI"] = "96"
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 class MainWindow(QMainWindow):
     def __init__(self):

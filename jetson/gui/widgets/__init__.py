@@ -10,3 +10,5 @@ from . py_slider import PySlider
 from . py_icon_button import PyIconButton
 from . py_line_edit import PyLineEdit
 from . py_table_widget import PyTableWidget
+from . py_face_recognition import FaceRecognitionWidget
+from . py_notification_popup import NotificationPopup
