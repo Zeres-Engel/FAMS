@@ -34,13 +34,17 @@ class SetupMainWindow:
             "btn_tooltip" : "Face Recognition & RFID System",
             "show_top" : True,
             "is_active" : False,
-        },
+        }
+    ]
+    
+    # Add settings button at the bottom
+    add_bottom_menus = [
         {
-            "btn_icon" : "icon_emoticons.svg",
+            "btn_icon" : "icon_settings.svg",
             "btn_id" : "btn_2",
             "btn_text" : "Settings",
             "btn_tooltip" : "Settings",
-            "show_top" : True,
+            "show_top" : False,  # Show at bottom
             "is_active" : False
         }
     ]
@@ -69,7 +73,13 @@ class SetupMainWindow:
             self.top_right_grip = PyGrips(self, "top_right", self.hide_grips)
             self.bottom_left_grip = PyGrips(self, "bottom_left", self.hide_grips)
             self.bottom_right_grip = PyGrips(self, "bottom_right", self.hide_grips)
+            
+        # Add top menu buttons
         self.ui.left_menu.add_menus(SetupMainWindow.add_left_menus)
+        
+        # Add bottom menu buttons
+        self.ui.left_menu.add_menus(SetupMainWindow.add_bottom_menus)
+        
         self.ui.left_menu.clicked.connect(self.btn_clicked)
         self.ui.left_menu.released.connect(self.btn_released)
         self.ui.title_bar.clicked.connect(self.btn_clicked)

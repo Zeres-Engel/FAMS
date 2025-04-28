@@ -4,6 +4,8 @@ from PySide6.QtWidgets import QVBoxLayout, QStackedWidget, QWidget, QFrame, QLab
 
 # IMPORT ZENSYS FACE RECOGNITION PAGE
 from gui.uis.pages.face_recognition_page import FaceRecognitionPage
+# IMPORT SETTINGS PAGE
+from gui.uis.pages.settings_page import SettingsPage
 
 class Ui_MainPages(object): 
     def setupUi(self, MainPages):
@@ -99,48 +101,17 @@ class Ui_MainPages(object):
         # add page to pages
         self.pages.addWidget(self.page_2)
         
-        # Page 3
+        # Page 3 - SETTINGS PAGE
         self.page_3 = QWidget()
         self.page_3.setObjectName(u"page_3")
         self.page_3_layout = QVBoxLayout(self.page_3)
-        self.page_3_layout.setSpacing(5)
+        self.page_3_layout.setSpacing(0)
         self.page_3_layout.setObjectName(u"page_3_layout")
-        self.page_3_layout.setContentsMargins(5, 5, 5, 5)
-        self.scroll_area = QScrollArea(self.page_3)
-        self.scroll_area.setObjectName(u"scroll_area")
-        self.scroll_area.setStyleSheet(u"background: transparent;")
-        self.scroll_area.setFrameShape(QFrame.NoFrame)
-        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scroll_area.setWidgetResizable(True)
-        
-        # Contents
-        self.contents = QWidget()
-        self.contents.setObjectName(u"contents")
-        self.contents.setGeometry(QRect(0, 0, 840, 580))
-        self.contents.setStyleSheet(u"background: transparent;")
-        
-        # Vertical inherit (contents)
-        self.verticalLayout = QVBoxLayout(self.contents)
-        self.verticalLayout.setSpacing(15)
-        self.verticalLayout.setObjectName(u"verticalLayout")
-        self.verticalLayout.setContentsMargins(5, 5, 5, 5)
+        self.page_3_layout.setContentsMargins(0, 0, 0, 0)
 
-        # row 1
-        self.row_1_3layout = QHBoxLayout()
-        self.row_1_3layout.setObjectName(u"row_1_3layout")
-        self.verticalLayout.addLayout(self.row_1_3layout)
-
-        # row 2
-        self.row_2_3layout = QHBoxLayout()
-        self.row_2_3layout.setObjectName(u"row_2_3layout")
-        self.verticalLayout.addLayout(self.row_2_3layout)
-
-        # add contents to scroll
-        self.scroll_area.setWidget(self.contents)
-        
-        # add scroll to page_1_layout
-        self.page_3_layout.addWidget(self.scroll_area)
+        # CREATE SETTINGS PAGE
+        self.settings_page = SettingsPage()
+        self.page_3_layout.addWidget(self.settings_page)
         
         # add page to pages
         self.pages.addWidget(self.page_3)

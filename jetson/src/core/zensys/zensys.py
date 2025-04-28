@@ -459,14 +459,42 @@ class ZenSys:
                 save_thread.daemon = True
                 save_thread.start()
             
-            # Sử dụng đường dẫn ảnh thay vì ảnh trong bộ nhớ - chỉ gửi 1 lần
-            attendance_result = self.attendance.log_attendance(
-                user_id=user_id,
-                rfid_id=rfid_id,
-                face_image=self.current_face_crop,  # Sử dụng cả ảnh trực tiếp
-                face_image_path=self.current_face_crop_path,  # và đường dẫn
-                status="SUCCESS" if self.verification_result["match"] and is_live_face else "FAILED"
-            )
+            # Chỉ gửi attendance nếu mặt thật và xác thực thành công
+            if is_live_face and self.verification_result["match"]:
+                # Sử dụng đường dẫn ảnh thay vì ảnh trong bộ nhớ - chỉ gửi 1 lần
+                attendance_result = self.attendance.log_attendance(
+                    user_id=user_id,
+                    rfid_id=rfid_id,
+                    face_image=self.current_face_crop,  # Sử dụng cả ảnh trực tiếp
+                    face_image_path=self.current_face_crop_path,  # và đường dẫn
+                    status="SUCCESS" if self.verification_result["match"] and is_live_face else "FAILED"
+                )
+                
+                # Kiểm tra lỗi API sau khi gửi attendance
+                if attendance_result and "error" in attendance_result:
+                    error_code = attendance_result.get("error_code", "UNKNOWN_ERROR")
+                    error_message = attendance_result.get("error_message", "Lỗi không xác định")
+                    
+                    # Phân loại lỗi
+                    if "không tìm thấy lịch học" in error_message.lower() or error_code == "NO_SCHEDULE":
+                        error_type = "NO_SCHEDULE"
+                    elif error_code in ["SERVER_ERROR", "NETWORK_ERROR"]:
+                        error_type = error_code
+                    else:
+                        error_type = "API_ERROR"
+                    
+                    # Thông báo lỗi API lên UI
+                    if self.ui_callback:
+                        try:
+                            self.ui_callback("api_error", {
+                                "error_type": error_type,
+                                "error_message": error_message,
+                                "user_id": user_id,
+                                "rfid_id": rfid_id
+                            })
+                            print(f"Sent API error to UI: {error_type}")
+                        except Exception as e:
+                            self.system_logger.error(f"Error sending API error to UI: {e}")
             
             # Đánh dấu đã gửi API
             self.api_request_sent = True
@@ -484,7 +512,8 @@ class ZenSys:
         if self.verification_result["match"] and is_live_face:
             self.system_logger.info(f"Authentication successful for user: {user_id}, RFID: {rfid_id}")
         else:
-            self.system_logger.warning(f"Authentication failed: match={self.verification_result['match']}, live_face={is_live_face}")
+            reason = "face mismatch" if not self.verification_result["match"] else "fake face"
+            self.system_logger.warning(f"Authentication failed: reason={reason}, match={self.verification_result['match']}, live_face={is_live_face}")
             
         # Reset RFID sau thời gian hiển thị từ config
         log_interval = float(config.logging.log_interval) if hasattr(config.logging, 'log_interval') else 5.0
@@ -506,6 +535,7 @@ class ZenSys:
                     "rfid_name": self.verification_result.get("rfid_name", ""),
                     "rfid_id": self.rfid.current_rfid,
                     "match": self.verification_result.get("match", False),
+                    "is_live_face": is_live_face,  # Thêm kết quả anti-spoofing
                     "timestamp": time.time()
                 })
             except Exception as e:

@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 from PySide6.QtGui import QIcon 
 from PySide6.QtWidgets import QMainWindow, QApplication
 from gui.core.json_settings import Settings
@@ -32,8 +33,43 @@ class MainWindow(QMainWindow):
         # Setup UI on window
         SetupMainWindow.setup_gui(self)
 
+        # Connect settings page signals
+        self.setup_settings_page()
+
         # Show
         self.show()
+
+    def setup_settings_page(self):
+        # Connect settings saved signal
+        if hasattr(self.ui.load_pages, 'settings_page'):
+            self.ui.load_pages.settings_page.settings_saved.connect(self.save_app_settings)
+            
+            # Load existing settings if available
+            self.load_app_settings()
+
+    def save_app_settings(self, settings_data):
+        try:
+            # Create settings directory if it doesn't exist
+            os.makedirs('data/settings', exist_ok=True)
+            
+            # Save settings to JSON file
+            with open('data/settings/app_settings.json', 'w') as f:
+                json.dump(settings_data, f, indent=4)
+        except Exception as e:
+            print(f"Error saving settings: {e}")
+
+    def load_app_settings(self):
+        try:
+            # Check if settings file exists
+            if os.path.exists('data/settings/app_settings.json'):
+                with open('data/settings/app_settings.json', 'r') as f:
+                    settings_data = json.load(f)
+                    
+                # Load settings to the settings page
+                if hasattr(self.ui.load_pages, 'settings_page'):
+                    self.ui.load_pages.settings_page.load_settings(settings_data)
+        except Exception as e:
+            print(f"Error loading settings: {e}")
 
     def closeEvent(self, event):
         # Đảm bảo đóng camera và RFID reader khi tắt ứng dụng

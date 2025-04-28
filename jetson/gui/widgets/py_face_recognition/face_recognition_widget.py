@@ -28,6 +28,7 @@ class FaceRecognitionWidget(QWidget):
     verification_reset = Signal()
     verification_complete = Signal(dict)
     verification_signal = Signal(object)  # New signal for verification data
+    api_error_signal = Signal(str, str)  # New signal for API errors (title, message)
     
     def __init__(
         self,
@@ -82,6 +83,7 @@ class FaceRecognitionWidget(QWidget):
         
         # Connect verification signal to slot
         self.verification_signal.connect(self.show_verification_popup)
+        self.api_error_signal.connect(self.show_api_error)
         
         # Setup UI components
         self.setup_ui()
@@ -206,6 +208,7 @@ class FaceRecognitionWidget(QWidget):
         match_score = verification_result.get("match_score", 0)
         rfid_id = verification_result.get("rfid_id", "")
         timestamp = verification_result.get("timestamp", "")
+        is_live_face = verification_result.get("is_live_face", True)  # Get anti-spoofing result
         
         # Use current time if no timestamp provided
         if not timestamp:
@@ -223,15 +226,16 @@ class FaceRecognitionWidget(QWidget):
                 "face_name": face_name,
                 "match_score": match_score,
                 "current_time": current_time,
-                "rfid_name": rfid_name
+                "rfid_name": rfid_name,
+                "is_live_face": is_live_face
             }
             return
         
         # Show the notification
-        self._show_notification(match, rfid_id, face_name, match_score, current_time, rfid_name)
+        self._show_verification_notification(match, rfid_id, face_name, match_score, current_time, rfid_name, is_live_face)
     
-    def _show_notification(self, match, rfid_id, face_name, match_score, current_time, rfid_name):
-        """Display notification with verification result"""
+    def _show_verification_notification(self, match, rfid_id, face_name, match_score, current_time, rfid_name, is_live_face):
+        """Display verification result notification with comprehensive error handling"""
         try:
             # Force notification popup to parent if needed
             if not self.notification_popup.parent():
@@ -241,21 +245,66 @@ class FaceRecognitionWidget(QWidget):
             if not self.notification_popup.isVisible():
                 self.notification_popup.show()
                 
+            # Handle fake face detection (anti-spoofing failure)
+            if not is_live_face:
+                title = "❌ PHÁT HIỆN GƯƠNG MẶT GIẢ MẠO"
+                info_text = f"ID: {rfid_id}\nTên: {rfid_name}\nThời gian: {current_time}\n\nHệ thống phát hiện gương mặt giả mạo.\nVui lòng sử dụng khuôn mặt thật."
+                self.notification_popup.show_popup(title, info_text, False, True, 8000)
+                print(f"Showing fake face detection alert for {face_name}")
+                return
+                
+            # Handle different verification cases
             if match:
                 title = "✅ XÁC THỰC THÀNH CÔNG"
                 info_text = f"ID: {rfid_id}\nTên: {face_name}\nĐiểm số: {match_score:.2f}\nThời gian: {current_time}"
-                self.notification_popup.show_popup(title, info_text, True, True, 8000)  # Longer duration
+                self.notification_popup.show_popup(title, info_text, True, True, 8000)
                 print(f"Showing success notification for {face_name}")
             else:
-                title = "❌ XÁC THỰC THẤT BẠI"
-                info_text = f"ID: {rfid_id}\nRFID: {rfid_name}\nMặt: {face_name}\nĐiểm số: {match_score:.2f}\nThời gian: {current_time}"
-                self.notification_popup.show_popup(title, info_text, False, True, 8000)  # Longer duration
-                print(f"Showing failure notification for {face_name} vs {rfid_name}")
+                # RFID and face don't match - invalid RFID use case
+                title = "❌ THẺ RFID KHÔNG HỢP LỆ"
+                info_text = f"ID: {rfid_id}\nRFID: {rfid_name}\nMặt: {face_name}\nĐiểm số: {match_score:.2f}\nThời gian: {current_time}\n\nThẻ RFID và khuôn mặt không khớp."
+                self.notification_popup.show_popup(title, info_text, False, True, 8000)
+                print(f"Showing invalid RFID notification for {face_name} vs {rfid_name}")
         except Exception as e:
             print(f"Error showing notification: {e}")
             import traceback
             traceback.print_exc()
             self.active_notification = False  # Reset flag on error
+    
+    @Slot(str, str)
+    def show_api_error(self, title, message):
+        """Display API error notification"""
+        try:
+            # Force notification popup to parent if needed
+            if not self.notification_popup.parent():
+                self.notification_popup.setParent(self)
+                
+            # Make sure it's not hidden
+            if not self.notification_popup.isVisible():
+                self.notification_popup.show()
+                
+            # If another notification is visible, queue this one
+            if self.notification_popup.isVisible() and self._is_notification_active():
+                print("Queueing API error notification")
+                self.pending_notification = {
+                    "api_error": True,
+                    "title": title,
+                    "message": message
+                }
+                return
+                
+            # Show API error notification
+            self.notification_popup.show_popup(title, message, False, True, 8000)
+            print(f"Showing API error notification: {title}")
+            
+        except Exception as e:
+            print(f"Error showing API error notification: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def _is_notification_active(self):
+        """Check if notification is currently active"""
+        return self.active_notification or (hasattr(self.notification_popup, '_is_visible') and self.notification_popup._is_visible)
     
     @Slot()
     def handle_pending_notification(self):
@@ -267,14 +316,20 @@ class FaceRecognitionWidget(QWidget):
             notif = self.pending_notification
             self.pending_notification = None
             
-            # Show notification
-            self._show_notification(
-                notif["match"],
-                notif["rfid_id"],
-                notif["face_name"],
-                notif["match_score"],
-                notif["current_time"],
-                notif["rfid_name"]
+            # Check if this is an API error notification
+            if notif.get("api_error", False):
+                self.show_api_error(notif["title"], notif["message"])
+                return
+            
+            # Otherwise it's a verification notification
+            self._show_verification_notification(
+                notif.get("match", False),
+                notif.get("rfid_id", ""),
+                notif.get("face_name", "Unknown"),
+                notif.get("match_score", 0),
+                notif.get("current_time", ""),
+                notif.get("rfid_name", "Unknown"),
+                notif.get("is_live_face", True)
             )
         else:
             print("No pending notifications in queue")

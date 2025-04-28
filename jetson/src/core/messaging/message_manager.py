@@ -292,4 +292,115 @@ class MessageManager:
         """Close connections"""
         self.stop_consumer()
         if self.producer:
-            self.producer.flush() 
+            self.producer.flush()
+
+    def send_attendance(self, attendance_data):
+        """
+        Gửi dữ liệu điểm danh qua API
+        
+        Args:
+            attendance_data: Dict dữ liệu điểm danh
+            
+        Returns:
+            dict: Kết quả từ API
+        """
+        if not self.use_api:
+            return {"success": False, "message": "API is disabled", "code": "API_DISABLED"}
+        
+        try:
+            import requests
+            import json
+            import traceback
+            from datetime import datetime
+            
+            # Chuẩn bị headers
+            headers = {
+                "Content-Type": "application/json",
+                "x-device-id": str(attendance_data.get("deviceId", 1))
+            }
+            
+            # API URL từ config
+            api_url = self.config.api.attendance_url
+            
+            # Log API request
+            print(f"Sending attendance data to API: {api_url}")
+            
+            # Gửi request
+            try:
+                response = requests.post(
+                    api_url,
+                    json=attendance_data,
+                    headers=headers,
+                    timeout=10  # 10 seconds timeout
+                )
+                
+                print(f"API request status code: {response.status_code}")
+                
+                # Parse response
+                try:
+                    response_data = response.json()
+                except Exception:
+                    response_data = {
+                        "success": False,
+                        "message": "Invalid JSON response from server",
+                        "code": "INVALID_RESPONSE"
+                    }
+                
+                # Kiểm tra lỗi
+                if response.status_code != 200:
+                    error_message = response_data.get("message", "Unknown error")
+                    error_details = response_data.get("error", "Server error")
+                    error_code = response_data.get("code", "SERVER_ERROR")
+                    
+                    print(f"API error response: {json.dumps(response_data)}")
+                    
+                    # Phân loại lỗi chi tiết
+                    if "không tìm thấy lịch học" in error_details.lower() or "không tìm thấy bản ghi điểm danh" in error_details.lower():
+                        error_code = "NO_SCHEDULE"
+                        detailed_message = "Không tìm thấy lịch học phù hợp với thời gian hiện tại"
+                    elif response.status_code >= 500:
+                        error_code = "SERVER_ERROR"
+                        detailed_message = "Lỗi máy chủ: không thể xử lý yêu cầu"
+                    else:
+                        error_code = error_code or "API_ERROR"
+                        detailed_message = error_details or error_message
+                    
+                    return {
+                        "success": False,
+                        "message": error_message,
+                        "error": detailed_message,
+                        "code": error_code
+                    }
+                
+                return response_data
+                
+            except requests.RequestException as e:
+                print(f"API request error: {e}")
+                traceback.print_exc()
+                
+                # Phân loại lỗi mạng
+                if "ConnectTimeout" in str(e) or "ConnectionError" in str(e):
+                    error_code = "NETWORK_ERROR"
+                    error_message = "Không thể kết nối đến máy chủ"
+                else:
+                    error_code = "REQUEST_ERROR"
+                    error_message = str(e)
+                
+                return {
+                    "success": False,
+                    "message": "Network error connecting to server",
+                    "error": error_message,
+                    "code": error_code
+                }
+                
+        except Exception as e:
+            print(f"Error in send_attendance: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            return {
+                "success": False,
+                "message": "Internal error processing request",
+                "error": str(e),
+                "code": "INTERNAL_ERROR"
+            } 
