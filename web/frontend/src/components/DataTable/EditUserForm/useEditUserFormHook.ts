@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { AddUserForm, EditUserForm, ClassID } from "../../../model/tableModels/tableDataModels.model";
+import {
+  AddUserForm,
+  EditUserForm,
+  ClassID,
+} from "../../../model/tableModels/tableDataModels.model";
 import { RootState } from "../../../store/store";
 import { useSelector } from "react-redux";
 import { UserData } from "../../../model/userModels/userDataModels.model";
@@ -21,10 +25,10 @@ function useEditUserFormHook() {
   const [classOptions, setClassOptions] = useState<ClassOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedGrade, setSelectedGrade] = useState<string>("10");
-  
+  const [isFocusClassName, setIsFocusClassName] = useState<boolean>(false);
   // Grade options
   const gradeOptions = [10, 11, 12];
-  
+
   // Current academic year (fixed)
   const currentAcademicYear = "2024-2025";
 
@@ -40,7 +44,10 @@ function useEditUserFormHook() {
   }, [searchTerm]);
 
   // Function to fetch class suggestions
-  const fetchClassSuggestions = async (searchQuery = "", grade = selectedGrade) => {
+  const fetchClassSuggestions = async (
+    searchQuery = "",
+    grade = selectedGrade
+  ) => {
     if (grade === "") {
       setClassOptions([]);
       return;
@@ -50,11 +57,13 @@ function useEditUserFormHook() {
     try {
       // Include grade in the search query when available
       const response = await axiosInstance.get(
-        `/classes?grade=${grade || ""}&search=${searchQuery}&homeroomTeacherd=&academicYear=${currentAcademicYear}`
+        `/classes?grade=${
+          grade || ""
+        }&search=${searchQuery}&homeroomTeacherd=&academicYear=${currentAcademicYear}`
       );
-      
+
       console.log("Class search results:", response.data);
-      
+
       // Use all classes from response (up to a reasonable limit)
       const suggestedClasses = response.data.data.slice(0, 10);
       setClassOptions(suggestedClasses);
@@ -88,13 +97,13 @@ function useEditUserFormHook() {
       console.log("Avatar deletion response:", response.data);
       return {
         success: true,
-        message: "Avatar deleted successfully"
+        message: "Avatar deleted successfully",
       };
     } catch (error) {
       console.error("Error deleting avatar:", error);
       return {
         success: false,
-        message: "Failed to delete avatar"
+        message: "Failed to delete avatar",
       };
     } finally {
       setLoading(false);
@@ -106,25 +115,29 @@ function useEditUserFormHook() {
     try {
       setLoading(true);
       const formData = new FormData();
-      formData.append('avatar', file);
-      
-      const response = await axiosInstance.post(`/avatar/admin/${userId}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
+      formData.append("avatar", file);
+
+      const response = await axiosInstance.post(
+        `/avatar/admin/${userId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         }
-      });
-      
+      );
+
       console.log("Avatar upload response:", response.data);
       return {
         success: true,
         message: "Avatar uploaded successfully",
-        avatarUrl: response.data.data?.avatarUrl || null
+        avatarUrl: response.data.data?.avatarUrl || null,
       };
     } catch (error) {
       console.error("Error uploading avatar:", error);
       return {
         success: false,
-        message: "Failed to upload avatar"
+        message: "Failed to upload avatar",
       };
     } finally {
       setLoading(false);
@@ -138,17 +151,24 @@ function useEditUserFormHook() {
       if (userData.classId && Array.isArray(userData.classId)) {
         // Extract classIds for the API request - đảm bảo không có giá trị null/undefined
         userData.classIds = userData.classId
-          .filter((cls: any) => cls && (typeof cls === 'object' ? cls.classId : cls))
-          .map((cls: any) => 
-            typeof cls === 'object' && cls.classId ? Number(cls.classId) : Number(cls)
+          .filter(
+            (cls: any) => cls && (typeof cls === "object" ? cls.classId : cls)
+          )
+          .map((cls: any) =>
+            typeof cls === "object" && cls.classId
+              ? Number(cls.classId)
+              : Number(cls)
           );
-        
+
         // Log để debug
         console.log("Processed classIds for API:", userData.classIds);
       }
-      
+
       console.log("Sending update request:", userData);
-      const response = await axiosInstance.put(`/users/update/${userId}`, userData);
+      const response = await axiosInstance.put(
+        `/users/update/${userId}`,
+        userData
+      );
       return response.data;
     } catch (error) {
       console.error("Error updating user:", error);
@@ -160,18 +180,20 @@ function useEditUserFormHook() {
   const cleanStudentData = async (userId: string) => {
     try {
       setLoading(true);
-      const response = await axiosInstance.post(`/users/clean-student/${userId}`);
+      const response = await axiosInstance.post(
+        `/users/clean-student/${userId}`
+      );
       console.log("Clean student data response:", response.data);
       return {
         success: true,
         message: "Data cleaned successfully",
-        details: response.data
+        details: response.data,
       };
     } catch (error) {
       console.error("Error cleaning student data:", error);
       return {
         success: false,
-        message: "Failed to clean student data"
+        message: "Failed to clean student data",
       };
     } finally {
       setLoading(false);
@@ -184,7 +206,8 @@ function useEditUserFormHook() {
       loading,
       gradeOptions,
       currentAcademicYear,
-      selectedGrade
+      selectedGrade,
+      isFocusClassName,
     },
     handler: {
       setSearchTerm,
@@ -194,7 +217,8 @@ function useEditUserFormHook() {
       uploadAvatar,
       initializeClassSearch,
       fetchClassSuggestions,
-      cleanStudentData
+      cleanStudentData,
+      setIsFocusClassName
     },
   };
 }

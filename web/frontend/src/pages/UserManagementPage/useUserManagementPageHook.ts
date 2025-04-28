@@ -333,13 +333,16 @@ function useClassPageHook() {
   };
 
   useEffect(() => {
-    if (userState.user) {
+    console.log(userState.user);
+    
+    if (userState.user?.length !== 0 && userState.user) {
       // Filter out admin users from the displayed data
       const filteredUsers = userState.user.filter(
         user => user.role !== "admin"
       );
       setUserMainData(filteredUsers);
     } else {
+      console.log('hehehe');
       // Handle case when API returns no users (empty array)
       setUserMainData([]);
     }
@@ -362,7 +365,10 @@ function useClassPageHook() {
       });
     }
   }, [userState.user, userState.pagination]);
-
+  useEffect(()=>{
+    console.log(userMainData);
+    
+  },[userMainData])
   // Add additional debugging
   useEffect(() => {
     // Gọi API với các tham số phân trang

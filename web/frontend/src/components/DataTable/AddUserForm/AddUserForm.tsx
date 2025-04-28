@@ -284,22 +284,32 @@ const AddUserForm: React.FC = () => {
               <TextField
                 label={`Parent Phone ${index + 1}`}
                 value={parentPhones?.[index] || ""}
-                onChange={e =>
+                onChange={e => {
+                  const cleanValue = e.target.value
+                    .replace(/[^0-9]/g, "")
+                    .slice(0, 11);
                   handleParentStringFieldChange(
                     "parentPhones",
                     index,
-                    e.target.value.replace(/[^0-9]/g, "")
-                  )
-                }
+                    cleanValue
+                  );
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">+84</InputAdornment>
                   ),
                   inputProps: { maxLength: 11 },
                 }}
-                onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  e.target.value = e.target.value.replace(/[^0-9]/g, "").slice(0, 11);
-                }}
+                error={
+                  !!parentPhones?.[index] &&
+                  !/^\d{9,11}$/.test(parentPhones[index] || "")
+                }
+                helperText={
+                  parentPhones?.[index] &&
+                  !/^\d{9,11}$/.test(parentPhones[index] || "")
+                    ? "Phone must be 9-11 digits"
+                    : "Optional"
+                }
               />
               <TextField
                 label={`Parent Career ${index + 1}`}
@@ -321,6 +331,16 @@ const AddUserForm: React.FC = () => {
                     index,
                     e.target.value
                   )
+                }
+                error={
+                  !!parentEmails?.[index] &&
+                  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmails[index] || "")
+                }
+                helperText={
+                  parentEmails?.[index] &&
+                  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmails[index] || "")
+                    ? "Invalid email format"
+                    : "Optional"
                 }
               />
               <FormControl>
