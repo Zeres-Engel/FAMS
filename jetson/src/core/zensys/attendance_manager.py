@@ -59,6 +59,7 @@ class AttendanceManager:
         # Kiểm tra đường dẫn ảnh
         image_path = face_image_path
         image_data = None
+        base64_img = None  # Khởi tạo biến base64_img từ đầu
         
         if image_path:
             print(f"Image path: {image_path}")
@@ -67,6 +68,11 @@ class AttendanceManager:
             # Đọc dữ liệu ảnh nếu tồn tại
             if os.path.exists(image_path):
                 try:
+                    # Đợi một chút nếu file vừa được tạo để đảm bảo quá trình ghi hoàn tất
+                    if os.path.getmtime(image_path) > time.time() - 2:
+                        print(f"File mới được tạo, đợi 500ms để đảm bảo ghi xong")
+                        time.sleep(0.5)
+                    
                     with open(image_path, "rb") as img_file:
                         image_data = img_file.read()
                     print(f"Read image data: {len(image_data)} bytes")
@@ -120,25 +126,31 @@ class AttendanceManager:
         # Chuẩn bị dữ liệu cho API
         print("\n==== PREPARING API DATA ====")
         api_data = {
-            "deviceId": self.device_id,
             "userId": user_id,
-            "rfidId": rfid_id,
-            "checkInTime": current_time,
-            "status": status,
+            "deviceId": self.device_id,
+            "checkIn": current_time,
+            "checkInFace": "",
+            "faceVectorList": []
         }
         
         # Thêm ảnh nếu có
         if base64_img:
-            api_data["faceImage"] = base64_img
+            # Thêm tiền tố data:image/jpeg;base64 nếu chưa có
+            if not base64_img.startswith("data:image/jpeg;base64,"):
+                base64_img = f"data:image/jpeg;base64,{base64_img}"
+            api_data["checkInFace"] = base64_img
+            print(f"Added base64 image to API data, length: {len(base64_img)}")
+        else:
+            print("Warning: No base64 image to send with API data")
         
         # Thêm face vector nếu có
         if face_embedding:
-            face_vectors = [{
-                "type": "front",
-                "score": embedding_score,
-                "vector": face_embedding
-            }]
-            api_data["faceVectors"] = face_vectors
+            vector_data = {
+                "vectorType": "front",
+                "vector": face_embedding,
+                "score": embedding_score
+            }
+            api_data["faceVectorList"].append(vector_data)
             print(f"Added face vector of type 'front', score: {embedding_score}")
         
         # Gửi dữ liệu lên server

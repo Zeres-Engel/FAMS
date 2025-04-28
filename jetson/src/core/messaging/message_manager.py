@@ -316,18 +316,19 @@ class MessageManager:
             # Chuẩn bị headers
             headers = {
                 "Content-Type": "application/json",
-                "x-device-id": str(attendance_data.get("deviceId", 1))
+                "x-device-id": str(attendance_data.get("deviceId", 1)),
+                "Authorization": f"Bearer {self.API_TOKEN}"
             }
             
             # API URL từ config
-            api_url = self.config.api.attendance_url
+            api_url = self.API_ENDPOINT
             
             # Log API request
             print(f"Sending attendance data to API: {api_url}")
             
             # Gửi request
             try:
-                response = requests.post(
+                response = requests.put(
                     api_url,
                     json=attendance_data,
                     headers=headers,

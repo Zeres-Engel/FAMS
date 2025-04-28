@@ -424,40 +424,34 @@ class ZenSys:
                 except Exception as e:
                     self.system_logger.error(f"Error creating face crop from source: {e}")
             
-            # Lưu ảnh vào thư mục attendance/userId nếu có khuôn mặt - luồng lưu trữ
+            # Lưu ảnh vào thư mục attendance/userId nếu có khuôn mặt
             if self.current_face_crop is not None:
-                # Luồng lưu trữ - thực hiện trong thread riêng
-                def save_face_image_thread():
-                    # Lưu ảnh vào thư mục attendance/userId
-                    user_dir = os.path.join(self.attendance_faces_dir, user_id)
-                    os.makedirs(user_dir, exist_ok=True)
-                    
-                    # Sử dụng tên file cố định thay vì timestamp
-                    filename = "latest.jpg"
-                    filepath = os.path.join(user_dir, filename)
-                    
-                    # Xóa file cũ nếu tồn tại
-                    if os.path.exists(filepath):
-                        try:
-                            os.remove(filepath)
-                        except Exception as e:
-                            self.system_logger.error(f"Failed to remove old image: {e}")
-                    
-                    try:
-                        # Lưu ảnh vào thư mục attendance
-                        success = cv2.imwrite(filepath, self.current_face_crop)
-                        if success:
-                            self.current_face_crop_path = filepath
-                        else:
-                            self.system_logger.error(f"Failed to save face image: cv2.imwrite returned False")
-                    except Exception as e:
-                        self.system_logger.error(f"Failed to save face image: {e}")
+                # Chuẩn bị thư mục và đường dẫn
+                user_dir = os.path.join(self.attendance_faces_dir, user_id)
+                os.makedirs(user_dir, exist_ok=True)
                 
-                # Khởi chạy luồng lưu trữ riêng
-                import threading
-                save_thread = threading.Thread(target=save_face_image_thread)
-                save_thread.daemon = True
-                save_thread.start()
+                # Sử dụng tên file cố định thay vì timestamp
+                filename = "latest.jpg"
+                filepath = os.path.join(user_dir, filename)
+                
+                # Xóa file cũ nếu tồn tại
+                if os.path.exists(filepath):
+                    try:
+                        os.remove(filepath)
+                    except Exception as e:
+                        self.system_logger.error(f"Failed to remove old image: {e}")
+                        
+                # Lưu ảnh trực tiếp ở đây thay vì trong thread riêng
+                try:
+                    # Lưu ảnh vào thư mục attendance
+                    success = cv2.imwrite(filepath, self.current_face_crop)
+                    if success:
+                        self.current_face_crop_path = filepath
+                        print(f"Successfully saved face image to: {filepath}")
+                    else:
+                        self.system_logger.error(f"Failed to save face image: cv2.imwrite returned False")
+                except Exception as e:
+                    self.system_logger.error(f"Failed to save face image: {e}")
             
             # Chỉ gửi attendance nếu mặt thật và xác thực thành công
             if is_live_face and self.verification_result["match"]:
