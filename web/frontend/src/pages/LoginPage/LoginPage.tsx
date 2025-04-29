@@ -341,6 +341,7 @@ function LoginPage(): React.JSX.Element {
                     <div className="forgot-Pass">
                       <Typography variant="body1">
                         <button
+                        type="button"
                           style={{
                             cursor: "pointer",
                             background: "none",
