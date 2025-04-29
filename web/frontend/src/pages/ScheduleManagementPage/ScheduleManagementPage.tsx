@@ -1125,25 +1125,22 @@ const ScheduleManagementPage: React.FC = () => {
                   ))}
                 </Select>
               </FormControl>
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel id="date-select-label">Date</InputLabel>
-                <TextField
-                  type="date"
-                  fullWidth
-                  value={moment(newEvent.scheduleDate || new Date()).format(
-                    "YYYY-MM-DD"
-                  )}
-                  onChange={e =>
-                    setNewEvent({
-                      ...newEvent,
-                      scheduleDate: new Date(e.target.value),
-                    })
-                  }
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </FormControl>
+              <TextField
+                type="date"
+                label="Date"
+                value={moment(newEvent.scheduleDate || new Date()).format(
+                  "YYYY-MM-DD"
+                )}
+                onChange={e =>
+                  setNewEvent({
+                    ...newEvent,
+                    scheduleDate: new Date(e.target.value),
+                  })
+                }
+                fullWidth
+                margin="normal"
+                InputLabelProps={{ shrink: true }}
+              />
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel id="slot-select-label">Slot</InputLabel>
                 <Select
