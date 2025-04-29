@@ -238,7 +238,7 @@ function useNavBarHook() {
       setNavItems([
         "HomePage Admin",
         "Profile",
-        // "System Management",
+        "System Management",
         "User Management",
         "Schedule Management",
         "Class Management",
