@@ -375,9 +375,11 @@ async def init_fams_with_sample_data():
                     email = str(row.get('Email', f"{generate_username(name, len(extracted_teachers)+1, 'teacher')}@fams.edu.vn"))
                     major = str(row.get('Chuyên môn', row.get('Major', row.get('Môn giảng dạy', ''))))
                     degree = str(row.get('Bằng cấp', row.get('Degree', '')))
-                    weekly_capacity = 10
+                    
+                    # Lấy giá trị Weekcapacity từ file Excel với nhiều tên cột có thể
+                    weekly_capacity = 10  # Giá trị mặc định
                     try:
-                        capacity_val = row.get('Số tiết/tuần', row.get('WeeklyCapacity', 10))
+                        capacity_val = row.get('Weekcapacity', row.get('WeeklyCapacity', row.get('Số tiết/tuần', row.get('weekly_capacity', row.get('weeklyCapacity', 10)))))
                         if not pd.isna(capacity_val):
                             weekly_capacity = int(capacity_val)
                     except (ValueError, TypeError):
@@ -396,7 +398,7 @@ async def init_fams_with_sample_data():
                         "email": email,
                         "major": major,
                         "degree": degree,
-                        "weeklyCapacity": weekly_capacity
+                        "weeklyCapacity": weekly_capacity  # Sử dụng giá trị Weekcapacity đã đọc
                     }
                     extracted_teachers.append(teacher)
                 else:
@@ -552,7 +554,7 @@ async def init_fams_with_sample_data():
                 "phone": teacher_data.get("phone", ""),
                 "major": teacher_data.get("major", ""),
                 "degree": teacher_data.get("degree", ""),
-                "weeklyCapacity": teacher_data.get("weeklyCapacity", 10),
+                "weeklyCapacity": teacher_data.get("weeklyCapacity", 10),  # Đảm bảo trường weeklyCapacity được sử dụng
                 "classIds": [],  # Initialize empty classIds array for tracking teaching history
                 "createdAt": datetime.datetime.now(),
                 "updatedAt": datetime.datetime.now(),

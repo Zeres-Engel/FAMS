@@ -178,6 +178,14 @@ async def upload_fams_excel(file: UploadFile = File(...)):
                     degree = row.get('Bằng cấp', row.get('Degree', ''))
                     if degree and not pd.isna(degree):
                         user_info["degree"] = str(degree)
+                    
+                    # Thêm xử lý weeklyCapacity (số tiết dạy mỗi tuần)
+                    weekly_capacity = row.get('Weekcapacity', row.get('WeeklyCapacity', row.get('Số tiết/tuần', row.get('weekly_capacity', row.get('weeklyCapacity', None)))))
+                    if weekly_capacity is not None and not pd.isna(weekly_capacity):
+                        try:
+                            user_info["weeklyCapacity"] = int(weekly_capacity)
+                        except (ValueError, TypeError):
+                            user_info["weeklyCapacity"] = 10  # Giá trị mặc định
                 
                 # For students, build basic info
                 else:
@@ -240,9 +248,7 @@ async def import_filtered_users(user_data: List[Dict] = Body(...)):
     """
     Import filtered users to database
     Only users with chosen=True will be imported
-    Returns the userIds of imported users
-    Creates UserAccount entries and links to Student/Teacher records
-    Handles students with batch assignment and parent relationships
+    Returns a quick acknowledgment and processes the import in background
     """
     # Filter only chosen users
     chosen_users = [user for user in user_data if user.get("chosen", False)]
@@ -251,252 +257,218 @@ async def import_filtered_users(user_data: List[Dict] = Body(...)):
         return ErrorResponseModel(
             "No users selected", 
             400, 
-            "No users were selected for import"
+            "No users selected for import"
         )
     
-    # Connect to database
-    client = connect_to_mongodb()
-    db = client["fams"]
+    # Start a background task for importing
+    import asyncio
+    import threading
     
-    # Prepare results to store userIds
-    result_ids = []
-    
-    try:
-        current_year = datetime.datetime.now().year
+    def import_users_in_background(users_to_import):
+        # Create a new event loop for the thread
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         
-        # Process users based on role
-        for index, user in enumerate(chosen_users):
-            role = user.get("role", "")
-            name = user.get("name", "")
+        try:
+            # Connect to database
+            client = connect_to_mongodb()
+            db = client["fams"]
+            current_year = datetime.datetime.now().year
             
-            # Generate username based on name and counter
-            username = generate_username(name, index + 1, role=role)
-            
-            # Create email - for teachers, use provided email if available
-            if role == "teacher" and "email" in user and user["email"]:
-                email = user["email"]
-            else:
-                email = user.get("email", f"{username}@fams.edu.vn")
-            
-            # Create UserAccount document
-            user_account = {
-                "userId": username,
-                "email": email,
-                "password": hash_password("123456"),  # Default password
-                "role": role,
-                "createdAt": datetime.datetime.now(),
-                "updatedAt": datetime.datetime.now(),
-                "isActive": True
-            }
-            
-            # Insert UserAccount
-            db.UserAccount.insert_one(user_account)
-            
-            # Process gender field (handle Vietnamese input)
-            gender_str = user.get("gender", "").lower()
-            gender = True if gender_str in ["nam", "male", "true", "1"] else False
-            
-            # Format date of birth - now using dayOfBirth with fallback to dob for backward compatibility
-            dob_str = user.get("dayOfBirth", user.get("dob", ""))
-            try:
-                # Try to parse various date formats
-                dob = None
-                if dob_str:
-                    # Try common formats
-                    date_formats = ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y', '%m/%d/%Y']
-                    for fmt in date_formats:
-                        try:
-                            dob = datetime.datetime.strptime(dob_str, fmt)
-                            break
-                        except ValueError:
-                            continue
-            except Exception:
-                dob = None
-            
-            if role == "student":
-                # Check and create batch if needed
-                # Get the latest batch ID
-                latest_batch = db.Batch.find_one(sort=[("batchId", -1)])
-                
-                batch_id = 1  # Default batch ID as integer
-                if latest_batch:
-                    try:
-                        # Ensure batch_id is an integer
-                        if isinstance(latest_batch["batchId"], str):
-                            batch_id = int(latest_batch["batchId"]) + 1
-                        else:
-                            batch_id = latest_batch["batchId"] + 1
-                    except (ValueError, TypeError):
-                        batch_id = 1
-                
-                batch_name = f"Batch {batch_id}"
-                
-                # Create batch document
-                batch_doc = {
-                    "batchId": batch_id,  # Store as integer, not string
-                    "batchName": batch_name,
-                    "startYear": current_year,
-                    "startDate": datetime.datetime.now(),
-                    "endDate": datetime.datetime(current_year + 3, 5, 31),  # 3 years later
-                    "createdAt": datetime.datetime.now(),
-                    "updatedAt": datetime.datetime.now(),
-                    "isActive": True
-                }
-                
-                # Check if batch already exists
-                existing_batch = db.Batch.find_one({"startYear": current_year})
-                if not existing_batch:
-                    db.Batch.insert_one(batch_doc)
-                    batch_id_int = batch_id
-                else:
-                    # Ensure existing batch_id is an integer
-                    if isinstance(existing_batch["batchId"], str):
-                        batch_id_int = int(existing_batch["batchId"])
-                        # Update the existing batch to use integer batchId
-                        db.Batch.update_one(
-                            {"_id": existing_batch["_id"]},
-                            {"$set": {"batchId": batch_id_int}}
-                        )
-                    else:
-                        batch_id_int = existing_batch["batchId"]
-                
-                # Get next student ID
-                last_student = db.Student.find_one(sort=[("studentId", -1)])
-                student_id = 1
-                if last_student and "studentId" in last_student:
-                    try:
-                        student_id = int(last_student["studentId"]) + 1
-                    except (ValueError, TypeError):
-                        student_id = 1
-                
-                # Prepare student document
-                student_doc = {
-                    "studentId": student_id,
-                    "userId": username,
-                    "fullName": name,
-                    "email": email,
-                    "dateOfBirth": dob,
-                    "gender": gender,
-                    "address": user.get("address", ""),
-                    "phone": user.get("phone", ""),
-                    "batchId": batch_id_int,  # Use integer, not string
-                    "classId": None,  # Will be assigned later
-                    "createdAt": datetime.datetime.now(),
-                    "updatedAt": datetime.datetime.now(),
-                    "isActive": True
-                }
-                
-                # Insert student
-                result = db.Student.insert_one(student_doc)
-                student_db_id = result.inserted_id
-                
-                result_ids.append({
-                    "_id": str(student_db_id),
-                    "userId": username,
-                    "studentId": student_id,
-                    "role": "student"
-                })
-                
-                # Process parent information
-                parents_info = []
-                
-                # Parent 1
-                if "parent1" in user and user["parent1"]:
-                    parent1 = user["parent1"]
-                    parent1_record = process_parent(db, parent1, index)
-                    if parent1_record:
-                        parents_info.append({
-                            "parent_id": parent1_record["parentId"],
-                            "relationship": parent1.get("relationship", "Other"),
-                            "isEmergencyContact": True  # First parent is emergency contact
-                        })
-                
-                # Parent 2
-                if "parent2" in user and user["parent2"]:
-                    parent2 = user["parent2"]
-                    parent2_record = process_parent(db, parent2, index + 1000)  # Offset to avoid username conflicts
-                    if parent2_record:
-                        parents_info.append({
-                            "parent_id": parent2_record["parentId"],
-                            "relationship": parent2.get("relationship", "Other"),
-                            "isEmergencyContact": False
-                        })
-                
-                # Create ParentStudent relationships
-                for parent_info in parents_info:
-                    # Get next relationship ID
-                    last_relation = db.ParentStudent.find_one(sort=[("parentStudentId", -1)])
-                    relation_id = 1
-                    if last_relation and "parentStudentId" in last_relation:
-                        try:
-                            relation_id = int(last_relation["parentStudentId"]) + 1
-                        except (ValueError, TypeError):
-                            relation_id = 1
+            # Process users in background
+            for index, user in enumerate(users_to_import):
+                try:
+                    # Process user code from original function...
+                    role = user.get("role", "")
+                    name = user.get("name", "")
                     
-                    # Create relationship record
-                    parent_student_doc = {
-                        "parentStudentId": relation_id,
-                        "parentId": parent_info["parent_id"],  # Already an integer from process_parent
-                        "studentId": student_id,  # Integer
-                        "relationship": parent_info["relationship"],
-                        "isEmergencyContact": parent_info["isEmergencyContact"],
+                    # Generate username based on name and counter
+                    username = generate_username(name, index + 1, role=role)
+                    
+                    # Create email
+                    if role == "teacher" and "email" in user and user["email"]:
+                        email = user["email"]
+                    else:
+                        email = user.get("email", f"{username}@fams.edu.vn")
+                    
+                    # Create UserAccount document
+                    user_account = {
+                        "userId": username,
+                        "email": email,
+                        "password": hash_password("123456"),  # Default password
+                        "role": role,
                         "createdAt": datetime.datetime.now(),
                         "updatedAt": datetime.datetime.now(),
                         "isActive": True
                     }
                     
-                    db.ParentStudent.insert_one(parent_student_doc)
-                
-            elif role == "teacher":
-                # Get next teacher ID
-                last_teacher = db.Teacher.find_one(sort=[("teacherId", -1)])
-                teacher_id = 1
-                if last_teacher and "teacherId" in last_teacher:
+                    # Insert UserAccount
+                    db.UserAccount.insert_one(user_account)
+                    
+                    # Process role-specific data
+                    # ... Rest of the user processing code
+                    # Process gender field (handle Vietnamese input)
+                    gender_str = user.get("gender", "").lower()
+                    gender = True if gender_str in ["nam", "male", "true", "1"] else False
+                    
+                    # Format date of birth
+                    dob_str = user.get("dayOfBirth", user.get("dob", ""))
                     try:
-                        teacher_id = int(last_teacher["teacherId"]) + 1
-                    except (ValueError, TypeError):
+                        # Try to parse various date formats
+                        dob = None
+                        if dob_str:
+                            # Try common formats
+                            date_formats = ['%d/%m/%Y', '%Y-%m-%d', '%d-%m-%Y', '%m/%d/%Y']
+                            for fmt in date_formats:
+                                try:
+                                    dob = datetime.datetime.strptime(dob_str, fmt)
+                                    break
+                                except ValueError:
+                                    continue
+                    except Exception:
+                        dob = None
+                    
+                    if role == "student":
+                        # Student processing...
+                        # Check and create batch if needed
+                        # Get the latest batch ID
+                        latest_batch = db.Batch.find_one(sort=[("batchId", -1)])
+                        
+                        batch_id = 1  # Default batch ID as integer
+                        if latest_batch:
+                            try:
+                                # Ensure batch_id is an integer
+                                if isinstance(latest_batch["batchId"], str):
+                                    batch_id = int(latest_batch["batchId"]) + 1
+                                else:
+                                    batch_id = latest_batch["batchId"] + 1
+                            except (ValueError, TypeError):
+                                batch_id = 1
+                        
+                        batch_name = f"Batch {batch_id}"
+                        
+                        # Create batch document
+                        batch_doc = {
+                            "batchId": batch_id,  # Store as integer, not string
+                            "batchName": batch_name,
+                            "startYear": current_year,
+                            "startDate": datetime.datetime.now(),
+                            "endDate": datetime.datetime(current_year + 3, 5, 31),  # 3 years later
+                            "createdAt": datetime.datetime.now(),
+                            "updatedAt": datetime.datetime.now(),
+                            "isActive": True
+                        }
+                        
+                        # Check if batch already exists
+                        existing_batch = db.Batch.find_one({"startYear": current_year})
+                        if not existing_batch:
+                            db.Batch.insert_one(batch_doc)
+                            batch_id_int = batch_id
+                        else:
+                            # Ensure existing batch_id is an integer
+                            if isinstance(existing_batch["batchId"], str):
+                                batch_id_int = int(existing_batch["batchId"])
+                                # Update the existing batch to use integer batchId
+                                db.Batch.update_one(
+                                    {"_id": existing_batch["_id"]},
+                                    {"$set": {"batchId": batch_id_int}}
+                                )
+                            else:
+                                batch_id_int = existing_batch["batchId"]
+                        
+                        # Get next student ID
+                        last_student = db.Student.find_one(sort=[("studentId", -1)])
+                        student_id = 1
+                        if last_student and "studentId" in last_student:
+                            try:
+                                student_id = int(last_student["studentId"]) + 1
+                            except (ValueError, TypeError):
+                                student_id = 1
+                        
+                        # Prepare student document
+                        student_doc = {
+                            "studentId": student_id,
+                            "userId": username,
+                            "fullName": name,
+                            "email": email,
+                            "dateOfBirth": dob,
+                            "gender": gender,
+                            "address": user.get("address", ""),
+                            "phone": user.get("phone", ""),
+                            "batchId": batch_id_int,  # Use integer, not string
+                            "classId": None,  # Will be assigned later
+                            "createdAt": datetime.datetime.now(),
+                            "updatedAt": datetime.datetime.now(),
+                            "isActive": True
+                        }
+                        
+                        # Insert student
+                        db.Student.insert_one(student_doc)
+                        
+                        # Process parent information if available
+                        if "parent1" in user and user["parent1"]:
+                            parent1 = user["parent1"]
+                            process_parent(db, parent1, index)
+                            
+                        if "parent2" in user and user["parent2"]:
+                            parent2 = user["parent2"]
+                            process_parent(db, parent2, index + 1000)  # Offset to avoid conflicts
+                            
+                    elif role == "teacher":
+                        # Teacher processing...
+                        # Get next teacher ID
+                        last_teacher = db.Teacher.find_one(sort=[("teacherId", -1)])
                         teacher_id = 1
+                        if last_teacher and "teacherId" in last_teacher:
+                            try:
+                                teacher_id = int(last_teacher["teacherId"]) + 1
+                            except (ValueError, TypeError):
+                                teacher_id = 1
+                        
+                        # Prepare teacher document
+                        teacher_doc = {
+                            "teacherId": teacher_id,
+                            "userId": username,
+                            "fullName": name,
+                            "email": email,
+                            "dateOfBirth": dob,
+                            "gender": gender,
+                            "address": user.get("address", ""),
+                            "phone": user.get("phone", ""),
+                            "major": user.get("major", ""),
+                            "degree": user.get("degree", ""),  # Added degree field
+                            "weeklyCapacity": 10,  # Default value
+                            "createdAt": datetime.datetime.now(),
+                            "updatedAt": datetime.datetime.now(),
+                            "isActive": True
+                        }
+                        
+                        # Insert teacher
+                        db.Teacher.insert_one(teacher_doc)
+                except Exception as user_error:
+                    print(f"Error processing user {index}: {str(user_error)}")
+                    # Continue with other users even if one fails
+                    continue
                 
-                # Prepare teacher document
-                teacher_doc = {
-                    "teacherId": teacher_id,
-                    "userId": username,
-                    "fullName": name,
-                    "email": email,
-                    "dateOfBirth": dob,
-                    "gender": gender,
-                    "address": user.get("address", ""),
-                    "phone": user.get("phone", ""),
-                    "major": user.get("major", ""),
-                    "degree": user.get("degree", ""),  # Added degree field
-                    "weeklyCapacity": 10,  # Default value
-                    "createdAt": datetime.datetime.now(),
-                    "updatedAt": datetime.datetime.now(),
-                    "isActive": True
-                }
-                
-                # Insert teacher
-                result = db.Teacher.insert_one(teacher_doc)
-                result_ids.append({
-                    "_id": str(result.inserted_id),
-                    "userId": username,
-                    "teacherId": teacher_id,
-                    "role": "teacher"
-                })
-        
-        return ResponseModel(
-            result_ids,
-            f"Successfully imported {len(result_ids)} users"
-        )
+            client.close()
+        except Exception as e:
+            print(f"Background import error: {str(e)}")
+        finally:
+            loop.close()
     
-    except Exception as e:
-        return ErrorResponseModel(
-            "Import failed",
-            500,
-            f"Failed to import users: {str(e)}"
-        )
-    finally:
-        client.close()
+    # Start the background thread for importing
+    import_thread = threading.Thread(
+        target=import_users_in_background, 
+        args=(chosen_users,),
+        daemon=True
+    )
+    import_thread.start()
+    
+    # Return an immediate success response
+    return ResponseModel(
+        {"status": "importing", "count": len(chosen_users)},
+        f"Import of {len(chosen_users)} users has been started successfully in the background"
+    )
 
 def process_parent(db, parent_data, index):
     """
