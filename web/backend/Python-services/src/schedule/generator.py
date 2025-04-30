@@ -3,7 +3,7 @@ Schedule generation main module
 """
 import os
 import datetime
-from .core import generate_schedule
+from .core import generate_schedule, generate_improved_schedule, clean_existing_schedules
 from .export import export_schedule_to_csv, export_semester_schedules
 from ..constants import COLLECTIONS
 
@@ -173,7 +173,7 @@ def generate_schedule_entries(db, schedule_data, total_weeks, start_date, end_da
     return schedule_entries
 
 
-def generate_strict_schedule(db, semester_doc, total_weeks=20):
+def generate_strict_schedule(db, semester_doc, total_weeks=20, clean_before_generate=True):
     """
     Generate a schedule for a semester using strict assignment
     
@@ -181,6 +181,7 @@ def generate_strict_schedule(db, semester_doc, total_weeks=20):
         db: MongoDB database connection
         semester_doc: Semester document
         total_weeks: Total weeks in semester
+        clean_before_generate: Whether to clean existing schedules before generating new ones
         
     Returns:
         dict - results of generation
@@ -207,6 +208,23 @@ def generate_strict_schedule(db, semester_doc, total_weeks=20):
     classes = list(db.Class.find({"grade": grade}))
     class_ids = [c["_id"] for c in classes]
     print(f"Found {len(classes)} classes for grade {grade}")
+    
+    # Get academic year from classes (for cleanup)
+    academic_year = None
+    if classes:
+        academic_year = classes[0].get("academicYear")
+        print(f"Academic year for these classes: {academic_year}")
+        
+    # Clean existing schedules if requested
+    if clean_before_generate and semester_id:
+        semester_id_numeric = semester_doc.get("semesterId", semester_doc.get("SemesterID"))
+        if not semester_id_numeric and isinstance(semester_id, str):
+            # Convert ObjectId to string if needed
+            semester_id_numeric = str(semester_id)
+            
+        print(f"Cleaning existing schedules for semester {semester_id_numeric} and academic year {academic_year}")
+        clean_stats = clean_existing_schedules(db, semester_id_numeric, academic_year)
+        print(f"Cleaned {clean_stats['schedules_deleted']} schedules and {clean_stats['attendance_logs_deleted']} attendance logs")
     
     # Get teachers
     teachers = list(db.Teacher.find({}))
@@ -360,7 +378,7 @@ def generate_semesters(db):
     return semesters
 
 
-def generate_all_schedules(db, semesters, output_dir="src/data/schedules"):
+def generate_all_schedules(db, semesters, output_dir="src/data/schedules", clean_before_generate=True):
     """
     Generate schedules for all semesters.
     
@@ -368,6 +386,7 @@ def generate_all_schedules(db, semesters, output_dir="src/data/schedules"):
         db: MongoDB database connection
         semesters: List of semester documents
         output_dir: Directory to export schedules to
+        clean_before_generate: Whether to clean existing schedules before generating new ones
         
     Returns:
         int: Total number of schedule entries generated
@@ -388,7 +407,7 @@ def generate_all_schedules(db, semesters, output_dir="src/data/schedules"):
         batch_id = sem.get('batchId', 'Unknown')
         
         print(f"[SCHEDULE] Generating schedule for semester {semester_name} of Batch {batch_id}...")
-        scheds, warnings = generate_schedule(db, sem, total_weeks=18)
+        scheds, warnings = generate_schedule(db, sem, total_weeks=18, clean_existing=clean_before_generate)
         total_entries += len(scheds)
         
         if warnings:

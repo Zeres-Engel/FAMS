@@ -5,6 +5,10 @@ const Class = require('../database/models/Class');
 const Parent = require('../database/models/Parent');
 const scheduleService = require('../services/scheduleService');
 const mongoose = require('mongoose');
+const ClassSchedule = require('../database/models/ClassSchedule');
+const ScheduleFormat = require('../database/models/ScheduleFormat');
+const AttendanceLog = require('../database/models/AttendanceLog');
+const moment = require('moment');
 
 // Helper function to get classId based on user role and userId
 const getClassIdForUser = async (user) => {
@@ -666,6 +670,259 @@ exports.getCurrentWeekRange = async (req, res) => {
   } catch (error) {
     console.error('Error in getCurrentWeekRange:', error);
     res.status(500).json({
+      success: false,
+      message: error.message,
+      code: 'SCHEDULE_ERROR'
+    });
+  }
+};
+
+// @desc    Create a new schedule
+// @route   POST /api/schedules
+// @access  Public
+exports.createSchedule = async (req, res) => {
+  try {
+    // Extract schedule data from request body
+    const {
+      semesterId,
+      semesterNumber,
+      classId,
+      subjectId, 
+      teacherId,
+      teacherUserId, // Support teacherUserId field
+      classroomId,
+      topic,
+      sessionDate,
+      sessionWeek,
+      dayOfWeek,     // Day of week for the schedule (e.g., Monday, Tuesday)
+      slotNumber,    // Slot number (e.g., 1, 2, 3)
+      startTime,     // Start time (e.g., "07:00")
+      endTime        // End time (e.g., "07:50")
+    } = req.body;
+    
+    // Get teacherId from teacherUserId if needed
+    let resolvedTeacherId = teacherId;
+    let teacherData = null;
+    
+    if (!resolvedTeacherId && teacherUserId) {
+      console.log(`Finding teacherId for teacherUserId: ${teacherUserId}`);
+      // Find teacher by userId
+      const teacher = await Teacher.findOne({ userId: teacherUserId });
+      
+      if (teacher) {
+        resolvedTeacherId = teacher.teacherId;
+        teacherData = teacher;
+        console.log(`Found teacherId: ${resolvedTeacherId} for userId: ${teacherUserId}`);
+      } else {
+        console.log(`Teacher not found with userId: ${teacherUserId}`);
+        return res.status(400).json({
+          success: false,
+          message: `Teacher not found with userId ${teacherUserId}`
+        });
+      }
+    } else {
+      // Find teacher by teacherId
+      teacherData = await Teacher.findOne({ teacherId: resolvedTeacherId });
+      if (!teacherData) {
+        console.log(`Teacher not found with teacherId: ${resolvedTeacherId}`);
+        return res.status(400).json({
+          success: false,
+          message: `Teacher not found with teacherId ${resolvedTeacherId}`
+        });
+      }
+    }
+    
+    // Validate required fields
+    if (!semesterId || !classId || !subjectId || !resolvedTeacherId || 
+        !dayOfWeek || !slotNumber || !startTime || !endTime || !sessionDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide all required schedule information'
+      });
+    }
+    
+    // Step 1: Check if the slot already exists in ScheduleFormat by dayOfWeek, startTime, endTime
+    console.log(`Checking slot with dayOfWeek=${dayOfWeek}, startTime=${startTime}, endTime=${endTime}`);
+    let slot = await ScheduleFormat.findOne({
+      dayOfWeek: dayOfWeek,
+      startTime: startTime,
+      endTime: endTime
+    });
+    
+    // If slot doesn't exist, create a new one
+    if (!slot) {
+      console.log('Slot does not exist, creating new slot...');
+      
+      // Get the next slotId
+      const maxSlotResult = await ScheduleFormat.findOne().sort('-slotId');
+      const nextSlotId = maxSlotResult ? maxSlotResult.slotId + 1 : 1;
+      
+      // Create a new slot
+      slot = await ScheduleFormat.create({
+        slotId: nextSlotId,
+        slotName: `Slot ${slotNumber}`,
+        slotNumber: Number(slotNumber),
+        dayOfWeek: dayOfWeek,
+        startTime: startTime,
+        endTime: endTime,
+        isActive: true
+      });
+      
+      console.log(`Created new slot with slotId=${slot.slotId}`);
+    } else {
+      console.log(`Found existing slot with slotId=${slot.slotId}`);
+    }
+    
+    // Step 2: Create the ClassSchedule
+    // Generate the next scheduleId
+    const maxScheduleResult = await ClassSchedule.findOne().sort('-scheduleId');
+    const nextScheduleId = maxScheduleResult ? maxScheduleResult.scheduleId + 1 : 1;
+    
+    // Format the session date
+    const formattedSessionDate = new Date(sessionDate);
+    
+    // Create new class schedule
+    const newSchedule = await ClassSchedule.create({
+      scheduleId: nextScheduleId,
+      semesterId: Number(semesterId),
+      semesterNumber: Number(semesterNumber || 1),
+      classId: Number(classId),
+      subjectId: Number(subjectId),
+      teacherId: Number(resolvedTeacherId),
+      classroomId: Number(classroomId || 1), // Default to 1 if not provided
+      slotId: slot.slotId,
+      topic: topic || `Buổi học ${slotNumber}`,
+      sessionDate: formattedSessionDate,
+      sessionWeek: sessionWeek || scheduleService.getWeekRangeString(formattedSessionDate),
+      isActive: true
+    });
+    
+    console.log(`Created new schedule with scheduleId=${newSchedule.scheduleId}`);
+    
+    // Step 3: Create attendance logs for this schedule
+    // Get class info
+    const classObj = await Class.findOne({ classId: Number(classId) });
+    if (!classObj) {
+      return res.status(400).json({
+        success: false,
+        message: 'Class not found'
+      });
+    }
+    
+    // Get subject info
+    const subject = await mongoose.connection.db.collection('Subject')
+      .findOne({ subjectId: Number(subjectId) });
+    
+    // Get classroom info
+    const classroom = await mongoose.connection.db.collection('Classroom')
+      .findOne({ classroomId: Number(classroomId) });
+    
+    // Get students in this class (where classIds array includes this classId)
+    const students = await Student.find({ 
+      classIds: { $in: [Number(classId)] }, 
+      isActive: true 
+    });
+    
+    console.log(`Found ${students.length} students in class ${classObj.className}`);
+    
+    // Get the maximum attendanceId to create sequential IDs
+    const maxAttendanceLog = await AttendanceLog.findOne().sort({ attendanceId: -1 });
+    let nextAttendanceId = 1; // Default start at 1
+    
+    if (maxAttendanceLog && maxAttendanceLog.attendanceId) {
+      nextAttendanceId = maxAttendanceLog.attendanceId + 1;
+    }
+    
+    console.log(`Starting attendance log creation with ID: ${nextAttendanceId}`);
+    
+    // Create attendance log for teacher first
+    try {
+      console.log(`Creating attendance log for teacher ${teacherData.fullName}`);
+      
+      const teacherAttendanceLog = {
+        attendanceId: nextAttendanceId,
+        scheduleId: newSchedule.scheduleId,
+        userId: teacherData.userId,
+        checkIn: null,
+        note: "",
+        status: "Not Now", // Using "Not Now" instead of "Pending"
+        semesterNumber: Number(semesterNumber || 1),
+        isActive: true,
+        userRole: "teacher",
+        teacherId: teacherData.teacherId,
+        teacherName: teacherData.fullName,
+        subjectId: Number(subjectId),
+        subjectName: subject ? subject.subjectName : "",
+        classId: Number(classId),
+        className: classObj.className,
+        classroomId: Number(classroomId),
+        classroomName: classroom ? classroom.classroomName : ""
+      };
+      
+      await AttendanceLog.create(teacherAttendanceLog);
+      console.log(`Created attendance log for teacher ${teacherData.fullName} with ID ${nextAttendanceId}`);
+      nextAttendanceId++; // Increment for next attendance log
+    } catch (error) {
+      console.error("Error creating teacher attendance log:", error);
+    }
+    
+    // Create attendance logs for students
+    const attendanceLogEntries = [];
+    let successCount = 0;
+    
+    for (let i = 0; i < students.length; i++) {
+      try {
+        const student = students[i];
+        
+        console.log(`Creating attendance log for student ${student.fullName} with ID ${nextAttendanceId}`);
+        
+        const studentAttendanceLog = {
+          attendanceId: nextAttendanceId,
+          scheduleId: newSchedule.scheduleId,
+          userId: student.userId,
+          checkIn: null,
+          note: "",
+          status: "Not Now", // Using "Not Now" instead of "Pending"
+          semesterNumber: Number(semesterNumber || 1),
+          isActive: true,
+          userRole: "student",
+          teacherId: teacherData.teacherId,
+          teacherName: teacherData.fullName,
+          subjectId: Number(subjectId),
+          subjectName: subject ? subject.subjectName : "",
+          classId: Number(classId),
+          className: classObj.className,
+          studentId: student.studentId,
+          studentName: student.fullName,
+          classroomId: Number(classroomId),
+          classroomName: classroom ? classroom.classroomName : ""
+        };
+        
+        await AttendanceLog.create(studentAttendanceLog);
+        attendanceLogEntries.push(studentAttendanceLog);
+        successCount++;
+        nextAttendanceId++; // Increment for next attendance log
+      } catch (error) {
+        console.error(`Error creating attendance log for student ${students[i].fullName}:`, error);
+      }
+    }
+    
+    console.log(`Successfully created ${successCount} student attendance logs`);
+    
+    // Return success response
+    return res.status(201).json({
+      success: true,
+      message: 'Schedule created successfully',
+      data: {
+        schedule: newSchedule,
+        slot: slot,
+        attendanceCount: successCount + 1 // +1 for teacher
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error in createSchedule:', error);
+    return res.status(500).json({
       success: false,
       message: error.message,
       code: 'SCHEDULE_ERROR'

@@ -180,7 +180,7 @@ async def upload_fams_excel(file: UploadFile = File(...)):
                         user_info["degree"] = str(degree)
                     
                     # Thêm xử lý weeklyCapacity (số tiết dạy mỗi tuần)
-                    weekly_capacity = row.get('Weekcapacity', row.get('WeeklyCapacity', row.get('Số tiết/tuần', row.get('weekly_capacity', row.get('weeklyCapacity', None)))))
+                    weekly_capacity = row.get('Weekcapacity', row.get('WeeklyCapacity', row.get('Số lượng tiết học có thể dạy cho 1 tuần', row.get('weekly_capacity', row.get('weeklyCapacity', None)))))
                     if weekly_capacity is not None and not pd.isna(weekly_capacity):
                         try:
                             user_info["weeklyCapacity"] = int(weekly_capacity)
