@@ -58,6 +58,7 @@ export default function EditClassForm({
             name="className"
             value={state.editingClass.className}
             onChange={handler.handleEditClassChange}
+            disabled={true}
             error={!!state.formErrors.className}
             helperText={state.formErrors.className}
           />
@@ -93,6 +94,7 @@ export default function EditClassForm({
               labelId="grade-select-label"
               id="grade-select"
               name="grade"
+              disabled={true}
               value={state.editingClass.grade}
               label="Grade"
               onChange={handler.handleSelectChange}
