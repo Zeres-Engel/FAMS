@@ -6,6 +6,7 @@ import useLayoutHook from "./useLayoutHook";
 import GlobalLoading from "../ShowLoading/ShowLoading";
 import { useSelector } from "react-redux";
 import { RootState } from "../../store/store";
+import AnnounceComponent from "../AnnounceComponent/AnnounceComponent";
 
 interface LayoutProps {
   children: ReactNode;
@@ -73,6 +74,7 @@ function LayoutComponent({
           {children}
         </Box>
       </Box>
+      <AnnounceComponent />
     </Container>
   );
 }
