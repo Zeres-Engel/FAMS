@@ -97,7 +97,8 @@ function useLoginPageHook() {
         setIsOtpVerified(true); // Chuyển sang bước nhập mật khẩu mới
         setAlertMessage("OTP verified successfully!");
         setNotifyID((prev) => prev + 1);
-  
+        resetField("otp");
+        resetField("email");
         // Clear dữ liệu của các trường "New Password" và "Confirm New Password"
         resetField("newPassword");
         resetField("confirmNewPassword");

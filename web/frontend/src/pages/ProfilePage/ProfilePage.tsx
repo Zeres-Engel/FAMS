@@ -424,6 +424,7 @@ function ProfilePage(): React.JSX.Element {
                     <Box flex={1}>
                       {isEditing ? (
                         <TextField
+                          disabled={['email','fullName','userId'].includes(key)}
                           fullWidth
                           size="small"
                           name={key}
