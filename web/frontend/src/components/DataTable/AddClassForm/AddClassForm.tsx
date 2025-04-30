@@ -16,39 +16,57 @@ export default function AddClassForm(): React.JSX.Element {
   const { state, handler } = useAddClassFormHook();
 
   return (
-    <Box display="flex" justifyContent="center" alignItems="center" sx={{ mt: 4, px: 2 }}>
+    <Box
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+      sx={{ mt: 4, px: 2 }}
+    >
       <Paper elevation={3} sx={{ p: 4, width: "100%", maxWidth: 800 }}>
         <Typography variant="h5" gutterBottom>
           Create Class
         </Typography>
 
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <FormControl fullWidth>
-            <InputLabel id="academicYear-select-label">Academic Year</InputLabel>
+          {/* Academic Year */}
+          <FormControl
+            fullWidth
+            required
+            error={Boolean(state.formErrors.academicYear)}
+          >
+            <InputLabel id="academicYear-select-label">
+              Academic Year
+            </InputLabel>
             <Select
               labelId="academicYear-select-label"
               id="academicYear-select"
               name="academicYear"
-              value={state.form?.academicYear}
-              label="academicYear"
+              value={state.form.academicYear}
+              label="Academic Year"
               onChange={handler.handleSelectChange}
             >
-              {handler.getAcademicYears(4).map((year) => (
+              {handler.getAcademicYears(4).map(year => (
                 <MenuItem key={year} value={year}>
                   {year}
                 </MenuItem>
               ))}
             </Select>
+            {state.formErrors.academicYear && (
+              <Typography variant="caption" color="error" sx={{ ml: 2 }}>
+                {state.formErrors.academicYear}
+              </Typography>
+            )}
           </FormControl>
 
-          <FormControl fullWidth>
+          {/* Grade */}
+          <FormControl fullWidth required>
             <InputLabel id="grade-select-label">Grade</InputLabel>
             <Select
               labelId="grade-select-label"
               id="grade-select"
               name="grade"
-              value={state.form?.grade}
-              label="grade"
+              value={state.form.grade}
+              label="Grade"
               onChange={handler.handleSelectChange}
             >
               <MenuItem value="10">10</MenuItem>
@@ -57,7 +75,9 @@ export default function AddClassForm(): React.JSX.Element {
             </Select>
           </FormControl>
 
+          {/* Class Name */}
           <TextField
+            required
             fullWidth
             label="Class Name"
             name="className"
@@ -67,7 +87,12 @@ export default function AddClassForm(): React.JSX.Element {
             helperText={state.formErrors.className}
           />
 
-          <FormControl fullWidth error={Boolean(state.formErrors.teacherId)}>
+          {/* Teacher */}
+          <FormControl
+            fullWidth
+            required
+            error={Boolean(state.formErrors.teacherId)}
+          >
             <InputLabel id="teacher-select-label">Teacher</InputLabel>
             <Select
               labelId="teacher-select-label"
@@ -77,14 +102,20 @@ export default function AddClassForm(): React.JSX.Element {
               label="Teacher"
               onChange={handler.handleSelectChange}
             >
-              {state.teachers.map((teacher) => (
+              {state.teachers.map(teacher => (
                 <MenuItem key={teacher.userId} value={teacher.userId}>
                   {teacher.fullName} - {teacher.userId}
                 </MenuItem>
               ))}
             </Select>
+            {state.formErrors.teacherId && (
+              <Typography variant="caption" color="error" sx={{ ml: 2 }}>
+                {state.formErrors.teacherId}
+              </Typography>
+            )}
           </FormControl>
 
+          {/* Submit Button */}
           <Button
             variant="contained"
             color="primary"

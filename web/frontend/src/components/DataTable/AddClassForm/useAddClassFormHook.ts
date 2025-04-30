@@ -23,7 +23,15 @@ export default function useAddClassFormHook() {
 
   // Lấy danh sách giáo viên từ Redux store
   const teachers = useSelector((state: RootState) => state.teacher.teachers);
-
+  const resetForm = () => {
+    setForm({
+      className: "",
+      teacherId: "",
+      academicYear: "",
+      grade: "10",
+    });
+    setFormErrors({});
+  };
   useEffect(() => {
     // Chỉ gọi API khi teachers chưa có dữ liệu
     if (!teachers || teachers.length === 0) {
@@ -76,6 +84,7 @@ export default function useAddClassFormHook() {
 
       console.log("Creating class:", payload);
       dispatch(createClass(payload));
+      resetForm();
     }
   };
 
