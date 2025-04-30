@@ -62,6 +62,7 @@ interface EnhancedTableToolbarProps {
   availableAcademicYears?: string[];
   onAcademicYearChange?: (year: string) => void;
   classYears?: Array<{ className: string; academicYear: string }>;
+  createButtonAction?: () => void;
 }
 
 const roleOptions = ["student", "teacher", "parent"];
@@ -99,6 +100,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
     classPageList = [],
     subjectList = [],
     classYears = [],
+    createButtonAction,
   } = props;
 
   const { state, handler } = useTableToolBarHook({
@@ -165,6 +167,15 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
         <Typography variant="h6" id="tableTitle" marginLeft={5}>
           {tableTitle}
         </Typography>
+        {/* {createButtonAction && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={createButtonAction}
+          >
+            Create Class
+          </Button>
+        )} */}
         {/* {((isAttendance && !isRoleStudent) || isTeacherView) && (
           <Button
             variant="outlined"

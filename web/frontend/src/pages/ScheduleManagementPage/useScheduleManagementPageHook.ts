@@ -567,7 +567,6 @@ function useScheduleManagementPageHook() {
       // Kiểm tra scheduleId hợp lệ
       if (!scheduleId) {
         console.error("Invalid scheduleId:", scheduleId);
-        alert("Không thể xóa lịch học: ID không hợp lệ");
         return;
       }
 
@@ -593,24 +592,21 @@ function useScheduleManagementPageHook() {
         setEvents(prevEvents =>
           prevEvents.filter(event => event.id !== scheduleId)
         );
-
-        // Show success message
-        alert(`Xóa lịch học thành công! Đã xóa ${logsDeleted} bản ghi điểm danh liên quan.`);
       } else {
         // Nếu API trả về lỗi
-        alert(`Không thể xóa lịch học: ${response.data.message || "Lỗi không xác định"}`);
+        console.error(`Không thể xóa lịch học: ${response.data.message || "Lỗi không xác định"}`);
       }
     } catch (error: any) {
       console.error("Lỗi khi xóa lịch học:", error);
       
-      // Thông báo lỗi chi tiết hơn
+      // Thông báo lỗi chi tiết hơn bằng console.error thay vì alert
       const errorStatus = error?.response?.status;
       const errorMessage = error?.response?.data?.message || error?.message || "Lỗi không xác định";
       
       if (errorStatus === 404) {
-        alert(`Không tìm thấy lịch học với ID ${scheduleId}. Có thể lịch học đã bị xóa trước đó.`);
+        console.error(`Không tìm thấy lịch học với ID ${scheduleId}. Có thể lịch học đã bị xóa trước đó.`);
       } else {
-        alert(`Lỗi khi xóa lịch học (${errorStatus}): ${errorMessage}`);
+        console.error(`Lỗi khi xóa lịch học (${errorStatus}): ${errorMessage}`);
       }
     }
   };

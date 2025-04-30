@@ -79,11 +79,17 @@ const createClass = async (req, res) => {
       isActive: true
     });
 
-    console.log(`Created new class:`, JSON.stringify(newClass));
+    // Mặc định studentNumber = 0 cho lớp mới
+    const classWithStudentNumber = {
+      ...newClass.toObject(),
+      studentNumber: 0
+    };
+
+    console.log(`Created new class:`, JSON.stringify(classWithStudentNumber));
 
     return res.status(201).json({
       success: true,
-      data: newClass,
+      data: classWithStudentNumber,
       message: 'Class created successfully'
     });
   } catch (error) {
@@ -156,11 +162,21 @@ const getAllClasses = async (req, res) => {
     const classes = await Class.find(query).sort({ classId: 1 });
     console.log(`Found ${classes.length} classes`);
     
-    // Return the classes directly without modifying the grade field
+    // Get student counts for each class
+    const Student = mongoose.model('Student');
+    const classesWithStudentCount = await Promise.all(classes.map(async (classItem) => {
+      const studentCount = await Student.countDocuments({ classIds: classItem.classId });
+      return {
+        ...classItem.toObject(),
+        studentNumber: studentCount
+      };
+    }));
+    
+    // Return the classes with student counts
     return res.status(200).json({
       success: true,
       count: classes.length,
-      data: classes
+      data: classesWithStudentCount
     });
   } catch (error) {
     console.error('Error fetching classes:', error);
@@ -205,14 +221,22 @@ const getClassById = async (req, res) => {
       });
     }
     
-    console.log(`Found class:`, JSON.stringify(classRecord));
+    // Get student count for the class
+    const Student = mongoose.model('Student');
+    const studentCount = await Student.countDocuments({ classIds: classRecord.classId });
+    
+    // Return the class with student count
+    const classWithStudentCount = {
+      ...classRecord.toObject(),
+      studentNumber: studentCount
+    };
     
     return res.status(200).json({
       success: true,
-      data: classRecord
+      data: classWithStudentCount
     });
   } catch (error) {
-    console.error('Error fetching class:', error);
+    console.error('Error fetching class by ID:', error);
     return res.status(500).json({
       success: false,
       error: error.message || 'An error occurred while fetching the class',
@@ -339,9 +363,21 @@ const updateClass = async (req, res) => {
     
     console.log(`Updated class:`, JSON.stringify(updatedClass));
     
+    // Get student count for the updated class
+    const Student = mongoose.model('Student');
+    const studentCount = await Student.countDocuments({ classIds: updatedClass.classId });
+    
+    // Add student count to the response
+    const updatedClassWithStudentCount = {
+      ...updatedClass.toObject(),
+      studentNumber: studentCount
+    };
+    
+    console.log(`Updated class successfully:`, JSON.stringify(updatedClassWithStudentCount));
+    
     return res.status(200).json({
       success: true,
-      data: updatedClass,
+      data: updatedClassWithStudentCount,
       message: 'Class updated successfully'
     });
   } catch (error) {
@@ -535,11 +571,21 @@ const getClassesByUserId = async (req, res) => {
       });
     }
     
+    // Get student count for each class
+    const Student = mongoose.model('Student');
+    const classesWithStudentCount = await Promise.all(classes.map(async (classItem) => {
+      const studentCount = await Student.countDocuments({ classIds: classItem.classId });
+      return {
+        ...classItem.toObject(),
+        studentNumber: studentCount
+      };
+    }));
+    
     return res.status(200).json({
       success: true,
       count: classes.length,
       role,
-      data: classes
+      data: classesWithStudentCount
     });
   } catch (error) {
     console.error('Error fetching classes by user ID:', error);

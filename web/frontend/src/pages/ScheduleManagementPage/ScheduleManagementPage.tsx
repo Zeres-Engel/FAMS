@@ -1025,14 +1025,8 @@ const ScheduleManagementPage: React.FC = () => {
                       variant="contained"
                       color="error"
                       onClick={() => {
-                        if (
-                          window.confirm(
-                            `Bạn có chắc chắn muốn xóa lịch học này không?`
-                          )
-                        ) {
-                          handler.deleteEvent(state.eventShow?.id);
-                          handler.handleSelectEvent();
-                        }
+                        handler.deleteEvent(state.eventShow?.id);
+                        handler.handleSelectEvent();
                       }}
                     >
                       Delete
@@ -1283,13 +1277,20 @@ const ScheduleManagementPage: React.FC = () => {
                     // Get slot info from configuration
                     const slotDetails = slotConfig.find(slot => slot.slotNumber === Number(selectedSlot));
                     if (slotDetails) {
-                      // Giữ lại dayOfWeek hiện tại khi cập nhật thời gian
+                      // Set slot info
                       setSlotInfo({
-                        dayOfWeek: slotInfo?.dayOfWeek || "", // Giữ nguyên giá trị đã có
+                        dayOfWeek: slotInfo?.dayOfWeek || "",
                         startTime: slotDetails.startTime,
                         endTime: slotDetails.endTime,
                         isExtraSlot: !!slotDetails.isExtra
                       });
+                      
+                      // ADD THIS: Update customStartTime and customEndTime for all slots
+                      setNewEvent(prev => ({
+                        ...prev,
+                        customStartTime: slotDetails.startTime,
+                        customEndTime: slotDetails.endTime
+                      }));
                     }
                   }}
                 >
@@ -1483,9 +1484,6 @@ const ScheduleManagementPage: React.FC = () => {
                       // Đóng dialog khi thêm thành công
                       setOpenCreateDialog(false);
                       
-                      // Hiển thị thông báo thành công và ID của event mới
-                      alert(`Tạo lịch học thành công! ID: ${createdEvent.id}`);
-                      
                       // Reset form
                       setNewEvent({
                         id: 0,
@@ -1516,7 +1514,7 @@ const ScheduleManagementPage: React.FC = () => {
                       errorMessage = error;
                     }
                     
-                    alert(`Lỗi khi tạo lịch học: ${errorMessage}`);
+                    console.error(`Lỗi khi tạo lịch học: ${errorMessage}`);
                   }
                 }}
               >
@@ -1656,22 +1654,16 @@ const ScheduleManagementPage: React.FC = () => {
                     );
 
                     if (response.data.success) {
-                      // Show success message
-                      alert(
-                        `${response.data.message}. The schedule generation is processing in the background.`
-                      );
+                      // Log success to console instead of showing alert
+                      console.log(`${response.data.message}. The schedule generation is processing in the background.`);
                     } else {
-                      // Show error message
-                      alert(`Failed: ${response.data.message}`);
+                      // Log error message to console
                       console.error("API Error:", response.data);
                     }
                   } catch (error) {
                     console.error(
                       "Error calling schedule generation API:",
                       error
-                    );
-                    alert(
-                      "An error occurred while arranging the schedule. Please try again later."
                     );
                   }
 

@@ -125,6 +125,7 @@ interface DataTableProps {
   classYears?: Array<{ className: string; academicYear: string }>;
   isRoleParent?: boolean;
   importUsersButton?: React.ReactNode;
+  createButtonAction?: () => void;
 }
 
 export default function DataTable({
@@ -164,6 +165,7 @@ export default function DataTable({
   classYears,
   isRoleParent,
   importUsersButton,
+  createButtonAction,
 }: DataTableProps) {
   const { state, handler } = useDataTableHook({ tableMainData });
 
@@ -425,7 +427,7 @@ export default function DataTable({
           classYears={classYears}
           isUserManagement={isUserManagement}
           numSelected={state.selected.length}
-          // tableTitle={tableTitle}
+          tableTitle={tableTitle}
           isAdmin={isAdmin}
           isClassManagement={isClassManagement}
           isAttendance={isAttendance}
@@ -449,6 +451,7 @@ export default function DataTable({
           subjectList={subjectList}
           onAcademicYearChange={onAcademicYearChange}
           setFiltersAttendancePage={setFiltersAttendancePage}
+          createButtonAction={createButtonAction}
         />
         <TableContainer>
           <Table sx={{ minWidth: 850 }} aria-labelledby="tableTitle">
@@ -547,20 +550,20 @@ export default function DataTable({
             </FormControl>
           )}
 
-          {isAdmin && isClassManagement && (
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => handler.handlerClassDistribution()}
-            >
-              class distribution
-            </Button>
-          )}
-
           {/* Display import users button if provided and if we're in user management */}
           {isUserManagement && importUsersButton && importUsersButton}
 
-          {isAdmin && !isAttendance && (
+          {isAdmin && isClassManagement && createButtonAction && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={createButtonAction}
+            >
+              CREATE CLASS
+            </Button>
+          )}
+
+          {isAdmin && !isAttendance && !isClassManagement && (
             <Button
               variant="contained"
               color="primary"
