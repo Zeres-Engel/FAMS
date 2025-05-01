@@ -1,0 +1,16 @@
+2025-04-30 17:24:34,230 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-30 17:24:44,924 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-30 17:24:45,005 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-30 17:24:46,401 - zensys - INFO - ZenSys initialized successfully
+2025-04-30 17:25:09,016 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-30 17:25:12,230 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-30 17:25:46,172 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrlv", "rfid_name": "Unknown"}
+2025-04-30 17:25:46,442 - zensys - ERROR - Error processing frame: local variable 'attendance_result' referenced before assignment
+2025-04-30 17:49:22,171 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-30 17:49:43,646 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-30 17:49:43,707 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-30 17:49:45,181 - zensys - INFO - ZenSys initialized successfully
+2025-04-30 17:49:55,479 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-30 17:49:58,081 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-30 17:50:23,850 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "thanhnpst1", "rfid_name": "Unknown"}
+2025-04-30 17:50:24,030 - zensys - ERROR - Error processing frame: local variable 'attendance_result' referenced before assignment
