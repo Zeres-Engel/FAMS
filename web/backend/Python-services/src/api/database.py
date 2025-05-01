@@ -11,7 +11,7 @@ from bson.objectid import ObjectId
 from .init_db_excel import init_database_from_excel, init_fams, init_users_only_from_excel
 from .models import ResponseModel, ErrorResponseModel
 import pandas as pd
-from ..schedule.core import generate_improved_schedule
+from ..schedule.core import generate_improved_schedule, clean_existing_schedules
 import re
 import numpy as np
 
@@ -36,6 +36,29 @@ async def initialize_fams(background_tasks: BackgroundTasks):
     return ResponseModel(
         "FAMS initialization started in background",
         "FAMS initialization process with database structure based on SQL schema has been queued. Check logs for progress."
+    )
+
+@router.post("/cleanSchedules")
+async def clean_schedules(semester_id: int, academic_year: Optional[str] = None):
+    """
+    Clean existing schedules and attendance logs for a specific semester and academic year
+    
+    Args:
+        semester_id: ID of the semester
+        academic_year: Optional academic year (e.g. "2022-2023")
+    
+    Returns:
+        Information about deleted records
+    """
+    from ..db import connect_to_mongodb
+    client = connect_to_mongodb()
+    db = client["fams"]
+    
+    stats = clean_existing_schedules(db, semester_id, academic_year)
+    
+    return ResponseModel(
+        f"Cleaned {stats['schedules_deleted']} schedules and {stats['attendance_logs_deleted']} attendance logs",
+        stats
     )
 
 def promote_students_to_next_grade(db, current_academic_year, next_academic_year):
@@ -375,12 +398,17 @@ async def init_fams_with_sample_data():
                     email = str(row.get('Email', f"{generate_username(name, len(extracted_teachers)+1, 'teacher')}@fams.edu.vn"))
                     major = str(row.get('Chuyên môn', row.get('Major', row.get('Môn giảng dạy', ''))))
                     degree = str(row.get('Bằng cấp', row.get('Degree', '')))
-                    weekly_capacity = 10
+                    
+                    # Lấy giá trị Weekcapacity từ file Excel với nhiều tên cột có thể
+                    weekly_capacity = 10  # Giá trị mặc định
                     try:
-                        capacity_val = row.get('Số tiết/tuần', row.get('WeeklyCapacity', 10))
+                        capacity_val = row.get('Weekcapacity', row.get('WeeklyCapacity', row.get('Số lượng tiết học có thể dạy cho 1 tuần', row.get('weekly_capacity', row.get('weeklyCapacity', 10)))))
+                        print(f"[DEBUG] Đọc giá trị weeklyCapacity từ Excel: {capacity_val}, loại: {type(capacity_val)}")
                         if not pd.isna(capacity_val):
-                            weekly_capacity = int(capacity_val)
-                    except (ValueError, TypeError):
+                            weekly_capacity = int(float(capacity_val))  # Thêm float() để xử lý cả giá trị số thực
+                            print(f"[DEBUG] Đã chuyển đổi thành công weeklyCapacity = {weekly_capacity}")
+                    except (ValueError, TypeError) as e:
+                        print(f"[WARNING] Không thể chuyển đổi giá trị weeklyCapacity '{capacity_val}': {str(e)}")
                         weekly_capacity = 10
                     
                     # Skip duplicate teachers (by email)
@@ -552,13 +580,16 @@ async def init_fams_with_sample_data():
                 "phone": teacher_data.get("phone", ""),
                 "major": teacher_data.get("major", ""),
                 "degree": teacher_data.get("degree", ""),
-                "weeklyCapacity": teacher_data.get("weeklyCapacity", 10),
+                "weeklyCapacity": teacher_data.get("weeklyCapacity", 10),  # Đảm bảo trường weeklyCapacity được sử dụng
                 "classIds": [],  # Initialize empty classIds array for tracking teaching history
                 "createdAt": datetime.datetime.now(),
                 "updatedAt": datetime.datetime.now(),
                 "isActive": True,
                 "academicYear": academic_year  # Add academic year to teacher record
             }
+            
+            # In ra giá trị weekly capacity để debug
+            print(f"[DEBUG] Lưu giáo viên {teacher_data['fullName']} với weeklyCapacity = {teacher_doc['weeklyCapacity']}")
             
             # Insert teacher
             db.Teacher.insert_one(teacher_doc)
@@ -811,8 +842,15 @@ async def init_fams_with_sample_data():
             
             print(f"[INFO] Generating schedules for {sem_name} ({start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')})")
             
+            # Clean existing schedules first
+            sem_id = semester["id"]
+            print(f"[INFO] Cleaning existing schedules for semester {sem_id} and academic year {academic_year}")
+            clean_stats = clean_existing_schedules(db, sem_id, academic_year)
+            print(f"[INFO] Cleaned {clean_stats['schedules_deleted']} schedules and {clean_stats['attendance_logs_deleted']} attendance logs")
+            
             # Prepare semester info for schedule generation
             semester_info = {
+                "semesterId": sem_id,
                 "semesterNumber": sem_number,
                 "semesterName": sem_name,
                 "startDate": start_date,
@@ -820,13 +858,15 @@ async def init_fams_with_sample_data():
                 "curriculumId": 1  # Default curriculum ID
             }
             
-            # Generate schedules using improved algorithm
+            # Generate schedules using improved algorithm with automatic attendance log generation
             try:
                 schedules, warnings = generate_improved_schedule(
                     db=db,
                     semester_info=semester_info,
                     total_weeks=16,  # 16 weeks per semester
-                    academic_year=academic_year  # Thêm tham số academicYear để chỉ lấy lớp của năm học này
+                    academic_year=academic_year,  # Pass academic year to filter classes
+                    generate_attendance=True,     # Generate attendance logs
+                    clean_existing=False          # Already cleaned above
                 )
                 
                 if warnings:
@@ -893,7 +933,6 @@ async def init_fams_with_sample_data():
                         
                         if success_count > 0:
                             print(f"[INFO] Successfully inserted {success_count}/{len(cleaned_schedules)} schedules individually")
-                            schedules_count += success_count
                 else:
                     print(f"[WARNING] No schedules were generated for {sem_name}. Please check for errors.")
                 
@@ -949,13 +988,22 @@ async def init_fams_with_sample_data():
                     
                     if teacher and "userId" in teacher:
                         # Create attendance log for teacher
+                        # Random status cho giáo viên: 70% Present, 20% Late, 10% Absent
+                        status_random = np.random.random()
+                        if status_random < 0.7:
+                            teacher_status = "Present"
+                        elif status_random < 0.9:
+                            teacher_status = "Late"
+                        else:
+                            teacher_status = "Absent"
+                            
                         teacher_attendance = {
                             "attendanceId": next_attendance_id,
                             "scheduleId": schedule_id,
                             "userId": teacher["userId"],
                             "checkIn": None,
                             "note": "",
-                            "status": "Not Now",  # Default status
+                            "status": teacher_status,  # Thay đổi từ "Not Now" sang trạng thái ngẫu nhiên
                             "semesterNumber": sem_number,
                             "createdAt": datetime.datetime.now(),
                             "updatedAt": datetime.datetime.now(),
@@ -976,13 +1024,22 @@ async def init_fams_with_sample_data():
                     for student in students_in_class:
                         user_id = student.get("userId")
                         if user_id:
+                            # Random status cho học sinh: 60% Present, 25% Late, 15% Absent
+                            status_random = np.random.random()
+                            if status_random < 0.6:
+                                student_status = "Present"
+                            elif status_random < 0.85:
+                                student_status = "Late"
+                            else:
+                                student_status = "Absent"
+                                
                             attendance_log = {
                                 "attendanceId": next_attendance_id,
                                 "scheduleId": schedule_id,
                                 "userId": user_id,
                                 "checkIn": None,
                                 "note": "",
-                                "status": "Not Now",  # Default status
+                                "status": student_status,  # Thay đổi từ "Not Now" sang trạng thái ngẫu nhiên
                                 "semesterNumber": sem_number,  # Add for easier filtering
                                 "createdAt": datetime.datetime.now(),
                                 "updatedAt": datetime.datetime.now(),
@@ -1039,9 +1096,6 @@ async def init_fams_with_sample_data():
                                     
                                     if success_count > 0:
                                         print(f"[INFO] Successfully inserted {success_count}/{len(attendance_logs)} attendance logs individually")
-                                    
-                                    # Reset batch sau khi xử lý
-                                    attendance_logs = []
                 
                 # Insert any remaining attendance logs at the end
                 if attendance_logs:
@@ -1138,58 +1192,72 @@ async def init_fams_with_sample_data():
     print("[INFO] Initializing devices and models")
 
     # Kiểm tra nếu đã có thiết bị
-    existing_device = db.Device.find_one({"deviceName": "Jetson Nano 1"})
-    if not existing_device:
-        # Tạo thiết bị Jetson Nano đặt tại classroom 1
-        device_id = 1
-        last_device = db.Device.find_one(sort=[("deviceId", -1)])
-        if last_device and "deviceId" in last_device:
-            try:
-                device_id = int(last_device["deviceId"]) + 1
-            except (ValueError, TypeError):
-                device_id = 1
+    existing_devices = list(db.Device.find({"deviceType": "Jetson"}))
+    if not existing_devices or len(existing_devices) < 6:
+        # Xóa các thiết bị cũ nếu có
+        if existing_devices:
+            device_ids = [device["deviceId"] for device in existing_devices]
+            db.Device.delete_many({"deviceId": {"$in": device_ids}})
+            db.ModelVersion.delete_many({"deviceId": {"$in": device_ids}})
+            print(f"[INFO] Deleted {len(existing_devices)} existing Jetson devices and their models")
         
-        device_doc = {
-            "deviceId": device_id,
-            "deviceName": "Jetson Nano 1",
-            "deviceType": "Jetson",
-            "status": True,
-            "classroomId": 1,
-            "createdAt": datetime.datetime.now(),
-            "updatedAt": datetime.datetime.now(),
-            "isActive": True
-        }
+        # Lấy 6 classId đầu tiên
+        classrooms = list(db.Classroom.find().limit(6))
+        classroom_ids = [classroom["classroomId"] for classroom in classrooms]
+        if len(classroom_ids) < 6:
+            print(f"[WARNING] Found only {len(classroom_ids)} classrooms, using available ones")
+            # Thêm classroom_ids giả nếu không đủ 6
+            while len(classroom_ids) < 6:
+                classroom_ids.append(classroom_ids[0] if classroom_ids else 1)
         
-        db.Device.insert_one(device_doc)
-        print(f"[INFO] Created device: Jetson Nano 1 with ID: {device_id}")
+        # Các model AI mới
+        ai_models = ["AdaFace", "RetinaFace", "MiDas", "6DRepNet"]
         
-        # Tạo phiên bản model cho thiết bị
-        model_id = 1
-        last_model = db.ModelVersion.find_one(sort=[("modelId", -1)])
-        if last_model and "modelId" in last_model:
-            try:
-                model_id = int(last_model["modelId"]) + 1
-            except (ValueError, TypeError):
-                model_id = 1
-        
-        model_doc = {
-            "modelId": model_id,
-            "deviceId": device_id,
-            "modelName": "FaceNet",
-            "version": "1.0.0",
-            "deploymentDate": datetime.datetime.now(),
-            "description": "Initial face recognition model for attendance",
-            "checkpointPath": "/models/facenet_v1.0.0.pt",
-            "status": "Active",
-            "createdAt": datetime.datetime.now(),
-            "updatedAt": datetime.datetime.now(),
-            "isActive": True
-        }
-        
-        db.ModelVersion.insert_one(model_doc)
-        print(f"[INFO] Created model version: FaceNet 1.0.0 with ID: {model_id} for device ID: {device_id}")
+        # Tạo 6 thiết bị Jetson Nano và phân bổ vào các classroom
+        for i in range(6):
+            device_id = i + 1
+            classroom_id = classroom_ids[i % len(classroom_ids)]
+            
+            device_doc = {
+                "deviceId": device_id,
+                "deviceName": f"Jetson Nano {device_id}",
+                "deviceType": "Jetson",
+                "status": True,
+                "classroomId": classroom_id,
+                "createdAt": datetime.datetime.now(),
+                "updatedAt": datetime.datetime.now(),
+                "isActive": True
+            }
+            
+            db.Device.insert_one(device_doc)
+            print(f"[INFO] Created device: Jetson Nano {device_id} with ID: {device_id} for classroom {classroom_id}")
+            
+            # Tạo 1-2 phiên bản model cho mỗi thiết bị
+            num_models = np.random.randint(1, 3)  # 1 hoặc 2 model
+            
+            for j in range(num_models):
+                model_id = (i * 2) + j + 1
+                model_name = ai_models[model_id % len(ai_models)]
+                version = f"{1 + j}.0.{np.random.randint(0, 5)}"
+                
+                model_doc = {
+                    "modelId": model_id,
+                    "deviceId": device_id,
+                    "modelName": model_name,
+                    "version": version,
+                    "deploymentDate": datetime.datetime.now() - datetime.timedelta(days=np.random.randint(0, 90)),
+                    "description": f"{model_name} version {version} for face recognition and attendance",
+                    "checkpointPath": f"/models/{model_name.lower()}_v{version}.pt",
+                    "status": "Active",
+                    "createdAt": datetime.datetime.now(),
+                    "updatedAt": datetime.datetime.now(),
+                    "isActive": True
+                }
+                
+                db.ModelVersion.insert_one(model_doc)
+                print(f"[INFO] Created model version: {model_name} {version} with ID: {model_id} for device ID: {device_id}")
     else:
-        print(f"[INFO] Device Jetson Nano 1 already exists with ID: {existing_device.get('deviceId')}")
+        print(f"[INFO] Found {len(existing_devices)} Jetson devices already in the system")
 
     # Report on devices and models
     device_count = db.Device.count_documents({})
@@ -1199,7 +1267,7 @@ async def init_fams_with_sample_data():
     
     print("[INFO] Generating face vectors for users")
 
-    # Tạo vector random cho AdaFace (512 chiều)
+    # Tạo vector random cho các model face recognition (512 chiều)
     def generate_random_face_vector():
         # Tạo vector 512 chiều với giá trị random từ -1 đến 1
         vector = np.random.uniform(-1, 1, 512).tolist()
@@ -1214,7 +1282,7 @@ async def init_fams_with_sample_data():
     print(f"[INFO] Found {len(all_users)} users to generate face vectors")
 
     # Lấy model ID
-    model = db.ModelVersion.find_one({"modelName": "FaceNet"})
+    model = db.ModelVersion.find_one({})
     model_id = model["modelId"] if model else None
 
     if model_id:

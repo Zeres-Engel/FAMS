@@ -1,0 +1,868 @@
+2025-04-28 00:40:05,667 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 00:40:15,243 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 00:40:15,248 - zensys - INFO - Loaded database with 4 faces from C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 00:40:15,249 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 00:42:39,342 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 00:42:48,054 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 00:42:48,057 - zensys - INFO - Loaded database with 4 faces from C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 00:42:48,058 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 01:52:47,718 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 01:52:56,720 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 01:52:56,724 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 01:52:56,725 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 02:00:22,532 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 02:00:29,711 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 02:00:29,714 - zensys - INFO - Loaded database with 4 faces from C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 02:00:29,715 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 02:02:07,639 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 02:02:14,676 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 02:02:14,678 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 02:02:14,679 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 02:21:59,369 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 02:22:08,313 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 02:22:08,315 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 02:22:08,316 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 02:22:17,445 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 02:28:11,336 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 02:28:19,510 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 02:28:19,512 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 02:28:19,513 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 02:47:38,573 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 02:47:46,741 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 02:47:46,744 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 02:47:46,745 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 02:50:32,341 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 02:50:39,427 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 02:50:39,429 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 02:50:39,430 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 03:10:30,876 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 03:10:47,690 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 03:10:47,719 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 03:10:47,721 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 03:20:06,202 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 03:20:16,275 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 03:20:16,277 - zensys - INFO - Loaded database with 4 faces from C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 03:20:16,278 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 03:21:40,397 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 03:21:47,903 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 03:21:47,908 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 03:21:47,910 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 03:22:01,275 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrlv", "rfid_name": "Unknown"}
+2025-04-28 03:22:28,476 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 03:22:35,860 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 03:22:35,865 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 03:22:35,867 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 03:26:46,966 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 03:26:54,555 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 03:26:54,555 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 03:26:54,561 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 03:27:32,114 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrlv", "rfid_name": "Unknown"}
+2025-04-28 03:30:59,752 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 03:31:07,698 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 03:31:07,704 - zensys - INFO - Loaded database with 4 faces from C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 03:31:07,706 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 03:39:27,462 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 03:39:34,906 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 03:39:34,910 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 03:39:34,912 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 03:40:50,900 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "backspacebackspacebackspace2", "rfid_name": "Unknown"}
+2025-04-28 03:41:23,066 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 03:41:30,077 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 03:41:30,077 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 03:41:30,085 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 03:44:06,410 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 03:44:13,385 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 03:44:13,388 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 03:44:13,389 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 03:44:23,866 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrl", "rfid_name": "Unknown"}
+2025-04-28 03:44:34,172 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 03:44:41,084 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 03:44:41,084 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 03:44:41,091 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 03:45:05,941 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 03:45:12,931 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 03:45:12,934 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 03:45:12,936 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 03:45:36,794 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 03:45:43,918 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 03:45:43,926 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 03:45:43,927 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 06:01:52,115 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 06:02:01,274 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 06:02:01,278 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 06:02:01,279 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 06:02:11,088 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 06:08:14,084 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 06:08:21,540 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 06:08:21,543 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 06:08:22,785 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 06:10:50,031 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 06:10:57,200 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 06:10:57,205 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 06:10:58,370 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 06:11:14,715 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrl", "rfid_name": "Unknown"}
+2025-04-28 06:11:14,793 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:15,230 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:15,598 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:16,046 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:16,378 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:16,673 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\Unknown\\latest.jpg'
+2025-04-28 06:11:16,674 - zensys - INFO - Authentication successful for user: Unknown, RFID: ctrl
+2025-04-28 06:11:17,037 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:17,409 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:11:17,412 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:17,745 - zensys - INFO - Authentication successful for user: Unknown, RFID: ctrl
+2025-04-28 06:11:18,113 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:18,425 - zensys - INFO - Authentication successful for user: Unknown, RFID: ctrl
+2025-04-28 06:11:18,718 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:19,008 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:19,291 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:19,572 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:19,899 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:20,200 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:20,481 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:20,791 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:21,072 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:21,370 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:21,660 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:11:21,662 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:22,007 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:22,297 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:22,593 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:22,926 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:23,249 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:11:23,252 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:23,560 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:23,871 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:24,185 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:24,483 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:24,826 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:25,140 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:11:25,141 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:25,437 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:25,754 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:11:25,756 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:26,079 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:11:26,370 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:12:12,880 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 06:12:20,397 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 06:12:20,399 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 06:12:21,506 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 06:13:55,749 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 06:14:02,795 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 06:14:02,799 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 06:15:06,549 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 06:15:13,709 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 06:15:13,709 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 06:15:14,841 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 06:17:32,530 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 06:17:39,619 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 06:17:39,621 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 06:17:40,724 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 06:17:49,629 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 06:17:49,649 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:17:49,713 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:17:50,189 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:17:50,575 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:17:51,013 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:17:51,416 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:17:51,849 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:17:52,316 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:17:52,792 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:17:53,207 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:17:53,630 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:17:54,043 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:17:54,456 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:19:18,648 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 06:19:25,842 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 06:19:25,844 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 06:19:27,024 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 06:23:04,612 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 06:23:11,691 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 06:23:11,693 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 06:23:12,851 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 06:23:18,946 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 06:23:19,175 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:23:21,556 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:23:22,078 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:23:22,591 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:23:23,106 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:23:23,109 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:23:23,612 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:23:24,119 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:23:46,832 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrlv", "rfid_name": "Unknown"}
+2025-04-28 06:23:46,902 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:23:47,450 - zensys - INFO - Authentication successful for user: Unknown, RFID: ctrlv
+2025-04-28 06:23:48,013 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:23:48,578 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:23:49,084 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ysspacelafspaceduf", "rfid_name": "Unknown"}
+2025-04-28 06:23:49,190 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:23:49,834 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:23:50,489 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:23:50,492 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:23:51,210 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:23:51,787 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:28:36,197 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 06:28:43,341 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 06:28:43,343 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 06:28:44,557 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 06:28:56,651 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 06:28:56,967 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:28:57,931 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:28:58,411 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:28:58,823 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:28:58,831 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:28:59,271 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:28:59,734 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:29:00,145 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:29:00,593 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:29:01,098 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:29:01,101 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:29:01,547 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:09,021 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 06:44:16,181 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 06:44:16,185 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 06:44:17,400 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 06:44:23,006 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 06:44:23,331 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:24,306 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:24,690 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:25,022 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:25,351 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:25,664 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:25,983 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:26,353 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:26,686 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:27,015 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:27,345 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:27,683 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:28,006 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:28,344 - zensys - ERROR - Error processing frame: 'NoneType' object is not subscriptable
+2025-04-28 06:44:33,099 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 06:44:33,351 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:33,765 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:34,086 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:34,364 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:34,644 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:34,933 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:35,287 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:35,565 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:44:35,565 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:35,835 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:36,122 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:44:36,124 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:36,405 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:44:36,407 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:36,680 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:36,978 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:37,283 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:37,599 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:37,888 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:44:38,180 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:45:34,030 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrlc", "rfid_name": "Unknown"}
+2025-04-28 06:45:34,157 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:45:34,159 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:45:34,643 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:45:34,966 - zensys - INFO - Authentication successful for user: Unknown, RFID: ctrlc
+2025-04-28 06:45:35,140 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrlv", "rfid_name": "Unknown"}
+2025-04-28 06:45:35,290 - zensys - INFO - Authentication successful for user: Unknown, RFID: ctrlv
+2025-04-28 06:45:35,830 - zensys - INFO - Authentication successful for user: Unknown, RFID: ctrlv
+2025-04-28 06:45:36,150 - zensys - INFO - Authentication successful for user: Unknown, RFID: ctrlv
+2025-04-28 06:45:36,482 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\Unknown\\latest.jpg'
+2025-04-28 06:45:36,484 - zensys - INFO - Authentication successful for user: Unknown, RFID: ctrlv
+2025-04-28 06:45:36,808 - zensys - INFO - Authentication successful for user: Unknown, RFID: ctrlv
+2025-04-28 06:45:37,147 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:45:37,484 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:45:37,485 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:45:37,781 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:45:38,137 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:45:38,454 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:45:38,787 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:45:38,789 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:45:39,105 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:45:39,116 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 06:50:48,979 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 06:50:56,145 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 06:50:56,147 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 06:50:57,287 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 06:51:10,617 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 06:51:10,738 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:11,614 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:11,943 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:12,206 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:51:12,206 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:12,483 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:12,771 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:13,066 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:13,338 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:13,605 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:51:13,606 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:13,898 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:14,180 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:51:14,183 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:14,459 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:14,741 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:15,034 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:15,315 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:15,600 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:20,718 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 06:51:20,777 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:21,223 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:21,603 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:21,885 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:51:21,887 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:22,155 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:22,427 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:22,708 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:22,979 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:23,271 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:23,555 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:23,844 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:24,149 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:24,421 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:24,707 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:24,985 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 06:51:24,988 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:25,269 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 06:51:25,567 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:08:17,610 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 07:08:24,899 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 07:08:24,902 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 07:08:26,015 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 07:12:14,310 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 07:16:38,577 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 07:16:49,068 - zensys - ERROR - Error initializing component: 'RFIDManager' object has no attribute 'set_callback'
+2025-04-28 07:20:09,347 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 07:20:19,767 - zensys - WARNING - PeopleCounter unavailable, using stub implementation
+2025-04-28 07:20:19,769 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 07:20:21,019 - zensys - INFO - Camera and processing thread started
+2025-04-28 07:20:21,020 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 07:20:21,150 - zensys - WARNING - No frames available yet
+2025-04-28 07:20:28,991 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 07:20:29,231 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:29,497 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:29,737 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:29,979 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:30,209 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:30,446 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:30,667 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:30,965 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:31,214 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:31,443 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:31,674 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:31,929 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:32,161 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:32,409 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:32,627 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:32,879 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:33,107 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:33,372 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:33,633 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:33,867 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:34,118 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:20:34,404 - zensys - ERROR - Error processing frame: 'FaceRecognitionManager' object has no attribute 'get_face_embedding'
+2025-04-28 07:21:24,479 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 07:21:32,741 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 07:21:32,747 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 07:21:34,078 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 07:21:39,771 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 07:21:39,831 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:21:40,995 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:21:41,508 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:21:42,039 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:21:42,533 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:21:43,103 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:21:43,614 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:21:44,159 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:21:44,686 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 07:21:44,693 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:24:23,417 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 07:24:31,038 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 07:24:31,041 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 07:24:32,135 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 07:24:39,134 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 07:24:39,475 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 07:24:39,480 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:24:40,560 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:24:41,010 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:24:41,522 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:24:42,000 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:24:42,456 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:24:42,897 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:24:43,331 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:24:43,743 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:24:44,148 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:32:40,581 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 07:32:48,882 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 07:32:48,906 - zensys - INFO - Loaded database with 4 faces from C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 07:32:50,143 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 07:33:27,464 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 07:33:35,097 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 07:33:35,102 - zensys - INFO - Loaded database with 4 faces from C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 07:33:36,301 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 07:34:20,469 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 07:34:28,401 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 07:34:28,408 - zensys - INFO - Loaded database with 4 faces from C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 07:34:29,701 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 07:36:22,427 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 07:36:30,291 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 07:36:30,294 - zensys - INFO - Loaded database with 4 faces from C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 07:36:31,863 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 07:37:25,727 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 07:37:33,796 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 07:37:33,797 - zensys - INFO - Loaded database with 4 faces from C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 07:37:35,080 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 07:38:29,471 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 07:38:36,821 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 07:38:36,822 - zensys - INFO - Loaded database with 4 faces from C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 07:38:38,005 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 07:39:05,788 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 07:39:12,621 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 07:39:12,624 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 07:39:13,685 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 07:39:19,383 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 07:39:19,416 - zensys - ERROR - Error processing frame: 'NoneType' object is not subscriptable
+2025-04-28 07:39:19,605 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:39:22,391 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 07:39:22,391 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 07:39:22,396 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:39:22,446 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:39:22,971 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:39:23,323 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:39:23,497 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:39:23,606 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 07:39:23,618 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:39:24,063 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 07:39:24,076 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:39:24,512 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:39:24,587 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:39:43,232 - zensys - ERROR - Failed to remove old image: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 07:45:41,017 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 07:45:49,948 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 07:45:49,953 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 07:45:51,117 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 07:46:00,284 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 07:46:00,574 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 07:46:00,578 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:46:01,416 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:46:01,814 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:46:02,228 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:46:02,628 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:46:03,045 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:46:03,463 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:46:03,884 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:46:04,342 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:46:04,776 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:46:05,184 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:46:05,577 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:50:30,572 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 07:50:39,501 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 07:50:39,503 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 07:50:40,749 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 07:50:48,331 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 07:50:48,489 - zensys - ERROR - Error processing frame: 'ZenSys' object has no attribute 'logger'
+2025-04-28 07:52:47,622 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 07:52:54,641 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 07:52:54,641 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 07:52:55,913 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 07:53:01,339 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 07:53:01,484 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:01,744 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:02,042 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:02,298 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:02,563 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:02,844 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:03,101 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:03,367 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:03,642 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:03,909 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:04,200 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:04,477 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:04,747 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:05,085 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:05,333 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:05,583 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:05,845 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:06,103 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:06,359 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:06,611 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:06,872 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:07,120 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'lookup_rfid_name'
+2025-04-28 07:53:54,640 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 07:54:02,013 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 07:54:02,015 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 07:54:03,205 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 07:54:07,341 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 07:54:07,341 - zensys - WARNING - Cannot save face image: Invalid image data
+2025-04-28 07:54:07,341 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:07,588 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:07,859 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:08,120 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:08,402 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:08,635 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:08,872 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:09,127 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:09,384 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:09,651 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:09,911 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:10,182 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:10,447 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:10,774 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:11,029 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:11,347 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:11,625 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:11,914 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:12,221 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:54:12,539 - zensys - ERROR - Error in verification process: 'RFIDManager' object has no attribute 'get_rfid_name'
+2025-04-28 07:57:04,650 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 07:57:11,952 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 07:57:11,952 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 07:57:13,115 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 07:57:18,889 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 07:57:18,958 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 07:57:18,962 - zensys - ERROR - Failed to remove old image: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 08:01:02,452 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 08:01:10,227 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 08:01:10,229 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 08:01:11,409 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 08:01:18,257 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:01:18,386 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:01:40,684 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:01:40,754 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:01:50,451 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrlv", "rfid_name": "Unknown"}
+2025-04-28 08:01:50,667 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 08:03:53,450 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 08:04:01,546 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 08:04:01,547 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 08:04:02,840 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 08:04:10,493 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:04:10,728 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\Unknown\\latest.jpg'
+2025-04-28 08:04:10,729 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 08:04:22,980 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:04:23,017 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 08:04:30,349 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:04:30,525 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 08:04:38,494 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:04:38,651 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 08:04:57,556 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 08:05:05,178 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 08:05:05,181 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 08:05:06,332 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 08:05:10,821 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:05:10,862 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:05:26,344 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:05:26,574 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:05:26,586 - zensys - ERROR - Failed to remove old image: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 08:05:34,603 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:05:34,638 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 08:05:34,640 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:05:34,653 - zensys - ERROR - Failed to remove old image: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 08:05:43,139 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:05:43,336 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:09:10,794 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 08:09:18,027 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 08:09:18,031 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 08:09:19,174 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 08:09:25,129 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:09:25,195 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 08:09:25,199 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:09:32,192 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:09:32,242 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:12:17,156 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 08:12:24,454 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 08:12:24,458 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 08:12:25,750 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 08:12:32,959 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:12:33,229 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:12:45,728 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:12:45,815 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:13:45,255 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 08:13:52,954 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 08:13:52,956 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 08:13:54,334 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 08:14:01,866 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:14:01,944 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:15:08,830 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 08:15:16,579 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 08:15:16,581 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 08:15:17,914 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 08:15:24,207 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:15:24,298 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:15:29,318 - zensys - ERROR - Failed to send reset signal to UI: 'NotificationPopup' object has no attribute 'closed'
+2025-04-28 08:19:01,720 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 08:19:09,442 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 08:19:09,444 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 08:19:10,704 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 08:19:14,437 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:19:14,527 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:19:15,423 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 08:19:15,427 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:19:15,948 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:19:16,380 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 08:19:16,383 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:19:16,855 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:19:17,325 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:19:17,800 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:19:18,251 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:19:18,735 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:19:19,164 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:23:09,768 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 08:23:16,688 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 08:23:16,690 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 08:23:17,863 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 08:23:22,753 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:23:28,614 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:28:04,279 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 08:28:12,237 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 08:28:12,239 - zensys - INFO - Loaded database with 4 faces from C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 08:28:13,477 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 08:28:20,950 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:28:23,630 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:28:26,262 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:28:31,350 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:29:59,425 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 08:30:07,080 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 08:30:07,082 - zensys - INFO - Loaded database with 4 faces from C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 08:30:08,355 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 08:30:13,497 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:30:16,580 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:31:17,988 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 08:31:25,817 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 08:31:25,820 - zensys - INFO - Loaded database with 4 faces from C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 08:31:27,047 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 08:31:31,676 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:31:35,236 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:38:00,700 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 08:38:08,093 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 08:38:08,095 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 08:38:09,247 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 08:38:13,356 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:38:13,506 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:38:14,595 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:38:15,005 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:38:15,403 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:38:15,816 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:38:16,196 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:38:16,619 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:38:17,069 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:38:17,484 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:38:17,886 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:38:18,309 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:41:42,304 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 08:41:50,686 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 08:41:50,688 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 08:41:51,928 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 08:41:58,579 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:41:58,757 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 08:41:58,767 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:42:00,009 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:42:00,494 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 08:42:00,498 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:42:00,911 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 08:42:00,914 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:42:01,375 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:42:01,784 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:42:02,257 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:42:02,698 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:42:03,116 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-28 08:42:03,522 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 08:42:03,525 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:51:02,578 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 08:51:09,331 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 08:51:17,240 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 08:51:17,242 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 08:51:18,429 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 08:51:25,752 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:51:26,556 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-28 08:51:26,560 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:51:26,563 - zensys - ERROR - Error updating UI with verification: qArgDataFromPyType: Unable to find a QMetaType for "dict".
+2025-04-28 08:51:36,217 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:51:36,516 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:51:36,518 - zensys - ERROR - Error updating UI with verification: qArgDataFromPyType: Unable to find a QMetaType for "dict".
+2025-04-28 08:54:50,851 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 08:54:58,384 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 08:54:58,386 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 08:54:59,604 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 08:55:04,862 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:55:05,532 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:55:15,619 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:55:15,863 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:55:23,589 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:55:23,876 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:55:35,886 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:55:36,127 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 08:55:44,592 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 08:55:44,827 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 09:02:29,726 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 09:02:37,994 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 09:02:37,996 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 09:02:39,247 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 09:02:48,226 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 09:02:49,028 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 09:07:06,076 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 09:07:13,075 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 09:07:13,077 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 09:07:14,382 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 09:07:21,913 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 09:07:22,547 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 09:07:36,743 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 09:07:36,983 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 09:11:58,677 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 09:12:06,954 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 09:12:06,988 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 09:12:08,233 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 09:12:15,292 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 09:12:16,540 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 09:12:25,735 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 09:12:26,243 - zensys - ERROR - Error processing frame: local variable 'base64_img' referenced before assignment
+2025-04-28 09:13:04,975 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 09:13:12,671 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 09:13:12,701 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 09:13:13,949 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 09:13:20,004 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 09:13:21,314 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 09:13:31,679 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 09:13:32,675 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 09:13:41,092 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 09:13:41,510 - zensys - ERROR - Error processing frame: local variable 'base64_img' referenced before assignment
+2025-04-28 09:22:53,971 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 09:23:03,358 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 09:23:03,404 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 09:23:04,707 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 09:23:42,746 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrlv", "rfid_name": "Unknown"}
+2025-04-28 09:23:44,102 - zensys - ERROR - Error processing frame: local variable 'attendance_result' referenced before assignment
+2025-04-28 09:27:14,475 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 09:27:21,672 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 09:27:21,704 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 09:27:22,885 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 09:30:34,333 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 09:30:41,723 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 09:30:41,754 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 09:30:42,942 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 09:31:16,251 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrlv", "rfid_name": "Unknown"}
+2025-04-28 09:31:17,148 - zensys - ERROR - Error processing frame: local variable 'attendance_result' referenced before assignment
+2025-04-28 09:32:01,775 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 09:32:09,141 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 09:32:09,171 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 09:32:10,303 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 09:32:15,321 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 09:32:16,753 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 09:32:33,220 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrlv", "rfid_name": "Unknown"}
+2025-04-28 09:32:33,415 - zensys - ERROR - Error processing frame: local variable 'attendance_result' referenced before assignment
+2025-04-28 09:44:04,265 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 09:44:12,742 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 09:44:12,771 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 09:44:13,952 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 09:44:34,495 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 09:44:35,817 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 09:44:50,295 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "thanhnpst1", "rfid_name": "Unknown"}
+2025-04-28 09:44:50,628 - zensys - ERROR - Error processing frame: local variable 'attendance_result' referenced before assignment
+2025-04-28 09:47:12,959 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 09:47:19,800 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 09:47:19,830 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 09:47:21,019 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 09:47:29,806 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrlc", "rfid_name": "Unknown"}
+2025-04-28 09:47:30,526 - zensys - ERROR - Error processing frame: local variable 'attendance_result' referenced before assignment
+2025-04-28 09:52:37,462 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 09:52:44,784 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 09:52:44,812 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 09:52:46,014 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 09:53:04,470 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "thanhnpst1", "rfid_name": "Unknown"}
+2025-04-28 09:53:05,219 - zensys - ERROR - Error processing frame: local variable 'attendance_result' referenced before assignment
+2025-04-28 09:54:07,441 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 09:54:15,128 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 09:54:15,152 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 09:54:16,208 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrlc", "rfid_name": "Unknown"}
+2025-04-28 09:54:16,402 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 09:54:18,341 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrlv", "rfid_name": "Unknown"}
+2025-04-28 09:54:18,518 - zensys - ERROR - Error processing frame: local variable 'attendance_result' referenced before assignment
+2025-04-28 09:54:35,320 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 09:54:42,232 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 09:54:42,260 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 09:54:43,446 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 09:54:46,952 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 09:54:48,267 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 09:56:01,601 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "thanhnpst1", "rfid_name": "Unknown"}
+2025-04-28 09:56:05,166 - zensys - INFO - Authentication successful for user: Unknown, RFID: thanhnpst1
+2025-04-28 09:56:12,134 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 09:56:13,012 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 09:57:00,660 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 09:57:07,469 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 09:57:07,499 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 09:57:08,803 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 09:57:11,699 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 09:57:13,030 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 10:04:45,960 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 10:04:53,152 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 10:04:53,180 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 10:04:54,375 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 10:05:00,326 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 10:05:01,824 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 10:06:30,363 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrlac", "rfid_name": "Unknown"}
+2025-04-28 10:06:30,612 - zensys - ERROR - Error processing frame: local variable 'attendance_result' referenced before assignment
+2025-04-28 10:06:44,803 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 10:06:51,722 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 10:06:51,747 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 10:06:52,865 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 10:06:57,437 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 10:06:58,728 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 10:07:23,659 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrlc", "rfid_name": "Unknown"}
+2025-04-28 10:07:24,037 - zensys - ERROR - Error processing frame: local variable 'attendance_result' referenced before assignment
+2025-04-28 10:08:58,083 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 10:09:05,141 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 10:09:05,169 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 10:09:06,276 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 10:09:12,342 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 10:09:13,825 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 10:09:39,872 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "thanh", "rfid_name": "Unknown"}
+2025-04-28 10:09:41,303 - zensys - INFO - Authentication successful for user: Unknown, RFID: thanh
+2025-04-28 10:14:10,568 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 10:14:17,816 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 10:14:17,840 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 10:14:18,977 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 10:14:26,939 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 10:14:29,274 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 10:19:09,985 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 10:19:17,758 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 10:19:17,782 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 10:19:18,968 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 10:19:23,785 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 10:19:26,082 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 10:21:00,155 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 10:21:06,781 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 10:21:06,810 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 10:21:07,998 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 10:21:13,734 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 10:21:15,976 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 10:24:15,673 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 10:24:22,047 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 10:24:22,083 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 10:24:23,278 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 10:24:30,636 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 10:24:32,727 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 10:42:06,859 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 10:42:14,591 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 10:42:14,626 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 10:42:15,830 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 10:42:19,455 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 10:42:22,132 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 10:43:12,067 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 10:43:19,188 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 10:43:19,216 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 10:43:20,365 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 10:43:24,179 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 10:43:26,265 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 11:13:54,644 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 11:14:05,604 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 11:14:05,656 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 11:14:07,039 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 11:15:02,012 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 11:15:03,174 - zensys - ERROR - Error processing frame: local variable 'attendance_result' referenced before assignment
+2025-04-28 11:16:14,777 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-28 11:16:22,663 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-28 11:16:22,690 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-28 11:16:23,875 - zensys - INFO - ZenSys initialized successfully
+2025-04-28 11:16:29,658 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-28 11:16:32,158 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-28 11:21:12,801 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "thifspaceoongspacenoisspaceddi", "rfid_name": "Unknown"}
+2025-04-28 11:21:14,431 - zensys - INFO - Authentication successful for user: Unknown, RFID: thifspaceoongspacenoisspaceddi

@@ -93,11 +93,11 @@ export default function CreateNotifyForm({
                   control={<Radio />}
                   label="All System"
                 />
-                <FormControlLabel
+                {/* <FormControlLabel
                   value="specific"
                   control={<Radio />}
                   label="Specific"
-                />
+                /> */}
               </RadioGroup>
             </FormControl>
           )}

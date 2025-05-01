@@ -104,3 +104,46 @@
 2025-04-27 15:34:57,711 - zensys - INFO - ZenSys initialized successfully
 2025-04-27 15:35:28,168 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
 2025-04-27 15:35:28,374 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-27 19:41:58,820 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-27 19:42:08,519 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-27 19:42:08,524 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-27 19:42:08,525 - zensys - INFO - ZenSys initialized successfully
+2025-04-27 19:45:06,359 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-04-27 19:45:13,527 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-04-27 19:45:13,530 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-04-27 19:45:13,531 - zensys - INFO - ZenSys initialized successfully
+2025-04-27 19:45:26,538 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-27 19:45:26,770 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-27 19:45:38,536 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-27 19:45:38,722 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-27 19:46:22,949 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrl", "rfid_name": "Unknown"}
+2025-04-27 19:46:23,063 - zensys - INFO - Authentication successful for user: Unknown, RFID: ctrl
+2025-04-27 19:46:26,524 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-27 19:46:26,741 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-27 19:47:18,143 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "shiftA", "rfid_name": "Unknown"}
+2025-04-27 19:47:18,298 - zensys - INFO - Authentication successful for user: Unknown, RFID: shiftA
+2025-04-27 19:47:21,612 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ttedanceshiftshiftLog", "rfid_name": "Unknown"}
+2025-04-27 19:47:21,820 - zensys - INFO - Authentication successful for user: Unknown, RFID: ttedanceshiftshiftLog
+2025-04-27 19:48:15,795 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrl", "rfid_name": "Unknown"}
+2025-04-27 19:48:15,898 - zensys - INFO - Authentication successful for user: Unknown, RFID: ctrl
+2025-04-27 19:48:17,883 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrl", "rfid_name": "Unknown"}
+2025-04-27 19:48:18,165 - zensys - INFO - Authentication successful for user: Unknown, RFID: ctrl
+2025-04-27 19:48:40,981 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-27 19:48:41,110 - zensys - WARNING - Authentication failed: match=False, live_face=True
+2025-04-27 19:48:47,576 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-04-27 19:48:47,804 - zensys - ERROR - Failed to remove old image: [WinError 5] Access is denied: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\thanhnpst1\\latest.jpg'
+2025-04-27 19:48:47,805 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-04-27 19:49:19,253 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "thanhnpst1", "rfid_name": "Unknown"}
+2025-04-27 19:49:19,520 - zensys - INFO - Authentication successful for user: Unknown, RFID: thanhnpst1
+2025-04-27 19:50:08,848 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "backspace5", "rfid_name": "Unknown"}
+2025-04-27 19:50:09,052 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\Unknown\\latest.jpg'
+2025-04-27 19:50:09,054 - zensys - INFO - Authentication successful for user: Unknown, RFID: backspace5
+2025-04-27 19:50:44,085 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "thanhnpst1", "rfid_name": "Unknown"}
+2025-04-27 19:50:44,320 - zensys - INFO - Authentication successful for user: Unknown, RFID: thanhnpst1
+2025-04-27 19:52:08,502 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "04202", "rfid_name": "Unknown"}
+2025-04-27 19:52:08,717 - zensys - INFO - Authentication successful for user: Unknown, RFID: 04202
+2025-04-27 19:56:57,612 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "thanhnpst1", "rfid_name": "Unknown"}
+2025-04-27 19:56:57,835 - zensys - ERROR - Failed to remove old image: [WinError 2] The system cannot find the file specified: 'C:\\Users\\nguye\\OneDrive\\Desktop\\FAMS\\jetson\\data\\attendance\\Unknown\\latest.jpg'
+2025-04-27 19:56:57,839 - zensys - INFO - Authentication successful for user: Unknown, RFID: thanhnpst1
+2025-04-27 20:14:10,541 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "xuispacequas", "rfid_name": "Unknown"}
+2025-04-27 20:14:10,694 - zensys - INFO - Authentication successful for user: Unknown, RFID: xuispacequas

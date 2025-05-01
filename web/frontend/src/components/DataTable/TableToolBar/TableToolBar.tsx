@@ -33,7 +33,7 @@ import {
 interface EnhancedTableToolbarProps {
   isTeacher?: boolean;
   numSelected: number;
-  tableTitle: string;
+  tableTitle?: string;
   isAdmin?: boolean;
   isClassManagement?: boolean;
   isAttendance?: boolean;
@@ -53,6 +53,7 @@ interface EnhancedTableToolbarProps {
   defaultClass?: string;
   isRoleStudent?: boolean;
   isNotifyPage?: boolean;
+  isClassPage?: boolean;
   classOptionsData?: Array<{ className: string; id: string }>;
   isRFIDPage?: boolean;
   onShowMyAttendance?: () => void;
@@ -61,6 +62,7 @@ interface EnhancedTableToolbarProps {
   availableAcademicYears?: string[];
   onAcademicYearChange?: (year: string) => void;
   classYears?: Array<{ className: string; academicYear: string }>;
+  createButtonAction?: () => void;
 }
 
 const roleOptions = ["student", "teacher", "parent"];
@@ -77,6 +79,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
     isUserManagement = false,
     setFiltersUser,
     setFiltersClass,
+    isClassPage,
     setFiltersClassPage,
     setFiltersAttendancePage,
     isTeacher = false,
@@ -97,6 +100,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
     classPageList = [],
     subjectList = [],
     classYears = [],
+    createButtonAction,
   } = props;
 
   const { state, handler } = useTableToolBarHook({
@@ -163,6 +167,15 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
         <Typography variant="h6" id="tableTitle" marginLeft={5}>
           {tableTitle}
         </Typography>
+        {/* {createButtonAction && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={createButtonAction}
+          >
+            Create Class
+          </Button>
+        )} */}
         {/* {((isAttendance && !isRoleStudent) || isTeacherView) && (
           <Button
             variant="outlined"
@@ -197,6 +210,57 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
           fullWidth={isMobile}
           sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
         />
+      );
+    }
+    if (isRoleParent && isClassPage) {
+      return (
+        <>
+          <TextField
+            label="User ID"
+            value={filters.userID}
+            required
+            onChange={e => {
+              handleFilterChange("userID", e.target.value);
+            }}
+            onFocus={e => {
+              handleFilterChange("classId", "");
+              handleFilterChange("className", "");
+            }}
+            onBlur={handler.handleCallAPIClass}
+            fullWidth={isMobile}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+          />
+          <FormControl
+            fullWidth={isMobile}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+          >
+            <InputLabel id="class-select-label">Class</InputLabel>
+            <Select
+              labelId="class-select-label"
+              value={filters.classId || ""}
+              label="Class"
+              required
+              disabled={
+                !filters?.userID || state.classAttendanceList.length === 0
+              }
+              onChange={e => {
+                handleFilterChange("classId", e.target.value);
+                const selectedClass = state.classAttendanceList.find(
+                  s => s.classId === e.target.value
+                );
+                handleFilterChange("className", selectedClass?.className || "");
+              }}
+            >
+              {state.classAttendanceList?.map((option, index) => {
+                return (
+                  <MenuItem key={index} value={option.classId}>
+                    {option.className}
+                  </MenuItem>
+                );
+              })}
+            </Select>
+          </FormControl>
+        </>
       );
     }
     if (isTeacherView) {

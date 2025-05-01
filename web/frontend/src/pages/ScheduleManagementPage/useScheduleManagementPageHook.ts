@@ -68,9 +68,20 @@ interface SubjectsApiResponse {
   data: SubjectData[];
 }
 
+// Interface for teacher data structure
+interface TeacherData {
+  userId: string;
+  fullName: string;
+  teacherId?: number;
+}
+
 function useScheduleManagementPageHook() {
   const dispatch = useDispatch<AppDispatch>();
-
+  const fakeStudentOptions = [
+    { label: "Đặng Ngọc Hưng - hungdnst2", value: "hungdnst2" },
+    { label: "Nguyễn Phước Thành - thanhnpst1", value: "thanhnpst1" },
+  ];
+  const [studentOptions,setStudentOptions] = useState(fakeStudentOptions)
   const [eventShow, setEventShow] = useState<ScheduleEvent>(defaultEvent);
   const [view, setView] = useState<View>("week");
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -80,9 +91,7 @@ function useScheduleManagementPageHook() {
   const [selectedAcademicYear, setSelectedAcademicYear] = useState("");
   const [allSubjects, setAllSubjects] = useState<SubjectData[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<number | null>(null);
-  const [teachersList, setTeachersList] = useState<
-    { userId: string; fullName: string }[]
-  >([]);
+  const [teachersList, setTeachersList] = useState<TeacherData[]>([]);
   const classList = useSelector((state: RootState) => state.classById.classes);
   const userData = useAppSelector(state => state.login.loginData);
   const classrooms = useSelector(
@@ -97,17 +106,26 @@ function useScheduleManagementPageHook() {
     class: "",
     academicYear: "",
     subjectId: null as number | null,
+    studentId: ""
   });
   const handleSearch = () => {
-    dispatch(
-      fetchSchedules({
-        classId: filters.class,
-        userId: "",
-        fromDate: "",
-        toDate: "",
-        subjectId: filters.subjectId || undefined,
-      })
-    );
+    const params: any = {
+      userId: "",
+      fromDate: "",
+      toDate: "",
+    };
+    
+    // Chỉ thêm classId khi không phải tùy chọn "All classes"
+    if (filters.class !== "") {
+      params.classId = filters.class;
+    }
+    
+    // Thêm subjectId nếu có
+    if (filters.subjectId) {
+      params.subjectId = filters.subjectId;
+    }
+    
+    dispatch(fetchSchedules(params));
   };
 
   useEffect(() => {
@@ -206,12 +224,16 @@ function useScheduleManagementPageHook() {
   const fetchTeachersFromAPI = async () => {
     try {
       console.log("Fetching teachers from API...");
-      const response = await axios.get(
+      const response = await axios.get<{success: boolean, data: TeacherData[]}>(
         "http://fams.io.vn/api-nodejs/teachers/search?search=&page=1&limit=100"
       );
       console.log("API Response:", response);
       if (response.data.success) {
         console.log("Fetched teachers:", response.data.data);
+        // Kiểm tra xem API có trả về teacherId không
+        const hasTeacherId = response.data.data.length > 0 && response.data.data[0].hasOwnProperty('teacherId');
+        console.log("API response includes teacherId:", hasTeacherId);
+        
         // Override the teachers from Redux store with data from API
         const teachersFromAPI = response.data.data;
         setTeachersList(teachersFromAPI);
@@ -244,6 +266,14 @@ function useScheduleManagementPageHook() {
     fetchClassesFromAPI();
     fetchSubjectsFromAPI();
     fetchTeachersFromAPI();
+    
+    // Load lịch học khi component được mount
+    const params: any = {
+      userId: "",
+      fromDate: "",
+      toDate: "",
+    };
+    dispatch(fetchSchedules(params));
   }, []);
 
   // Filter class options based on selected academic year
@@ -339,83 +369,185 @@ function useScheduleManagementPageHook() {
     setIsEditing(false);
   };
 
-  const handleAddEvent = async (newEvent: ScheduleEvent) => {
+  // Hàm lấy thông tin chi tiết về giáo viên từ API
+  const getTeacherDetails = async (userId: string) => {
+    try {
+      console.log(`Fetching details for teacher userId: ${userId}`);
+      const response = await axios.get(
+        `http://fams.io.vn/api-nodejs/users/teacher/${userId}`
+      );
+      console.log("Teacher details response:", response.data);
+      
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      return null;
+    } catch (error) {
+      console.error(`Error fetching teacher details for ${userId}:`, error);
+      return null;
+    }
+  };
+
+  // Thêm hàm fetchSlotDetails vào hook
+  const fetchSlotDetails = async (slotId: number | string) => {
+    try {
+      const response = await axios.get(
+        `http://fams.io.vn/api-nodejs/schedules/slots/${slotId}`
+      );
+      if (response.data.success) {
+        return response.data.data;
+      }
+      return null;
+    } catch (error) {
+      console.error(`Error fetching slot details for ${slotId}:`, error);
+      return null;
+    }
+  };
+
+  // Sửa hàm để kiểm tra và xử lý undefined
+  const createSlotIfNotExists = async (
+    slotNumber: number | string,
+    dayOfWeek: string,
+    startTime: string,
+    endTime: string,
+    isExtra: boolean = false
+  ) => {
+    try {
+      if (!slotNumber) {
+        console.error("Cannot create slot: slotNumber is required");
+        return null;
+      }
+
+      console.log(`Creating new slot: ${slotNumber} for ${dayOfWeek}`);
+      
+      // Chuẩn bị dữ liệu slot mới
+      const slotData = {
+        slotNumber: Number(slotNumber),
+        slotName: isExtra ? "Slot Extra" : `Slot ${slotNumber}`,
+        dayOfWeek: dayOfWeek,
+        startTime: startTime,
+        endTime: endTime,
+        isActive: true
+      };
+      
+      // Gọi API để tạo slot mới
+      const response = await axios.post(
+        "http://fams.io.vn/api-nodejs/schedules/slots",
+        slotData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        console.log("New slot created successfully:", response.data.data);
+        return response.data.data;
+      } else {
+        console.error("Failed to create new slot:", response.data.message);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error creating new slot:", error);
+      return null;
+    }
+  };
+
+  // Sửa hàm handleAddEvent để trả về event đã tạo
+  const handleAddEvent = async (newEvent: ScheduleEvent): Promise<ScheduleEvent> => {
     try {
       console.log("Creating new schedule with data:", newEvent);
-
+      
+      // Tìm giáo viên trong danh sách để lấy teacherId
+      const teacher = teachersList.find(t => t.userId === newEvent.teacher);
+      
+      // Lấy thông tin ngày và thứ
+      const selectedDate = newEvent.scheduleDate || new Date();
+      const dayOfWeek = moment(selectedDate).format('dddd');
+      
+      // Tìm thông tin classroom để lấy classroomNumber
+      const classroom = classrooms.find(c => c.classroomId.toString() === String(newEvent.classroomNumber));
+      
+      // Xử lý thời gian bắt đầu và kết thúc
+      const startTime = newEvent.customStartTime || "17:00";
+      const endTime = newEvent.customEndTime || "19:00";
+      
       // Chuẩn bị dữ liệu để gửi đến API
-      const scheduleData = {
+      const scheduleData: any = {
+        semesterId: newEvent.semesterId || 1,
+        semesterNumber: newEvent.semesterNumber || 1,
         classId: newEvent.classId,
         subjectId: newEvent.subjectId,
-        scheduleDate: moment(newEvent.scheduleDate || new Date()).format(
-          "YYYY-MM-DD"
-        ),
-        slotId: newEvent.slotId,
         classroomId: newEvent.classroomNumber,
-        teacherId: newEvent.teacher,
+        teacherUserId: newEvent.teacher,
+        topic: newEvent.title || `Buổi học ${newEvent.slotId || ''}`,
+        sessionDate: moment(selectedDate).format("YYYY-MM-DD"),
+        dayOfWeek: dayOfWeek,
+        slotNumber: newEvent.slotId || 1,
+        startTime: startTime,
+        endTime: endTime
       };
-
+      
+      // Log the time values for debugging
+      console.log("Time values:", {
+        providedStart: newEvent.customStartTime,
+        providedEnd: newEvent.customEndTime,
+        usedStart: scheduleData.startTime,
+        usedEnd: scheduleData.endTime
+      });
+      
       console.log("Sending data to API:", scheduleData);
 
-      // Gọi API để tạo lịch học mới - không cần token
+      // Gọi API để tạo lịch học mới
       const response = await axios.post(
         "http://fams.io.vn/api-nodejs/schedules",
-        scheduleData
+        scheduleData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+          }
+        }
       );
 
       console.log("API response:", response.data);
 
       if (response.data.success) {
-        // Lấy thông tin slot để hiển thị đúng giờ bắt đầu và kết thúc
-        let slotInfo = null;
-        if (newEvent.slotId !== undefined) {
-          slotInfo = await fetchSlotDetails(newEvent.slotId);
-          console.log("Slot details:", slotInfo);
-        }
-
-        // Tạo dữ liệu hiển thị trên calendar
-        const startTime = new Date(newEvent.scheduleDate || new Date());
-        const endTime = new Date(newEvent.scheduleDate || new Date());
-
-        if (slotInfo) {
-          // Parse thời gian từ slot (ví dụ: "7:00" -> [7, 0])
-          const startParts = slotInfo.startTime.split(":").map(Number);
-          const endParts = slotInfo.endTime.split(":").map(Number);
-
-          startTime.setHours(startParts[0], startParts[1], 0);
-          endTime.setHours(endParts[0], endParts[1], 0);
-        } else {
-          // Fallback nếu không lấy được thông tin slot
-          startTime.setHours(7, 0, 0);
-          endTime.setHours(7, 50, 0);
-        }
-
         // Tìm tên môn học từ subjectId
-        const subject = subjectState.find(
-          s => s.subjectId === newEvent.subjectId
-        );
+        const subject = subjectState.find(s => s.subjectId === newEvent.subjectId);
+
+        // Tạo đối tượng Date cho start và end với ngày và giờ chính xác
+        const startDate = new Date(newEvent.scheduleDate || new Date());
+        const endDate = new Date(newEvent.scheduleDate || new Date());
+        
+        // Phân tích giờ từ startTime và endTime
+        const [startHour, startMinute] = startTime.split(':').map(Number);
+        const [endHour, endMinute] = endTime.split(':').map(Number);
+        
+        // Đặt giờ cho startDate và endDate
+        startDate.setHours(startHour, startMinute, 0, 0);
+        endDate.setHours(endHour, endMinute, 0, 0);
+
+        // Tạo event mới với scheduleId từ API response
+        const createdEvent: ScheduleEvent = {
+          id: response.data.data.schedule.scheduleId,
+          title: subject?.subjectName || newEvent.title || "",
+          start: startDate,
+          end: endDate,
+          subject: subject?.subjectName || "",
+          teacher: newEvent.teacher,
+          classroomNumber: classroom?.classroomName || "",
+          classId: newEvent.classId,
+          subjectId: newEvent.subjectId,
+        };
 
         // Thêm vào state để hiển thị
-        setEvents([
-          ...events,
-          {
-            id: response.data.data.scheduleId,
-            title: subject?.subjectName || "",
-            start: startTime,
-            end: endTime,
-            subject: subject?.subjectName || "",
-            teacher: newEvent.teacher,
-            classroomNumber: newEvent.classroomNumber,
-            classId: newEvent.classId,
-            subjectId: newEvent.subjectId,
-          },
-        ]);
+        setEvents([...events, createdEvent]);
 
-        // Generate attendance logs for all students and teacher
-        generateAttendanceLogs(response.data.data.scheduleId, newEvent);
-
-        // Hiển thị thông báo thành công
-        alert("Tạo lịch học thành công!");
+        // Trả về event với scheduleId đã cập nhật
+        return createdEvent;
+      } else {
+        throw new Error(response.data.message || "Tạo lịch học thất bại");
       }
     } catch (error: any) {
       console.error("Lỗi khi tạo lịch học:", error);
@@ -423,40 +555,59 @@ function useScheduleManagementPageHook() {
         error?.response?.data?.message ||
         error?.message ||
         "Lỗi không xác định";
-      alert(`Lỗi khi tạo lịch học: ${errorMessage}`);
+      throw new Error(`Lỗi khi tạo lịch học: ${errorMessage}`);
     }
   };
 
-  // Delete a schedule
+  // Sửa hàm handleDeleteEvent để đảm bảo xóa cả AttendanceLog
   const handleDeleteEvent = async (scheduleId: number) => {
     try {
       console.log(`Deleting schedule with ID: ${scheduleId}`);
 
-      // Call API to delete the schedule
+      // Kiểm tra scheduleId hợp lệ
+      if (!scheduleId) {
+        console.error("Invalid scheduleId:", scheduleId);
+        return;
+      }
+
+      // Call API to delete the schedule (API đã xử lý việc xóa AttendanceLog liên quan)
       const response = await axios.delete(
-        `http://fams.io.vn/api-nodejs/schedules/${scheduleId}`
+        `http://fams.io.vn/api-nodejs/schedules/${scheduleId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json"
+          }
+        }
       );
 
       console.log("Delete API response:", response.data);
 
       if (response.data.success) {
+        // Log thông tin về số bản ghi AttendanceLog đã bị xóa
+        const logsDeleted = response.data.data?.attendanceLogsDeleted || 0;
+        console.log(`Deleted ${logsDeleted} attendance logs`);
+        
         // Remove from local state to update UI
         setEvents(prevEvents =>
           prevEvents.filter(event => event.id !== scheduleId)
         );
-
-        // Show success message
-        alert("Xóa lịch học thành công!");
       } else {
-        alert(`Không thể xóa lịch học: ${response.data.message}`);
+        // Nếu API trả về lỗi
+        console.error(`Không thể xóa lịch học: ${response.data.message || "Lỗi không xác định"}`);
       }
     } catch (error: any) {
       console.error("Lỗi khi xóa lịch học:", error);
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Lỗi không xác định";
-      alert(`Lỗi khi xóa lịch học: ${errorMessage}`);
+      
+      // Thông báo lỗi chi tiết hơn bằng console.error thay vì alert
+      const errorStatus = error?.response?.status;
+      const errorMessage = error?.response?.data?.message || error?.message || "Lỗi không xác định";
+      
+      if (errorStatus === 404) {
+        console.error(`Không tìm thấy lịch học với ID ${scheduleId}. Có thể lịch học đã bị xóa trước đó.`);
+      } else {
+        console.error(`Lỗi khi xóa lịch học (${errorStatus}): ${errorMessage}`);
+      }
     }
   };
 
@@ -677,18 +828,40 @@ function useScheduleManagementPageHook() {
   }, [filters, dispatch]);
 
   // Fetch classes with academicYear
-  const fetchClassesWithFilter = async (academicYear: string) => {
+  const fetchClassesWithFilter = async (academicYear: string, callback?: (classes: ClassData[]) => void) => {
     try {
       const response = await axios.get(
         `http://fams.io.vn/api-nodejs/classes?academicYear=${academicYear}`
       );
       if (response.data.success) {
         const filteredClasses = response.data.data;
+        if (callback) {
+          callback(filteredClasses);
+        }
         return filteredClasses;
       }
       return [];
     } catch (error) {
       console.error("Error fetching classes by academic year:", error);
+      return [];
+    }
+  };
+
+  // Fetch classes by academic year specifically for the add schedule dialog
+  const fetchClassesByAcademicYear = async (academicYear: string) => {
+    try {
+      console.log(`Fetching classes for academic year: ${academicYear}`);
+      const response = await axios.get(
+        `http://fams.io.vn/api-nodejs/classes?academicYear=${academicYear}`
+      );
+      
+      if (response.data.success) {
+        console.log(`Found ${response.data.data.length} classes for year ${academicYear}`);
+        return response.data.data;
+      }
+      return [];
+    } catch (error) {
+      console.error("Error fetching classes for academic year:", error);
       return [];
     }
   };
@@ -707,22 +880,6 @@ function useScheduleManagementPageHook() {
     } catch (error) {
       console.error("Error fetching teachers by subject:", error);
       return [];
-    }
-  };
-
-  // Fetch slot details
-  const fetchSlotDetails = async (slotId: number | string) => {
-    try {
-      const response = await axios.get(
-        `http://fams.io.vn/api-nodejs/schedules/slot-details/${slotId}`
-      );
-      if (response.data.success) {
-        return response.data.data;
-      }
-      return null;
-    } catch (error) {
-      console.error("Error fetching slot details:", error);
-      return null;
     }
   };
 
@@ -746,6 +903,7 @@ function useScheduleManagementPageHook() {
       classrooms,
       subjectState,
       allClasses,
+      studentOptions
     },
     handler: {
       setEventShow,
@@ -762,6 +920,8 @@ function useScheduleManagementPageHook() {
       addEvent: handleAddEvent,
       deleteEvent: handleDeleteEvent,
       generateAttendanceLogs,
+      fetchClassesByAcademicYear,
+      fetchSlotDetails,
     },
   };
 }

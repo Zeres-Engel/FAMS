@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import "./UserManagementPage.scss";
 import LayoutComponent from "../../components/Layout/Layout";
 import Container from "@mui/material/Container";
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Stack, IconButton, Paper, Tab, Tabs, Typography, Checkbox, Snackbar, Alert, TextField, FormControl, InputLabel, Select, MenuItem, Grid } from "@mui/material";
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Stack, IconButton, Paper, Tab, Tabs, Typography, Checkbox, Snackbar, Alert, TextField, FormControl, InputLabel, Select, MenuItem, Grid, CircularProgress } from "@mui/material";
 import DataTable from "../../components/DataTable/DataTable";
 import useUserManagementPageHook from "./useUserManagementPageHook";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
@@ -10,6 +10,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import FileOpenIcon from "@mui/icons-material/FileOpen";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 
 function UserManagementPage(): React.JSX.Element {
   const { state, handler } = useUserManagementPageHook();
@@ -17,7 +18,9 @@ function UserManagementPage(): React.JSX.Element {
   const [tabValue, setTabValue] = useState(0);
   const [previewData, setPreviewData] = useState<any[]>([]);
   const [isImporting, setIsImporting] = useState(false);
-  const [snackbar, setSnackbar] = useState<{open: boolean, message: string, severity: 'success' | 'error'}>({
+  const [loadingDialogOpen, setLoadingDialogOpen] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Please wait while we process your request...");
+  const [snackbar, setSnackbar] = useState<{open: boolean, message: string, severity: 'success' | 'error' | 'warning'}>({
     open: false,
     message: '',
     severity: 'success'
@@ -50,7 +53,7 @@ function UserManagementPage(): React.JSX.Element {
 
   const handleDownloadTemplate = () => {
     // Download template from API
-    const downloadUrl = 'http://14.225.204.42:3001/api/users/download/template';
+    const downloadUrl = 'http://fams.io.vn/api-python/users/download/template';
     
     // Create a temporary link element
     const link = document.createElement('a');
@@ -77,8 +80,36 @@ function UserManagementPage(): React.JSX.Element {
   const handleProcessFile = async () => {
     if (!state.initUserFile) return;
     
-    const userData = await handler.handleSubmitInitUserData();
-    // The state will be updated in the hook, which will trigger the useEffect above
+    // Show loading dialog
+    setLoadingMessage("Processing file. Please wait...");
+    setLoadingDialogOpen(true);
+    
+    try {
+      const userData = await handler.handleSubmitInitUserData();
+      
+      if (userData && userData.length > 0) {
+        setSnackbar({
+          open: true,
+          message: 'File processed successfully!',
+          severity: 'success'
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: 'Failed to process file. Please check the format.',
+          severity: 'error'
+        });
+      }
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: 'Error processing file',
+        severity: 'error'
+      });
+    } finally {
+      // Hide loading dialog
+      setLoadingDialogOpen(false);
+    }
   };
 
   // Handle user selection toggle
@@ -90,36 +121,107 @@ function UserManagementPage(): React.JSX.Element {
   const handleConfirmImport = async () => {
     setIsImporting(true);
     
+    // Show loading dialog with dynamic message updates
+    setLoadingMessage("Importing users...");
+    setLoadingDialogOpen(true);
+    
+    // Set a timeout to update the message after 5 seconds
+    const messageUpdateTimeout = setTimeout(() => {
+      setLoadingMessage("System is processing your data. This may take a while...");
+    }, 5000);
+    
+    // Set another timeout for 10 seconds to update with optimistic message
+    const successMessageTimeout = setTimeout(() => {
+      setLoadingMessage("Data has been sent successfully and is being processed...");
+    }, 10000);
+    
     try {
+      console.log("Starting user import process...");
       const result = await handler.confirmImportUsers();
       
+      // Clear the timeouts as we have a response now
+      clearTimeout(messageUpdateTimeout);
+      clearTimeout(successMessageTimeout);
+      
+      console.log("Import result:", result);
+      
       if (result.success) {
+        // Set success message
         setSnackbar({
           open: true,
-          message: 'Users imported successfully!',
+          message: result.message || 'Users imported successfully!',
           severity: 'success'
         });
+        
+        // Close import dialog and clear preview
         handleCloseImportDialog();
+        setPreviewData([]);
       } else {
         setSnackbar({
           open: true,
-          message: result.message || 'Import failed',
+          message: result.message || 'Error importing data',
           severity: 'error'
         });
       }
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: 'An error occurred during import',
-        severity: 'error'
-      });
+    } catch (error: any) {
+      // Clear the timeouts if there's an error
+      clearTimeout(messageUpdateTimeout);
+      clearTimeout(successMessageTimeout);
+      
+      console.error("Error in import process:", error);
+      
+      // If this is a timeout error (504)
+      const isTimeoutError = 
+        error?.message?.includes('timeout') || 
+        error?.message?.includes('504') ||
+        (error?.response?.status === 504);
+        
+      if (isTimeoutError) {
+        // For timeout errors, show an optimistic message
+        setSnackbar({
+          open: true,
+          message: 'Data is being processed. Please check back in a few minutes.',
+          severity: 'warning'
+        });
+        
+        // Wait and verify
+        setTimeout(async () => {
+          const verificationResult = await handler.verifyImportSuccess();
+          if (verificationResult.success) {
+            // If verification succeeds, show success message
+            setSnackbar({
+              open: true,
+              message: 'Import successful! User list has been updated.',
+              severity: 'success'
+            });
+            
+            // Close import dialog and clear preview
+            handleCloseImportDialog();
+            setPreviewData([]);
+          }
+        }, 5000);
+      } else {
+        // For other errors
+        setSnackbar({
+          open: true,
+          message: 'An error occurred during import',
+          severity: 'error'
+        });
+      }
     } finally {
       setIsImporting(false);
+      // Hide loading dialog
+      setLoadingDialogOpen(false);
     }
   };
 
   const handleCloseSnackbar = () => {
     setSnackbar({...snackbar, open: false});
+    
+    // Ensure loading dialog is closed if snackbar shows an error
+    if (snackbar.severity === 'error' && loadingDialogOpen) {
+      setLoadingDialogOpen(false);
+    }
   };
 
   // Handle search change
@@ -151,19 +253,9 @@ function UserManagementPage(): React.JSX.Element {
     <LayoutComponent pageHeader="User Management">
       <Container maxWidth={false} className="userManagementPage-Container">
         <Box className="userManagementPage-Box">
-          {/* Action buttons row */}
-          <Box className="import-button-container">
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<CloudUploadIcon />}
-              onClick={handleOpenImportDialog}
-            >
-              Import Users
-            </Button>
-          </Box>
+          {/* Removing the import button container from here */}
           
-          <Box mb={4}>
+          <Box mb={4} className="userManagementPageTable">
             <DataTable
               headCellsData={state.headCellsData}
               tableMainData={state.userMainData}
@@ -179,6 +271,16 @@ function UserManagementPage(): React.JSX.Element {
               onPageChange={handler.handlePageChange}
               availableAcademicYears={state.availableAcademicYears}
               onAcademicYearChange={handler.handleAcademicYearChange}
+              importUsersButton={
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<CloudUploadIcon />}
+                  onClick={handleOpenImportDialog}
+                >
+                  Import Users
+                </Button>
+              }
             />
           </Box>
         </Box>
@@ -324,13 +426,13 @@ function UserManagementPage(): React.JSX.Element {
                     <thead>
                       <tr>
                         <th style={{ width: '50px' }}>Select</th>
-                        <th>Name</th>
-                        <th>Gender</th>
-                        <th>Date of Birth</th>
-                        <th>Role</th>
-                        <th>Phone</th>
-                        <th>Address</th>
-                        <th>Parent Info</th>
+                        <th>Họ tên</th>
+                        <th>Giới tính</th>
+                        <th>Ngày sinh</th>
+                        <th>Vai trò</th>
+                        <th>Số điện thoại</th>
+                        <th>Địa chỉ</th>
+                        <th>Thông tin phụ huynh</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -355,20 +457,20 @@ function UserManagementPage(): React.JSX.Element {
                               <td>{user.name}</td>
                               <td>{user.gender}</td>
                               <td>{user.dayOfBirth}</td>
-                              <td>{user.role}</td>
+                              <td>{user.role === 'student' ? 'Học sinh' : user.role === 'teacher' ? 'Giáo viên' : user.role}</td>
                               <td>{user.phone}</td>
                               <td>{user.address}</td>
                               <td>
                                 {user.parent1 && (
                                   <div>
-                                    <div><strong>{user.parent1.relationship || 'Mother'}:</strong> {user.parent1.name}</div>
-                                    {user.parent1.phone && <div>Phone: {user.parent1.phone}</div>}
+                                    <div><strong>{user.parent1.relationship === 'Father' ? 'Bố' : 'Mẹ'}:</strong> {user.parent1.name}</div>
+                                    {user.parent1.phone && <div>SĐT: {user.parent1.phone}</div>}
                                   </div>
                                 )}
                                 {user.parent2 && (
                                   <div style={{ marginTop: '8px' }}>
-                                    <div><strong>{user.parent2.relationship || 'Father'}:</strong> {user.parent2.name}</div>
-                                    {user.parent2.phone && <div>Phone: {user.parent2.phone}</div>}
+                                    <div><strong>{user.parent2.relationship === 'Father' ? 'Bố' : 'Mẹ'}:</strong> {user.parent2.name}</div>
+                                    {user.parent2.phone && <div>SĐT: {user.parent2.phone}</div>}
                                   </div>
                                 )}
                                 {!user.parent1 && !user.parent2 && "-"}
@@ -404,6 +506,45 @@ function UserManagementPage(): React.JSX.Element {
             </Button>
           )}
         </DialogActions>
+      </Dialog>
+
+      {/* Loading Dialog */}
+      <Dialog
+        open={loadingDialogOpen}
+        aria-labelledby="loading-dialog-title"
+        disableEscapeKeyDown={true}
+        hideBackdrop={false}
+        PaperProps={{
+          style: {
+            backgroundColor: 'white',
+            boxShadow: 'none',
+            padding: '20px',
+            minWidth: '350px',
+            textAlign: 'center'
+          },
+        }}
+        // Make dialog non-closable by clicking outside
+        onClose={(event, reason) => {
+          // Prevent dialog from closing when clicking outside
+          if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
+            return;
+          }
+        }}
+      >
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 3 }}>
+            <CircularProgress size={60} thickness={4} />
+            <Typography variant="h6" sx={{ mt: 2 }}>
+              {loadingMessage}
+            </Typography>
+            <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+              Please don't close this window
+            </Typography>
+            <Typography variant="caption" color="textSecondary" sx={{ mt: 2 }}>
+              Import process may take several minutes to complete
+            </Typography>
+          </Box>
+        </DialogContent>
       </Dialog>
 
       {/* Snackbar for notifications */}

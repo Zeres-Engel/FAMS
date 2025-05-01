@@ -70,6 +70,9 @@ class ZenSys:
         self._last_rfid_id = None
         self.ui_callback = None
         
+        # Flag để đảm bảo chỉ 1 quá trình xác thực được chạy cùng lúc
+        self.verification_in_progress = False
+        
         # Biến kiểm soát check-in
         self.checkin_enabled = True
         self.last_checkin_time = 0
@@ -94,6 +97,15 @@ class ZenSys:
         
         # Thêm biến depth_display_paused
         self.depth_display_paused = False
+        self.processing_paused = False
+        
+        # Thêm quản lý camera trong ZenSys
+        self.camera = None
+        self.camera_lock = threading.Lock()
+        self.latest_processed_result = None
+        
+        # Biến để lưu kết quả API gửi đi 1 lần
+        self.api_request_sent = False
     
     def set_ui_callback(self, callback):
         """
@@ -113,6 +125,11 @@ class ZenSys:
             rfid_id: ID của thẻ RFID
             rfid_name: Tên người từ RFID
         """
+        # Nếu đang xác thực, bỏ qua quá trình quẹt thẻ mới
+        if self.verification_in_progress:
+            print(f"Ignoring RFID scan during verification: {rfid_id}")
+            return
+            
         # Kiểm tra trùng lặp RFID trong thời gian ngắn (tránh quét 2 lần)
         current_time = time.time()
         if (self._last_rfid_id == rfid_id and 
@@ -127,6 +144,11 @@ class ZenSys:
         # Cập nhật biến compatibility
         self.current_rfid = rfid_id
         
+        # Reset trạng thái xác thực
+        self.verification_result = None
+        self.current_face_crop = None
+        self.api_request_sent = False
+        
         # Cập nhật UI nếu có callback
         if self.ui_callback:
             try:
@@ -138,10 +160,6 @@ class ZenSys:
                 print(f"UI updated with RFID: {rfid_id}")
             except Exception as e:
                 print(f"Error updating UI with RFID: {e}")
-        
-        # Reset các biến xác thực
-        self.verification_result = None
-        self.current_face_crop = None
         
         # Log system event (chỉ log 1 lần)
         self.system_logger.log_system_event("rfid_scanned", {
@@ -158,6 +176,9 @@ class ZenSys:
         
         # Khởi động RFID listener
         self.rfid.start_listening()
+        
+        # Thêm: Khởi tạo camera
+        self.start_camera()
         
         print("ZenSys initialized successfully")
         self.system_logger.info("ZenSys initialized successfully")
@@ -267,6 +288,10 @@ class ZenSys:
         try:
             # 1. Lưu frame gốc
             self._last_frame = frame.copy()
+            
+            # Nếu đang trong quá trình xác thực, chỉ trả về kết quả cũ
+            if self.processing_paused:
+                return self.latest_processed_result or {}
 
             # 2. Phát hiện khuôn mặt
             faces = self.face_recognition.face_analyzer.get(frame)
@@ -277,125 +302,52 @@ class ZenSys:
                 self.current_face_crop = None
                 self.current_face_image = None
                 self.current_face_crop_path = None
+                return result
 
-            # Xử lý depth map
-            depth_result = self.depth.predict_depth(frame)
-            result['depth_info'] = depth_result['stats'] if 'stats' in depth_result else {}
-
-            # Lưu trữ depth map để sử dụng cho anti-spoofing
-            self._last_depth_map = depth_result.get('depth_map', None)
-
+            # Chỉ xử lý depth nếu cần thiết
+            depth_result = None
+            if not self.processing_paused and self.rfid.current_rfid:
+                # Xử lý depth map
+                depth_result = self.depth.predict_depth(frame)
+                result['depth_info'] = depth_result['stats'] if 'stats' in depth_result else {}
+                # Lưu trữ depth map để sử dụng cho anti-spoofing
+                self._last_depth_map = depth_result.get('depth_map', None)
+            
             if faces:
                 face = faces[0]  # Lấy khuôn mặt lớn nhất (đã được sắp xếp trong ZenFace)
                 
-                # 3. Nhận diện khuôn mặt
-                embedding = face.normed_embedding
-                name, score = self.face_recognition.recognize_face(embedding)
-                result['face_name'] = name
-                result['face_score'] = score
+                # 3. Nhận diện khuôn mặt chỉ khi cần
+                if not self.processing_paused:
+                    embedding = face.normed_embedding
+                    name, score = self.face_recognition.recognize_face(embedding)
+                    result['face_name'] = name
+                    result['face_score'] = score
+                    
+                    # 4. Xử lý anti-spoofing với depth map
+                    if depth_result and self.rfid.current_rfid:
+                        anti_spoofing_result = self.anti_spoofing.process_depth_anti_spoofing(
+                            depth_result.get('depth_map'), face)
+                        result['anti_spoofing'] = anti_spoofing_result
+                        # Update for backward compatibility
+                        self.depth_face_crop = self.anti_spoofing.depth_face_crop
+                        self.anti_spoofing_result = self.anti_spoofing.anti_spoofing_result
                 
-                # 4. Xử lý anti-spoofing với depth map
-                anti_spoofing_result = self.anti_spoofing.process_depth_anti_spoofing(
-                    depth_result.get('depth_map'), face)
-                result['anti_spoofing'] = anti_spoofing_result
-                # Update for backward compatibility
-                self.depth_face_crop = self.anti_spoofing.depth_face_crop
-                self.anti_spoofing_result = self.anti_spoofing.anti_spoofing_result
-                
-                # 5. Crop và align khuôn mặt
-                face_aligned = False
-                if face.kps is not None:
-                    try:
-                        # Thêm kiểm tra hình dạng của landmarks
-                        if face.kps.shape == (5, 2):
-                            self.current_face_crop = face_align.norm_crop(frame, landmark=face.kps, image_size=112)
-                            # Lưu trực tiếp vào biến để GUI truy cập
-                            self.current_face_image = self.current_face_crop.copy() if self.current_face_crop is not None else None
-                            face_aligned = True
-                            
-                            # Lưu ảnh xuống disk trong thread riêng
-                            if self.current_face_crop is not None:
-                                def save_face_image_thread():
-                                    # Lưu ảnh xuống disk
-                                    self.current_face_crop_path = self.save_face_image(
-                                        self.current_face_crop, name, f"aligned_{name}")
-                                    result['face_crop_path'] = self.current_face_crop_path
-                                
-                                import threading
-                                save_thread = threading.Thread(target=save_face_image_thread)
-                                save_thread.daemon = True
-                                save_thread.start()
-                        else:
-                            raise ValueError(f"Incorrect landmark shape: {face.kps.shape}")
-                    except Exception as e:
-                        self.system_logger.error(f"Error in face alignment: {e}")
-                        face_aligned = False
-                
-                # Nếu không thể face align, thử sử dụng bbox để crop
-                if not face_aligned and face.bbox is not None:
-                    try:
-                        x1, y1, x2, y2 = [int(b) for b in face.bbox]
-                        
-                        # Đảm bảo tọa độ nằm trong kích thước ảnh
-                        h, w = frame.shape[:2]
-                        x1, y1 = max(0, x1), max(0, y1)
-                        x2, y2 = min(w, x2), min(h, y2)
-                        
-                        # Cắt khuôn mặt
-                        if x2 > x1 and y2 > y1:
-                            crop_img = frame[y1:y2, x1:x2]
-                            if crop_img.size > 0:
-                                # Resize để đảm bảo kích thước 112x112 tương thích với gallery
-                                self.current_face_crop = cv2.resize(crop_img, (112, 112))
-                                # Lưu trực tiếp vào biến để GUI truy cập
-                                self.current_face_image = self.current_face_crop.copy() if self.current_face_crop is not None else None
-                                
-                                # Lưu ảnh xuống disk trong thread riêng
-                                def save_face_image_thread():
-                                    # Lưu ảnh xuống disk
-                                    self.current_face_crop_path = self.save_face_image(
-                                        self.current_face_crop, name, f"bbox_{name}")
-                                    result['face_crop_path'] = self.current_face_crop_path
-                                
-                                import threading
-                                save_thread = threading.Thread(target=save_face_image_thread)
-                                save_thread.daemon = True
-                                save_thread.start()
-                    except Exception as e:
-                        self.system_logger.error(f"Error in face cropping: {e}")
-                
-                # 6. Xác thực nếu có RFID
-                if self.rfid.current_rfid:
+                # 6. Xác thực nếu có RFID và chưa đang trong quá trình xác thực
+                if self.rfid.current_rfid and not self.verification_in_progress:
+                    # Đánh dấu đang trong quá trình xác thực
+                    self.verification_in_progress = True
+                    # Bắt đầu quy trình xác thực
+                    print("Starting verification process after RFID detection")
                     self.process_verification(face)
                     # Update current RFID for backward compatibility
                     self.current_rfid = self.rfid.current_rfid
                     result['verification'] = self.verification_result
-                                        
-                # 7. Đếm lưu lượng nếu đã cấu hình
-                if hasattr(config, 'counter') and config.counter.enable:
-                    try:
-                        min_confidence = getattr(config.counter, 'min_confidence', 0.5)
-                        if score >= min_confidence:
-                            self.counter.count_person(name, score)
-                    except Exception as e:
-                        self.system_logger.error(f"Error in people counting: {e}")
-            
-            # 8. Xử lý depth check-in nếu người dùng muốn
-            if hasattr(config, 'depth_check_in') and config.depth_check_in.enable:
-                try:
-                    if depth_result is not None and 'depth_map' in depth_result:
-                        depth_score = self.depth.analyze_depth_map(depth_result['depth_map'])
-                        
-                        # Cập nhật trạng thái check-in dựa trên depth
-                        if depth_score > config.depth_check_in.threshold:
-                            # TODO: Implement automatic check-in based on depth
-                            pass
-                except Exception as e:
-                    self.system_logger.error(f"Error in depth check-in: {e}")
         
         except Exception as e:
             self.system_logger.error(f"Error processing frame: {e}")
             
+        # Lưu kết quả để tái sử dụng trong trạng thái tạm dừng
+        self.latest_processed_result = result
         return result
     
     def process_verification(self, face):
@@ -409,7 +361,12 @@ class ZenSys:
             dict: Kết quả xác thực hoặc None
         """
         if not self.rfid.current_rfid or not face:
+            self.verification_in_progress = False
             return None
+        
+        print(f"Processing verification for RFID: {self.rfid.current_rfid}")    
+        # Đảm bảo chỉ xử lý một lần
+        self.processing_paused = True
             
         # Lấy embedding
         embedding = face.normed_embedding
@@ -420,6 +377,14 @@ class ZenSys:
         # Xác thực với RFID
         self.verification_result = self.rfid.verify_identity(
             self.rfid.current_rfid, face_name)
+        
+        # Chạy MiDAS 1 lần để lấy depth map cho anti-spoofing
+        if hasattr(self, '_last_frame') and self._last_frame is not None:
+            # Chỉ chạy MiDAS nếu chưa có depth map hoặc đã bị reset
+            if not hasattr(self, 'last_depth_result') or self.last_depth_result is None:
+                print("Running MiDAS depth model for verification...")
+                depth_result = self.depth.predict_depth(self._last_frame)
+                self.last_depth_result = depth_result
         
         # Kiểm tra anti-spoofing
         is_live_face = self.anti_spoofing.is_live_face()
@@ -433,36 +398,35 @@ class ZenSys:
             is_live_face
         )
         
-        # Log attendance
-        user_id = face_name
-        rfid_id = self.rfid.current_rfid
-        
-        # Chuẩn bị ảnh khuôn mặt từ bbox nếu không có sẵn
-        if self.current_face_crop is None and face.bbox is not None and hasattr(face, 'img') and face.img is not None:
-            try:
-                x1, y1, x2, y2 = [int(b) for b in face.bbox]
-                img = face.img  # Lấy ảnh từ face object
-                
-                # Đảm bảo tọa độ nằm trong kích thước ảnh
-                h, w = img.shape[:2]
-                x1, y1 = max(0, x1), max(0, y1)
-                x2, y2 = min(w, x2), min(h, y2)
-                
-                if x2 > x1 and y2 > y1:
-                    # Cắt khuôn mặt
-                    crop_img = img[y1:y2, x1:x2]
-                    if crop_img.size > 0:
-                        self.current_face_crop = cv2.resize(crop_img, (112, 112))
-                        # Lưu biến ảnh trực tiếp vào đối tượng để GUI có thể truy cập 
-                        self.current_face_image = self.current_face_crop.copy()
-            except Exception as e:
-                self.system_logger.error(f"Error creating face crop from source: {e}")
-        
-        # Lưu ảnh vào thư mục attendance/userId nếu có khuôn mặt - luồng lưu trữ
-        if self.current_face_crop is not None:
-            # Luồng lưu trữ - thực hiện trong thread riêng
-            def save_face_image_thread():
-                # Lưu ảnh vào thư mục attendance/userId
+        # Log attendance - chỉ thực hiện 1 lần
+        if not self.api_request_sent:
+            user_id = face_name
+            rfid_id = self.rfid.current_rfid
+            
+            # Chuẩn bị ảnh khuôn mặt từ bbox nếu không có sẵn
+            if self.current_face_crop is None and face.bbox is not None and hasattr(face, 'img') and face.img is not None:
+                try:
+                    x1, y1, x2, y2 = [int(b) for b in face.bbox]
+                    img = face.img  # Lấy ảnh từ face object
+                    
+                    # Đảm bảo tọa độ nằm trong kích thước ảnh
+                    h, w = img.shape[:2]
+                    x1, y1 = max(0, x1), max(0, y1)
+                    x2, y2 = min(w, x2), min(h, y2)
+                    
+                    if x2 > x1 and y2 > y1:
+                        # Cắt khuôn mặt
+                        crop_img = img[y1:y2, x1:x2]
+                        if crop_img.size > 0:
+                            self.current_face_crop = cv2.resize(crop_img, (112, 112))
+                            # Lưu biến ảnh trực tiếp vào đối tượng để GUI có thể truy cập 
+                            self.current_face_image = self.current_face_crop.copy()
+                except Exception as e:
+                    self.system_logger.error(f"Error creating face crop from source: {e}")
+            
+            # Lưu ảnh vào thư mục attendance/userId nếu có khuôn mặt
+            if self.current_face_crop is not None:
+                # Chuẩn bị thư mục và đường dẫn
                 user_dir = os.path.join(self.attendance_faces_dir, user_id)
                 os.makedirs(user_dir, exist_ok=True)
                 
@@ -476,31 +440,58 @@ class ZenSys:
                         os.remove(filepath)
                     except Exception as e:
                         self.system_logger.error(f"Failed to remove old image: {e}")
-                
+                        
+                # Lưu ảnh trực tiếp ở đây thay vì trong thread riêng
                 try:
                     # Lưu ảnh vào thư mục attendance
                     success = cv2.imwrite(filepath, self.current_face_crop)
                     if success:
                         self.current_face_crop_path = filepath
+                        print(f"Successfully saved face image to: {filepath}")
                     else:
                         self.system_logger.error(f"Failed to save face image: cv2.imwrite returned False")
                 except Exception as e:
                     self.system_logger.error(f"Failed to save face image: {e}")
             
-            # Khởi chạy luồng lưu trữ riêng
-            import threading
-            save_thread = threading.Thread(target=save_face_image_thread)
-            save_thread.daemon = True
-            save_thread.start()
-        
-        # Sử dụng đường dẫn ảnh thay vì ảnh trong bộ nhớ
-        attendance_result = self.attendance.log_attendance(
-            user_id=user_id,
-            rfid_id=rfid_id,
-            face_image=self.current_face_crop,  # Sử dụng cả ảnh trực tiếp
-            face_image_path=self.current_face_crop_path,  # và đường dẫn
-            status="SUCCESS" if self.verification_result["match"] and is_live_face else "FAILED"
-        )
+            # Chỉ gửi attendance nếu mặt thật và xác thực thành công
+            if is_live_face and self.verification_result["match"]:
+                # Sử dụng đường dẫn ảnh thay vì ảnh trong bộ nhớ - chỉ gửi 1 lần
+                attendance_result = self.attendance.log_attendance(
+                    user_id=user_id,
+                    rfid_id=rfid_id,
+                    face_image=self.current_face_crop,  # Sử dụng cả ảnh trực tiếp
+                    face_image_path=self.current_face_crop_path,  # và đường dẫn
+                    status="SUCCESS" if self.verification_result["match"] and is_live_face else "FAILED"
+                )
+                
+                # Kiểm tra lỗi API sau khi gửi attendance
+                if attendance_result and "error" in attendance_result:
+                    error_code = attendance_result.get("error_code", "UNKNOWN_ERROR")
+                    error_message = attendance_result.get("error_message", "Lỗi không xác định")
+                    
+                    # Phân loại lỗi
+                    if "không tìm thấy lịch học" in error_message.lower() or error_code == "NO_SCHEDULE":
+                        error_type = "NO_SCHEDULE"
+                    elif error_code in ["SERVER_ERROR", "NETWORK_ERROR"]:
+                        error_type = error_code
+                    else:
+                        error_type = "API_ERROR"
+                    
+                    # Thông báo lỗi API lên UI
+                    if self.ui_callback:
+                        try:
+                            self.ui_callback("api_error", {
+                                "error_type": error_type,
+                                "error_message": error_message,
+                                "user_id": user_id,
+                                "rfid_id": rfid_id
+                            })
+                            print(f"Sent API error to UI: {error_type}")
+                        except Exception as e:
+                            self.system_logger.error(f"Error sending API error to UI: {e}")
+            
+            # Đánh dấu đã gửi API
+            self.api_request_sent = True
         
         # Cập nhật thêm thông tin cho verification result
         self.verification_result.update({
@@ -514,32 +505,17 @@ class ZenSys:
         # Log thành công hoặc thất bại
         if self.verification_result["match"] and is_live_face:
             self.system_logger.info(f"Authentication successful for user: {user_id}, RFID: {rfid_id}")
-            
-            # Reset RFID sau khi xác thực thành công
-            if self.verification_result["match"]:
-                log_interval = float(config.logging.log_interval) if hasattr(config.logging, 'log_interval') else 5.0
-                threading.Timer(log_interval, self.reset_after_verification).start()
-            
-            # Khi xác thực thành công, tạm dừng hiển thị depth
-            self.depth_display_paused = True
-            
-            # Lưu last_depth_result để giữ depth map cố định
-            if hasattr(self, '_last_frame') and self._last_frame is not None:
-                depth_result = self.depth.predict_depth(self._last_frame)
-                self.last_depth_result = depth_result
         else:
-            self.system_logger.warning(f"Authentication failed: match={self.verification_result['match']}, live_face={is_live_face}")
-            # Đợi lâu hơn khi xác thực thất bại để người dùng có thể xem kết quả
-            log_interval = float(config.logging.log_interval) if hasattr(config.logging, 'log_interval') else 5.0
-            threading.Timer(log_interval, self.reset_after_verification).start()
+            reason = "face mismatch" if not self.verification_result["match"] else "fake face"
+            self.system_logger.warning(f"Authentication failed: reason={reason}, match={self.verification_result['match']}, live_face={is_live_face}")
             
-            # Khi xác thực thất bại, cũng tạm dừng hiển thị depth
-            self.depth_display_paused = True
-            
-            # Lưu last_depth_result để giữ depth map cố định
-            if hasattr(self, '_last_frame') and self._last_frame is not None:
-                depth_result = self.depth.predict_depth(self._last_frame)
-                self.last_depth_result = depth_result
+        # Reset RFID sau thời gian hiển thị từ config
+        log_interval = float(config.logging.log_interval) if hasattr(config.logging, 'log_interval') else 5.0
+        print(f"Setting verification reset timer for {log_interval} seconds")
+        threading.Timer(log_interval, self.reset_after_verification).start()
+        
+        # Khi xác thực thành công, tạm dừng hiển thị depth
+        self.depth_display_paused = True
         
         # Cập nhật UI về kết quả xác thực - Truyền trực tiếp dữ liệu ảnh thay vì đường dẫn
         if self.ui_callback and self.verification_result:
@@ -550,6 +526,10 @@ class ZenSys:
                     "face_image": self.current_face_crop,  # Thêm truyền trực tiếp ảnh
                     "face_name": face_name,
                     "face_score": score,
+                    "rfid_name": self.verification_result.get("rfid_name", ""),
+                    "rfid_id": self.rfid.current_rfid,
+                    "match": self.verification_result.get("match", False),
+                    "is_live_face": is_live_face,  # Thêm kết quả anti-spoofing
                     "timestamp": time.time()
                 })
             except Exception as e:
@@ -559,6 +539,8 @@ class ZenSys:
     
     def reset_after_verification(self):
         """Reset sau khi xác thực thành công"""
+        print("Resetting verification state after display period")
+        
         # Kích hoạt UI callback trước tiên để đảm bảo UI được cập nhật
         if self.ui_callback:
             try:
@@ -569,12 +551,19 @@ class ZenSys:
         # Reset RFID
         self.rfid.clear_current_rfid()
         
-        # Reset depth map display
+        # Reset depth map display và các biến trạng thái
         self.depth_display_paused = False
+        self.last_depth_result = None  # Đảm bảo depth map được tính toán lại trong lần tiếp theo
         
         # Reset các giá trị khác
         self.verification_result = None
         self.anti_spoofing_result = None
+        self.current_face_crop = None
+        self.processing_paused = False
+        self.verification_in_progress = False
+        self.api_request_sent = False
+        
+        print("Verification reset complete, ready for next session")
     
     def run_webcam(self):
         """
@@ -663,4 +652,45 @@ class ZenSys:
             min_thresh=min_thresh,
             max_thresh=max_thresh
         )
-        print(f"Depth thresholds updated: variance={variance_thresh}, range={range_thresh}, min={min_thresh}, max={max_thresh}") 
+        print(f"Depth thresholds updated: variance={variance_thresh}, range={range_thresh}, min={min_thresh}, max={max_thresh}")
+    
+    def start_camera(self):
+        with self.camera_lock:
+            if self.camera is None:
+                self.camera = cv2.VideoCapture(0)
+                
+        # Bắt đầu thread xử lý liên tục
+        self.camera_thread = threading.Thread(target=self.camera_processing_loop)
+        self.camera_thread.daemon = True
+        self.camera_thread.start()
+        
+    def camera_processing_loop(self):
+        while True:
+            # Đọc frame từ camera
+            ret, frame = self.camera.read()
+            if ret:
+                # Xử lý frame và lưu kết quả
+                result = self.process_frame(frame)
+                self.latest_processed_result = result
+            
+            # Ngủ một chút để giảm tải CPU
+            time.sleep(0.01)
+            
+    def get_latest_processed_frame(self):
+        # API để GUI lấy frame và kết quả mới nhất
+        result = self.latest_processed_result
+        
+        # Trong quá trình xác thực, ưu tiên hiển thị frame hiện tại
+        if self.verification_in_progress:
+            # Hiển thị frame với bounding box nhưng không cần thực hiện xác thực
+            if self._last_frame is not None:
+                # Vẽ bounding box nếu đang trong quá trình xác thực
+                return result
+        
+        return result
+        
+    def stop_camera(self):
+        with self.camera_lock:
+            if self.camera:
+                self.camera.release()
+                self.camera = None 

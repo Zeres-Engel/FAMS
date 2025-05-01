@@ -73,6 +73,8 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
   useEffect(() => {
     if (tableMainData && tableMainData.length > 0) {
       setRows(tableMainData);
+    }else{
+      setRows([])
     }
   }, [tableMainData]);
 
@@ -226,6 +228,7 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
   const handleEditClick = (user: EditUserForm, userId?: string) => {
     const userEdit = allUsers?.find(u => u.id === userId);
     // Lọc tại đây nếu cần'
+    console.log("Editing userID:", userId);
     console.log("Editing user:", userEdit);
 
     console.log(formatUserToEditUserForm(userEdit));
@@ -348,6 +351,7 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
         userId: attendanceData.userId,
         scheduleId: attendanceData.scheduleId,
         status: attendanceData.status,
+        note:attendanceData.note,
         checkInFace: attendanceData.checkinFace,
       }))
     console.log("Saving edited Attendance:", attendanceData);

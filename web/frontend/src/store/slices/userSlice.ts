@@ -117,80 +117,6 @@ function formatUsersFromResponse(responseData: any[]): UserData[] {
   });
 }
 
-export const createUser = createAsyncThunk(
-  "user/createUser",
-  async (userData: CreateUserPayload, thunkAPI) => {
-    try {
-      thunkAPI.dispatch(showLoading());
-      
-      // Check if we have an avatar file to handle
-      const hasAvatar = userData.avatar instanceof File;
-      
-      let response;
-      
-      if (hasAvatar) {
-        // Create FormData to handle file upload
-        const formData = new FormData();
-        
-        // Add all form fields to FormData
-        Object.keys(userData).forEach((key) => {
-          const k = key as keyof CreateUserPayload;
-          const value = userData[k];
-          
-          if (key === 'avatar') {
-            if (value instanceof File) {
-              // Check file size before adding
-              if (value.size > 5 * 1024 * 1024) {
-                throw new Error("Avatar file size must be less than 5MB");
-              }
-              formData.append('avatar', value);
-            }
-          } else if (Array.isArray(value)) {
-            formData.append(key, JSON.stringify(value));
-          } else if (value !== null && value !== undefined) {
-            formData.append(key, value.toString());
-          }
-        });
-        
-        // Use FormData for the API call
-        response = await axiosInstance.post("/users/create", formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-      } else {
-        // Regular JSON API call without file upload
-        response = await axiosInstance.post("/users/create", userData);
-      }
-      
-      thunkAPI.dispatch(
-        addNotify({
-          type: "success",
-          message: `${userData.role === 'teacher' ? 'Teacher' : 'Student'} created successfully!`,
-          duration: 3000,
-        })
-      );
-      return response.data;
-    } catch (error: any) {
-      thunkAPI.dispatch(hideLoading());
-      
-      // Get detailed error message
-      const errorMessage = error.response?.data?.message || error.message || 'User creation failed';
-      
-      thunkAPI.dispatch(
-        addNotify({
-          type: "error",
-          message: errorMessage,
-          duration: 5000,
-        })
-      );
-      console.error("User creation error:", error);
-      return thunkAPI.rejectWithValue(errorMessage);
-    } finally {
-      thunkAPI.dispatch(hideLoading());
-    }
-  }
-);
 export const deleteUser = createAsyncThunk(
   "user/deleteUser",
   async (username: string | number | undefined, thunkAPI) => {
@@ -482,6 +408,86 @@ export const searchUsers = createAsyncThunk(
   }
 );
 
+export const createUser = createAsyncThunk(
+  "user/createUser",
+  async (userData: CreateUserPayload, thunkAPI) => {
+    try {
+      thunkAPI.dispatch(showLoading());
+      
+      // Check if we have an avatar file to handle
+      const hasAvatar = userData.avatar instanceof File;
+      
+      let response;
+      
+      if (hasAvatar) {
+        // Create FormData to handle file upload
+        const formData = new FormData();
+        
+        // Add all form fields to FormData
+        Object.keys(userData).forEach((key) => {
+          const k = key as keyof CreateUserPayload;
+          const value = userData[k];
+          
+          if (key === 'avatar') {
+            if (value instanceof File) {
+              // Check file size before adding
+              if (value.size > 5 * 1024 * 1024) {
+                throw new Error("Avatar file size must be less than 5MB");
+              }
+              formData.append('avatar', value);
+            }
+          } else if (Array.isArray(value)) {
+            formData.append(key, JSON.stringify(value));
+          } else if (value !== null && value !== undefined) {
+            formData.append(key, value.toString());
+          }
+        });
+        
+        // Use FormData for the API call
+        response = await axiosInstance.post("/users/create", formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      } else {
+        // Regular JSON API call without file upload
+        response = await axiosInstance.post("/users/create", userData);
+      }
+      
+      thunkAPI.dispatch(
+        addNotify({
+          type: "success",
+          message: `${userData.role === 'teacher' ? 'Teacher' : 'Student'} created successfully!`,
+          duration: 3000,
+        })
+      );
+      const filterCreate: SearchFilters={
+        search:response?.data?.data?.user?.userId
+      }
+      thunkAPI.dispatch(searchUsers(filterCreate))
+      
+      return response.data.data;
+    } catch (error: any) {
+      thunkAPI.dispatch(hideLoading());
+      
+      // Get detailed error message
+      const errorMessage = error.response?.data?.message || error.message || 'User creation failed';
+      
+      thunkAPI.dispatch(
+        addNotify({
+          type: "error",
+          message: errorMessage,
+          duration: 5000,
+        })
+      );
+      console.error("User creation error:", error);
+      return thunkAPI.rejectWithValue(errorMessage);
+    } finally {
+      thunkAPI.dispatch(hideLoading());
+    }
+  }
+);
+
 export const fetchUser = createAsyncThunk(
   "user/fetchUser",
   async (_, thunkAPI) => {
@@ -607,10 +613,6 @@ const userSlice = createSlice({
       .addCase(createUser.fulfilled, (state, action) => {
         state.loading = false;
         state.error = null;
-
-        if (state.user) {
-          state.user.push(action.payload);
-        }
       })
       .addCase(createUser.rejected, (state, action) => {
         state.loading = false;

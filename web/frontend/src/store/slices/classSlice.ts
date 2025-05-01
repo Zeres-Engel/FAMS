@@ -55,6 +55,7 @@ export const fetchClasses = createAsyncThunk(
           batchId: element.batchId,
           name: element.className,
           classId: element.classId,
+          studentNumber: element.studentNumber?.toString() || "0",
         });
       }
       return formattedData;
@@ -122,7 +123,11 @@ export const createClass = createAsyncThunk(
           duration: 3000,
         })
       );
-      return response.data.data;
+      const responseData = {
+        ...response.data.data,
+        studentNumber: response.data.data.studentNumber?.toString() || "0"
+      };
+      return responseData;
     } catch (error: any) {
       console.log(error);
 
@@ -193,6 +198,7 @@ export const searchClassById = createAsyncThunk(
         academicYear: element.academicYear,
         batchId: element.batchId,
         name: element.className,
+        studentNumber: element.studentNumber?.toString() || "0"
       };
 
       return [formattedClass]; // return as array to be consistent with `classes` type
@@ -245,6 +251,7 @@ export const searchClasses = createAsyncThunk(
           academicYear: element.academicYear,
           batchId: element.batchId,
           name: element.className,
+          studentNumber: element.studentNumber?.toString() || "0",
         })
       );
 

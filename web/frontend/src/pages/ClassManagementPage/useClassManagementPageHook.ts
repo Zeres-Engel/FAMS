@@ -1,39 +1,23 @@
 import { useEffect, useState } from "react";
 import { useAppSelector } from "../../store/useStoreHook";
-import { fetchUser } from "../../store/slices/userSlice";
 import {
-  ClassArrangementData,
-  ClassArrangementHeadCellProps,
   ClassHeadCell,
-  Data,
-  HeadCell,
 } from "../../model/tableModels/tableDataModels.model";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store/store";
 import {
   fetchClasses,
-  searchClassById,
   searchClasses,
+  createClass
 } from "../../store/slices/classSlice";
+import { searchUsers } from "../../store/slices/userSlice";
 import {
   ClassData,
   SearchClassFilters,
 } from "../../model/classModels/classModels.model";
-import { generateFakeClassArrangementData } from "./ClassArrangementFakeData";
+import axiosInstance from "../../services/axiosInstance";
 
 function useClassManagementPageHook() {
-  const [mode, setMode] = useState<
-    "ClassManagement" | "ClassArrangement" | "NewSemester"
-  >("ClassManagement");
-
-  const handleModeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setMode(
-      event.target.value as
-        | "ClassManagement"
-        | "ClassArrangement"
-        | "NewSemester"
-    );
-  };
   const [filters, setFiltersClass] = useState<SearchClassFilters>({
     search: "",
     grade: "",
@@ -43,20 +27,23 @@ function useClassManagementPageHook() {
   const dispatch = useDispatch<AppDispatch>();
   const classState = useAppSelector(state => state.class);
   const [classMainData, setClassMainData] = useState<ClassData[]>([]);
-  const [classArrangementMainData, setClassArrangementMainData] = useState<
-    ClassArrangementData[]
-  >(generateFakeClassArrangementData(50));
   const classes = useSelector((state: RootState) => state.class.allClasses);
   const classOptions = classes?.map(c => c.className) || [];
   const classYears =
     classes?.map(c => {
       return { className: c.className, academicYear: c.academicYear };
     }) || [];
+  
+  // State để quản lý người dùng
+  const [users, setUsers] = useState<any[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState<boolean>(false);
+
   useEffect(() => {
     if (!classes) {
       dispatch(fetchClasses());
     }
   }, [dispatch, classes]);
+  
   useEffect(() => {
     if (!classState.classes) {
       dispatch(fetchClasses());
@@ -64,6 +51,7 @@ function useClassManagementPageHook() {
       setClassMainData(classState?.classes);
     }
   }, [dispatch, classState.classes]);
+  
   useEffect(() => {
     if (filters) {
       dispatch(searchClasses(filters));
@@ -71,6 +59,98 @@ function useClassManagementPageHook() {
       dispatch(fetchClasses());
     }
   }, [filters, dispatch]);
+
+  // Lấy danh sách người dùng từ API
+  const fetchUsers = async (searchTerm = "", role = "") => {
+    setIsLoadingUsers(true);
+    try {
+      // Tạo tham số tìm kiếm
+      const searchParams = new URLSearchParams();
+      if (searchTerm) searchParams.append("search", searchTerm);
+      if (role && role !== "all") searchParams.append("roles", role);
+      
+      // Gọi API để lấy danh sách người dùng
+      const response = await axiosInstance.get(`/users?${searchParams.toString()}`);
+      
+      if (response.data?.success) {
+        // Chuyển đổi dữ liệu để phù hợp với cấu trúc cần thiết
+        const formattedUsers = response.data.data.map((user: any) => ({
+          id: user.userId || user._id,
+          name: user.fullName || `${user.firstName} ${user.lastName}`,
+          role: user.role,
+          gender: user.gender,
+          phone: user.phone || "-",
+          email: user.email || "-"
+        }));
+        
+        setUsers(formattedUsers);
+      } else {
+        console.error("Failed to fetch users:", response.data);
+        setUsers([]);
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      setUsers([]);
+    } finally {
+      setIsLoadingUsers(false);
+    }
+  };
+
+  // Tạo lớp mới
+  const handleCreateClass = async (classInfo: any, selectedUsers: any[]) => {
+    try {
+      // 1. Tạo lớp học mới
+      const classData = {
+        className: classInfo.className,
+        grade: classInfo.grade,
+        homeroomTeacherId: classInfo.homeroomTeacherId,
+        academicYear: classInfo.academicYear
+      };
+      
+      const result = await dispatch(createClass(classData)).unwrap();
+      
+      if (result && result.classId) {
+        // 2. Nếu tạo lớp thành công và có người dùng được chọn, thêm họ vào lớp
+        if (selectedUsers.length > 0) {
+          const classId = result.classId;
+          
+          // Tách danh sách học sinh và giáo viên
+          const students = selectedUsers.filter(user => user.role === "student");
+          const teachers = selectedUsers.filter(user => user.role === "teacher");
+          
+          // Thêm học sinh vào lớp (nếu có)
+          if (students.length > 0) {
+            const studentIds = students.map(student => student.id);
+            await axiosInstance.post(`/classes/${classId}/students`, {
+              studentIds: studentIds
+            });
+          }
+          
+          // Thêm giáo viên vào lớp (nếu có)
+          if (teachers.length > 0) {
+            const teacherIds = teachers.map(teacher => teacher.id);
+            await axiosInstance.post(`/classes/${classId}/teachers`, {
+              teacherIds: teacherIds
+            });
+          }
+        }
+        
+        // 3. Làm mới danh sách lớp học
+        dispatch(fetchClasses());
+        
+        return { success: true, message: "Class created successfully" };
+      } else {
+        return { success: false, message: "Failed to create class" };
+      }
+    } catch (error: any) {
+      console.error("Error creating class:", error);
+      return { 
+        success: false, 
+        message: error.response?.data?.message || "Error creating class" 
+      };
+    }
+  };
+  
   const headCellsData: ClassHeadCell[] = [
     {
       id: "id",
@@ -115,116 +195,26 @@ function useClassManagementPageHook() {
       label: "Created At",
     },
   ];
-  const classArrangementHeadCell: ClassArrangementHeadCellProps[] = [
-    {
-      id: "id",
-      numeric: false,
-      disablePadding: true,
-      label: "ID",
-    },
-    {
-      id: "username",
-      numeric: false,
-      disablePadding: true,
-      label: "User Name",
-    },
-    // {
-    //   id: "avatar",
-    //   numeric: false,
-    //   disablePadding: false,
-    //   label: "Avatar",
-    // },
-    {
-      id: "name",
-      numeric: false,
-      disablePadding: false,
-      label: "name",
-    },
-    {
-      id: "email",
-      numeric: false,
-      disablePadding: false,
-      label: "Email",
-    },
-    {
-      id: "phone",
-      numeric: false,
-      disablePadding: false,
-      label: "Phone",
-    },
-  ];
-  const newSemesterHeadCell: ClassArrangementHeadCellProps[] = [
-    {
-      id: "id",
-      numeric: false,
-      disablePadding: true,
-      label: "ID",
-    },
-    // {
-    //   id: "avatar",
-    //   numeric: false,
-    //   disablePadding: false,
-    //   label: "Avatar",
-    // },
-    {
-      id: "username",
-      numeric: false,
-      disablePadding: true,
-      label: "User Name",
-    },
-    {
-      id: "name",
-      numeric: false,
-      disablePadding: false,
-      label: "name",
-    },
-    {
-      id: "email",
-      numeric: false,
-      disablePadding: false,
-      label: "Email",
-    },
-    {
-      id: "phone",
-      numeric: false,
-      disablePadding: false,
-      label: "Phone",
-    },
-    {
-      id: "grade",
-      numeric: false,
-      disablePadding: false,
-      label: "Grade",
-    },
-    {
-      id: "className",
-      numeric: false,
-      disablePadding: false,
-      label: "Class Name",
-    },
-  ];
+
   const isCheckBox = false;
   const tableTitle = "Class Data";
-  // useEffect(() => {
-  //   if (!userState.user) {
-  //     dispatch(fetchUser());
-  //   } else {
-  //     // setUserMainData(userState?.user);
-  //   }
-  // }, [dispatch, userState.user]);
+
   const state = {
     headCellsData,
     classMainData,
     tableTitle,
     isCheckBox,
-    mode,
-    classArrangementHeadCell,
-    classArrangementMainData,
-    newSemesterHeadCell,
     classOptions,
     classYears,
+    users,
+    isLoadingUsers
   };
-  const handler = { handleModeChange, setFiltersClass };
+  
+  const handler = { 
+    setFiltersClass,
+    fetchUsers,
+    handleCreateClass
+  };
 
   return { state, handler };
 }

@@ -11,6 +11,52 @@ const { searchTeachers } = require('../controllers/teacherSearchController');
 router.get('/search', searchTeachers);
 
 /**
+ * @route   GET /api/teachers/userid-to-teacherid/:userId
+ * @desc    Convert a teacher's userId to teacherId
+ * @access  Public - no authentication required
+ */
+router.get('/userid-to-teacherid/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'UserId is required',
+        code: 'MISSING_USERID'
+      });
+    }
+    
+    // Tìm giáo viên theo userId
+    const Teacher = require('../database/models/Teacher');
+    const teacher = await Teacher.findOne({ userId });
+    
+    if (!teacher) {
+      return res.status(404).json({
+        success: false,
+        message: `Teacher with userId ${userId} not found`,
+        code: 'TEACHER_NOT_FOUND'
+      });
+    }
+    
+    return res.json({
+      success: true,
+      data: {
+        userId: teacher.userId,
+        teacherId: teacher.teacherId,
+        fullName: teacher.fullName
+      }
+    });
+  } catch (error) {
+    console.error('Error converting userId to teacherId:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      code: 'SERVER_ERROR'
+    });
+  }
+});
+
+/**
  * Deprecated Routes - Redirects to User API
  * These routes have been deprecated and will be removed in future versions.
  * Please use the User API instead.

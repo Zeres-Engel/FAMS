@@ -9,11 +9,9 @@ import {
   Radio,
   Button,
   InputAdornment,
-  Select,
-  MenuItem,
   FormHelperText,
 } from "@mui/material";
-import { Controller } from "react-hook-form";
+import { Controller, useWatch } from "react-hook-form";
 import useAddUserFormHook from "./useAddUserFormHook";
 import "./AddUserForm.scss";
 
@@ -25,7 +23,6 @@ const AddUserForm: React.FC = () => {
       register,
       formState: { errors },
       setValue,
-      watch,
     },
     userType,
     handleUserTypeChange,
@@ -35,7 +32,61 @@ const AddUserForm: React.FC = () => {
     setAvatarPreview,
   } = useAddUserFormHook();
 
-  const form = watch();
+  const avatar = useWatch({ control, name: "avatar" });
+  const parentNames = useWatch({ control, name: "parentNames" });
+  const parentPhones = useWatch({ control, name: "parentPhones" });
+  const parentCareers = useWatch({ control, name: "parentCareers" });
+  const parentEmails = useWatch({ control, name: "parentEmails" });
+  const parentGenders = useWatch({ control, name: "parentGenders" });
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert("File size must be less than 5MB");
+        return;
+      }
+      setValue("avatar", file);
+      setAvatarPreview(URL.createObjectURL(file));
+    } else {
+      setValue("avatar", null);
+      setAvatarPreview(null);
+    }
+  };
+
+  const handleParentStringFieldChange = (
+    fieldName:
+      | "parentNames"
+      | "parentPhones"
+      | "parentCareers"
+      | "parentEmails",
+    index: number,
+    value: string
+  ) => {
+    let updatedArray: string[] = [];
+    switch (fieldName) {
+      case "parentNames":
+        updatedArray = [...(parentNames || [])];
+        break;
+      case "parentPhones":
+        updatedArray = [...(parentPhones || [])];
+        break;
+      case "parentCareers":
+        updatedArray = [...(parentCareers || [])];
+        break;
+      case "parentEmails":
+        updatedArray = [...(parentEmails || [])];
+        break;
+    }
+    updatedArray[index] = value;
+    setValue(fieldName, updatedArray);
+  };
+
+  const handleParentGenderChange = (index: number, value: boolean) => {
+    const updatedGenders = [...(parentGenders || [])];
+    updatedGenders[index] = value;
+    setValue("parentGenders", updatedGenders);
+  };
 
   return (
     <Box
@@ -60,7 +111,7 @@ const AddUserForm: React.FC = () => {
         ))}
       </Box>
 
-      {/* Name, Phone, Gender, DOB */}
+      {/* Basic Information */}
       <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
         <TextField
           label="First Name"
@@ -74,43 +125,49 @@ const AddUserForm: React.FC = () => {
           error={!!errors.lastName}
           helperText={errors.lastName?.message}
         />
-        {userType === "teacher" && (
+        {userType === "teacher" ? (
           <TextField
             label="Email"
-            {...register("email", { 
-              required: true,
-              pattern: { 
-                value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 
-                message: "Invalid email format" 
-              } 
+            {...register("email", {
+              required: "Required",
+              pattern: {
+                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: "Invalid email format",
+              },
             })}
             error={!!errors.email}
             helperText={errors.email?.message}
           />
-        )}
-        {userType === "student" && (
+        ) : (
           <TextField
             label="Backup Email"
-            {...register("backup_email", { 
-              pattern: { 
-                value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, 
-                message: "Invalid email format" 
-              } 
+            {...register("backup_email", {
+              pattern: {
+                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                message: "Invalid email format",
+              },
             })}
             error={!!errors.backup_email}
-            helperText={errors.backup_email?.message || "Optional backup email for student"}
+            helperText={errors.backup_email?.message || "Optional backup email"}
           />
         )}
         <TextField
           label="Phone"
           {...register("phone", {
             required: "Required",
-            pattern: { value: /^[0-9]+$/, message: "Numbers only" },
+            pattern: {
+              value: /^[0-9]{9,11}$/,
+              message: "Phone must be 9-11 digits",
+            },
           })}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">+84</InputAdornment>
             ),
+            inputProps: { maxLength: 11 },
+          }}
+          onInput={(e: React.ChangeEvent<HTMLInputElement>) => {
+            e.target.value = e.target.value.replace(/[^0-9]/g, "").slice(0, 11);
           }}
           error={!!errors.phone}
           helperText={errors.phone?.message}
@@ -156,6 +213,7 @@ const AddUserForm: React.FC = () => {
         helperText={errors.address?.message}
         fullWidth
       />
+
       {/* Avatar Upload */}
       <FormControl>
         <FormLabel>Upload Avatar</FormLabel>
@@ -165,20 +223,7 @@ const AddUserForm: React.FC = () => {
             type="file"
             accept="image/*"
             hidden
-            onChange={e => {
-              const file = e.target.files?.[0] || null;
-              // Check file size - max 5MB
-              if (file && file.size > 5 * 1024 * 1024) {
-                alert("File size must be less than 5MB");
-                return;
-              }
-              setValue("avatar", file);
-              if (file) {
-                setAvatarPreview(URL.createObjectURL(file));
-              } else {
-                setAvatarPreview(null);
-              }
-            }}
+            onChange={handleAvatarChange}
           />
         </Button>
         {avatarPreview && (
@@ -190,10 +235,9 @@ const AddUserForm: React.FC = () => {
             />
           </Box>
         )}
-        {form.avatar && (
-          <FormHelperText>Selected: {form.avatar.name}</FormHelperText>
-        )}
+        {avatar && <FormHelperText>Selected: {avatar.name}</FormHelperText>}
       </FormControl>
+
       {/* Teacher fields */}
       {userType === "teacher" && (
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
@@ -224,60 +268,89 @@ const AddUserForm: React.FC = () => {
           <FormLabel className="add-user-form__section-title">
             Parent Section
           </FormLabel>
-
           {[0, 1].map(index => (
             <Box key={index} sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
               <TextField
                 label={`Parent Name ${index + 1}`}
-                value={form.parentNames[index]}
-                onChange={e => {
-                  const copy = [...form.parentNames];
-                  copy[index] = e.target.value;
-                  setValue("parentNames", copy);
-                }}
+                value={parentNames?.[index] || ""}
+                onChange={e =>
+                  handleParentStringFieldChange(
+                    "parentNames",
+                    index,
+                    e.target.value
+                  )
+                }
               />
               <TextField
                 label={`Parent Phone ${index + 1}`}
-                value={form.parentPhones[index]}
+                value={parentPhones?.[index] || ""}
                 onChange={e => {
-                  const copy = [...form.parentPhones];
-                  copy[index] = e.target.value.replace(/[^0-9]/g, "");
-                  setValue("parentPhones", copy);
+                  const cleanValue = e.target.value
+                    .replace(/[^0-9]/g, "")
+                    .slice(0, 11);
+                  handleParentStringFieldChange(
+                    "parentPhones",
+                    index,
+                    cleanValue
+                  );
                 }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">+84</InputAdornment>
                   ),
+                  inputProps: { maxLength: 11 },
                 }}
+                error={
+                  !!parentPhones?.[index] &&
+                  !/^\d{9,11}$/.test(parentPhones[index] || "")
+                }
+                helperText={
+                  parentPhones?.[index] &&
+                  !/^\d{9,11}$/.test(parentPhones[index] || "")
+                    ? "Phone must be 9-11 digits"
+                    : "Optional"
+                }
               />
               <TextField
                 label={`Parent Career ${index + 1}`}
-                value={form.parentCareers[index]}
-                onChange={e => {
-                  const copy = [...form.parentCareers];
-                  copy[index] = e.target.value;
-                  setValue("parentCareers", copy);
-                }}
+                value={parentCareers?.[index] || ""}
+                onChange={e =>
+                  handleParentStringFieldChange(
+                    "parentCareers",
+                    index,
+                    e.target.value
+                  )
+                }
               />
               <TextField
                 label={`Parent Email ${index + 1}`}
-                value={form.parentEmails[index]}
-                onChange={e => {
-                  const copy = [...form.parentEmails];
-                  copy[index] = e.target.value;
-                  setValue("parentEmails", copy);
-                }}
+                value={parentEmails?.[index] || ""}
+                onChange={e =>
+                  handleParentStringFieldChange(
+                    "parentEmails",
+                    index,
+                    e.target.value
+                  )
+                }
+                error={
+                  !!parentEmails?.[index] &&
+                  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmails[index] || "")
+                }
+                helperText={
+                  parentEmails?.[index] &&
+                  !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmails[index] || "")
+                    ? "Invalid email format"
+                    : "Optional"
+                }
               />
               <FormControl>
                 <FormLabel>{`Parent ${index + 1} Gender`}</FormLabel>
                 <RadioGroup
                   row
-                  value={form.parentGenders[index] ? "Male" : "Female"}
-                  onChange={e => {
-                    const copy = [...form.parentGenders];
-                    copy[index] = e.target.value === "Male";
-                    setValue("parentGenders", copy);
-                  }}
+                  value={parentGenders?.[index] ? "Male" : "Female"}
+                  onChange={e =>
+                    handleParentGenderChange(index, e.target.value === "Male")
+                  }
                 >
                   <FormControlLabel
                     value="Male"
@@ -296,6 +369,7 @@ const AddUserForm: React.FC = () => {
         </>
       )}
 
+      {/* Submit */}
       <Box display="flex" justifyContent="center">
         <Button
           type="submit"

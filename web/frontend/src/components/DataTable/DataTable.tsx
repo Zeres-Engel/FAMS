@@ -56,6 +56,7 @@ import {
 import EditAttendanceForm from "./EditAttendanceForm/EditAttendanceForm";
 import CreateNotifyForm from "./CreateNotifyForm/CreateNotifyForm";
 import ShowNotify from "./ShowNotify/ShowNotify";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 
 // Thêm interface cho pagination
 interface PaginationProps {
@@ -88,10 +89,13 @@ interface DataTableProps {
   isAdmin?: boolean;
   isClassManagement?: boolean;
   isAttendance?: boolean;
-  isUserManagement?: boolean;  setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
+  isUserManagement?: boolean;
+  setFiltersUser?: React.Dispatch<React.SetStateAction<SearchFilters>>;
   setFiltersClass?: React.Dispatch<React.SetStateAction<SearchClassFilters>>;
   setFiltersClassPage?: React.Dispatch<React.SetStateAction<number>>;
-  setFiltersAttendancePage?: React.Dispatch<React.SetStateAction<AttendanceSearchParam>>;
+  setFiltersAttendancePage?: React.Dispatch<
+    React.SetStateAction<AttendanceSearchParam>
+  >;
   isRoleTeacher?: boolean;
   isClassArrangement?: boolean;
   isNewSemester?: boolean;
@@ -101,7 +105,7 @@ interface DataTableProps {
   isNotifyRole?: string;
   isRFIDPage?: boolean;
   classOptions?: string[];
-  classOptionsData?: Array<{className: string, id: string}>;
+  classOptionsData?: Array<{ className: string; id: string }>;
   className?: string;
   onClassChange?: (className: string) => void;
   pagination?: {
@@ -116,9 +120,12 @@ interface DataTableProps {
   classPageList?: ClassPageList[];
   subjectList?: SubjectList[];
   availableAcademicYears?: string[];
+  onShowMyAttendance?: () => void;
   onAcademicYearChange?: (year: string) => void;
-  classYears?: Array<{className: string, academicYear: string}>;
-  isRoleParent?:boolean;
+  classYears?: Array<{ className: string; academicYear: string }>;
+  isRoleParent?: boolean;
+  importUsersButton?: React.ReactNode;
+  createButtonAction?: () => void;
 }
 
 export default function DataTable({
@@ -147,6 +154,7 @@ export default function DataTable({
   pagination,
   onPageChange,
   onRowsPerPageChange,
+  onShowMyAttendance,
   isClassPage,
   classPageList,
   setFiltersClassPage,
@@ -155,7 +163,9 @@ export default function DataTable({
   setFiltersAttendancePage,
   subjectList,
   classYears,
-  isRoleParent
+  isRoleParent,
+  importUsersButton,
+  createButtonAction,
 }: DataTableProps) {
   const { state, handler } = useDataTableHook({ tableMainData });
 
@@ -270,7 +280,7 @@ export default function DataTable({
   );
   const renderClassPageCells = (row: any) => (
     <>
-          <TableCell align="left">{row.fullName}</TableCell>
+      <TableCell align="left">{row.fullName}</TableCell>
       <TableCell align="left">
         <img
           src={
@@ -389,7 +399,9 @@ export default function DataTable({
     }
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     if (onRowsPerPageChange) {
       onRowsPerPageChange(parseInt(event.target.value, 10));
     }
@@ -410,7 +422,9 @@ export default function DataTable({
         className="dataTable-Table"
       >
         <TableToolBar
-          classYears ={classYears}
+          isClassPage={isClassPage}
+          onShowMyAttendance={onShowMyAttendance}
+          classYears={classYears}
           isUserManagement={isUserManagement}
           numSelected={state.selected.length}
           tableTitle={tableTitle}
@@ -437,6 +451,7 @@ export default function DataTable({
           subjectList={subjectList}
           onAcademicYearChange={onAcademicYearChange}
           setFiltersAttendancePage={setFiltersAttendancePage}
+          createButtonAction={createButtonAction}
         />
         <TableContainer>
           <Table sx={{ minWidth: 850 }} aria-labelledby="tableTitle">
@@ -535,19 +550,24 @@ export default function DataTable({
             </FormControl>
           )}
 
-          {isAdmin && isClassManagement && (
+          {/* Display import users button if provided and if we're in user management */}
+          {isUserManagement && importUsersButton && importUsersButton}
+
+          {isAdmin && isClassManagement && createButtonAction && (
             <Button
               variant="contained"
               color="primary"
-              onClick={() => handler.handlerClassDistribution()}
+              onClick={createButtonAction}
             >
-              class distribution
+              CREATE CLASS
             </Button>
           )}
-          {isAdmin && !isAttendance && (
+
+          {isAdmin && !isAttendance && !isClassManagement && (
             <Button
               variant="contained"
               color="primary"
+              startIcon={isUserManagement ? <PersonAddIcon /> : undefined}
               onClick={() => {
                 if (isClassArrangement) {
                   handler.handleSubmitClassArrangement(isClassArrangement);
@@ -583,7 +603,7 @@ export default function DataTable({
         )}
 
         {/* Pagination */}
-        {pagination && (
+        {pagination && isUserManagement && (
           <TablePagination
             rowsPerPageOptions={[]}
             component="div"
@@ -594,6 +614,24 @@ export default function DataTable({
             labelDisplayedRows={({ from, to, count }) => {
               const totalPages = Math.ceil(count / 5);
               return `${from}–${to} of ${count} (Page ${pagination.page} of ${totalPages})`;
+            }}
+          />
+        )}
+        {!isUserManagement && (
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={state.rows.length}
+            rowsPerPage={state.rowsPerPage}
+            page={state.page}
+            onPageChange={handler.handleChangePage}
+            onRowsPerPageChange={handler.handleChangeRowsPerPage}
+            labelRowsPerPage="Rows per page:"
+            SelectProps={{
+              sx: {
+                minWidth: "64px",
+                paddingRight: "15px",
+              },
             }}
           />
         )}

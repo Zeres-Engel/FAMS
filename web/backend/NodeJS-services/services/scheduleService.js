@@ -634,7 +634,7 @@ const formatScheduleData = async (schedules, format = 'daily') => {
         // Add classroom info
         const classroom = classroomMap.get(normalizedSchedule.classroomId);
         if (classroom) {
-          normalizedSchedule.classroomNumber = classroom.roomNumber;
+          normalizedSchedule.classroomNumber = classroom.roomName;
         } else {
           normalizedSchedule.classroomNumber = `Phòng ${normalizedSchedule.classroomId}`;
         }

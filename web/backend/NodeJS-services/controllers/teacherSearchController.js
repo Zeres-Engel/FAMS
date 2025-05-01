@@ -128,7 +128,7 @@ exports.searchTeachers = async (req, res) => {
     const total = await UserAccount.countDocuments(userQuery);
     
     // Get teacher details from Teacher collection
-    const teachers = await Teacher.find(teacherQuery, 'userId fullName');
+    const teachers = await Teacher.find(teacherQuery, 'userId fullName teacherId');
     
     // Filter out extra results if we have teachers matching the prefix
     // This ensures we only get results that EITHER have userId OR fullName starting with search
@@ -144,20 +144,46 @@ exports.searchTeachers = async (req, res) => {
       filteredTeachers = teachers;
     }
     
-    // Create a mapping of userId to fullName
+    // Create a mapping of userId to fullName and teacherId
     const teacherMap = {};
     filteredTeachers.forEach(teacher => {
-      teacherMap[teacher.userId] = teacher.fullName || '';
+      teacherMap[teacher.userId] = {
+        fullName: teacher.fullName || '',
+        teacherId: teacher.teacherId
+      };
     });
     
-    // Format teacher data to return userId and fullName
+    // Format teacher data to return userId, fullName and teacherId
     // Only include those in the filtered results
     const formattedTeachers = userAccounts
       .filter(user => teacherMap[user.userId] || prefixSearch?.test(user.userId))
       .map(user => ({
         userId: user.userId,
-        fullName: teacherMap[user.userId] || ''
+        fullName: teacherMap[user.userId]?.fullName || '',
+        teacherId: teacherMap[user.userId]?.teacherId || null
       }));
+    
+    // Đảm bảo rằng tất cả đều có teacherId
+    const teacherPromises = [];
+    for (let i = 0; i < formattedTeachers.length; i++) {
+      const teacher = formattedTeachers[i];
+      if (!teacher.teacherId) {
+        teacherPromises.push(
+          Teacher.findOne({ userId: teacher.userId })
+            .then(foundTeacher => {
+              if (foundTeacher) {
+                teacher.teacherId = foundTeacher.teacherId;
+              }
+              return teacher;
+            })
+        );
+      }
+    }
+    
+    // Chờ tất cả các promise hoàn thành
+    if (teacherPromises.length > 0) {
+      await Promise.all(teacherPromises);
+    }
     
     // For autocomplete, return a more compact response without pagination details
     if (search && !page) {

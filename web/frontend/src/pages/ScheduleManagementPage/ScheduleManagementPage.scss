@@ -1,8 +1,11 @@
+@import './button-styles.scss';
+
 .schedulePage-Container{
     display: flex;
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
+    overflow: hidden;
     & .rbc-event {
         white-space: nowrap;
         overflow: hidden;
@@ -272,21 +275,51 @@ button[type="submit"].MuiButton-contained {
 /* Chỉnh sửa hiển thị trong chế độ month */
 .rbc-month-view {
   .rbc-event {
-    padding: 3px 4px !important;
+    padding: 2px 3px !important;
+    max-height: 50px;
+    overflow: hidden;
+    margin-bottom: 1px;
   }
 
   .custom-event {
     .event-title {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     
     .event-details {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
+      max-width: 100%;
       div:first-child {
         display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       div:nth-child(2) {
         display: none;
+      }
+    }
+  }
+}
+
+/* Tối ưu kích thước trong chế độ tháng */
+@media (max-width: 768px) {
+  .rbc-month-view {
+    .rbc-event {
+      padding: 1px 2px !important;
+    }
+    
+    .custom-event {
+      .event-title {
+        font-size: 0.75rem;
+      }
+      
+      .event-details {
+        font-size: 0.68rem;
       }
     }
   }
@@ -380,4 +413,263 @@ button[type="submit"].MuiButton-contained {
 /* Hiệu ứng khi hover vào header */
 .rbc-header:hover {
   background-color: #f5f5f5;
+}
+
+/* Fix for double scrollbars */
+.rbc-calendar, .rbc-time-view {
+  overflow: visible !important;
+}
+
+.rbc-time-content {
+  overflow-y: scroll !important;
+  overflow-x: hidden !important;
+}
+
+body .MuiContainer-root {
+  overflow: hidden;
+}
+
+/* Custom search button style */
+.compact-search-button {
+  height: auto !important;
+  padding: 8px 16px !important; /* px: 2, py: 1 in MUI equals to 8px 16px */
+  min-width: 100px !important;
+  border-radius: 4px !important;
+  font-size: 0.875rem !important;
+  text-transform: none !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+/* Xử lý scroll cho phần more events */
+.rbc-show-more {
+  background-color: rgba(49, 116, 173, 0.1);
+  z-index: 4;
+  font-weight: 500;
+  font-size: 0.85em;
+  height: auto;
+  line-height: 1.2;
+  color: #3174ad;
+  max-height: 50px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  white-space: normal;
+  word-wrap: break-word;
+  padding: 2px 5px;
+  border-radius: 4px;
+  margin-top: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  
+  &:hover {
+    background-color: rgba(49, 116, 173, 0.2);
+    color: #1a5a9e;
+  }
+}
+
+/* Đảm bảo vùng chứa các sự kiện có thể cuộn được */
+.rbc-month-row, .rbc-month-view {
+  .rbc-row-content {
+    z-index: 3;
+    
+    .rbc-row {
+      overflow: visible;
+    }
+  }
+}
+
+/* Khi di chuột vào ô chứa ngày, đảm bảo hiển thị đầy đủ các sự kiện */
+.rbc-day-bg:hover {
+  .rbc-show-more {
+    visibility: visible !important;
+    display: block !important;
+  }
+}
+
+/* Pop-up khi hiện các sự kiện nhiều */
+.rbc-overlay {
+  max-height: 60vh;
+  max-width: 350px;
+  width: 90vw;
+  overflow-y: auto;
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  z-index: 1000 !important;
+  left: 50% !important;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+}
+
+.rbc-overlay-header {
+  font-weight: bold;
+  font-size: 1.1em;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #eee;
+  position: sticky;
+  top: 0;
+  background-color: white;
+  z-index: 10;
+}
+
+.rbc-agenda-view table.rbc-agenda-table {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Sự kiện trong overlay */
+.rbc-overlay > * {
+  margin-bottom: 5px;
+}
+
+.rbc-overlay .rbc-event {
+  position: relative; 
+  min-height: auto;
+  padding: 8px 10px !important;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.2s;
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* Xử lý khi có quá nhiều sự kiện trong một ô */
+.rbc-row-segment {
+  max-height: 100%;
+  overflow-y: visible;
+  
+  .rbc-event-content {
+    width: 100%;
+    overflow: hidden;
+  }
+}
+
+/* Cải thiện hiển thị trong ô ngày của tháng */
+.rbc-row-content {
+  .rbc-row-segment {
+    padding: 0 1px;
+    box-sizing: border-box;
+    
+    .rbc-event-content {
+      min-width: 0;
+    }
+  }
+}
+
+/* Tối ưu cho +more trong cột ngày */
+.rbc-date-cell {
+  padding-right: 2px;
+  
+  & > a {
+    margin-right: 5px;
+  }
+}
+
+/* Hạn chế chiều cao của ô ngày */
+.rbc-month-row {
+  overflow: visible;
+  max-height: 150px;
+  min-height: 100px;
+}
+
+/* Cải thiện nút more */
+.rbc-row-segment .rbc-show-more {
+  font-size: 0.78em;
+  padding: 1px 3px;
+  margin: 0;
+  text-align: left;
+  max-height: 35px;
+  background-color: transparent;
+  color: #2196f3;
+  
+  &:hover {
+    text-decoration: underline;
+    background-color: rgba(33, 150, 243, 0.1);
+  }
+}
+
+/* Giới hạn số lượng sự kiện hiển thị trong một ô */
+.rbc-month-view .rbc-month-row {
+  .rbc-row-segment {
+    max-height: 110px;
+    overflow-y: hidden;
+  }
+}
+
+/* Điều chỉnh màu sắc và kích thước văn bản more để dễ thấy */
+a.rbc-show-more {
+  font-weight: bold !important;
+  color: #1976d2 !important;
+  background-color: transparent !important;
+}
+
+/* Sửa lỗi khoảng cách trống ở trên */
+.rbc-month-view {
+  overflow: hidden;
+  position: relative;
+  margin-top: 0;
+  border-top: 1px solid #DDD;
+}
+
+.rbc-month-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: white;
+}
+
+/* Sửa lỗi sự kiện bị sổ ra ngoài */
+.rbc-event-content {
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Đảm bảo popup hiển thị trên cùng */
+.rbc-overlay {
+  position: fixed !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 1500 !important;
+}
+
+/* Điều chỉnh vị trí cho sự kiện hiển thị bị lỗi */
+.rbc-date-cell {
+  position: relative;
+  z-index: 1;
+}
+
+.rbc-row-content {
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+  
+  & > * {
+    pointer-events: auto;
+  }
+}
+
+/* Sửa lỗi hiển thị title ngày trong tuần */
+.rbc-header {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 8px 3px !important;
+}
+
+/* Chỉnh lại padding của sự kiện */
+.rbc-event {
+  border: none;
+  padding: 1px 2px !important;
 }

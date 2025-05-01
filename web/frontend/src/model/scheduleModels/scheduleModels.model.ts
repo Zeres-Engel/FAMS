@@ -8,10 +8,15 @@ interface ScheduleEvent {
     classroomId?:number;
     subjectId?:number;
     teacher: string;
+    teacherId?: number;
     classId?: string;
     scheduleDate?: Date;
     slotId?: string | number;
     academicYear?: string;
+    semesterId?: number;
+    semesterNumber?: number;
+    customStartTime?: string;
+    customEndTime?: string;
 }
 export type{
     ScheduleEvent

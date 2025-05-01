@@ -75,6 +75,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/avatars', express.static(path.join(__dirname, 'public/avatars')));
 // Cấu hình đường dẫn cho faces 
 app.use('/faces', express.static(path.join(__dirname, 'public/faces')));
+app.use('/api-nodejs/faces', express.static(path.join(__dirname, 'public/faces')));
+app.use('/api/faces', express.static(path.join(__dirname, 'public/faces')));
 
 // Test route để kiểm tra kết nối
 app.get('/api/test', (req, res) => {

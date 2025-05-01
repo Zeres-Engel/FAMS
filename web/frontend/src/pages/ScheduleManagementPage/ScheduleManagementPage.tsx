@@ -59,6 +59,21 @@ const calendarComponents: Components<ScheduleEvent, object> = {
   },
 };
 
+// Cập nhật phần Slot 1-11 để đặt thời gian theo định dạng 24h
+const slotConfig = [
+  { slotNumber: 1, startTime: "07:00", endTime: "07:50" },
+  { slotNumber: 2, startTime: "07:50", endTime: "08:35" },
+  { slotNumber: 3, startTime: "08:50", endTime: "09:35" },
+  { slotNumber: 4, startTime: "09:40", endTime: "10:25" },
+  { slotNumber: 5, startTime: "10:30", endTime: "11:15" },
+  { slotNumber: 6, startTime: "13:00", endTime: "13:50" },
+  { slotNumber: 7, startTime: "13:50", endTime: "14:35" },
+  { slotNumber: 8, startTime: "14:40", endTime: "15:25" },
+  { slotNumber: 9, startTime: "15:30", endTime: "16:15" },
+  { slotNumber: 10, startTime: "16:20", endTime: "17:05" },
+  { slotNumber: 11, startTime: "", endTime: "", isExtra: true },
+];
+
 const ScheduleManagementPage: React.FC = () => {
   const { state, handler } = useScheduleManagementPageHook();
 
@@ -100,6 +115,14 @@ const ScheduleManagementPage: React.FC = () => {
 
   // Get access to all classes for filtering
   const { allClasses } = state;
+
+  // Add state for slot information near other states
+  const [slotInfo, setSlotInfo] = useState<{
+    dayOfWeek: string;
+    startTime: string;
+    endTime: string;
+    isExtraSlot: boolean;
+  } | null>(null);
 
   // Load Material Icons and fetch teachers directly
   useEffect(() => {
@@ -211,11 +234,31 @@ const ScheduleManagementPage: React.FC = () => {
     };
   };
 
+  // Thêm useEffect để cập nhật Day of Week khi component mount hoặc khi openCreateDialog thay đổi
+  useEffect(() => {
+    if (openCreateDialog) {
+      // Ngày mặc định là ngày hiện tại
+      const selectedDate = newEvent.scheduleDate || new Date();
+      
+      // Xác định thứ trong tuần từ ngày đã chọn
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const dayOfWeek = days[selectedDate.getDay()];
+      
+      // Khởi tạo slotInfo ngay từ đầu
+      setSlotInfo({
+        dayOfWeek: dayOfWeek,
+        startTime: newEvent.slotId ? (slotConfig.find(s => s.slotNumber === Number(newEvent.slotId))?.startTime || "") : "",
+        endTime: newEvent.slotId ? (slotConfig.find(s => s.slotNumber === Number(newEvent.slotId))?.endTime || "") : "",
+        isExtraSlot: newEvent.slotId === "11"
+      });
+    }
+  }, [openCreateDialog, newEvent.scheduleDate]);
+
   return (
     <LayoutComponent
       pageHeader={role === "admin" ? "Schedule Management" : "Schedule Page"}
     >
-      <Container maxWidth="xl" style={{ padding: "16px" }}>
+      <Container maxWidth="xl" style={{ padding: "0", overflow: "hidden" }}>
         <Box className={state?.eventShow?.id !== 0 ? "schedule-Display" : ""}>
           <Paper elevation={3} sx={{ padding: "16px" }}>
             {(role === "admin" || role === "supervisor") && (
@@ -273,12 +316,14 @@ const ScheduleManagementPage: React.FC = () => {
                   >
                     <Autocomplete
                       disablePortal
-                      options={state.classOptions}
+                      options={[{ label: "All classes", value: "" }, ...state.classOptions]}
                       getOptionLabel={option => option.label}
                       value={
-                        state.classOptions.find(
-                          opt => opt.value === state.filters.class
-                        ) || null
+                        state.filters.class === "" 
+                          ? { label: "All classes", value: "" } 
+                          : state.classOptions.find(
+                            opt => opt.value === state.filters.class
+                          ) || null
                       }
                       onChange={(event, newValue) =>
                         handler.setFilters({
@@ -326,6 +371,18 @@ const ScheduleManagementPage: React.FC = () => {
                       </Select>
                     </FormControl>
                   </Box>
+
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handler.handleSearch}
+                      className="compact-search-button"
+                      size="small"
+                    >
+                      Search
+                    </Button>
+                  </Box>
                 </Box>
 
                 {role === "admin" && (
@@ -333,7 +390,41 @@ const ScheduleManagementPage: React.FC = () => {
                     <Button
                       variant="contained"
                       color="primary"
-                      onClick={() => setOpenCreateDialog(true)}
+                      onClick={() => {
+                        // Khởi tạo ngày mặc định là ngày hiện tại
+                        const today = new Date();
+                        
+                        // Reset form và thiết lập ngày mặc định
+                        setNewEvent({
+                          id: 0,
+                          subject: "",
+                          subjectId: 0,
+                          title: "",
+                          start: today,
+                          end: today,
+                          teacher: "",
+                          classroomNumber: "",
+                          classId: "",
+                          scheduleDate: today,
+                          slotId: "",
+                          academicYear: "",
+                        });
+                        
+                        // Xác định thứ trong tuần
+                        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                        const dayOfWeek = days[today.getDay()];
+                        
+                        // Đặt slotInfo với thứ đã xác định
+                        setSlotInfo({
+                          dayOfWeek: dayOfWeek,
+                          startTime: "",
+                          endTime: "",
+                          isExtraSlot: false
+                        });
+                        
+                        // Mở dialog
+                        setOpenCreateDialog(true);
+                      }}
                       startIcon={<span className="material-icons">add</span>}
                       sx={{
                         borderRadius: "8px",
@@ -406,12 +497,14 @@ const ScheduleManagementPage: React.FC = () => {
                 >
                   <Autocomplete
                     disablePortal
-                    options={state.classOptions}
+                    options={[{ label: "All classes", value: "" }, ...state.classOptions]}
                     getOptionLabel={option => option.label}
                     value={
-                      state.classOptions.find(
-                        opt => opt.value === state.filters.class
-                      ) || null
+                      state.filters.class === "" 
+                        ? { label: "All classes", value: "" } 
+                        : state.classOptions.find(
+                          opt => opt.value === state.filters.class
+                        ) || null
                     }
                     onChange={(event, newValue) =>
                       handler.setFilters({
@@ -437,6 +530,39 @@ const ScheduleManagementPage: React.FC = () => {
                   alignItems: "center",
                 }}
               >
+                <Box
+                  sx={{
+                    flex: isMobile ? "1 1 100%" : "auto",
+                    minWidth: "180px",
+                  }}
+                >
+                  <Autocomplete
+                    disablePortal
+                    options={state.studentOptions} // bạn cần chuẩn bị mảng này
+                    getOptionLabel={option => option.label}
+                    value={
+                      state.studentOptions.find(
+                        opt => opt.value === state.filters.studentId
+                      ) || null
+                    }
+                    onChange={(event, newValue) => {
+                      handler.setFilters({
+                        ...state.filters,
+                        studentId: newValue?.value || "",
+                      });
+                      if (newValue?.value === "hungdnst2") {
+                        handler.setFilters({
+                          ...state.filters,
+                          class: "17",
+                        });
+                      }
+                    }}
+                    renderInput={params => (
+                      <TextField {...params} label="Student ID" />
+                    )}
+                    fullWidth
+                  />
+                </Box>
                 <Box
                   sx={{
                     flex: isMobile ? "1 1 100%" : "auto",
@@ -473,12 +599,14 @@ const ScheduleManagementPage: React.FC = () => {
                 >
                   <Autocomplete
                     disablePortal
-                    options={state.classOptions}
+                    options={[{ label: "All classes", value: "" }, ...state.classOptions]}
                     getOptionLabel={option => option.label}
                     value={
-                      state.classOptions.find(
-                        opt => opt.value === state.filters.class
-                      ) || null
+                      state.filters.class === "" 
+                        ? { label: "All classes", value: "" } 
+                        : state.classOptions.find(
+                          opt => opt.value === state.filters.class
+                        ) || null
                     }
                     onChange={(event, newValue) =>
                       handler.setFilters({
@@ -491,6 +619,18 @@ const ScheduleManagementPage: React.FC = () => {
                     )}
                     fullWidth
                   />
+                </Box>
+
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handler.handleSearch}
+                    className="compact-search-button"
+                    size="small"
+                  >
+                    Search
+                  </Button>
                 </Box>
               </Box>
             )}
@@ -540,12 +680,14 @@ const ScheduleManagementPage: React.FC = () => {
                 >
                   <Autocomplete
                     disablePortal
-                    options={state.classOptions}
+                    options={[{ label: "All classes", value: "" }, ...state.classOptions]}
                     getOptionLabel={option => option.label}
                     value={
-                      state.classOptions.find(
-                        opt => opt.value === state.filters.class
-                      ) || null
+                      state.filters.class === "" 
+                        ? { label: "All classes", value: "" } 
+                        : state.classOptions.find(
+                          opt => opt.value === state.filters.class
+                        ) || null
                     }
                     onChange={(event, newValue) =>
                       handler.setFilters({
@@ -594,19 +736,37 @@ const ScheduleManagementPage: React.FC = () => {
                   </FormControl>
                 </Box>
 
-                <Button
-                  variant="outlined"
-                  onClick={handler.handleShowTeacherSchedule}
-                  startIcon={<span className="material-icons">person</span>}
+                <Box
                   sx={{
-                    height: "56px",
-                    borderRadius: "8px",
-                    textTransform: "none",
-                    fontWeight: 500,
+                    flex: isMobile ? "1 1 100%" : "auto",
+                    minWidth: "180px",
                   }}
                 >
-                  My Schedule
-                </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={handler.handleShowTeacherSchedule}
+                    startIcon={<span className="material-icons">person</span>}
+                    sx={{
+                      height: "56px",
+                      borderRadius: "8px",
+                      textTransform: "none",
+                      fontWeight: 500,
+                    }}
+                  >
+                    My Schedule
+                  </Button>
+                  
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handler.handleSearch}
+                    className="compact-search-button"
+                    size="small"
+                    sx={{ ml: 1 }}
+                  >
+                    Search
+                  </Button>
+                </Box>
               </Box>
             )}
             <FormControl size="small" sx={{ minWidth: 100, mr: 2, mb: 1 }}>
@@ -637,7 +797,6 @@ const ScheduleManagementPage: React.FC = () => {
                 mt: 2,
                 height: "calc(100vh - 150px)",
                 minHeight: "900px",
-                overflowY: "auto",
               }}
             >
               <Calendar
@@ -650,7 +809,7 @@ const ScheduleManagementPage: React.FC = () => {
                 min={new Date(0, 0, 0, 7, 0)} // 7:00 AM
                 max={new Date(0, 0, 0, 19, 0)} // 7:00 PM
                 views={["month", "week", "day"]}
-                style={{ height: "100%", width: "100%" }}
+                style={{ height: "100%", width: "100%", overflow: "visible" }}
                 onSelectEvent={handler.handleSelectEvent}
                 onView={handler.handleSetView}
                 onNavigate={handler.handleSetDate}
@@ -826,7 +985,7 @@ const ScheduleManagementPage: React.FC = () => {
                     {moment(state.eventShow?.end).format("YYYY-MM-DD HH:mm")}
                   </Typography>
                   <Typography>
-                    <strong>Classroom ID:</strong>{" "}
+                    <strong>Classroom:</strong>{" "}
                     {state.eventShow?.classroomNumber || "N/A"}
                   </Typography>
                   <Typography>
@@ -866,14 +1025,8 @@ const ScheduleManagementPage: React.FC = () => {
                       variant="contained"
                       color="error"
                       onClick={() => {
-                        if (
-                          window.confirm(
-                            `Bạn có chắc chắn muốn xóa lịch học này không?`
-                          )
-                        ) {
-                          handler.deleteEvent(state.eventShow?.id);
-                          handler.handleSelectEvent();
-                        }
+                        handler.deleteEvent(state.eventShow?.id);
+                        handler.handleSelectEvent();
                       }}
                     >
                       Delete
@@ -926,37 +1079,17 @@ const ScheduleManagementPage: React.FC = () => {
                     });
 
                     // Fetch classes for this academic year
-                    fetch(
-                      `http://fams.io.vn/api-nodejs/classes?academicYear=${selectedYear}`,
-                      {
-                        method: "GET",
-                        headers: {
-                          "Content-Type": "application/json",
-                        },
-                      }
-                    )
-                      .then(response => {
-                        if (!response.ok) {
-                          throw new Error(
-                            `HTTP error! Status: ${response.status}`
-                          );
-                        }
-                        return response.json();
-                      })
-                      .then(data => {
-                        if (data.success) {
-                          console.log(
-                            `Loaded ${data.data.length} classes for year ${selectedYear}`
-                          );
-                          // We will filter classes in the component based on this academicYear
-                        }
-                      })
-                      .catch(error => {
-                        console.error(
-                          "Error fetching classes for academic year:",
-                          error
-                        );
-                      });
+                    if (selectedYear) {
+                      // Using the new method to fetch classes by academic year
+                      handler.fetchClassesByAcademicYear(selectedYear)
+                        .then(classes => {
+                          console.log(`Loaded ${classes.length} classes for academic year ${selectedYear}`);
+                          // No need to update state here, we'll filter in the render
+                        })
+                        .catch(error => {
+                          console.error("Error loading classes for academic year:", error);
+                        });
+                    }
                   }}
                 >
                   {state.academicYears.map(year => (
@@ -982,23 +1115,15 @@ const ScheduleManagementPage: React.FC = () => {
                   }
                   disabled={!newEvent.academicYear} // Disable until academic year is selected
                 >
-                  {state.classOptions
-                    .filter(classOption => {
-                      // Only show classes for selected academic year
-                      const classData = allClasses.find(
-                        c => c.classId.toString() === classOption.value
-                      );
-                      return (
-                        classData &&
-                        classData.academicYear === newEvent.academicYear
-                      );
-                    })
-                    .map(classOption => (
+                  {/* Filter the classes based on the selected academic year */}
+                  {allClasses
+                    .filter(classData => classData.academicYear === newEvent.academicYear)
+                    .map(classData => (
                       <MenuItem
-                        key={classOption.value}
-                        value={classOption.value}
+                        key={classData.classId}
+                        value={classData.classId.toString()}
                       >
-                        {classOption.label}
+                        {classData.className}
                       </MenuItem>
                     ))}
                 </Select>
@@ -1092,25 +1217,46 @@ const ScheduleManagementPage: React.FC = () => {
                   ))}
                 </Select>
               </FormControl>
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel id="date-select-label">Date</InputLabel>
-                <TextField
-                  type="date"
-                  fullWidth
-                  value={moment(newEvent.scheduleDate || new Date()).format(
-                    "YYYY-MM-DD"
-                  )}
-                  onChange={e =>
-                    setNewEvent({
-                      ...newEvent,
-                      scheduleDate: new Date(e.target.value),
-                    })
-                  }
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </FormControl>
+              <TextField
+                type="date"
+                label="Date"
+                value={moment(newEvent.scheduleDate || new Date()).format(
+                  "YYYY-MM-DD"
+                )}
+                onChange={e => {
+                  const selectedDate = new Date(e.target.value);
+                  
+                  // Cập nhật ngày cho sự kiện mới
+                  setNewEvent({
+                    ...newEvent,
+                    scheduleDate: selectedDate,
+                  });
+                  
+                  // Xác định thứ trong tuần từ ngày đã chọn - dùng tiếng Anh
+                  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                  const dayOfWeek = days[selectedDate.getDay()];
+                  
+                  // Cập nhật thông tin slot với day of week mới ngay lập tức
+                  setSlotInfo(prevSlotInfo => {
+                    // Cung cấp các giá trị mặc định nếu prevSlotInfo là null
+                    const dayOfWeekValue = dayOfWeek;
+                    const startTime = prevSlotInfo?.startTime || "";
+                    const endTime = prevSlotInfo?.endTime || "";
+                    const isExtraSlot = prevSlotInfo?.isExtraSlot || false;
+                    
+                    // Trả về đối tượng mới với tất cả các trường bắt buộc
+                    return {
+                      dayOfWeek: dayOfWeekValue,
+                      startTime,
+                      endTime,
+                      isExtraSlot
+                    };
+                  });
+                }}
+                fullWidth
+                margin="normal"
+                InputLabelProps={{ shrink: true }}
+              />
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel id="slot-select-label">Slot</InputLabel>
                 <Select
@@ -1118,20 +1264,158 @@ const ScheduleManagementPage: React.FC = () => {
                   id="slot-select"
                   value={newEvent.slotId || ""}
                   label="Slot"
-                  onChange={e =>
+                  onChange={e => {
+                    const selectedSlot = e.target.value;
                     setNewEvent({
                       ...newEvent,
-                      slotId: e.target.value,
-                    })
-                  }
+                      slotId: selectedSlot,
+                    });
+                    
+                    // Kiểm tra xem có phải Slot Extra hay không
+                    const isExtraSlot = Number(selectedSlot) === 11;
+                    
+                    // Get slot info from configuration
+                    const slotDetails = slotConfig.find(slot => slot.slotNumber === Number(selectedSlot));
+                    if (slotDetails) {
+                      // Set slot info
+                      setSlotInfo({
+                        dayOfWeek: slotInfo?.dayOfWeek || "",
+                        startTime: slotDetails.startTime,
+                        endTime: slotDetails.endTime,
+                        isExtraSlot: !!slotDetails.isExtra
+                      });
+                      
+                      // ADD THIS: Update customStartTime and customEndTime for all slots
+                      setNewEvent(prev => ({
+                        ...prev,
+                        customStartTime: slotDetails.startTime,
+                        customEndTime: slotDetails.endTime
+                      }));
+                    }
+                  }}
                 >
-                  {Array.from({ length: 10 }, (_, i) => i + 1).map(slot => (
-                    <MenuItem key={slot} value={slot}>
-                      Slot {slot}
+                  {slotConfig.map(slot => (
+                    <MenuItem key={slot.slotNumber} value={slot.slotNumber}>
+                      {slot.isExtra ? "Slot Extra (Custom)" : `Slot ${slot.slotNumber}`}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
+              {(newEvent.scheduleDate) && (
+                <Box sx={{ mt: 2, mb: 2, p: 2, bgcolor: '#f9f9f9', borderRadius: 1, border: '1px solid #eaeaea' }}>
+                  <TextField
+                    label="Day of Week"
+                    value={slotInfo?.dayOfWeek || ""}
+                    fullWidth
+                    margin="dense"
+                    disabled
+                    InputProps={{
+                      readOnly: true,
+                      sx: { 
+                        backgroundColor: 'white',
+                        '&.Mui-disabled': {
+                          color: '#1976d2',
+                          fontWeight: 500,
+                          opacity: 0.9
+                        }
+                      }
+                    }}
+                    sx={{ mb: 2 }}
+                  />
+                  
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <TextField
+                      label="Start Time"
+                      value={slotInfo?.startTime || ""}
+                      fullWidth
+                      margin="dense"
+                      disabled={!slotInfo?.isExtraSlot}
+                      type={slotInfo?.isExtraSlot ? "time" : "text"}
+                      InputProps={{
+                        readOnly: !slotInfo?.isExtraSlot,
+                        sx: { 
+                          backgroundColor: 'white',
+                          '&.Mui-disabled': {
+                            color: '#1976d2',
+                            fontWeight: 500,
+                            opacity: 0.9
+                          }
+                        }
+                      }}
+                      inputProps={{
+                        step: 300, // 5 minutes step
+                        format: "24h" // Sử dụng định dạng 24h
+                      }}
+                      onChange={(e) => {
+                        if (slotInfo?.isExtraSlot) {
+                          setSlotInfo(prevSlotInfo => {
+                            // Đảm bảo tất cả các trường bắt buộc
+                            return {
+                              dayOfWeek: prevSlotInfo?.dayOfWeek || "",
+                              startTime: e.target.value,
+                              endTime: prevSlotInfo?.endTime || "",
+                              isExtraSlot: prevSlotInfo?.isExtraSlot || false
+                            };
+                          });
+                          
+                          // Cập nhật giờ bắt đầu tùy chỉnh
+                          setNewEvent({
+                            ...newEvent,
+                            customStartTime: e.target.value
+                          });
+                        }
+                      }}
+                    />
+                    <TextField
+                      label="End Time"
+                      value={slotInfo?.endTime || ""}
+                      fullWidth
+                      margin="dense"
+                      disabled={!slotInfo?.isExtraSlot}
+                      type={slotInfo?.isExtraSlot ? "time" : "text"}
+                      InputProps={{
+                        readOnly: !slotInfo?.isExtraSlot,
+                        sx: { 
+                          backgroundColor: 'white',
+                          '&.Mui-disabled': {
+                            color: '#1976d2',
+                            fontWeight: 500,
+                            opacity: 0.9
+                          }
+                        }
+                      }}
+                      inputProps={{
+                        step: 300, // 5 minutes step
+                        format: "24h" // Sử dụng định dạng 24h
+                      }}
+                      onChange={(e) => {
+                        if (slotInfo?.isExtraSlot) {
+                          setSlotInfo(prevSlotInfo => {
+                            // Đảm bảo tất cả các trường bắt buộc
+                            return {
+                              dayOfWeek: prevSlotInfo?.dayOfWeek || "",
+                              startTime: prevSlotInfo?.startTime || "",
+                              endTime: e.target.value,
+                              isExtraSlot: prevSlotInfo?.isExtraSlot || false
+                            };
+                          });
+                          
+                          // Cập nhật giờ kết thúc tùy chỉnh
+                          setNewEvent({
+                            ...newEvent,
+                            customEndTime: e.target.value
+                          });
+                        }
+                      }}
+                    />
+                  </Box>
+                  {slotInfo?.isExtraSlot && (
+                    <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'text.secondary' }}>
+                      Please specify custom start and end times for this extra slot
+                    </Typography>
+                  )}
+                </Box>
+              )}
               <FormControl fullWidth sx={{ mb: 2 }}>
                 <InputLabel id="classroom-select-label">Classroom</InputLabel>
                 <Select
@@ -1178,23 +1462,60 @@ const ScheduleManagementPage: React.FC = () => {
             <DialogActions>
               <Button
                 variant="contained"
-                onClick={() => {
-                  handler.addEvent(newEvent);
-                  setOpenCreateDialog(false);
-                  setNewEvent({
-                    id: 0,
-                    subject: "",
-                    subjectId: 0,
-                    title: "",
-                    start: new Date(),
-                    end: new Date(),
-                    teacher: "",
-                    classroomNumber: "",
-                    classId: "",
-                    scheduleDate: new Date(),
-                    slotId: "",
-                    academicYear: "",
-                  });
+                onClick={async () => {
+                  // For extra slot, ensure we have valid times
+                  if (newEvent.slotId === "11" && (!slotInfo?.startTime || !slotInfo?.endTime)) {
+                    alert("Please specify both start and end times for the extra slot");
+                    return;
+                  }
+                  
+                  // Create a copy of the newEvent with custom times if needed
+                  const eventToAdd = {...newEvent};
+                  if (slotInfo?.isExtraSlot) {
+                    eventToAdd.customStartTime = slotInfo.startTime;
+                    eventToAdd.customEndTime = slotInfo.endTime;
+                  }
+                  
+                  try {
+                    // Sử dụng await để đợi thêm event xong
+                    const createdEvent = await handler.addEvent(eventToAdd);
+                    
+                    if (createdEvent && createdEvent.id) {
+                      // Đóng dialog khi thêm thành công
+                      setOpenCreateDialog(false);
+                      
+                      // Reset form
+                      setNewEvent({
+                        id: 0,
+                        subject: "",
+                        subjectId: 0,
+                        title: "",
+                        start: new Date(),
+                        end: new Date(),
+                        teacher: "",
+                        classroomNumber: "",
+                        classId: "",
+                        scheduleDate: new Date(),
+                        slotId: "",
+                        academicYear: "",
+                      });
+                    }
+                  } catch (error) {
+                    // Xử lý lỗi nếu có
+                    console.error("Lỗi khi tạo lịch học:", error);
+                    
+                    // Xử lý error.message một cách an toàn
+                    let errorMessage = "Unknown error";
+                    if (error instanceof Error) {
+                      errorMessage = error.message;
+                    } else if (typeof error === 'object' && error !== null && 'message' in error) {
+                      errorMessage = (error as { message: string }).message;
+                    } else if (typeof error === 'string') {
+                      errorMessage = error;
+                    }
+                    
+                    console.error(`Lỗi khi tạo lịch học: ${errorMessage}`);
+                  }
                 }}
               >
                 Add
@@ -1323,7 +1644,7 @@ const ScheduleManagementPage: React.FC = () => {
                   try {
                     // Call the Python API to generate schedules
                     const response = await axios.post(
-                      "http://fams.io.vn/api-python/api/schedules/generate",
+                      "http://fams.io.vn/api-python/schedules/generate",
                       {
                         semesterNumber,
                         startDate: formatDateForAPI(semesterDateFrom),
@@ -1333,22 +1654,16 @@ const ScheduleManagementPage: React.FC = () => {
                     );
 
                     if (response.data.success) {
-                      // Show success message
-                      alert(
-                        `${response.data.message}. The schedule generation is processing in the background.`
-                      );
+                      // Log success to console instead of showing alert
+                      console.log(`${response.data.message}. The schedule generation is processing in the background.`);
                     } else {
-                      // Show error message
-                      alert(`Failed: ${response.data.message}`);
+                      // Log error message to console
                       console.error("API Error:", response.data);
                     }
                   } catch (error) {
                     console.error(
                       "Error calling schedule generation API:",
                       error
-                    );
-                    alert(
-                      "An error occurred while arranging the schedule. Please try again later."
                     );
                   }
 

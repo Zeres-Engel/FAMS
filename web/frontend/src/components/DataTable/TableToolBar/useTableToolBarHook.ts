@@ -97,10 +97,18 @@ function useTableToolBarHook({
       const uniqueClassNames = Array.from( 
         new Set((classYears ?? []).map((item) => item.className))
       );
-      setAcademicYearsForClass(uniqueAcademicYears);
-      setClassNamesFiltered(uniqueClassNames);
+      
+      // Only update state if the values have actually changed
+      if (JSON.stringify(uniqueAcademicYears) !== JSON.stringify(academicYearsForClass)) {
+        setAcademicYearsForClass(uniqueAcademicYears);
+      }
+      
+      // Only update state if the values have actually changed
+      if (JSON.stringify(uniqueClassNames) !== JSON.stringify(classNamesFiltered)) {
+        setClassNamesFiltered(uniqueClassNames);
+      }
     }
-  }, [classYears,isClassManagement]);
+  }, [classYears, isClassManagement, academicYearsForClass, classNamesFiltered]);
 
   const filterClassNamesByYear = (year: string) => {
     const filteredClassNames = (classYears ?? [])

@@ -6,6 +6,19 @@ import logging
 import re
 from typing import Dict, List, Set, Tuple, Any
 from ..constants import COLLECTIONS
+try:
+    from .subject_matching import match_teacher_to_subject, get_matching_teachers
+    SUBJECT_MATCHING_AVAILABLE = True
+except ImportError:
+    SUBJECT_MATCHING_AVAILABLE = False
+    print("[WARNING] subject_matching module not available, using basic matching logic")
+
+try:
+    from .attendance import generate_attendance_logs
+    ATTENDANCE_GENERATION_AVAILABLE = True
+except ImportError:
+    ATTENDANCE_GENERATION_AVAILABLE = False
+    print("[WARNING] attendance module not available, attendance logs will not be generated automatically")
 
 # Cấu hình logging
 logger = logging.getLogger(__name__)
@@ -125,7 +138,91 @@ def get_period_time(period_index):
     return periods.get(period_index, {"start": "00:00", "end": "00:00"})
 
 
-def generate_improved_schedule(db, semester_info, total_weeks=18, academic_year=None):
+def clean_existing_schedules(db, semester_id, academic_year=None):
+    """
+    Delete existing schedules and attendance logs for a specific semester and academic year
+    
+    Args:
+        db: MongoDB database connection
+        semester_id: ID of the semester
+        academic_year: Optional academic year (e.g., "2024-2025")
+        
+    Returns:
+        dict: Statistics about deleted records
+    """
+    logger.info(f"Cleaning existing schedules for semester {semester_id}")
+    
+    stats = {
+        "schedules_deleted": 0,
+        "attendance_logs_deleted": 0,
+        "classes_found": 0
+    }
+    
+    # Get all schedules for this semester
+    schedules = list(db.ClassSchedule.find({"semesterId": semester_id}))
+    logger.info(f"Found {len(schedules)} schedules for semester {semester_id}")
+    
+    # If no academic year specified, delete all schedules for this semester
+    if not academic_year:
+        # First get schedule IDs to delete corresponding attendance logs
+        schedule_ids = [schedule["scheduleId"] for schedule in schedules]
+        
+        # Delete attendance logs first
+        if schedule_ids:
+            attendance_result = db.AttendanceLog.delete_many({"scheduleId": {"$in": schedule_ids}})
+            stats["attendance_logs_deleted"] = attendance_result.deleted_count
+            logger.info(f"Deleted {stats['attendance_logs_deleted']} attendance logs")
+        
+        # Then delete schedules
+        schedule_result = db.ClassSchedule.delete_many({"semesterId": semester_id})
+        stats["schedules_deleted"] = schedule_result.deleted_count
+        logger.info(f"Deleted {stats['schedules_deleted']} schedules")
+        
+        return stats
+    
+    # If academic year is specified, we need to check each schedule's class to see if it matches
+    # Get all classes and create a map of classId -> academicYear
+    class_academic_year_map = {}
+    all_classes = list(db.Class.find({}))
+    for cls in all_classes:
+        if "classId" in cls and "academicYear" in cls:
+            class_academic_year_map[cls["classId"]] = cls["academicYear"]
+    
+    stats["classes_found"] = len(class_academic_year_map)
+    logger.info(f"Found academic year info for {stats['classes_found']} classes")
+    
+    # Collect schedules to delete
+    schedules_to_delete = []
+    schedule_ids_to_delete = []
+    
+    for schedule in schedules:
+        class_id = schedule.get("classId")
+        if class_id in class_academic_year_map:
+            schedule_academic_year = class_academic_year_map[class_id]
+            
+            if schedule_academic_year == academic_year:
+                schedules_to_delete.append(schedule["_id"])
+                schedule_ids_to_delete.append(schedule["scheduleId"])
+                logger.debug(f"Schedule {schedule['scheduleId']} matches academic year {academic_year}")
+    
+    logger.info(f"Found {len(schedules_to_delete)} schedules matching academic year {academic_year}")
+    
+    # Delete matching attendance logs
+    if schedule_ids_to_delete:
+        attendance_result = db.AttendanceLog.delete_many({"scheduleId": {"$in": schedule_ids_to_delete}})
+        stats["attendance_logs_deleted"] = attendance_result.deleted_count
+        logger.info(f"Deleted {stats['attendance_logs_deleted']} attendance logs")
+    
+    # Delete matching schedules
+    if schedules_to_delete:
+        schedule_result = db.ClassSchedule.delete_many({"_id": {"$in": schedules_to_delete}})
+        stats["schedules_deleted"] = schedule_result.deleted_count
+        logger.info(f"Deleted {stats['schedules_deleted']} schedules")
+    
+    return stats
+
+
+def generate_improved_schedule(db, semester_info, total_weeks=18, academic_year=None, generate_attendance=True, clean_existing=True):
     """
     Generate schedule for a semester using the improved algorithm
     
@@ -134,15 +231,24 @@ def generate_improved_schedule(db, semester_info, total_weeks=18, academic_year=
         semester_info: Dictionary with semester information
         total_weeks: Number of weeks in semester (default 18)
         academic_year: Optional academic year to filter classes (e.g. "2022-2023")
+        generate_attendance: Whether to generate attendance logs (default True)
+        clean_existing: Whether to delete existing schedules before generating new ones (default True)
         
     Returns:
         tuple - (schedule_entries, warnings)
     """
     semesterNumber = semester_info.get('semesterNumber')
+    semester_id = semester_info.get('semesterId', semester_info.get('SemesterID'))
     start_date = semester_info.get('startDate')
     end_date = semester_info.get('endDate')
     
     logger.info(f"Generating schedule for Semester {semesterNumber}")
+    
+    # Clean existing schedules if requested
+    if clean_existing and semester_id:
+        logger.info(f"Cleaning existing schedules for semester {semester_id} and academic year {academic_year}")
+        clean_stats = clean_existing_schedules(db, semester_id, academic_year)
+        logger.info(f"Cleaned {clean_stats['schedules_deleted']} schedules and {clean_stats['attendance_logs_deleted']} attendance logs")
     
     # Load all classes with optional academic year filter
     class_query = {}
@@ -235,7 +341,12 @@ def generate_improved_schedule(db, semester_info, total_weeks=18, academic_year=
         teacher_id = t.get("teacherId")
         major = t.get("major", "").lower()
         capacity = int(t.get("weeklyCapacity", 10))
-        teacher_info[teacher_id] = {"major": major, "capacity": capacity, "name": t.get("fullName", "")}
+        teacher_info[teacher_id] = {
+            "major": major, 
+            "capacity": capacity, 
+            "name": t.get("fullName", ""),
+            "teacherId": teacher_id  # Store teacherId in the info dict for easier access
+        }
         logger.debug(f"Teacher {teacher_id}: Major={major}, Capacity={capacity}")
     
     # Prepare class needs for subjects
@@ -354,29 +465,44 @@ def generate_improved_schedule(db, semester_info, total_weeks=18, academic_year=
                         continue
                     
                     # Find a teacher for this subject
-                    subject_name = subjects_map.get(subject_id, {}).get("subjectName", "").lower()
+                    subject_info = subjects_map.get(subject_id, {})
+                    subject_name = subject_info.get("subjectName", "")
+                    
                     suitable_teachers = []
                     
-                    # Find teachers with matching major
-                    for t_id in available_teachers:
-                        if t_id in used_teachers:
-                            continue
+                    # Use improved subject matching if available
+                    if SUBJECT_MATCHING_AVAILABLE:
+                        # Create list of available teacher info objects for matching
+                        available_teacher_infos = [
+                            teacher_info[t_id] for t_id in available_teachers 
+                            if t_id not in used_teachers
+                        ]
                         
-                        teacher_major = teacher_info.get(t_id, {}).get("major", "").lower()
-                        
-                        # Check if teacher major matches subject
-                        if teacher_major and subject_name:
-                            # Try different matching methods
-                            match = False
-                            # Direct match
-                            if subject_name in teacher_major:
-                                match = True
-                            # Word matching (e.g. "vật lý" in "Giáo viên vật lý")
-                            elif any(subj_word in teacher_major.split() for subj_word in subject_name.split()):
-                                match = True
-                                
-                            if match:
-                                suitable_teachers.append(t_id)
+                        # Match teachers to this subject
+                        for t_info in available_teacher_infos:
+                            if match_teacher_to_subject(t_info["major"], subject_name):
+                                suitable_teachers.append(t_info["teacherId"])
+                    else:
+                        # Fallback to basic matching
+                        for t_id in available_teachers:
+                            if t_id in used_teachers:
+                                continue
+                            
+                            teacher_major = teacher_info.get(t_id, {}).get("major", "").lower()
+                            
+                            # Check if teacher major matches subject
+                            if teacher_major and subject_name:
+                                # Try different matching methods
+                                match = False
+                                # Direct match
+                                if subject_name.lower() in teacher_major:
+                                    match = True
+                                # Word matching (e.g. "vật lý" in "Giáo viên vật lý")
+                                elif any(subj_word in teacher_major.split() for subj_word in subject_name.lower().split()):
+                                    match = True
+                                    
+                                if match:
+                                    suitable_teachers.append(t_id)
                     
                     # If no specialized teachers, use any available teacher
                     if not suitable_teachers:
@@ -452,10 +578,26 @@ def generate_improved_schedule(db, semester_info, total_weeks=18, academic_year=
     
     logger.info(f"Schedule generation completed with {len(schedule_entries)} entries and {len(warnings)} warnings")
     
+    # Generate attendance logs if requested and available
+    if generate_attendance and ATTENDANCE_GENERATION_AVAILABLE and schedule_entries:
+        try:
+            logger.info(f"Generating attendance logs for {len(schedule_entries)} schedule entries")
+            attendance_result = generate_attendance_logs(db, schedule_entries, semester_info)
+            logger.info(f"Generated {attendance_result['generated']} attendance logs")
+            
+            if attendance_result.get('errors'):
+                for error in attendance_result.get('errors', []):
+                    warnings.append(f"Attendance generation error: {error}")
+        except Exception as e:
+            logger.error(f"Failed to generate attendance logs: {str(e)}")
+            warnings.append(f"Failed to generate attendance logs: {str(e)}")
+    elif generate_attendance and not ATTENDANCE_GENERATION_AVAILABLE:
+        warnings.append("Attendance logs not generated - attendance module not available")
+    
     return schedule_entries, warnings
 
 
-def generate_schedule(db, semester_doc, total_weeks=18):
+def generate_schedule(db, semester_doc, total_weeks=18, generate_attendance=True, clean_existing=True):
     """
     Generate schedule for a semester using the greedy approach
     
@@ -463,6 +605,8 @@ def generate_schedule(db, semester_doc, total_weeks=18):
         db: MongoDB database connection
         semester_doc: Semester document with semester info
         total_weeks: Number of weeks in semester (default 18)
+        generate_attendance: Whether to generate attendance logs (default True)
+        clean_existing: Whether to delete existing schedules before generating new ones (default True)
         
     Returns:
         tuple - (schedule_entries, warnings)
@@ -499,6 +643,24 @@ def generate_schedule(db, semester_doc, total_weeks=18):
     else:
         logger.info(f"Using curriculum ID: {curriculum_id}")
     
+    # Clean existing schedules if requested
+    semester_id = semester_doc.get('semesterId', semester_doc.get('SemesterID'))
+    if clean_existing and semester_id:
+        # Get academic year from classes with this grade
+        classes = list(db.Class.find({"grade": grade}))
+        academic_year = None
+        if classes:
+            academic_year = classes[0].get("academicYear")
+        
+        if academic_year:
+            logger.info(f"Cleaning existing schedules for semester {semester_id} and academic year {academic_year}")
+            clean_stats = clean_existing_schedules(db, semester_id, academic_year)
+            logger.info(f"Cleaned {clean_stats['schedules_deleted']} schedules and {clean_stats['attendance_logs_deleted']} attendance logs")
+        else:
+            logger.info(f"Cleaning all existing schedules for semester {semester_id}")
+            clean_stats = clean_existing_schedules(db, semester_id)
+            logger.info(f"Cleaned {clean_stats['schedules_deleted']} schedules and {clean_stats['attendance_logs_deleted']} attendance logs")
+    
     # Load resources - Use grade instead of batchId to find classes
     classes = list(db.Class.find({"grade": grade}))
     
@@ -523,16 +685,16 @@ def generate_schedule(db, semester_doc, total_weeks=18):
     
     # Get curriculum subjects and sessions needed
     curriculum_subjects = {}
-    for cs in db.CurriculumSubject.find({"curriculumId": c.get('curriculumId')}):
+    for cs in db.CurriculumSubject.find({"curriculumId": curriculum_id}):
         subject_id = cs.get("subjectId")
         if subject_id:
             curriculum_subjects[subject_id] = cs.get("sessions", 3)
     
     if not curriculum_subjects:
-        logger.error(f"No curriculum subjects found for curriculum {c.get('curriculumId')}")
-        return [], [f"No curriculum subjects found for curriculum {c.get('curriculumId')}"]
+        logger.error(f"No curriculum subjects found for curriculum {curriculum_id}")
+        return [], [f"No curriculum subjects found for curriculum {curriculum_id}"]
     
-    logger.info(f"Found {len(curriculum_subjects)} subjects in curriculum {c.get('curriculumId')}")
+    logger.info(f"Found {len(curriculum_subjects)} subjects in curriculum {curriculum_id}")
     
     # Map subjects to their details
     subjects_map = {s.get("subjectId"): s for s in db.Subject.find()}
@@ -543,8 +705,13 @@ def generate_schedule(db, semester_doc, total_weeks=18):
     for t in teachers:
         teacher_id = t.get("teacherId")
         major = t.get("major", "").lower()
-        capacity = int(t.get("WeeklyCapacity", 10))
-        teacher_info[teacher_id] = {"major": major, "capacity": capacity}
+        capacity = int(t.get("weeklyCapacity", 10))  # Use consistent naming for weekly capacity
+        teacher_info[teacher_id] = {
+            "major": major, 
+            "capacity": capacity,
+            "teacherId": teacher_id,
+            "name": t.get("fullName", "")
+        }
         logger.debug(f"Teacher {teacher_id}: Major={major}, Capacity={capacity}")
     
     # Class needs for subjects
@@ -639,14 +806,28 @@ def generate_schedule(db, semester_doc, total_weeks=18):
                         continue
                     
                     # Find a teacher for this subject
-                    subject_name = subjects_map.get(subject_id, {}).get("subjectName", "").lower()
+                    subject_info = subjects_map.get(subject_id, {})
+                    subject_name = subject_info.get("subjectName", "")
+                    
                     suitable_teachers = []
                     
-                    # Find teachers with matching major
-                    for t_id in available_teachers:
-                        teacher_major = teacher_info.get(t_id, {}).get("major", "").lower()
-                        if teacher_major and subject_name and subject_name in teacher_major:
-                            suitable_teachers.append(t_id)
+                    # Use improved subject matching if available
+                    if SUBJECT_MATCHING_AVAILABLE:
+                        # Create list of available teacher info objects for matching
+                        available_teacher_infos = [
+                            teacher_info[t_id] for t_id in available_teachers
+                        ]
+                        
+                        # Match teachers to this subject
+                        for t_info in available_teacher_infos:
+                            if match_teacher_to_subject(t_info["major"], subject_name):
+                                suitable_teachers.append(t_info["teacherId"])
+                    else:
+                        # Find teachers with matching major - basic matching
+                        for t_id in available_teachers:
+                            teacher_major = teacher_info.get(t_id, {}).get("major", "").lower()
+                            if teacher_major and subject_name and subject_name.lower() in teacher_major:
+                                suitable_teachers.append(t_id)
                     
                     # If no specialized teachers, use any available teacher
                     if not suitable_teachers:
@@ -671,15 +852,21 @@ def generate_schedule(db, semester_doc, total_weeks=18):
                         {"$addToSet": {"classIds": class_id}}
                     )
                     
+                    # Get teacher name for better display
+                    teacher_name = teacher_info.get(teacher_id, {}).get("name", f"Teacher {teacher_id}")
+                    
                     # Create schedule entry
                     schedule_entry = {
-                        "classScheduleId": str(entry_id),
+                        "scheduleId": entry_id,
                         "semesterId": semester_doc.get("semesterId"),
                         "weekNumber": week,
                         "dayNumber": {"Monday": 1, "Tuesday": 2, "Wednesday": 3, "Thursday": 4, "Friday": 5, "Saturday": 6, "Sunday": 7}.get(day_of_week, 1),
                         "classId": class_id,
                         "subjectId": subject_id,
                         "teacherId": teacher_id,
+                        "teacherName": teacher_name,
+                        "className": class_doc.get("className", f"Class {class_id}"),
+                        "subjectName": subject_name,
                         "classroomId": room_id,
                         "slotId": slot_id,
                         "roomName": next((r.get("roomName", "") for r in rooms if r.get("classroomId") == room_id), ""),
@@ -693,6 +880,7 @@ def generate_schedule(db, semester_doc, total_weeks=18):
                     }
                     
                     schedule_entries.append(schedule_entry)
+                    logger.debug(f"Scheduled {subject_name} for class {class_id} with teacher {teacher_id} at {day_of_week} slot {slot_number} week {week}")
                     
                     entry_id += 1
                     break  # Scheduled one subject for this class at this slot
@@ -705,6 +893,22 @@ def generate_schedule(db, semester_doc, total_weeks=18):
                 warnings.append(
                     f"Could not schedule all sessions for {subject_name} in class {class_id}. {sessions_left} sessions remaining."
                 )
+    
+    # Generate attendance logs if requested and available
+    if generate_attendance and ATTENDANCE_GENERATION_AVAILABLE and schedule_entries:
+        try:
+            logger.info(f"Generating attendance logs for {len(schedule_entries)} schedule entries")
+            attendance_result = generate_attendance_logs(db, schedule_entries, semester_doc)
+            logger.info(f"Generated {attendance_result['generated']} attendance logs")
+            
+            if attendance_result.get('errors'):
+                for error in attendance_result.get('errors', []):
+                    warnings.append(f"Attendance generation error: {error}")
+        except Exception as e:
+            logger.error(f"Failed to generate attendance logs: {str(e)}")
+            warnings.append(f"Failed to generate attendance logs: {str(e)}")
+    elif generate_attendance and not ATTENDANCE_GENERATION_AVAILABLE:
+        warnings.append("Attendance logs not generated - attendance module not available")
     
     # Save to database
     if schedule_entries and db is not None:

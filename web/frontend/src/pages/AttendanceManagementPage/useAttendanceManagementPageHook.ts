@@ -31,6 +31,7 @@ function useAttendanceManagementPageHook() {
       face: e.avatar,
       checkin: e.checkIn,
       status: e.status,
+      note:e.note,
       checkinFace: e.checkInFace,
     })
   );
