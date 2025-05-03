@@ -1,0 +1,3 @@
+python cluster_kmean.py --input data/shuffle_12 --model_name ir_50 --checkpoint_path model/adaface_ir50_webface4m.ckpt --output ./clustered_faces --num_clusters 12 --batch_size 32 --device cuda
+
+python cluster_kmean.py --input C:/Users/nguye/Desktop/ACB_face_data_clustered/LocNX --model_name ir_50 --checkpoint_path model/adaface_ir50_webface4m.ckpt --output C:/Users/nguye/Desktop --num_clusters 3 --batch_size 258 --device cuda

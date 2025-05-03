@@ -1,0 +1,9 @@
+*.ckpt
+*.pth
+*.jpg
+*.bin
+*.pt
+*.xlsx
+*.pptx
+/report
+*.pyc
