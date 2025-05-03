@@ -19,6 +19,12 @@ router.get('/:id', protect, classController.getClassById);
 // POST /api/classes - Create a new class
 router.post('/', protect, classController.createClass);
 
+// POST /api/classes/with-students - Create a new class and add students
+router.post('/with-students', protect, classController.createClassWithStudents);
+
+// POST /api/classes/:classId/students - Add students to an existing class
+router.post('/:classId/students', protect, classController.addStudentsToClass);
+
 // PUT /api/classes/:id - Update a class
 router.put('/:id', protect, classController.updateClass);
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./ClassManagementPage.scss";
 import LayoutComponent from "../../components/Layout/Layout";
 import Container from "@mui/material/Container";
@@ -28,13 +28,38 @@ import {
   TableHead,
   TableRow,
   Checkbox,
-  SelectChangeEvent
+  SelectChangeEvent,
+  Autocomplete,
+  Snackbar,
+  Alert
 } from "@mui/material";
 import DataTable from "../../components/DataTable/DataTable";
 import useClassManagementPageHook from "./useClassManagementPageHook";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
+import axios from "axios";
+
+// Interface for Teacher data
+interface Teacher {
+  userId: string;
+  fullName: string;
+  teacherId: number;
+}
+
+// Interface for Class data
+interface ClassData {
+  _id: string;
+  className: string;
+  grade: number;
+  homeroomTeacherId: string;
+  academicYear: string;
+  createdAt: string;
+  isActive: boolean;
+  classId: number;
+  id: string;
+  studentNumber: number;
+}
 
 function ClassManagementPage(): React.JSX.Element {
   const { state, handler } = useClassManagementPageHook();
@@ -52,8 +77,78 @@ function ClassManagementPage(): React.JSX.Element {
   const [selectedStudents, setSelectedStudents] = useState<any[]>([]);
   const [selectedTeachers, setSelectedTeachers] = useState<any[]>([]);
   const [teacherSearchTerm, setTeacherSearchTerm] = useState("");
-  const [academicYearFilter, setAcademicYearFilter] = useState("");
+  const [academicYearFilter, setAcademicYearFilter] = useState("2024-2025");
   const [classFilter, setClassFilter] = useState("");
+  const [academicYearOptions, setAcademicYearOptions] = useState<string[]>([]);
+  const [availableClassesForFilter, setAvailableClassesForFilter] = useState<any[]>([]);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [isLoadingTeachers, setIsLoadingTeachers] = useState(false);
+  const [allClasses, setAllClasses] = useState<ClassData[]>([]);
+  const [isLoadingClasses, setIsLoadingClasses] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error" | "info" | "warning">("info");
+
+  // Generate academic year options based on current year
+  useEffect(() => {
+    const generateAcademicYearOptions = () => {
+      const currentYear = new Date().getFullYear();
+      const options = [];
+      
+      // Generate 5 options: 3 years before current year to 1 year after current year
+      for (let i = -3; i <= 1; i++) {
+        const startYear = currentYear + i;
+        const endYear = startYear + 1;
+        options.push(`${startYear}-${endYear}`);
+      }
+      
+      return options;
+    };
+    
+    setAcademicYearOptions(generateAcademicYearOptions());
+  }, []);
+
+  // Fetch teachers when component mounts
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      setIsLoadingTeachers(true);
+      try {
+        const response = await axios.get('http://fams.io.vn/api-nodejs/teachers/search?search=&page=1&limit=100');
+        if (response.data.success) {
+          setTeachers(response.data.data);
+        } else {
+          console.error("Failed to fetch teachers:", response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching teachers:", error);
+      } finally {
+        setIsLoadingTeachers(false);
+      }
+    };
+
+    fetchTeachers();
+  }, []);
+
+  // Fetch all classes when component mounts
+  useEffect(() => {
+    const fetchClasses = async () => {
+      setIsLoadingClasses(true);
+      try {
+        const response = await axios.get('http://fams.io.vn/api-nodejs/classes?search=&academicYear=');
+        if (response.data.success) {
+          setAllClasses(response.data.data);
+        } else {
+          console.error("Failed to fetch classes:", response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching classes:", error);
+      } finally {
+        setIsLoadingClasses(false);
+      }
+    };
+
+    fetchClasses();
+  }, []);
 
   // Handle dialog open/close
   const handleOpenCreateDialog = () => {
@@ -69,6 +164,18 @@ function ClassManagementPage(): React.JSX.Element {
 
   const handleCloseCreateDialog = () => {
     setCreateDialogOpen(false);
+  };
+
+  // Handle snackbar close
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
+  // Show notification
+  const showNotification = (message: string, severity: "success" | "error" | "info" | "warning") => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
   };
 
   // Handle tab change
@@ -95,8 +202,32 @@ function ClassManagementPage(): React.JSX.Element {
     });
   };
 
+  // Handle teacher autocomplete change
+  const handleTeacherChange = (event: React.SyntheticEvent, value: Teacher | null) => {
+    setClassInfo({
+      ...classInfo,
+      homeroomTeacherId: value ? value.userId : ""
+    });
+  };
+
+  // Check if class already exists
+  const isClassDuplicate = () => {
+    return allClasses.some(
+      (cls) => 
+        cls.className === classInfo.className && 
+        cls.grade.toString() === classInfo.grade && 
+        cls.academicYear === classInfo.academicYear
+    );
+  };
+
   // Handle next to preview
   const handleNextToPreview = async () => {
+    // Check if class already exists
+    if (isClassDuplicate()) {
+      showNotification(`Class ${classInfo.className} for grade ${classInfo.grade} in academic year ${classInfo.academicYear} already exists. Please create a different class.`, "error");
+      return;
+    }
+
     // Clear any previously selected users
     setSelectedStudents([]);
     setSelectedTeachers([]);
@@ -104,23 +235,80 @@ function ClassManagementPage(): React.JSX.Element {
     // Reset filters
     setSearchTerm("");
     setTeacherSearchTerm("");
-    setAcademicYearFilter("");
-    setClassFilter("");
     
-    // Set role filter to "all" to show all users initially
-    setRoleFilter("all");
+    // Đặt mặc định là hiển thị học sinh chưa có lớp
+    setAcademicYearFilter("2024-2025");
+    setClassFilter("no_class");
     
-    // Fetch users from API
-    await handler.fetchUsers("", "all");
+    // Set role filter to "student" to show all students initially
+    setRoleFilter("student");
+    
+    // Fetch students from API with default parameters to show students without class
+    await handler.fetchUsers("", "student", "2024-2025", "", true, false);
+    
+    // Fetch all available classes for this academic year
+    await fetchClassesForFilter("2024-2025");
     
     // Move to the next tab
     setTabValue(1);
   };
 
+  // Thêm hàm mới để lấy danh sách lớp học cho bộ lọc
+  const fetchClassesForFilter = async (academicYear: string) => {
+    try {
+      const response = await axios.get(`http://fams.io.vn/api-nodejs/classes?academicYear=${academicYear}`);
+      if (response.data.success) {
+        // Cập nhật state với danh sách lớp cho bộ lọc
+        setAvailableClassesForFilter(response.data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching classes for filter:", error);
+    }
+  };
+
   // Handle search change
   const handleSearchChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
-    await handler.fetchUsers(event.target.value, roleFilter);
+  };
+
+  // Thêm hàm mới để xử lý việc tìm kiếm học sinh
+  const handleSearchStudents = async () => {
+    // Xử lý các trường hợp đặc biệt
+    const searchParams: {
+      searchTerm: string,
+      role: string,
+      academicYear?: string,
+      className?: string,
+      noClass?: boolean,
+      noAcademicYear?: boolean
+    } = {
+      searchTerm: searchTerm,
+      role: "student"
+    };
+    
+    // Xử lý tham số năm học
+    if (academicYearFilter === "no_academic_year") {
+      searchParams.noAcademicYear = true;
+    } else if (academicYearFilter) {
+      searchParams.academicYear = academicYearFilter;
+    }
+    
+    // Xử lý tham số lớp học
+    if (classFilter === "no_class") {
+      searchParams.noClass = true;
+    } else if (classFilter) {
+      searchParams.className = classFilter;
+    }
+    
+    // Gọi API với các tham số đã xử lý
+    await handler.fetchUsers(
+      searchParams.searchTerm,
+      searchParams.role,
+      searchParams.academicYear || "",
+      searchParams.className || "",
+      searchParams.noClass,
+      searchParams.noAcademicYear
+    );
   };
 
   // Handle role filter change - updated to use SelectChangeEvent
@@ -143,6 +331,12 @@ function ClassManagementPage(): React.JSX.Element {
 
   // Create class with selected users
   const handleCreateClass = async () => {
+    // Check again if class already exists (in case it was created in another session while dialog was open)
+    if (isClassDuplicate()) {
+      showNotification(`Class ${classInfo.className} for grade ${classInfo.grade} in academic year ${classInfo.academicYear} already exists. Please create a different class.`, "error");
+      return;
+    }
+
     // Combine selected students and teachers
     const selectedUsers = [...selectedStudents, ...selectedTeachers];
     
@@ -151,7 +345,7 @@ function ClassManagementPage(): React.JSX.Element {
     
     if (result.success) {
       // Hiển thị thông báo thành công
-      alert(result.message);
+      showNotification(result.message, "success");
       
       // Đóng dialog sau khi tạo
       setCreateDialogOpen(false);
@@ -165,9 +359,22 @@ function ClassManagementPage(): React.JSX.Element {
       });
       setSelectedStudents([]);
       setSelectedTeachers([]);
+
+      // Refresh class list
+      const fetchClasses = async () => {
+        try {
+          const response = await axios.get('http://fams.io.vn/api-nodejs/classes?search=&academicYear=');
+          if (response.data.success) {
+            setAllClasses(response.data.data);
+          }
+        } catch (error) {
+          console.error("Error fetching classes:", error);
+        }
+      };
+      fetchClasses();
     } else {
       // Hiển thị thông báo lỗi
-      alert(result.message);
+      showNotification(result.message, "error");
     }
   };
 
@@ -185,17 +392,8 @@ function ClassManagementPage(): React.JSX.Element {
     // Only include students
     if (user.role !== 'student') return false;
     
-    // Filter by name
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (user.phone && user.phone.includes(searchTerm));
-    
-    // Filter by academic year
-    const matchesAcademicYear = !academicYearFilter || user.academicYear === academicYearFilter;
-    
-    // Filter by class
-    const matchesClass = !classFilter || user.className === classFilter;
-    
-    return matchesSearch && matchesAcademicYear && matchesClass;
+    // Không cần lọc thêm vì API đã xử lý việc lọc theo academicYear và className
+    return true;
   });
 
   // Filter teachers based on name
@@ -234,12 +432,30 @@ function ClassManagementPage(): React.JSX.Element {
 
   // Handle academic year filter change
   const handleAcademicYearFilterChange = (event: SelectChangeEvent) => {
-    setAcademicYearFilter(event.target.value);
+    const newAcademicYear = event.target.value;
+    setAcademicYearFilter(newAcademicYear);
+    
+    // Nếu chọn "No Academic Year", không cần tải danh sách lớp
+    if (newAcademicYear === "no_academic_year") {
+      setAvailableClassesForFilter([]);
+      setClassFilter("no_class"); // Tự động chọn "No Class" khi chọn "No Academic Year"
+    } else {
+      // Tải lại danh sách lớp khi thay đổi năm học
+      fetchClassesForFilter(newAcademicYear);
+      // Reset class filter nếu đang là "no_class"
+      if (classFilter === "no_class") {
+        setClassFilter("");
+      }
+    }
   };
 
   // Handle class filter change
   const handleClassFilterChange = (event: SelectChangeEvent) => {
-    setClassFilter(event.target.value);
+    const newClassFilter = event.target.value;
+    setClassFilter(newClassFilter);
+    
+    // Nếu chọn "No Class", không cần làm gì thêm
+    // Các xử lý khác sẽ được thực hiện khi nhấn nút Search
   };
 
   // Handle teacher search change
@@ -290,7 +506,7 @@ function ClassManagementPage(): React.JSX.Element {
         <DialogContent>
           <Tabs value={tabValue} onChange={handleTabChange}>
             <Tab label="Class Info" />
-            <Tab label="Add Students & Teachers" disabled={!classInfo.className || !classInfo.grade} />
+            <Tab label="Add Students" disabled={!classInfo.className || !classInfo.grade} />
           </Tabs>
           
           {tabValue === 0 && (
@@ -306,8 +522,9 @@ function ClassManagementPage(): React.JSX.Element {
                       label="Academic Year *"
                       required
                     >
-                      <MenuItem value="2023-2024">2023-2024</MenuItem>
-                      <MenuItem value="2024-2025">2024-2025</MenuItem>
+                      {academicYearOptions.map((year) => (
+                        <MenuItem key={year} value={year}>{year}</MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
                 </div>
@@ -341,20 +558,30 @@ function ClassManagementPage(): React.JSX.Element {
                 </div>
                 
                 <div>
-                  <FormControl fullWidth>
-                    <InputLabel>Teacher *</InputLabel>
-                    <Select
-                      name="homeroomTeacherId"
-                      value={classInfo.homeroomTeacherId}
-                      onChange={handleSelectChange}
-                      label="Teacher *"
-                      required
-                    >
-                      <MenuItem value="T001">Mr. Nguyen</MenuItem>
-                      <MenuItem value="T002">Ms. Tran</MenuItem>
-                      <MenuItem value="T003">Mr. Pham</MenuItem>
-                    </Select>
-                  </FormControl>
+                  <Autocomplete
+                    id="teacher-autocomplete"
+                    options={teachers}
+                    loading={isLoadingTeachers}
+                    getOptionLabel={(option) => `${option.userId} - ${option.fullName}`}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Homeroom Teacher *"
+                        required
+                        InputProps={{
+                          ...params.InputProps,
+                          endAdornment: (
+                            <>
+                              {isLoadingTeachers ? <span>Loading...</span> : null}
+                              {params.InputProps.endAdornment}
+                            </>
+                          ),
+                        }}
+                      />
+                    )}
+                    onChange={handleTeacherChange}
+                    isOptionEqualToValue={(option, value) => option.userId === value.userId}
+                  />
                 </div>
               </div>
             </Box>
@@ -387,13 +614,14 @@ function ClassManagementPage(): React.JSX.Element {
                 <FormControl sx={{ minWidth: 150 }}>
                   <InputLabel>Academic Year</InputLabel>
                   <Select
-                    value={academicYearFilter || ""}
+                    value={academicYearFilter || "2024-2025"}
                     onChange={handleAcademicYearFilterChange}
                     label="Academic Year"
                   >
-                    <MenuItem value="">All</MenuItem>
-                    <MenuItem value="2023-2024">2023-2024</MenuItem>
-                    <MenuItem value="2024-2025">2024-2025</MenuItem>
+                    <MenuItem value="no_academic_year">No Academic Year</MenuItem>
+                    {academicYearOptions.map((year) => (
+                      <MenuItem key={year} value={year}>{year}</MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
                 <FormControl sx={{ minWidth: 150 }}>
@@ -403,13 +631,23 @@ function ClassManagementPage(): React.JSX.Element {
                     onChange={handleClassFilterChange}
                     label="Class"
                   >
-                    <MenuItem value="">All</MenuItem>
-                    <MenuItem value="10A1">10A1</MenuItem>
-                    <MenuItem value="10A2">10A2</MenuItem>
-                    <MenuItem value="11A1">11A1</MenuItem>
-                    <MenuItem value="11A2">11A2</MenuItem>
+                    <MenuItem value="">All Classes</MenuItem>
+                    <MenuItem value="no_class">No Class</MenuItem>
+                    {/* Sử dụng danh sách lớp từ API */}
+                    {availableClassesForFilter.map((cls: { classId: string | number, className: string }) => (
+                      <MenuItem key={cls.classId} value={cls.className}>
+                        {cls.className}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
+                <Button 
+                  variant="contained" 
+                  onClick={handleSearchStudents} 
+                  startIcon={<SearchIcon />}
+                >
+                  Search
+                </Button>
               </Box>
               
               {/* Students Table */}
@@ -455,11 +693,23 @@ function ClassManagementPage(): React.JSX.Element {
                             <TableCell padding="checkbox">
                               <Checkbox checked={isSelected} />
                             </TableCell>
-                            <TableCell>{student.name}</TableCell>
-                            <TableCell>{student.id}</TableCell>
+                            <TableCell>{student.name || student.fullName}</TableCell>
+                            <TableCell>{student.studentId || student.id}</TableCell>
                             <TableCell>{student.gender}</TableCell>
-                            <TableCell>{student.academicYear || '-'}</TableCell>
-                            <TableCell>{student.className || '-'}</TableCell>
+                            <TableCell>
+                              {/* Hiển thị năm học từ các lớp của học sinh */}
+                              {student.classes && student.classes.length > 0 
+                                ? student.classes.map((c: {academicYear: string}) => c.academicYear).join(', ')
+                                : '-'}
+                            </TableCell>
+                            <TableCell>
+                              {/* Hiển thị tên lớp từ các lớp của học sinh */}
+                              {student.classes && student.classes.length > 0 
+                                ? student.classes.map((c: {className: string}, idx: number) => (
+                                  <span key={idx}>{c.className}{idx < student.classes.length - 1 ? ', ' : ''}</span>
+                                ))
+                                : '-'}
+                            </TableCell>
                             <TableCell>{student.phone}</TableCell>
                           </TableRow>
                         );
@@ -479,92 +729,6 @@ function ClassManagementPage(): React.JSX.Element {
               <Box mt={2} mb={4}>
                 <Typography>
                   Selected students: {selectedStudents.length}
-                </Typography>
-              </Box>
-
-              {/* TEACHERS SECTION */}
-              <Typography variant="h6" sx={{ mt: 4, mb: 2, fontWeight: 'bold' }}>
-                Homeroom Teacher
-              </Typography>
-              
-              {/* Teacher Search */}
-              <Box display="flex" alignItems="center" mb={2} gap={2}>
-                <TextField
-                  placeholder="Search teachers by name..."
-                  value={teacherSearchTerm}
-                  onChange={handleTeacherSearchChange}
-                  sx={{ flexGrow: 1 }}
-                  InputProps={{
-                    startAdornment: <SearchIcon fontSize="small" sx={{ mr: 1, color: 'action.active' }} />,
-                  }}
-                />
-              </Box>
-              
-              {/* Teachers Table */}
-              <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-                <TableContainer sx={{ maxHeight: 250 }}>
-                  <Table stickyHeader aria-label="teachers table">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell padding="checkbox">
-                          <Checkbox
-                            indeterminate={selectedTeachers.length > 0 && selectedTeachers.length < filteredTeachers.length}
-                            checked={filteredTeachers.length > 0 && selectedTeachers.length === filteredTeachers.length}
-                            onChange={() => {
-                              if (selectedTeachers.length === filteredTeachers.length) {
-                                setSelectedTeachers([]);
-                              } else {
-                                setSelectedTeachers(filteredTeachers);
-                              }
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>Name</TableCell>
-                        <TableCell>ID</TableCell>
-                        <TableCell>Gender</TableCell>
-                        <TableCell>Phone</TableCell>
-                        <TableCell>Subject</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {filteredTeachers.map((teacher) => {
-                        const isSelected = selectedTeachers.some(t => t.id === teacher.id);
-                        
-                        return (
-                          <TableRow
-                            key={teacher.id}
-                            hover
-                            onClick={() => handleToggleTeacherSelection(teacher)}
-                            role="checkbox"
-                            aria-checked={isSelected}
-                            selected={isSelected}
-                          >
-                            <TableCell padding="checkbox">
-                              <Checkbox checked={isSelected} />
-                            </TableCell>
-                            <TableCell>{teacher.name}</TableCell>
-                            <TableCell>{teacher.id}</TableCell>
-                            <TableCell>{teacher.gender}</TableCell>
-                            <TableCell>{teacher.phone}</TableCell>
-                            <TableCell>{teacher.subject || '-'}</TableCell>
-                          </TableRow>
-                        );
-                      })}
-                      {filteredTeachers.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={6} align="center">
-                            No teachers found matching the criteria
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Paper>
-              
-              <Box mt={2}>
-                <Typography>
-                  Selected teachers: {selectedTeachers.length}
                 </Typography>
               </Box>
             </Box>
@@ -594,6 +758,23 @@ function ClassManagementPage(): React.JSX.Element {
           )}
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar 
+        open={snackbarOpen} 
+        autoHideDuration={6000} 
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleSnackbarClose} 
+          severity={snackbarSeverity} 
+          sx={{ width: '100%' }}
+          variant="filled"
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </LayoutComponent>
   );
 }

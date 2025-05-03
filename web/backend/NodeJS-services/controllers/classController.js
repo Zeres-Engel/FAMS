@@ -681,6 +681,343 @@ const getStudentsByClassId = async (req, res) => {
   }
 };
 
+/**
+ * Create a new class and add students to it
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ */
+const createClassWithStudents = async (req, res) => {
+  try {
+    const { className, homeroomTeacherId, grade, academicYear, studentIds, teacherIds } = req.body;
+    
+    console.log(`Attempting to create class with data and students:`, JSON.stringify(req.body));
+
+    // Validate required fields
+    if (!className) {
+      return res.status(400).json({
+        success: false,
+        error: 'Class name is required',
+        code: 'MISSING_CLASSNAME'
+      });
+    }
+
+    if (!grade) {
+      return res.status(400).json({
+        success: false,
+        error: 'Grade is required',
+        code: 'MISSING_GRADE'
+      });
+    }
+
+    // Check if class name already exists
+    const existingClass = await Class.findOne({ className });
+    if (existingClass) {
+      console.log(`Class with name ${className} already exists:`, JSON.stringify(existingClass));
+      return res.status(400).json({
+        success: false,
+        error: 'Class name already exists',
+        code: 'DUPLICATE_CLASSNAME'
+      });
+    }
+
+    // If teacherId is provided, validate it exists and not already a homeroom teacher
+    if (homeroomTeacherId) {
+      const teacher = await Teacher.findOne({ userId: homeroomTeacherId });
+      if (!teacher) {
+        console.log(`Teacher with ID ${homeroomTeacherId} not found`);
+        return res.status(400).json({
+          success: false,
+          error: 'Teacher ID does not exist',
+          code: 'INVALID_TEACHER_ID'
+        });
+      }
+      
+      // Check if teacher is already a homeroom teacher of another class
+      const existingHomeroom = await Class.findOne({ homeroomTeacherId });
+      if (existingHomeroom) {
+        console.log(`Teacher ${homeroomTeacherId} is already homeroom for class:`, JSON.stringify(existingHomeroom));
+        return res.status(400).json({
+          success: false,
+          error: 'This teacher is already a homeroom teacher for another class',
+          code: 'TEACHER_ALREADY_HOMEROOM'
+        });
+      }
+    }
+
+    // Generate a new classId (auto-increment)
+    const lastClass = await Class.findOne().sort({ classId: -1 });
+    const classId = lastClass ? lastClass.classId + 1 : 1;
+    console.log(`Generated new classId: ${classId}`);
+
+    // Create the new class with explicit grade independent of className
+    const newClass = await Class.create({
+      className,
+      classId,
+      homeroomTeacherId,
+      grade: Number(grade), // Ensure grade is stored as a number
+      academicYear,
+      isActive: true
+    });
+
+    // Kết quả xử lý
+    const results = {
+      students: { success: 0, total: 0 },
+      teachers: { success: 0, total: 0 }
+    };
+    
+    // Danh sách học sinh và giáo viên đã được thêm
+    let updatedStudents = [];
+    let updatedTeachers = [];
+    
+    // Import model Student
+    const Student = require('../database/models/Student');
+    
+    // Xử lý thêm học sinh vào lớp (nếu có)
+    if (studentIds && Array.isArray(studentIds) && studentIds.length > 0) {
+      console.log(`Adding ${studentIds.length} students to class ${classId}`);
+      results.students.total = studentIds.length;
+      
+      // Update classIds array for each student
+      const updatePromises = studentIds.map(async (userId) => {
+        try {
+          // Tìm học sinh theo userId
+          const student = await Student.findOne({ userId });
+          
+          if (!student) {
+            console.log(`Student with userId ${userId} not found`);
+            return null;
+          }
+          
+          // Thêm classId vào mảng classIds của học sinh (nếu chưa có)
+          if (!student.classIds) {
+            student.classIds = [];
+          }
+          
+          // Kiểm tra nếu học sinh đã có trong lớp này rồi
+          if (!student.classIds.includes(classId)) {
+            student.classIds.push(classId);
+            await student.save();
+            
+            return {
+              userId: student.userId,
+              studentId: student.studentId,
+              fullName: student.fullName
+            };
+          } else {
+            console.log(`Student ${userId} already in class ${classId}`);
+            return null;
+          }
+        } catch (err) {
+          console.error(`Error updating student ${userId}:`, err);
+          return null;
+        }
+      });
+      
+      // Đợi tất cả các cập nhật học sinh hoàn thành
+      const studentResults = await Promise.all(updatePromises);
+      
+      // Lọc ra các học sinh đã được cập nhật thành công
+      updatedStudents = studentResults.filter(result => result !== null);
+      results.students.success = updatedStudents.length;
+    }
+    
+    // Xử lý thêm giáo viên vào lớp (nếu có)
+    if (teacherIds && Array.isArray(teacherIds) && teacherIds.length > 0) {
+      console.log(`Adding ${teacherIds.length} teachers to class ${classId}`);
+      results.teachers.total = teacherIds.length;
+      
+      // Tạo bản ghi ClassTeacher để liên kết giáo viên với lớp
+      const ClassTeacher = mongoose.model('ClassTeacher');
+      
+      const teacherUpdatePromises = teacherIds.map(async (userId) => {
+        try {
+          // Tìm giáo viên theo userId
+          const teacher = await Teacher.findOne({ userId });
+          
+          if (!teacher) {
+            console.log(`Teacher with userId ${userId} not found`);
+            return null;
+          }
+          
+          // Kiểm tra xem giáo viên đã được liên kết với lớp chưa
+          const existingRelation = await ClassTeacher.findOne({
+            classId: classId,
+            teacherId: teacher.teacherId
+          });
+          
+          if (!existingRelation) {
+            // Tạo mới quan hệ giáo viên-lớp
+            await ClassTeacher.create({
+              classId: classId,
+              teacherId: teacher.teacherId
+            });
+            
+            return {
+              userId: teacher.userId,
+              teacherId: teacher.teacherId,
+              fullName: teacher.fullName || teacher.firstName + ' ' + teacher.lastName
+            };
+          } else {
+            console.log(`Teacher ${userId} is already linked to class ${classId}`);
+            return null;
+          }
+        } catch (err) {
+          console.error(`Error linking teacher ${userId} to class:`, err);
+          return null;
+        }
+      });
+      
+      // Đợi tất cả các cập nhật giáo viên hoàn thành
+      const teacherResults = await Promise.all(teacherUpdatePromises);
+      
+      // Lọc ra các giáo viên đã được cập nhật thành công
+      updatedTeachers = teacherResults.filter(result => result !== null);
+      results.teachers.success = updatedTeachers.length;
+    }
+
+    // Trả về thông tin lớp học với số lượng học sinh
+    const classWithStudentNumber = {
+      ...newClass.toObject(),
+      studentNumber: updatedStudents.length
+    };
+
+    console.log(`Created new class with ${updatedStudents.length} students and ${updatedTeachers.length} teachers:`, JSON.stringify(classWithStudentNumber));
+
+    return res.status(201).json({
+      success: true,
+      data: classWithStudentNumber,
+      students: updatedStudents,
+      teachers: updatedTeachers,
+      results: results,
+      message: `Class created successfully with ${updatedStudents.length} students and ${updatedTeachers.length} teachers`
+    });
+  } catch (error) {
+    console.error('Error creating class with students:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'An error occurred while creating the class with students',
+      code: 'SERVER_ERROR'
+    });
+  }
+};
+
+/**
+ * Add students to a class
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ */
+const addStudentsToClass = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const { studentIds } = req.body;
+    
+    if (!classId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Class ID is required',
+        code: 'MISSING_CLASS_ID'
+      });
+    }
+    
+    if (!studentIds || !Array.isArray(studentIds) || studentIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Student IDs array is required',
+        code: 'MISSING_STUDENT_IDS'
+      });
+    }
+    
+    console.log(`Adding students to class ${classId}:`, JSON.stringify(studentIds));
+    
+    // Validate class exists
+    const classRecord = await Class.findOne({ classId: Number(classId) });
+    if (!classRecord) {
+      return res.status(404).json({
+        success: false,
+        error: 'Class not found',
+        code: 'CLASS_NOT_FOUND'
+      });
+    }
+    
+    // Import model Student
+    const Student = require('../database/models/Student');
+    
+    // Update classIds array for each student
+    const updatePromises = studentIds.map(async (userId) => {
+      try {
+        // Tìm học sinh theo userId
+        const student = await Student.findOne({ userId });
+        
+        if (!student) {
+          console.log(`Student with userId ${userId} not found`);
+          return {
+            userId,
+            success: false,
+            message: 'Student not found'
+          };
+        }
+        
+        // Thêm classId vào mảng classIds của học sinh (nếu chưa có)
+        if (!student.classIds) {
+          student.classIds = [];
+        }
+        
+        // Kiểm tra nếu học sinh đã có trong lớp này rồi
+        if (!student.classIds.includes(Number(classId))) {
+          student.classIds.push(Number(classId));
+          await student.save();
+          
+          return {
+            userId: student.userId,
+            studentId: student.studentId,
+            fullName: student.fullName,
+            success: true,
+            message: 'Added to class'
+          };
+        } else {
+          return {
+            userId: student.userId,
+            studentId: student.studentId,
+            fullName: student.fullName,
+            success: true,
+            message: 'Already in class'
+          };
+        }
+      } catch (err) {
+        console.error(`Error updating student ${userId}:`, err);
+        return {
+          userId,
+          success: false,
+          message: err.message
+        };
+      }
+    });
+    
+    // Đợi tất cả các cập nhật hoàn thành
+    const results = await Promise.all(updatePromises);
+    
+    // Đếm số học sinh được thêm thành công
+    const successCount = results.filter(r => r.success).length;
+    
+    return res.status(200).json({
+      success: true,
+      message: `Added ${successCount} students to class ${classId}`,
+      class: {
+        classId: classRecord.classId,
+        className: classRecord.className
+      },
+      results
+    });
+  } catch (error) {
+    console.error('Error adding students to class:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'An error occurred while adding students to class',
+      code: 'SERVER_ERROR'
+    });
+  }
+};
+
 module.exports = {
   createClass,
   getAllClasses,
@@ -688,5 +1025,7 @@ module.exports = {
   updateClass,
   deleteClass,
   getClassesByUserId,
-  getStudentsByClassId
+  getStudentsByClassId,
+  createClassWithStudents,
+  addStudentsToClass
 }; 

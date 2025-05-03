@@ -61,32 +61,105 @@ function useClassManagementPageHook() {
   }, [filters, dispatch]);
 
   // Lấy danh sách người dùng từ API
-  const fetchUsers = async (searchTerm = "", role = "") => {
+  const fetchUsers = async (
+    searchTerm = "", 
+    role = "", 
+    academicYear = "2024-2025", 
+    className = "",
+    noClass = false,
+    noAcademicYear = false
+  ) => {
     setIsLoadingUsers(true);
     try {
-      // Tạo tham số tìm kiếm
-      const searchParams = new URLSearchParams();
-      if (searchTerm) searchParams.append("search", searchTerm);
-      if (role && role !== "all") searchParams.append("roles", role);
-      
-      // Gọi API để lấy danh sách người dùng
-      const response = await axiosInstance.get(`/users?${searchParams.toString()}`);
-      
-      if (response.data?.success) {
-        // Chuyển đổi dữ liệu để phù hợp với cấu trúc cần thiết
-        const formattedUsers = response.data.data.map((user: any) => ({
-          id: user.userId || user._id,
-          name: user.fullName || `${user.firstName} ${user.lastName}`,
-          role: user.role,
-          gender: user.gender,
-          phone: user.phone || "-",
-          email: user.email || "-"
-        }));
+      // Xác định API endpoint dựa trên role
+      if (role === 'student' || role === 'all') {
+        // Sử dụng API student-info
+        const searchParams = new URLSearchParams();
         
-        setUsers(formattedUsers);
+        // Thêm tham số tìm kiếm nếu có
+        if (searchTerm) {
+          searchParams.append("q", searchTerm);
+        }
+        
+        // Thêm tham số phân trang
+        searchParams.append("page", "1");
+        searchParams.append("limit", "500"); // Tăng limit để lấy nhiều học sinh hơn
+        
+        // Thêm tham số năm học nếu có và không phải là noAcademicYear
+        if (academicYear && !noAcademicYear) {
+          searchParams.append("academicYear", academicYear);
+        }
+        
+        // Thêm tham số lớp học nếu có và không phải là noClass
+        if (className && !noClass) {
+          searchParams.append("className", className);
+        }
+        
+        // Thêm tham số tìm kiếm học sinh không có lớp
+        if (noClass) {
+          searchParams.append("noClass", "true");
+        }
+        
+        // Thêm tham số tìm kiếm học sinh không có năm học
+        if (noAcademicYear) {
+          searchParams.append("noAcademicYear", "true");
+        }
+        
+        const response = await axiosInstance.get(`http://fams.io.vn/api-nodejs/student-info?${searchParams.toString()}`);
+        
+        if (response.data?.success) {
+          // Chuyển đổi dữ liệu học sinh
+          const formattedStudents = response.data.data.map((student: any) => ({
+            id: student.userId,
+            name: student.fullName,
+            fullName: student.fullName,
+            role: "student",
+            gender: student.gender ? "Nam" : "Nữ",
+            phone: student.phone || "-",
+            email: student.email || "-",
+            studentId: student.studentId,
+            classIds: student.classIds || [],
+            classes: student.classes || [],
+            academicYear: student.classes && student.classes.length > 0 
+              ? student.classes[0].academicYear 
+              : academicYear, // Sử dụng academicYear từ tham số nếu không có trong dữ liệu
+            className: student.classes && student.classes.length > 0
+              ? student.classes[0].className
+              : "",
+            avatar: student.user?.avatar || null,
+            dateOfBirth: student.dateOfBirth
+          }));
+          
+          setUsers(formattedStudents);
+        } else {
+          console.error("Failed to fetch students:", response.data);
+          setUsers([]);
+        }
       } else {
-        console.error("Failed to fetch users:", response.data);
-        setUsers([]);
+        // Tìm kiếm giáo viên hoặc các vai trò khác (giữ nguyên code cũ)
+        const searchParams = new URLSearchParams();
+        if (searchTerm) searchParams.append("search", searchTerm);
+        if (role && role !== "all") searchParams.append("roles", role);
+        
+        // Gọi API để lấy danh sách người dùng
+        const response = await axiosInstance.get(`/users?${searchParams.toString()}`);
+        
+        if (response.data?.success) {
+          // Chuyển đổi dữ liệu để phù hợp với cấu trúc cần thiết
+          const formattedUsers = response.data.data.map((user: any) => ({
+            id: user.userId || user._id,
+            name: user.fullName || `${user.firstName} ${user.lastName}`,
+            role: user.role,
+            gender: user.gender,
+            phone: user.phone || "-",
+            email: user.email || "-"
+          }));
+          
+          setUsers(formattedUsers);
+        } else {
+          console.error("Failed to fetch users:", response.data);
+          setUsers([]);
+        }
       }
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -99,7 +172,7 @@ function useClassManagementPageHook() {
   // Tạo lớp mới
   const handleCreateClass = async (classInfo: any, selectedUsers: any[]) => {
     try {
-      // 1. Tạo lớp học mới
+      // Chuẩn bị dữ liệu lớp học
       const classData = {
         className: classInfo.className,
         grade: classInfo.grade,
@@ -107,46 +180,54 @@ function useClassManagementPageHook() {
         academicYear: classInfo.academicYear
       };
       
-      const result = await dispatch(createClass(classData)).unwrap();
+      // Lấy danh sách studentIds và teacherIds
+      const students = selectedUsers.filter(user => user.role === "student");
+      const teachers = selectedUsers.filter(user => user.role === "teacher");
       
-      if (result && result.classId) {
-        // 2. Nếu tạo lớp thành công và có người dùng được chọn, thêm họ vào lớp
-        if (selectedUsers.length > 0) {
-          const classId = result.classId;
+      const studentIds = students.map(student => student.id);
+      const teacherIds = teachers.map(teacher => teacher.id);
+      
+      // Tạo lớp và thêm học sinh/giáo viên cùng lúc nếu có người dùng được chọn
+      if (studentIds.length > 0 || teacherIds.length > 0) {
+        // Sử dụng API mới tạo lớp kèm danh sách học sinh và giáo viên
+        const response = await axiosInstance.post(`http://fams.io.vn/api-nodejs/classes/with-students`, {
+          ...classData,
+          studentIds,
+          teacherIds
+        });
+        
+        if (response.data?.success) {
+          // Làm mới danh sách lớp học
+          dispatch(fetchClasses());
           
-          // Tách danh sách học sinh và giáo viên
-          const students = selectedUsers.filter(user => user.role === "student");
-          const teachers = selectedUsers.filter(user => user.role === "teacher");
-          
-          // Thêm học sinh vào lớp (nếu có)
-          if (students.length > 0) {
-            const studentIds = students.map(student => student.id);
-            await axiosInstance.post(`/classes/${classId}/students`, {
-              studentIds: studentIds
-            });
-          }
-          
-          // Thêm giáo viên vào lớp (nếu có)
-          if (teachers.length > 0) {
-            const teacherIds = teachers.map(teacher => teacher.id);
-            await axiosInstance.post(`/classes/${classId}/teachers`, {
-              teacherIds: teacherIds
-            });
-          }
+          return { 
+            success: true, 
+            message: response.data.message || "Class created successfully with users" 
+          };
+        } else {
+          return { 
+            success: false, 
+            message: response.data?.error || "Failed to create class with users" 
+          };
         }
-        
-        // 3. Làm mới danh sách lớp học
-        dispatch(fetchClasses());
-        
-        return { success: true, message: "Class created successfully" };
       } else {
-        return { success: false, message: "Failed to create class" };
+        // Không có người dùng được chọn, chỉ tạo lớp mới
+        const result = await dispatch(createClass(classData)).unwrap();
+        
+        if (result && result.classId) {
+          // Làm mới danh sách lớp học
+          dispatch(fetchClasses());
+          
+          return { success: true, message: "Class created successfully" };
+        } else {
+          return { success: false, message: "Failed to create class" };
+        }
       }
     } catch (error: any) {
       console.error("Error creating class:", error);
       return { 
         success: false, 
-        message: error.response?.data?.message || "Error creating class" 
+        message: error.response?.data?.message || error.message || "Error creating class" 
       };
     }
   };
