@@ -148,7 +148,7 @@ const getAllClasses = async (req, res) => {
     
     // Filter by homeroom teacher ID
     if (homeroomTeacherId && homeroomTeacherId !== 'none') {
-      query.homeroomTeacherId = homeroomTeacherId;
+      query.homeroomTeacherId = { $regex: homeroomTeacherId, $options: 'i' };
     }
     
     // Filter by academicYear

@@ -91,12 +91,16 @@ function useTableToolBarHook({
   const [classNamesFiltered, setClassNamesFiltered] = useState<string[]>([]);
   useEffect(() => {
     if(classYears && isClassManagement){
+      console.log('classYears in useTableToolBarHook:', classYears);
+      
       const uniqueAcademicYears = Array.from(
         new Set((classYears ?? []).map((item) => item.academicYear))
       );
       const uniqueClassNames = Array.from( 
         new Set((classYears ?? []).map((item) => item.className))
       );
+      
+      console.log('uniqueAcademicYears:', uniqueAcademicYears);
       
       // Only update state if the values have actually changed
       if (JSON.stringify(uniqueAcademicYears) !== JSON.stringify(academicYearsForClass)) {
@@ -237,7 +241,8 @@ function useTableToolBarHook({
         search: filters.class,
         academicYear: filters.academicYear,
         grade: filters.grade,
-        homeroomTeacherd: filters.userID,
+        homeroomTeacherId: filters.userID,
+        preserveAcademicYears: true
       };
       if (setFiltersClass) {
         setFiltersClass(classFilters);

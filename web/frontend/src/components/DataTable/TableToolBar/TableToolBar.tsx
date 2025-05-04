@@ -605,8 +605,14 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
               }}
               displayEmpty={false}
             >
-              {state.academicYearsForClass &&
-              state.academicYearsForClass.length > 0 ? (
+              <MenuItem value="">All Academic Years</MenuItem>
+              {(availableAcademicYears && availableAcademicYears.length > 0) ? (
+                availableAcademicYears.map((year, index) => (
+                  <MenuItem key={index} value={year}>
+                    {year}
+                  </MenuItem>
+                ))
+              ) : state.academicYearsForClass && state.academicYearsForClass.length > 0 ? (
                 state.academicYearsForClass.map((year, index) => (
                   <MenuItem key={index} value={year}>
                     {year}
@@ -659,7 +665,8 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             </Select>
           </FormControl>
           <TextField
-            label="User ID"
+            label="Homeroom Teacher ID"
+            placeholder="Enter teacher ID..."
             value={filters.userID || ""}
             onChange={e => handleFilterChange("userID", e.target.value)}
             fullWidth={isMobile}
@@ -967,8 +974,15 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
       onAcademicYearChange(newAcademicYear);
     }
 
-    // Submit filter ngay sau khi đổi năm học
-    setTimeout(() => onSubmit(), 100);
+    // Submit filter ngay sau khi đổi năm học - đảm bảo academicYearOptions không bị thay đổi
+    setTimeout(() => {
+      if (setFiltersClass) {
+        setFiltersClass(prevFilters => ({
+          ...prevFilters,
+          academicYear: newAcademicYear
+        }));
+      }
+    }, 100);
   };
 
   // Xử lý khi chọn Class thay đổi

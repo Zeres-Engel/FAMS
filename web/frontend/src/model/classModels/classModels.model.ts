@@ -6,6 +6,7 @@ interface ClassData {
   className: string;
   grade: string;
   homeroomTeacherd: string;
+  homeroomTeacherId?: string;
   createdAt: string;
   updatedAt: string;
   academicYear?: string;
@@ -20,8 +21,9 @@ interface ClassData {
 interface SearchClassFilters {
   search?: string;
   grade?: string;
-  homeroomTeacherd?: string;
+  homeroomTeacherId?: string;
   academicYear?: string;
+  preserveAcademicYears?: boolean;
 }
 
 export type { SearchClassFilters, ClassData };

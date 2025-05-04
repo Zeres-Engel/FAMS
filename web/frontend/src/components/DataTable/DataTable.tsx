@@ -183,7 +183,7 @@ export default function DataTable({
               {
                 className: row.className,
                 grade: row.grade,
-                teacherId: row.homeroomTeacherd,
+                teacherId: row.homeroomTeacherId,
                 academicYear: row.academicYear,
               },
               row.id
@@ -243,7 +243,7 @@ export default function DataTable({
         )}
       </TableCell>
       <TableCell component="th" id={labelId} scope="row" padding="none">
-        {row.id}
+        {isClassManagement ? row.classId : row.id}
       </TableCell>
       {/* <TableCell align="left">{row.name}</TableCell> */}
     </>
@@ -306,7 +306,7 @@ export default function DataTable({
     <>
       <TableCell align="left">{row.className}</TableCell>
       <TableCell align="left">{row.grade}</TableCell>
-      <TableCell align="left">{row.homeroomTeacherd || "none"}</TableCell>
+      <TableCell align="left">{row.homeroomTeacherId || "none"}</TableCell>
       <TableCell align="left">{row.studentNumber || 0}</TableCell>
       {/* <TableCell align="left">{row.batchId}</TableCell> */}
       <TableCell align="left">{row.academicYear}</TableCell>
@@ -414,12 +414,9 @@ export default function DataTable({
         sx={{
           width: "100%",
           mb: 2,
-          border: "1px solid #ddd",
-          borderRadius: 2,
-          boxShadow: "0px 2px 10px rgba(0,0,0,0.05)",
-          overflow: "hidden",
+          borderRadius: "8px",
+          boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
         }}
-        className="dataTable-Table"
       >
         <TableToolBar
           isClassPage={isClassPage}

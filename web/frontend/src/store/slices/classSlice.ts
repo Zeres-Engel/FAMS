@@ -49,6 +49,7 @@ export const fetchClasses = createAsyncThunk(
           className: element.className,
           grade: element.grade,
           homeroomTeacherd: element.homeroomTeacherId,
+          homeroomTeacherId: element.homeroomTeacherId,
           createdAt: element.createdAt,
           updatedAt: element.updatedAt,
           academicYear: element.academicYear,
@@ -149,6 +150,9 @@ export const editClass = createAsyncThunk(
   async (data: EditClassPayload, thunkAPI) => {
     try {
       const { id, ...payload } = data;
+      console.log("Class update API call with ID:", id);
+      console.log("Class update payload:", JSON.stringify(payload));
+      
       const response = await axiosInstance.put(`/classes/${id}`, payload);
 
       thunkAPI.dispatch(
@@ -161,6 +165,7 @@ export const editClass = createAsyncThunk(
       thunkAPI.dispatch(fetchClasses());
       return response.data;
     } catch (error: any) {
+      console.error("Error updating class:", error.response?.data || error.message);
       thunkAPI.dispatch(
         addNotify({
           type: "error",
@@ -193,6 +198,7 @@ export const searchClassById = createAsyncThunk(
         className: element.className,
         grade: element.grade,
         homeroomTeacherd: element.homeroomTeacherId,
+        homeroomTeacherId: element.homeroomTeacherId,
         createdAt: element.createdAt,
         updatedAt: element.updatedAt,
         academicYear: element.academicYear,
@@ -225,8 +231,8 @@ export const searchClasses = createAsyncThunk(
       const params = new URLSearchParams();
       if (filters.search) params.append("search", filters.search);
       if (filters.grade) params.append("grade", filters.grade);
-      if (filters.homeroomTeacherd)
-        params.append("homeroomTeacherd", filters.homeroomTeacherd);
+      if (filters.homeroomTeacherId)
+        params.append("homeroomTeacherId", filters.homeroomTeacherId);
       if (filters.academicYear)
         params.append("academicYear", filters.academicYear);
 
@@ -246,6 +252,7 @@ export const searchClasses = createAsyncThunk(
           className: element.className,
           grade: element.grade,
           homeroomTeacherd: element.homeroomTeacherId,
+          homeroomTeacherId: element.homeroomTeacherId,
           createdAt: element.createdAt,
           updatedAt: element.updatedAt,
           academicYear: element.academicYear,

@@ -4,6 +4,7 @@ import { SelectChangeEvent } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store/store";
 import { searchTeachers } from "../../../store/slices/teacherSlice";
+import axios from "axios";
 
 // Kiểu cho form errors
 type FormErrors = Partial<Record<keyof editClassForm, string>>;
@@ -30,15 +31,54 @@ function useEditClassFormHook(formData: editClassForm) {
   });
 
   const [formErrors, setFormErrors] = useState<FormErrors>({});
+  
+  // State local để lưu trữ danh sách giáo viên đã lọc
+  const [availableTeachers, setAvailableTeachers] = useState<any[]>([]);
 
   // Lấy danh sách giáo viên từ Redux store
-  const teachers = useSelector((state: RootState) => state.teacher.teachers);
+  const allTeachers = useSelector((state: RootState) => state.teacher.teachers || []);
 
   useEffect(() => {
-    if (!teachers || teachers.length === 0) {
-      dispatch(searchTeachers({ search: "", page: 1, limit: 100 }));
-    }
-  }, [teachers, dispatch]);
+    const fetchTeachers = async () => {
+      try {
+        // Fetch all teachers
+        await dispatch(searchTeachers({ search: "", page: 1, limit: 100 }));
+        
+        // Fetch all classes to get list of homeroom teachers
+        const classesResponse = await axios.get('http://fams.io.vn/api-nodejs/classes?search=&academicYear=');
+        
+        if (allTeachers && allTeachers.length > 0 && classesResponse.data?.success) {
+          // Extract all homeroom teacher IDs from classes
+          const assignedTeacherIds = new Set(
+            classesResponse.data.data.map((cls: any) => cls.homeroomTeacherId)
+          );
+          
+          // Kiểm tra xem giáo viên đã lọc
+          let filteredTeachersList: any[] = [];
+          
+          // If editing an existing class, include its current teacher and all unassigned teachers
+          if (editingClass?.teacherId) {
+            // Filter to get only unassigned teachers + the current teacher
+            filteredTeachersList = allTeachers.filter(
+              (teacher: any) => !assignedTeacherIds.has(teacher.userId) || teacher.userId === editingClass.teacherId
+            );
+          } else {
+            // New class case - only show unassigned teachers
+            filteredTeachersList = allTeachers.filter(
+              (teacher: any) => !assignedTeacherIds.has(teacher.userId)
+            );
+          }
+          
+          console.log(`Found ${filteredTeachersList.length} available teachers for editing`);
+          setAvailableTeachers(filteredTeachersList);
+        }
+      } catch (error) {
+        console.error('Error fetching teachers:', error);
+      }
+    };
+
+    fetchTeachers();
+  }, [dispatch, editingClass?.teacherId, allTeachers]);
 
   const handleEditClassChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -86,7 +126,7 @@ function useEditClassFormHook(formData: editClassForm) {
     return Object.keys(errors).length === 0;
   };
 
-  const state = { editingClass, formErrors, teachers };
+  const state = { editingClass, formErrors, teachers: availableTeachers };
   const handler = { handleEditClassChange, handleSelectChange, getAcademicYears, validateForm };
 
   return { state, handler };

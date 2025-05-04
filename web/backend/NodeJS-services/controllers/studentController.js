@@ -28,7 +28,7 @@ exports.getAllStudents = async (req, res) => {
       const genderValue = req.query.gender.toLowerCase() === 'male' || req.query.gender === 'true';
       filter.gender = genderValue;
     }
-    
+
     // Tìm kiếm theo search term nếu có
     if (req.query.q) {
       filter.$or = [

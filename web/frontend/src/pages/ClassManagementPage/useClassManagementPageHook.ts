@@ -1,65 +1,155 @@
 import { useEffect, useState } from "react";
-import { useAppSelector } from "../../store/useStoreHook";
+import axios from "../../services/axiosInstance";
 import {
   ClassHeadCell,
 } from "../../model/tableModels/tableDataModels.model";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "../../store/store";
-import {
-  fetchClasses,
-  searchClasses,
-  createClass
-} from "../../store/slices/classSlice";
-import { searchUsers } from "../../store/slices/userSlice";
-import {
-  ClassData,
-  SearchClassFilters,
-} from "../../model/classModels/classModels.model";
-import axiosInstance from "../../services/axiosInstance";
+
+// Định nghĩa kiểu dữ liệu
+interface ClassData {
+  _id: string;
+  className: string;
+  grade: number;
+  homeroomTeacherId: string;
+  academicYear: string;
+  createdAt: string;
+  isActive: boolean;
+  classId: number;
+  id: string;
+  studentNumber: number;
+}
+
+interface SearchClassFilters {
+  search?: string;
+  academicYear?: string;
+  preserveAcademicYears?: boolean;
+  grade?: string;
+  homeroomTeacherId?: string;
+}
 
 function useClassManagementPageHook() {
+  const [classMainData, setClassMainData] = useState<ClassData[]>([]);
   const [filters, setFiltersClass] = useState<SearchClassFilters>({
     search: "",
-    grade: "",
-    homeroomTeacherd: "",
     academicYear: "",
+    preserveAcademicYears: true
   });
-  const dispatch = useDispatch<AppDispatch>();
-  const classState = useAppSelector(state => state.class);
-  const [classMainData, setClassMainData] = useState<ClassData[]>([]);
-  const classes = useSelector((state: RootState) => state.class.allClasses);
-  const classOptions = classes?.map(c => c.className) || [];
-  const classYears =
-    classes?.map(c => {
-      return { className: c.className, academicYear: c.academicYear };
-    }) || [];
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [academicYear, setAcademicYear] = useState<string>("");
+  const [academicYearOptions, setAcademicYearOptions] = useState<string[]>([]);
+  const [classOptions, setClassOptions] = useState<string[]>([]);
   
   // State để quản lý người dùng
   const [users, setUsers] = useState<any[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (!classes) {
-      dispatch(fetchClasses());
-    }
-  }, [dispatch, classes]);
   
+  // Lấy danh sách tất cả các lớp khi component được mount
   useEffect(() => {
-    if (!classState.classes) {
-      dispatch(fetchClasses());
-    } else {
-      setClassMainData(classState?.classes);
-    }
-  }, [dispatch, classState.classes]);
+    fetchClasses();
+  }, []);
   
+  // Gọi API khi academicYear hoặc filters thay đổi
   useEffect(() => {
-    if (filters) {
-      dispatch(searchClasses(filters));
-    } else {
-      dispatch(fetchClasses());
+    fetchClasses();
+  }, [academicYear, filters]);
+  
+  // Hàm gọi API để lấy danh sách lớp
+  const fetchClasses = async () => {
+    setIsLoading(true);
+    try {
+      // Tạo URL với các tham số filter
+      const params = new URLSearchParams();
+      
+      // Thêm tham số năm học nếu có
+      if (filters.academicYear) {
+        params.append("academicYear", filters.academicYear);
+      }
+      
+      // Thêm tham số tìm kiếm nếu có
+      if (filters.search) {
+        params.append("search", filters.search);
+      }
+      
+      // Thêm tham số grade nếu có
+      if (filters.grade) {
+        params.append("grade", filters.grade);
+      }
+      
+      // Thêm tham số homeroomTeacherId nếu có
+      if (filters.homeroomTeacherId) {
+        params.append("homeroomTeacherId", filters.homeroomTeacherId);
+      }
+      
+      const url = `http://fams.io.vn/api-nodejs/classes?${params.toString()}`;
+      console.log("Fetching classes with URL:", url);
+      
+      const response = await axios.get(url);
+      
+      if (response.data?.success) {
+        const classes = response.data.data;
+        setClassMainData(classes);
+        
+        // Lấy danh sách các tên lớp cho dropdown
+        const classNames = classes.map((cls: ClassData) => cls.className);
+        setClassOptions(Array.from(new Set(classNames)));
+        
+        // Lấy danh sách các năm học từ dữ liệu API
+        const years = classes.map((cls: ClassData) => cls.academicYear);
+        const uniqueYears = Array.from(new Set(years)).sort() as string[];
+        
+        // Nếu academicYearOptions rỗng hoặc chưa được khởi tạo, hãy cập nhật nó
+        if (academicYearOptions.length === 0) {
+          console.log("Initializing academicYearOptions");
+          
+          // Tạo danh sách năm học từ API hoặc từ năm hiện tại
+          if (uniqueYears.length > 0) {
+            // Nếu API trả về năm học, sử dụng danh sách đó
+            console.log("Setting academicYearOptions from API data:", uniqueYears);
+            setAcademicYearOptions(uniqueYears);
+          } else {
+            // Nếu không có dữ liệu năm học từ API, tạo danh sách từ năm hiện tại
+            const currentYear = new Date().getFullYear();
+            const options = [];
+            for (let i = -3; i <= 1; i++) {
+              const startYear = currentYear + i;
+              const endYear = startYear + 1;
+              options.push(`${startYear}-${endYear}`);
+            }
+            console.log("Setting academicYearOptions from generated data:", options);
+            setAcademicYearOptions(options);
+          }
+        } else {
+          // Nếu có danh sách năm học rồi, kiểm tra xem có năm học mới nào không có trong danh sách hiện tại
+          const currentOptions = new Set(academicYearOptions);
+          let hasNewYears = false;
+          
+          uniqueYears.forEach(year => {
+            if (!currentOptions.has(year)) {
+              hasNewYears = true;
+              currentOptions.add(year);
+            }
+          });
+          
+          // Cập nhật danh sách nếu có năm học mới
+          if (hasNewYears) {
+            const newOptions = Array.from(currentOptions).sort();
+            console.log("Updating academicYearOptions with new years:", newOptions);
+            setAcademicYearOptions(newOptions);
+          }
+        }
+      } else {
+        console.error("Failed to fetch classes:", response.data);
+        setClassMainData([]);
+        setClassOptions([]);
+      }
+    } catch (error) {
+      console.error("Error fetching classes:", error);
+      setClassMainData([]);
+      setClassOptions([]);
+    } finally {
+      setIsLoading(false);
     }
-  }, [filters, dispatch]);
-
+  };
+  
   // Lấy danh sách người dùng từ API
   const fetchUsers = async (
     searchTerm = "", 
@@ -105,7 +195,7 @@ function useClassManagementPageHook() {
           searchParams.append("noAcademicYear", "true");
         }
         
-        const response = await axiosInstance.get(`http://fams.io.vn/api-nodejs/student-info?${searchParams.toString()}`);
+        const response = await axios.get(`http://fams.io.vn/api-nodejs/student-info?${searchParams.toString()}`);
         
         if (response.data?.success) {
           // Chuyển đổi dữ liệu học sinh
@@ -136,13 +226,13 @@ function useClassManagementPageHook() {
           setUsers([]);
         }
       } else {
-        // Tìm kiếm giáo viên hoặc các vai trò khác (giữ nguyên code cũ)
+        // Tìm kiếm giáo viên hoặc các vai trò khác
         const searchParams = new URLSearchParams();
         if (searchTerm) searchParams.append("search", searchTerm);
         if (role && role !== "all") searchParams.append("roles", role);
         
         // Gọi API để lấy danh sách người dùng
-        const response = await axiosInstance.get(`/users?${searchParams.toString()}`);
+        const response = await axios.get(`/users?${searchParams.toString()}`);
         
         if (response.data?.success) {
           // Chuyển đổi dữ liệu để phù hợp với cấu trúc cần thiết
@@ -168,7 +258,7 @@ function useClassManagementPageHook() {
       setIsLoadingUsers(false);
     }
   };
-
+  
   // Tạo lớp mới
   const handleCreateClass = async (classInfo: any, selectedUsers: any[]) => {
     try {
@@ -190,7 +280,7 @@ function useClassManagementPageHook() {
       // Tạo lớp và thêm học sinh/giáo viên cùng lúc nếu có người dùng được chọn
       if (studentIds.length > 0 || teacherIds.length > 0) {
         // Sử dụng API mới tạo lớp kèm danh sách học sinh và giáo viên
-        const response = await axiosInstance.post(`http://fams.io.vn/api-nodejs/classes/with-students`, {
+        const response = await axios.post(`http://fams.io.vn/api-nodejs/classes/with-students`, {
           ...classData,
           studentIds,
           teacherIds
@@ -198,7 +288,7 @@ function useClassManagementPageHook() {
         
         if (response.data?.success) {
           // Làm mới danh sách lớp học
-          dispatch(fetchClasses());
+          fetchClasses();
           
           return { 
             success: true, 
@@ -212,11 +302,11 @@ function useClassManagementPageHook() {
         }
       } else {
         // Không có người dùng được chọn, chỉ tạo lớp mới
-        const result = await dispatch(createClass(classData)).unwrap();
+        const response = await axios.post(`http://fams.io.vn/api-nodejs/classes`, classData);
         
-        if (result && result.classId) {
+        if (response.data?.success) {
           // Làm mới danh sách lớp học
-          dispatch(fetchClasses());
+          fetchClasses();
           
           return { success: true, message: "Class created successfully" };
         } else {
@@ -234,7 +324,7 @@ function useClassManagementPageHook() {
   
   const headCellsData: ClassHeadCell[] = [
     {
-      id: "id",
+      id: "classId",
       numeric: false,
       disablePadding: true,
       label: "ID",
@@ -252,7 +342,7 @@ function useClassManagementPageHook() {
       label: "Grade",
     },
     {
-      id: "homeroomTeacherd",
+      id: "homeroomTeacherId",
       numeric: false,
       disablePadding: false,
       label: "Teacher Id",
@@ -278,21 +368,31 @@ function useClassManagementPageHook() {
   ];
 
   const isCheckBox = false;
-  const tableTitle = "Class Data";
+  const tableTitle = "";
+
+  // Tạo mảng classYears từ dữ liệu lớp học
+  const classYearData = classMainData.map((cls: ClassData) => ({
+    className: cls.className,
+    academicYear: cls.academicYear
+  }));
 
   const state = {
     headCellsData,
     classMainData,
     tableTitle,
     isCheckBox,
+    academicYearOptions,
+    isLoading,
     classOptions,
-    classYears,
     users,
-    isLoadingUsers
+    isLoadingUsers,
+    classYears: classYearData
   };
   
   const handler = { 
     setFiltersClass,
+    setAcademicYear,
+    fetchClasses,
     fetchUsers,
     handleCreateClass
   };

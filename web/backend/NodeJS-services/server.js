@@ -20,6 +20,9 @@ const classroomRoutes = require('./routes/classroomRoutes');
 const subjectRoutes = require('./routes/subjectRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const studentInfoRoutes = require('./routes/studentInfoRoutes');
+const faceVectorRoutes = require('./routes/faceVectorRoutes');
+const curriculumRoutes = require('./routes/curriculumRoutes');
+const scheduleFormatRoutes = require('./routes/scheduleFormatRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -124,6 +127,9 @@ app.use('/api/classrooms', classroomRoutes);
 app.use('/api/subjects', subjectRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/student-info', studentInfoRoutes);
+app.use('/api/facevector', faceVectorRoutes);
+app.use('/api/curriculum', curriculumRoutes);
+app.use('/api/schedule-formats', scheduleFormatRoutes);
 
 // Root route
 app.get('/', (req, res) => {

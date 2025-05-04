@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, Typography, CircularProgress } from "@mui/material";
 import LayoutComponent from "../../components/Layout/Layout";
 import FaceIdentificationSetting from "../../components/SystemSettingComponent/FaceIdentificationSetting/FaceIdentificationSetting";
 import RFIDSetting from "../../components/SystemSettingComponent/RFIDSetting/RFIDSetting";
@@ -7,6 +7,7 @@ import DeviceSetting from "../../components/SystemSettingComponent/DeviceSetting
 import CurriculumSetting from "../../components/SystemSettingComponent/CurriculumSetting/CurriculumSetting";
 import ScheduleFormatSetting from "../../components/SystemSettingComponent/ScheduleFormatSetting/ScheduleFormatSetting";
 import AcademicYearSetting from "../../components/SystemSettingComponent/AcademicYearSetting/AcademicYearSetting";
+import useIdentifyManagementHook from "./useIdentifyManagementHook";
 
 // Import các setting component
 
@@ -21,6 +22,7 @@ const SETTINGS = [
 
 function SystemManagementPage(): React.JSX.Element {
   const [selectedSetting, setSelectedSetting] = useState<string>("face");
+  const { state, handler } = useIdentifyManagementHook();
 
   const renderSelectedSetting = () => {
     switch (selectedSetting) {
@@ -61,6 +63,19 @@ function SystemManagementPage(): React.JSX.Element {
               {setting.label}
             </Button>
           ))}
+          
+          {/* Nút Refresh Data */}
+          {selectedSetting === "rfid" && (
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={handler.refreshRFIDData}
+              disabled={state.loading}
+              startIcon={state.loading ? <CircularProgress size={20} /> : null}
+            >
+              {state.loading ? "Refreshing..." : "Refresh RFID Data"}
+            </Button>
+          )}
         </Box>
 
         {/* Nội dung Setting */}

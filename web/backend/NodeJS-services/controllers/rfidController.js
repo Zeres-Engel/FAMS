@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const RFID = require('../database/models/RFID');
 const UserAccount = require('../database/models/UserAccount');
 const asyncHandler = require('../middleware/asyncHandler');
@@ -284,6 +285,289 @@ exports.deleteRFID = asyncHandler(async (req, res, next) => {
       success: false,
       message: error.message || 'Error deleting RFID',
       code: 'DELETE_RFID_ERROR'
+    });
+  }
+});
+
+// @desc    Lấy danh sách thẻ RFID với thông tin người dùng
+// @route   GET /api/rfid/users
+// @access  Private
+exports.getAllRFIDWithUserInfo = asyncHandler(async (req, res, next) => {
+  try {
+    console.log("==== FETCHING RFID DATA WITH NEW APPROACH ====");
+    
+    // Truy vấn dữ liệu từ model RFID
+    const rfids = await RFID.find({}).lean();
+    console.log(`Found ${rfids.length} RFID records`);
+    
+    // Log mẫu để kiểm tra cấu trúc
+    if (rfids.length > 0) {
+      console.log("Sample RFID record:", JSON.stringify(rfids[0]));
+    }
+    
+    // Truy vấn mẫu từ các collection khác để kiểm tra
+    const userSample = await UserAccount.findOne().lean();
+    console.log("Sample UserAccount:", userSample ? JSON.stringify(userSample) : "None");
+    
+    const rfidArray = [];
+    
+    // Kiểm tra dữ liệu trong MongoDB Shell
+    console.log(`
+    // Bạn có thể dùng lệnh này trong MongoDB Shell để xem dữ liệu:
+    db.getCollection('rfids').find({}).limit(5);
+    db.getCollection('userAccounts').find({}).limit(5);
+    `);
+    
+    // Truy vấn và kết hợp dữ liệu
+    for (const rfid of rfids) {
+      // Log toàn bộ các trường của bản ghi để debug
+      console.log(`RFID record fields: ${Object.keys(rfid).join(', ')}`);
+      
+      // Kiểm tra trường user hoặc userId
+      let userId = null;
+      let rfidValue = null;
+      
+      // Tìm bất kỳ trường nào có thể chứa userId
+      Object.keys(rfid).forEach(key => {
+        const value = rfid[key];
+        if (typeof value === 'string') {
+          console.log(`Field ${key} = ${value}`);
+          
+          // Phát hiện trường RFID
+          if ((key === 'rfid' || key === 'rfidId' || key === 'RFID_ID' || key.includes('rfid')) &&
+              !rfidValue) {
+            rfidValue = value;
+            console.log(`Found RFID value: ${rfidValue} in field ${key}`);
+          }
+          
+          // Phát hiện userId
+          if ((key === 'userId' || key === 'UserID' || key === 'user' || key.includes('user')) &&
+              key !== '_id' && !userId) {
+            userId = value;
+            console.log(`Found userId: ${userId} in field ${key}`);
+          }
+        }
+      });
+      
+      // Nếu không tìm thấy các trường, sử dụng giá trị mặc định
+      let userInfo = { fullName: 'Unknown User', role: 'unknown' };
+      
+      // Thử tìm thông tin người dùng nếu có userId
+      if (userId) {
+        try {
+          // Tìm thông tin người dùng trong UserAccount
+          const user = await UserAccount.findOne({ userId }).lean();
+          
+          if (user) {
+            userInfo.role = user.role || 'unknown';
+            
+            // Tìm fullName dựa trên role
+            if (user.role === 'teacher') {
+              const Teacher = require('../database/models/Teacher');
+              const teacher = await Teacher.findOne({ userId }).lean();
+              if (teacher && teacher.fullName) {
+                userInfo.fullName = teacher.fullName;
+              } else if (user.username) {
+                userInfo.fullName = user.username;
+              }
+            } else if (user.role === 'student') {
+              const Student = require('../database/models/Student');
+              const student = await Student.findOne({ userId }).lean();
+              if (student && student.fullName) {
+                userInfo.fullName = student.fullName;
+              } else if (user.username) {
+                userInfo.fullName = user.username;
+              }
+            } else if (user.username) {
+              userInfo.fullName = user.username;
+            }
+          }
+        } catch (error) {
+          console.error(`Error finding user info for ${userId}:`, error.message);
+        }
+      }
+      
+      rfidArray.push({
+        userID: userId || 'unknown',
+        fullName: userInfo.fullName,
+        role: userInfo.role,
+        rfid: rfidValue || 'unknown',
+        expireTime: rfid.expireTime || rfid.ExpiryDate || rfid.updatedAt || rfid.createdAt,
+        _id: rfid._id,
+        id: rfid.id || rfid._id
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      count: rfidArray.length,
+      data: rfidArray
+    });
+    
+  } catch (error) {
+    console.error('Error in getAllRFIDWithUserInfo:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching RFID data',
+      error: error.message || error
+    });
+  }
+});
+
+// @desc    Lấy thông tin thẻ RFID của một người dùng cụ thể
+// @route   GET /api/rfid/users/:id
+// @access  Private
+exports.getUserRFID = asyncHandler(async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    
+    // Tìm thẻ RFID theo userId
+    const rfid = await RFID.findOne({ UserID: id, Status: 'Active' });
+    
+    if (!rfid) {
+      return res.status(404).json({
+        success: false,
+        message: `Không tìm thấy thẻ RFID cho người dùng ${id}`
+      });
+    }
+    
+    // Lấy thông tin người dùng
+    const user = await UserAccount.findOne({ userId: id });
+    
+    // Tạo đối tượng kết quả
+    const result = {
+      userID: rfid.UserID,
+      fullName: user ? (user.username || user.email?.split('@')[0]) : rfid.UserID,
+      role: user ? user.role : 'unknown',
+      rfid: rfid.RFID_ID,
+      expireTime: rfid.ExpiryDate,
+      issueDate: rfid.IssueDate,
+      status: rfid.Status
+    };
+    
+    return res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    console.error(`Error fetching RFID for user ${req.params.id}:`, error);
+    return res.status(500).json({
+      success: false,
+      message: 'Không thể lấy dữ liệu thẻ RFID',
+      error: error.message
+    });
+  }
+});
+
+// @desc    Tạo thẻ RFID mới
+// @route   POST /api/rfid/create
+// @access  Private (Admin)
+exports.createNewRFID = asyncHandler(async (req, res, next) => {
+  try {
+    const { userId, rfidId } = req.body;
+    
+    // Kiểm tra dữ liệu đầu vào
+    if (!userId || !rfidId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng cung cấp đầy đủ userId và rfidId'
+      });
+    }
+    
+    // Kiểm tra userId tồn tại
+    const user = await UserAccount.findOne({ userId });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: `Không tìm thấy người dùng với ID ${userId}`
+      });
+    }
+    
+    // Kiểm tra nếu userId đã có RFID
+    const existingUserRFID = await RFID.findOne({ UserID: userId, Status: 'Active' });
+    if (existingUserRFID) {
+      return res.status(400).json({
+        success: false,
+        message: `Người dùng ${userId} đã có thẻ RFID ${existingUserRFID.RFID_ID}`
+      });
+    }
+    
+    // Kiểm tra nếu rfidId đã tồn tại
+    const existingRFID = await RFID.findOne({ RFID_ID: rfidId, Status: 'Active' });
+    if (existingRFID) {
+      return res.status(400).json({
+        success: false,
+        message: `RFID ${rfidId} đã được gán cho người dùng ${existingRFID.UserID}`
+      });
+    }
+    
+    // Tạo RFID mới
+    const newRFID = await RFID.create({
+      UserID: userId,
+      RFID_ID: rfidId,
+      Status: 'Active',
+      IssueDate: new Date(),
+      ExpiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 3)) // Mặc định hết hạn sau 3 năm
+    });
+    
+    // Trả về kết quả
+    res.status(201).json({
+      success: true,
+      message: `Đã tạo thẻ RFID ${rfidId} cho người dùng ${userId}`,
+      data: newRFID
+    });
+  } catch (error) {
+    console.error('Error creating RFID:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Không thể tạo thẻ RFID',
+      error: error.message
+    });
+  }
+});
+
+// @desc    Xóa thẻ RFID theo userId
+// @route   DELETE /api/rfid/users/:id
+// @access  Private (Admin)
+exports.deleteUserRFID = asyncHandler(async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    
+    // Tìm thẻ RFID theo userId
+    const rfid = await RFID.findOne({ UserID: id, Status: 'Active' });
+    
+    if (!rfid) {
+      return res.status(404).json({
+        success: false,
+        message: `Không tìm thấy thẻ RFID đang hoạt động cho người dùng ${id}`
+      });
+    }
+    
+    // Lưu thông tin trước khi xóa
+    const rfidInfo = {
+      userId: rfid.UserID,
+      rfidId: rfid.RFID_ID
+    };
+    
+    // Có hai phương pháp xóa:
+    // 1. Xóa mềm: Đánh dấu là không hoạt động
+    rfid.Status = 'Revoked';
+    await rfid.save();
+    
+    // 2. Xóa cứng: Xóa hoàn toàn khỏi database
+    // await RFID.deleteOne({ _id: rfid._id });
+    
+    return res.status(200).json({
+      success: true,
+      message: `Đã vô hiệu hóa thẻ RFID ${rfidInfo.rfidId} của người dùng ${rfidInfo.userId}`,
+      data: rfidInfo
+    });
+  } catch (error) {
+    console.error(`Error deleting RFID for user ${req.params.id}:`, error);
+    return res.status(500).json({
+      success: false,
+      message: 'Không thể xóa thẻ RFID',
+      error: error.message
     });
   }
 }); 

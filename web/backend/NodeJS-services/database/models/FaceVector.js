@@ -21,7 +21,7 @@ const FaceVectorSchema = new mongoose.Schema({
     type: Number,
     ref: 'ModelVersion'
   },
-  vectorType: {
+  category: {
     type: String,
     enum: ['front', 'up', 'down', 'left', 'right'],
     required: true
@@ -50,7 +50,7 @@ const FaceVectorSchema = new mongoose.Schema({
 });
 
 // Create compound index for unique face vector per user and type
-FaceVectorSchema.index({ userId: 1, vectorType: 1 }, { unique: true });
+FaceVectorSchema.index({ userId: 1, category: 1 }, { unique: true });
 
 // Virtual for getting user info
 FaceVectorSchema.virtual('user', {

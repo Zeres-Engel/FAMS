@@ -40,7 +40,6 @@ def generate_username(full_name: str, id_num: int, batch: int = None, role: str 
     # Handle empty names
     if not full_name or full_name.strip() == "":
         return f"user{id_num}"
-    
     # Xử lý đặc biệt cho tiếng Việt - chuyển đ/Đ thành d/D trước khi remove_accents
     normalized_name = full_name.replace("đ", "d").replace("Đ", "D")
     

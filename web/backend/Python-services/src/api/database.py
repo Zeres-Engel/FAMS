@@ -1211,7 +1211,7 @@ async def init_fams_with_sample_data():
                 classroom_ids.append(classroom_ids[0] if classroom_ids else 1)
         
         # Các model AI mới
-        ai_models = ["AdaFace", "RetinaFace", "MiDas", "6DRepNet"]
+        ai_models = ["Face Recognition", "Face Detection", "Depth Estimation", "Head Pose Estimation"]
         
         # Tạo 6 thiết bị Jetson Nano và phân bổ vào các classroom
         for i in range(6):
@@ -1232,13 +1232,11 @@ async def init_fams_with_sample_data():
             db.Device.insert_one(device_doc)
             print(f"[INFO] Created device: Jetson Nano {device_id} with ID: {device_id} for classroom {classroom_id}")
             
-            # Tạo 1-2 phiên bản model cho mỗi thiết bị
-            num_models = np.random.randint(1, 3)  # 1 hoặc 2 model
-            
-            for j in range(num_models):
-                model_id = (i * 2) + j + 1
-                model_name = ai_models[model_id % len(ai_models)]
-                version = f"{1 + j}.0.{np.random.randint(0, 5)}"
+            # Mỗi thiết bị sẽ có đủ 4 mô hình
+            for j in range(4):
+                model_id = (i * 4) + j + 1
+                model_name = ai_models[j]  # Mỗi thiết bị có cả 4 loại mô hình
+                version = f"{1}.0.{np.random.randint(0, 5)}"
                 
                 model_doc = {
                     "modelId": model_id,
@@ -1246,8 +1244,8 @@ async def init_fams_with_sample_data():
                     "modelName": model_name,
                     "version": version,
                     "deploymentDate": datetime.datetime.now() - datetime.timedelta(days=np.random.randint(0, 90)),
-                    "description": f"{model_name} version {version} for face recognition and attendance",
-                    "checkpointPath": f"/models/{model_name.lower()}_v{version}.pt",
+                    "description": f"{model_name} model version {version} for AI-based attendance",
+                    "checkpointPath": f"/models/{model_name.lower().replace(' ', '_')}_v{version}.pt",
                     "status": "Active",
                     "createdAt": datetime.datetime.now(),
                     "updatedAt": datetime.datetime.now(),
@@ -1277,9 +1275,12 @@ async def init_fams_with_sample_data():
     face_vector_count = 0
     face_angles = ["front", "up", "down", "left", "right"]
 
-    # Danh sách userIds đã có trong hệ thống
-    all_users = list(db.UserAccount.find({"isActive": True}, {"userId": 1}))
-    print(f"[INFO] Found {len(all_users)} users to generate face vectors")
+    # Chỉ lấy danh sách học sinh và giáo viên, không lấy phụ huynh
+    all_users = list(db.UserAccount.find({
+        "isActive": True, 
+        "role": {"$in": ["student", "teacher"]}
+    }, {"userId": 1, "role": 1}))
+    print(f"[INFO] Found {len(all_users)} student and teacher users to generate face vectors")
 
     # Lấy model ID
     model = db.ModelVersion.find_one({})
@@ -1291,7 +1292,7 @@ async def init_fams_with_sample_data():
         
         # Lọc các user chưa có FaceVector
         users_needing_vectors = [user for user in all_users if user["userId"] not in existing_users_with_vectors]
-        print(f"[INFO] Generating face vectors for {len(users_needing_vectors)} users who don't have them yet")
+        print(f"[INFO] Generating face vectors for {len(users_needing_vectors)} students and teachers who don't have them yet")
         
         face_vectors_to_insert = []
         for user in users_needing_vectors:
@@ -1308,7 +1309,7 @@ async def init_fams_with_sample_data():
                     "updatedAt": datetime.datetime.now(),
                     "isActive": True,
                     "category": angle,
-                    "score": round(np.random.uniform(0.85, 0.98), 2)  # Score từ 0.85 đến 0.98
+                    "score": 0.00  # Đặt score cố định = 0.00
                 }
                 face_vectors_to_insert.append(face_vector)
                 face_vector_count += 1
@@ -1336,6 +1337,70 @@ async def init_fams_with_sample_data():
     # Thống kê số lượng face vector
     total_face_vectors = db.FaceVector.count_documents({})
     print(f"[INFO] Total face vectors in system: {total_face_vectors}")
+    
+    # Tạo thẻ RFID cho tất cả học sinh và giáo viên
+    print("[INFO] Generating RFID cards for all students and teachers")
+    
+    # Lấy danh sách tất cả học sinh và giáo viên
+    all_users = list(db.UserAccount.find({
+        "isActive": True, 
+        "role": {"$in": ["student", "teacher"]}
+    }, {"userId": 1}))
+    
+    # Lọc những người đã có RFID
+    existing_rfid_users = set(doc["userId"] for doc in db.RFID.find({}, {"userId": 1}))
+    users_needing_rfid = [user for user in all_users if user["userId"] not in existing_rfid_users]
+    
+    print(f"[INFO] Found {len(users_needing_rfid)} users who need RFID cards")
+    
+    # Tạo RFID cho những người chưa có
+    rfid_batch = []
+    next_rfid_id = 1
+    
+    # Lấy ID bản ghi RFID cuối cùng
+    last_rfid = db.RFID.find_one(sort=[("id", -1)])
+    if last_rfid and "id" in last_rfid:
+        next_rfid_id = int(last_rfid["id"]) + 1
+    
+    for user in users_needing_rfid:
+        user_id = user["userId"]
+        
+        # Tạo RFID ID ngẫu nhiên với 10 chữ số
+        rfid_value = f"{next_rfid_id:010d}"
+        
+        rfid_doc = {
+            "id": next_rfid_id,
+            "userId": user_id,
+            "rfidId": rfid_value,
+            "isActive": True,
+            "createdAt": datetime.datetime.now(),
+            "updatedAt": datetime.datetime.now()
+        }
+        
+        rfid_batch.append(rfid_doc)
+        next_rfid_id += 1
+        
+        # Insert theo batch để tránh vấn đề về bộ nhớ
+        if len(rfid_batch) >= 100:
+            try:
+                db.RFID.insert_many(rfid_batch)
+                print(f"[INFO] Inserted batch of {len(rfid_batch)} RFID cards")
+                rfid_batch = []
+            except Exception as e:
+                print(f"[ERROR] Failed to insert RFID batch: {str(e)}")
+                rfid_batch = []
+    
+    # Insert những RFID còn lại
+    if rfid_batch:
+        try:
+            db.RFID.insert_many(rfid_batch)
+            print(f"[INFO] Inserted final batch of {len(rfid_batch)} RFID cards")
+        except Exception as e:
+            print(f"[ERROR] Failed to insert final batch of RFID cards: {str(e)}")
+    
+    # Thống kê số lượng RFID
+    total_rfids = db.RFID.count_documents({})
+    print(f"[INFO] Total RFID cards in system: {total_rfids}")
     
     # Tạo indexes cho các collection quan trọng để tối ưu tìm kiếm
     print("[INFO] Creating indexes for important collections")

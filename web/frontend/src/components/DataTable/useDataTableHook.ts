@@ -24,7 +24,7 @@ import {
 } from "../../store/slices/userSlice";
 import { ClassData } from "../../model/classModels/classModels.model";
 import { fetchUserPaginated } from "../../store/slices/userSlice";
-import { deleteClass, editClass } from "../../store/slices/classSlice";
+import { deleteClass, editClass, fetchClasses } from "../../store/slices/classSlice";
 import { editAttendance } from "../../store/slices/attendanceSlice";
 
 interface UseDataTableHookProps {
@@ -239,7 +239,13 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
   const handleEditClassClick = (classData: editClassForm, editID: string) => {
     setEditingClass(classData);
     setIsEditOpen(true);
-    setEditingClassID(editID);
+    // Chuyển đổi để sử dụng classId thay vì _id cho API
+    // Sử dụng type assertion để tránh lỗi TypeScript với union type
+    const typedRows = rows as Array<{id?: string, _id?: string, classId?: number | string}>;
+    const row = typedRows.find(r => r.id === editID || r._id === editID);
+    console.log("Found class row:", row);
+    // Đảm bảo luôn sử dụng classId để gọi API
+    setEditingClassID(row?.classId?.toString() || row?.id?.toString() || editID);
   };
   const handleEditAttendanceClick = (
     attendanceStatus: EditAttendanceFormProps
@@ -338,9 +344,28 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
       grade: classFormData.grade,
       academicYear: classFormData.academicYear,
     };
-    console.log("Saving edited class:", classFormData);
-    console.log("Saving edited class ID:", editingClassID);
-    dispatch(editClass({ id: editingClassID, ...payload }));
+    
+    // Log ra để debug
+    console.log("[handleEditClassSave] Dữ liệu form:", classFormData);
+    console.log("[handleEditClassSave] Payload gửi API:", payload);
+    console.log("[handleEditClassSave] Class ID được sử dụng:", editingClassID);
+    console.log("[handleEditClassSave] Kiểu của classId:", typeof editingClassID);
+    
+    // Đảm bảo gửi classId chứ không phải _id và theo dõi kết quả sau khi hoàn thành
+    const updatePromise = dispatch(editClass({ id: editingClassID, ...payload }));
+    
+    // Đợi cập nhật hoàn tất trước khi đóng form
+    updatePromise.then(() => {
+      console.log("[handleEditClassSave] Cập nhật thành công, đang làm mới dữ liệu");
+      // Gọi lại fetchClasses để đảm bảo dữ liệu được cập nhật
+      dispatch(fetchClasses());
+      
+      // Kích hoạt sự kiện custom để thông báo việc cập nhật dữ liệu
+      window.dispatchEvent(new Event('class-updated'));
+    }).catch((error) => {
+      console.error("[handleEditClassSave] Lỗi khi cập nhật:", error);
+    });
+    
     setIsEditOpen(false);
   };
   const handleEditAttendanceSave = (

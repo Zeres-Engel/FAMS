@@ -84,6 +84,7 @@ function ClassManagementPage(): React.JSX.Element {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [isLoadingTeachers, setIsLoadingTeachers] = useState(false);
   const [allClasses, setAllClasses] = useState<ClassData[]>([]);
+  const [availableTeachers, setAvailableTeachers] = useState<Teacher[]>([]);
   const [isLoadingClasses, setIsLoadingClasses] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
@@ -108,50 +109,102 @@ function ClassManagementPage(): React.JSX.Element {
     setAcademicYearOptions(generateAcademicYearOptions());
   }, []);
 
-  // Fetch teachers when component mounts
+  // Fetch teachers and filter those not assigned as homeroom teachers
   useEffect(() => {
-    const fetchTeachers = async () => {
+    const fetchTeachersAndClasses = async () => {
       setIsLoadingTeachers(true);
       try {
-        const response = await axios.get('http://fams.io.vn/api-nodejs/teachers/search?search=&page=1&limit=100');
-        if (response.data.success) {
-          setTeachers(response.data.data);
+        // Fetch all teachers
+        const teachersResponse = await axios.get('http://fams.io.vn/api-nodejs/teachers/search?search=&page=1&limit=100');
+        
+        // Fetch all classes to get list of homeroom teachers
+        const classesResponse = await axios.get('http://fams.io.vn/api-nodejs/classes?search=&academicYear=');
+        
+        if (teachersResponse.data.success && classesResponse.data.success) {
+          const allTeachers = teachersResponse.data.data;
+          setTeachers(allTeachers);
+          
+          // Extract all homeroom teacher IDs from classes
+          const assignedTeacherIds = new Set(
+            classesResponse.data.data.map((classData: ClassData) => classData.homeroomTeacherId)
+          );
+          
+          console.log("Assigned teacher IDs:", Array.from(assignedTeacherIds));
+          
+          // Filter out teachers who are already homeroom teachers
+          const availableTeachers = allTeachers.filter(
+            (teacher: Teacher) => !assignedTeacherIds.has(teacher.userId)
+          );
+          
+          console.log("Available teachers:", availableTeachers.length);
+          setAvailableTeachers(availableTeachers);
+          setAllClasses(classesResponse.data.data);
         } else {
-          console.error("Failed to fetch teachers:", response.data);
+          console.error("Failed to fetch teachers or classes:", 
+            !teachersResponse.data.success ? teachersResponse.data : classesResponse.data);
         }
       } catch (error) {
-        console.error("Error fetching teachers:", error);
+        console.error("Error fetching teachers and classes:", error);
       } finally {
         setIsLoadingTeachers(false);
       }
     };
 
-    fetchTeachers();
+    fetchTeachersAndClasses();
   }, []);
 
-  // Fetch all classes when component mounts
+  // Thêm một useEffect để làm mới dữ liệu khi store thay đổi
   useEffect(() => {
-    const fetchClasses = async () => {
-      setIsLoadingClasses(true);
-      try {
-        const response = await axios.get('http://fams.io.vn/api-nodejs/classes?search=&academicYear=');
-        if (response.data.success) {
-          setAllClasses(response.data.data);
-        } else {
-          console.error("Failed to fetch classes:", response.data);
-        }
-      } catch (error) {
-        console.error("Error fetching classes:", error);
-      } finally {
-        setIsLoadingClasses(false);
-      }
+    // Đăng ký sự kiện lắng nghe cho việc làm mới dữ liệu
+    const refreshData = () => {
+      console.log("Refreshing class data after update");
+      handler.fetchClasses();
     };
-
-    fetchClasses();
-  }, []);
+    
+    // Lắng nghe sự kiện custom 'class-updated'
+    window.addEventListener('class-updated', refreshData);
+    
+    // Hủy đăng ký khi component unmount
+    return () => {
+      window.removeEventListener('class-updated', refreshData);
+    };
+  }, [handler]);
 
   // Handle dialog open/close
   const handleOpenCreateDialog = () => {
+    // Refresh available teachers when opening the dialog
+    const fetchTeachersAndClasses = async () => {
+      setIsLoadingTeachers(true);
+      try {
+        // Fetch all teachers
+        const teachersResponse = await axios.get('http://fams.io.vn/api-nodejs/teachers/search?search=&page=1&limit=100');
+        
+        // Fetch all classes to get list of homeroom teachers
+        const classesResponse = await axios.get('http://fams.io.vn/api-nodejs/classes?search=&academicYear=');
+        
+        if (teachersResponse.data.success && classesResponse.data.success) {
+          const allTeachers = teachersResponse.data.data;
+          
+          // Extract all homeroom teacher IDs from classes
+          const assignedTeacherIds = new Set(
+            classesResponse.data.data.map((classData: ClassData) => classData.homeroomTeacherId)
+          );
+          
+          // Filter out teachers who are already homeroom teachers
+          const availableTeachers = allTeachers.filter(
+            (teacher: Teacher) => !assignedTeacherIds.has(teacher.userId)
+          );
+          
+          setAvailableTeachers(availableTeachers);
+        }
+      } catch (error) {
+        console.error("Error refreshing teachers data:", error);
+      } finally {
+        setIsLoadingTeachers(false);
+      }
+    };
+    
+    fetchTeachersAndClasses();
     setCreateDialogOpen(true);
     setTabValue(0);
     setClassInfo({
@@ -213,7 +266,7 @@ function ClassManagementPage(): React.JSX.Element {
   // Check if class already exists
   const isClassDuplicate = () => {
     return allClasses.some(
-      (cls) => 
+      (cls: ClassData) => 
         cls.className === classInfo.className && 
         cls.grade.toString() === classInfo.grade && 
         cls.academicYear === classInfo.academicYear
@@ -320,10 +373,10 @@ function ClassManagementPage(): React.JSX.Element {
 
   // Handle user selection
   const handleToggleUserSelection = (user: any) => {
-    const isSelected = selectedTeachers.some(t => t.id === user.id);
+    const isSelected = selectedTeachers.some((t: any) => t.id === user.id);
     
     if (isSelected) {
-      setSelectedTeachers(selectedTeachers.filter(t => t.id !== user.id));
+      setSelectedTeachers(selectedTeachers.filter((t: any) => t.id !== user.id));
     } else {
       setSelectedTeachers([...selectedTeachers, user]);
     }
@@ -410,10 +463,10 @@ function ClassManagementPage(): React.JSX.Element {
 
   // Handle student selection
   const handleToggleStudentSelection = (student: any) => {
-    const isSelected = selectedStudents.some(s => s.id === student.id);
+    const isSelected = selectedStudents.some((s: any) => s.id === student.id);
     
     if (isSelected) {
-      setSelectedStudents(selectedStudents.filter(s => s.id !== student.id));
+      setSelectedStudents(selectedStudents.filter((s: any) => s.id !== student.id));
     } else {
       setSelectedStudents([...selectedStudents, student]);
     }
@@ -421,10 +474,10 @@ function ClassManagementPage(): React.JSX.Element {
 
   // Handle teacher selection
   const handleToggleTeacherSelection = (teacher: any) => {
-    const isSelected = selectedTeachers.some(t => t.id === teacher.id);
+    const isSelected = selectedTeachers.some((t: any) => t.id === teacher.id);
     
     if (isSelected) {
-      setSelectedTeachers(selectedTeachers.filter(t => t.id !== teacher.id));
+      setSelectedTeachers(selectedTeachers.filter((t: any) => t.id !== teacher.id));
     } else {
       setSelectedTeachers([...selectedTeachers, teacher]);
     }
@@ -470,13 +523,15 @@ function ClassManagementPage(): React.JSX.Element {
           <Grid size={12} className="classPage-Header">
             <DataTable
               headCellsData={state.headCellsData}
-              tableMainData={state.classMainData}
+              tableMainData={state.classMainData as any}
               tableTitle={state.tableTitle}
               isCheckBox={state.isCheckBox}
               isAdmin={true}
               isClassManagement={true}
               setFiltersClass={handler.setFiltersClass}
               classOptions={state.classOptions}
+              availableAcademicYears={state.academicYearOptions}
+              classYears={state.classYears}
               createButtonAction={handleOpenCreateDialog} 
             />
           </Grid>
@@ -560,7 +615,7 @@ function ClassManagementPage(): React.JSX.Element {
                 <div>
                   <Autocomplete
                     id="teacher-autocomplete"
-                    options={teachers}
+                    options={availableTeachers}
                     loading={isLoadingTeachers}
                     getOptionLabel={(option) => `${option.userId} - ${option.fullName}`}
                     renderInput={(params) => (
@@ -568,6 +623,7 @@ function ClassManagementPage(): React.JSX.Element {
                         {...params}
                         label="Homeroom Teacher *"
                         required
+                        helperText="Only showing teachers not assigned as homeroom teachers"
                         InputProps={{
                           ...params.InputProps,
                           endAdornment: (
@@ -637,7 +693,7 @@ function ClassManagementPage(): React.JSX.Element {
                     {availableClassesForFilter.map((cls: { classId: string | number, className: string }) => (
                       <MenuItem key={cls.classId} value={cls.className}>
                         {cls.className}
-                      </MenuItem>
+                        </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
