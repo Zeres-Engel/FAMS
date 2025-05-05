@@ -201,23 +201,37 @@ function useScheduleManagementPageHook() {
 
         setAllClasses(sortedClasses);
 
-        // Extract unique academic years
-        const uniqueYears = Array.from(
-          new Set(response.data.data.map(cls => cls.academicYear))
-        );
+        // Extract unique academic years and sort them
+        const uniqueYears = getUniqueAcademicYears(sortedClasses);
         setAcademicYears(uniqueYears);
 
         if (uniqueYears.length > 0) {
-          setSelectedAcademicYear(uniqueYears[uniqueYears.length - 1]); // Select the most recent year by default
+          // Chọn năm học gần đây nhất làm mặc định
+          setSelectedAcademicYear(uniqueYears[0]); 
           setFilters(prev => ({
             ...prev,
-            academicYear: uniqueYears[uniqueYears.length - 1],
+            academicYear: uniqueYears[0],
           }));
         }
       }
     } catch (error) {
       console.error("Error fetching classes:", error);
     }
+  };
+
+  // Hàm trích xuất các academicYear duy nhất từ danh sách lớp học và sắp xếp theo thứ tự mới nhất trước
+  const getUniqueAcademicYears = (classes: ClassData[]): string[] => {
+    // Lấy tất cả các năm học duy nhất từ danh sách lớp
+    const uniqueYearsSet = new Set(classes.map(cls => cls.academicYear));
+    const uniqueYears = Array.from(uniqueYearsSet);
+    
+    // Sắp xếp năm học theo thứ tự giảm dần (mới nhất lên đầu)
+    return uniqueYears.sort((a, b) => {
+      // Trích xuất năm kết thúc để so sánh (vd: "2022-2023" -> 2023)
+      const endYearA = parseInt(a.split('-')[1]);
+      const endYearB = parseInt(b.split('-')[1]);
+      return endYearB - endYearA; // Sắp xếp giảm dần
+    });
   };
 
   // Fetch teachers from API
@@ -266,6 +280,28 @@ function useScheduleManagementPageHook() {
     fetchClassesFromAPI();
     fetchSubjectsFromAPI();
     fetchTeachersFromAPI();
+    
+    // Sử dụng dữ liệu academicYears từ allClasses nếu có
+    if (allClasses.length > 0 && academicYears.length === 0) {
+      // Lấy và cập nhật academicYears từ allClasses hiện có
+      const years = getUniqueAcademicYears(allClasses);
+      if (years.length > 0) {
+        setAcademicYears(years);
+        setSelectedAcademicYear(years[0]);
+      }
+    } 
+    // Chỉ tạo năm học mặc định nếu không có dữ liệu từ API
+    else if (academicYears.length === 0) {
+      const currentYear = new Date().getFullYear();
+      const defaultYears = [
+        `${currentYear-1}-${currentYear}`,
+        `${currentYear}-${currentYear+1}`, 
+        `${currentYear+1}-${currentYear+2}`
+      ];
+      
+      setAcademicYears(defaultYears);
+      setSelectedAcademicYear(defaultYears[1]); // Năm hiện tại làm mặc định
+    }
     
     // Load lịch học khi component được mount
     const params: any = {
@@ -803,9 +839,22 @@ function useScheduleManagementPageHook() {
   };
 
   const handleAcademicYearChange = (year: string) => {
+    console.log("Changing academic year to:", year);
+    
+    // Nếu là giá trị trống, gán lại giá trị mặc định
+    if (!year) {
+      const currentYear = new Date().getFullYear();
+      const defaultYear = `${currentYear}-${currentYear+1}`;
+      console.log("Empty year provided, using default:", defaultYear);
+      year = defaultYear;
+    }
+    
     setSelectedAcademicYear(year);
     const newFilters = { ...filters, academicYear: year, class: "" };
     setFilters(newFilters);
+    
+    // Nếu đang chọn năm học cho lịch, tìm các lớp thuộc năm đó
+    fetchClassesWithFilter(year);
   };
 
   const handleSubjectChange = (subjectId: number | null) => {

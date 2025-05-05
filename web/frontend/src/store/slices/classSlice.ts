@@ -78,6 +78,7 @@ export const deleteClass = createAsyncThunk(
   "class/deleteClass",
   async (classId: string, thunkAPI) => {
     try {
+      console.log("Attempting to delete class with ID:", classId);
       thunkAPI.dispatch(showLoading());
       await axiosInstance.delete(`/classes/${classId}`);
       thunkAPI.dispatch(
@@ -88,8 +89,16 @@ export const deleteClass = createAsyncThunk(
         })
       );
       thunkAPI.dispatch(fetchClasses());
+      
+      // Kích hoạt sự kiện custom để thông báo việc cập nhật dữ liệu
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('class-updated'));
+      }
+      
       return classId;
     } catch (error: any) {
+      console.error("Error deleting class:", error.response?.data || error.message);
+      console.error("Request URL:", `/classes/${classId}`);
       thunkAPI.dispatch(
         addNotify({
           type: "error",

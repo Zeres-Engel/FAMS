@@ -6,7 +6,6 @@ import RFIDSetting from "../../components/SystemSettingComponent/RFIDSetting/RFI
 import DeviceSetting from "../../components/SystemSettingComponent/DeviceSetting/DeviceSetting";
 import CurriculumSetting from "../../components/SystemSettingComponent/CurriculumSetting/CurriculumSetting";
 import ScheduleFormatSetting from "../../components/SystemSettingComponent/ScheduleFormatSetting/ScheduleFormatSetting";
-import AcademicYearSetting from "../../components/SystemSettingComponent/AcademicYearSetting/AcademicYearSetting";
 import useIdentifyManagementHook from "./useIdentifyManagementHook";
 
 // Import các setting component
@@ -14,10 +13,8 @@ import useIdentifyManagementHook from "./useIdentifyManagementHook";
 const SETTINGS = [
   { label: "Face Identification Setting", value: "face" },
   { label: "RFID Setting", value: "rfid" },
-  { label: "Device Setting", value: "device" },
   { label: "Curriculum Setting", value: "curriculum" },
   { label: "Schedule Format Setting", value: "schedule" },
-  { label: "Academic Year Setting", value: "academic" },
 ];
 
 function SystemManagementPage(): React.JSX.Element {
@@ -30,14 +27,10 @@ function SystemManagementPage(): React.JSX.Element {
         return <FaceIdentificationSetting />;
       case "rfid":
         return <RFIDSetting />;
-      case "device":
-        return <DeviceSetting />;
       case "curriculum":
         return <CurriculumSetting />;
       case "schedule":
         return <ScheduleFormatSetting />;
-      case "academic":
-        return <AcademicYearSetting />;
       default:
         return null;
     }
@@ -63,19 +56,6 @@ function SystemManagementPage(): React.JSX.Element {
               {setting.label}
             </Button>
           ))}
-          
-          {/* Nút Refresh Data */}
-          {selectedSetting === "rfid" && (
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={handler.refreshRFIDData}
-              disabled={state.loading}
-              startIcon={state.loading ? <CircularProgress size={20} /> : null}
-            >
-              {state.loading ? "Refreshing..." : "Refresh RFID Data"}
-            </Button>
-          )}
         </Box>
 
         {/* Nội dung Setting */}

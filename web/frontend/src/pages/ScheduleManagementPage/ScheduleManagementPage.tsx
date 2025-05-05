@@ -20,6 +20,7 @@ import {
   Select,
   MenuItem,
   SelectChangeEvent,
+  FormHelperText,
 } from "@mui/material";
 import moment from "moment";
 import LayoutComponent from "../../components/Layout/Layout";
@@ -80,10 +81,18 @@ const ScheduleManagementPage: React.FC = () => {
   // Add this line to debug teachers list
   console.log("Component received teachers:", state.teachers);
 
+  // Thêm log để debug academicYears
+  useEffect(() => {
+    console.log("Academic years in component:", state.academicYears);
+    console.log("Selected academic year:", state.selectedAcademicYear);
+  }, [state.academicYears, state.selectedAcademicYear]);
+
   const isMobile = useMediaQuery("(max-width:600px)");
   const role = useSelector((state: RootState) => state.authUser.role);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [openArrangementDialog, setOpenArrangementDialog] = useState(false);
+  const [scheduleSuccess, setScheduleSuccess] = useState(false);
+  const [scheduleMessage, setScheduleMessage] = useState("");
   const [newEvent, setNewEvent] = useState<ScheduleEvent>({
     id: 0,
     subject: "",
@@ -1545,47 +1554,53 @@ const ScheduleManagementPage: React.FC = () => {
                   mt: 1,
                 }}
               >
-                <TextField
-                  select
-                  label="Academic Year"
-                  value={state.selectedAcademicYear}
-                  onChange={e => {
-                    handler.handleAcademicYearChange(e.target.value);
-                    setAcademicYearError(false);
-                  }}
-                  required
-                  error={academicYearError}
-                  helperText={
-                    academicYearError ? "Please select an academic year" : ""
-                  }
-                  sx={{ width: "100%" }}
-                >
-                  <option value="">-- Select --</option>
-                  {state.academicYears.map(year => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </TextField>
+                <FormControl fullWidth sx={{ mb: 2 }} variant="outlined">
+                  <InputLabel id="arrange-academic-year-label">Academic Year</InputLabel>
+                  <Select
+                    labelId="arrange-academic-year-label"
+                    id="arrange-academic-year-select"
+                    value={state.selectedAcademicYear}
+                    onChange={e => {
+                      console.log("Academic Year selected:", e.target.value);
+                      handler.handleAcademicYearChange(e.target.value);
+                      setAcademicYearError(false);
+                    }}
+                    required
+                    error={academicYearError}
+                    label="Academic Year"
+                  >
+                    {state.academicYears && state.academicYears.length > 0 ? (
+                      state.academicYears.map(year => (
+                        <MenuItem key={year} value={year}>
+                          {year}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>No academic years available</MenuItem>
+                    )}
+                  </Select>
+                  {academicYearError && <FormHelperText error>Please select an academic year</FormHelperText>}
+                </FormControl>
 
-                <TextField
-                  select
-                  label="Semester"
-                  value={semester}
-                  onChange={e => {
-                    setSemester(e.target.value);
-                    setSemesterError(false);
-                  }}
-                  SelectProps={{ native: true }}
-                  required
-                  error={semesterError}
-                  helperText={semesterError ? "Please select a semester" : ""}
-                  sx={{ width: "100%" }}
-                >
-                  <option value="">-- Select --</option>
-                  <option value="Semester 1">Semester 1</option>
-                  <option value="Semester 2">Semester 2</option>
-                </TextField>
+                <FormControl fullWidth sx={{ mb: 2 }} variant="outlined">
+                  <InputLabel id="arrange-semester-label">Semester</InputLabel>
+                  <Select
+                    labelId="arrange-semester-label"
+                    id="arrange-semester-select"
+                    value={semester}
+                    onChange={e => {
+                      setSemester(e.target.value);
+                      setSemesterError(false);
+                    }}
+                    required
+                    error={semesterError}
+                    label="Semester"
+                  >
+                    <MenuItem value="Semester 1">Semester 1</MenuItem>
+                    <MenuItem value="Semester 2">Semester 2</MenuItem>
+                  </Select>
+                  {semesterError && <FormHelperText error>Please select a semester</FormHelperText>}
+                </FormControl>
 
                 <TextField
                   label="From Date"
@@ -1596,7 +1611,16 @@ const ScheduleManagementPage: React.FC = () => {
                     setDateFromError(false);
                   }}
                   required
-                  InputLabelProps={{ shrink: true }}
+                  fullWidth
+                  sx={{ mb: 2 }}
+                  variant="outlined"
+                  InputLabelProps={{ 
+                    shrink: true,
+                    sx: { 
+                      backgroundColor: "#fff",
+                      px: 1
+                    }
+                  }}
                   error={dateFromError}
                   helperText={dateFromError ? "Please select a from date" : ""}
                 />
@@ -1610,7 +1634,16 @@ const ScheduleManagementPage: React.FC = () => {
                     setDateToError(false);
                   }}
                   required
-                  InputLabelProps={{ shrink: true }}
+                  fullWidth
+                  sx={{ mb: 2 }}
+                  variant="outlined"
+                  InputLabelProps={{ 
+                    shrink: true,
+                    sx: { 
+                      backgroundColor: "#fff",
+                      px: 1
+                    }
+                  }}
                   error={dateToError}
                   helperText={dateToError ? "Please select a to date" : ""}
                 />
@@ -1618,7 +1651,8 @@ const ScheduleManagementPage: React.FC = () => {
             </DialogContent>
             <DialogActions>
               <Button
-                variant="outlined"
+                variant="contained"
+                color="primary"
                 onClick={async () => {
                   const hasError =
                     !semester ||
@@ -1654,20 +1688,34 @@ const ScheduleManagementPage: React.FC = () => {
                     );
 
                     if (response.data.success) {
-                      // Log success to console instead of showing alert
+                      // Hiển thị thông báo thành công
+                      setScheduleSuccess(true);
+                      setScheduleMessage(response.data.message || "Schedule generation started successfully");
                       console.log(`${response.data.message}. The schedule generation is processing in the background.`);
                     } else {
-                      // Log error message to console
+                      // Hiển thị thông báo lỗi
+                      setScheduleSuccess(false);
+                      setScheduleMessage(response.data.message || "Failed to generate schedule");
                       console.error("API Error:", response.data);
                     }
                   } catch (error) {
+                    // Hiển thị thông báo lỗi
+                    setScheduleSuccess(false);
+                    setScheduleMessage("Error connecting to server");
                     console.error(
                       "Error calling schedule generation API:",
                       error
                     );
                   }
 
-                  setOpenArrangementDialog(false);
+                  // Hiển thị thông báo trước khi đóng dialog
+                  setTimeout(() => {
+                    setOpenArrangementDialog(false);
+                    // Hiển thị thông báo dưới dạng alert sau khi đóng dialog
+                    if (scheduleSuccess) {
+                      alert(scheduleMessage + ". The schedule generation is processing in the background.");
+                    }
+                  }, 500);
                 }}
               >
                 Submit

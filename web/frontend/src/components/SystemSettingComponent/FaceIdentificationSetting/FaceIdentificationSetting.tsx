@@ -25,6 +25,7 @@ import {
   Select,
   MenuItem,
   Chip,
+  SelectChangeEvent,
 } from "@mui/material";
 import axios from "../../../services/axiosInstance";
 import SearchIcon from "@mui/icons-material/Search";
@@ -58,8 +59,8 @@ function FaceIdentificationSetting() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   
-  // Search filter state
-  const [searchField, setSearchField] = useState<"all" | "userId" | "fullName" | "role">("all");
+  // Search filter state - đổi sang lọc theo role giống RFIDSetting
+  const [selectedRole, setSelectedRole] = useState<"all" | "teacher" | "student">("all");
 
   // Fetch face vectors from API
   useEffect(() => {
@@ -85,41 +86,41 @@ function FaceIdentificationSetting() {
     fetchFaceVectors();
   }, []);
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearch(value);
-    setPage(0); // Reset to first page when searching
+  // Cập nhật use effect để lọc theo role và search theo userID
+  useEffect(() => {
+    let filtered = [...users];
     
-    if (!value.trim()) {
-      setFilteredUsers(users);
-      return;
+    // Lọc theo vai trò nếu đã chọn
+    if (selectedRole !== "all") {
+      filtered = filtered.filter(user => 
+        user.role.toLowerCase() === selectedRole.toLowerCase()
+      );
     }
     
-    const lowerCaseValue = value.toLowerCase();
+    // Áp dụng tìm kiếm theo userID nếu có
+    if (search.trim() !== "") {
+      const lowerCaseValue = search.toLowerCase();
+      filtered = filtered.filter(user => 
+        user.userId.toLowerCase().includes(lowerCaseValue)
+      );
+    }
     
-    setFilteredUsers(
-      users.filter((user: FaceVector) => {
-        if (searchField === "userId") {
-          return user.userId.toLowerCase().includes(lowerCaseValue);
-        } else if (searchField === "fullName") {
-          return user.fullName.toLowerCase().includes(lowerCaseValue);
-        } else if (searchField === "role") {
-          return user.role.toLowerCase().includes(lowerCaseValue);
-        } else {
-          // Search in all fields
-          return (
-            user.userId.toLowerCase().includes(lowerCaseValue) ||
-            user.fullName.toLowerCase().includes(lowerCaseValue) ||
-            user.role.toLowerCase().includes(lowerCaseValue)
-          );
-        }
-      })
-    );
+    setFilteredUsers(filtered);
+    // Reset to first page when filtering
+    setPage(0);
+  }, [search, selectedRole, users]);
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
+
+  const handleRoleChange = (e: SelectChangeEvent<"all" | "teacher" | "student">) => {
+    setSelectedRole(e.target.value as "all" | "teacher" | "student");
   };
 
   const handleClearSearch = () => {
     setSearch("");
-    setFilteredUsers(users);
+    setSelectedRole("all");
   };
 
   const handleEdit = (user: FaceVector) => {
@@ -180,19 +181,18 @@ function FaceIdentificationSetting() {
           const lowerCaseValue = search.toLowerCase();
           setFilteredUsers(
             updatedUsers.filter((user: FaceVector) => {
-              if (searchField === "userId") {
-                return user.userId.toLowerCase().includes(lowerCaseValue);
-              } else if (searchField === "fullName") {
-                return user.fullName.toLowerCase().includes(lowerCaseValue);
-              } else if (searchField === "role") {
-                return user.role.toLowerCase().includes(lowerCaseValue);
-              } else {
+              if (selectedRole === "all") {
                 return (
                   user.userId.toLowerCase().includes(lowerCaseValue) ||
                   user.fullName.toLowerCase().includes(lowerCaseValue) ||
                   user.role.toLowerCase().includes(lowerCaseValue)
                 );
+              } else if (selectedRole === "teacher") {
+                return user.role.toLowerCase() === "teacher" && user.userId.toLowerCase().includes(lowerCaseValue);
+              } else if (selectedRole === "student") {
+                return user.role.toLowerCase() === "student" && user.userId.toLowerCase().includes(lowerCaseValue);
               }
+              return false;
             })
           );
         } else {
@@ -278,9 +278,9 @@ function FaceIdentificationSetting() {
               <>
                 <Box display="flex" alignItems="center" gap={2} mb={2}>
                   <Avatar
-                    src={selectedUser.avatar}
+                    src={selectedUser.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedUser.fullName)}&background=dddddd&color=555555`}
                     alt={selectedUser.fullName}
-                    sx={{ width: 64, height: 64, bgcolor: 'primary.main' }}
+                    sx={{ width: 64, height: 64, bgcolor: '#dddddd', color: '#555555' }}
                   >
                     {selectedUser.fullName.charAt(0)}
                   </Avatar>
@@ -340,22 +340,21 @@ function FaceIdentificationSetting() {
           {/* Enhanced search with field selection */}
           <Box display="flex" gap={2} mb={2}>
             <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel id="search-field-label">Search In</InputLabel>
+              <InputLabel id="role-filter-label">Role</InputLabel>
               <Select
-                labelId="search-field-label"
-                value={searchField}
-                label="Search In"
-                onChange={(e) => setSearchField(e.target.value as any)}
+                labelId="role-filter-label"
+                value={selectedRole}
+                label="Role"
+                onChange={handleRoleChange}
               >
-                <MenuItem value="all">All Fields</MenuItem>
-                <MenuItem value="userId">User ID</MenuItem>
-                <MenuItem value="fullName">Full Name</MenuItem>
-                <MenuItem value="role">Role</MenuItem>
+                <MenuItem value="all">All Roles</MenuItem>
+                <MenuItem value="teacher">Teacher</MenuItem>
+                <MenuItem value="student">Student</MenuItem>
               </Select>
             </FormControl>
             
             <TextField
-              label="Search"
+              label="Search by User ID"
               value={search}
               onChange={handleSearch}
               fullWidth
@@ -366,7 +365,7 @@ function FaceIdentificationSetting() {
                     <SearchIcon />
                   </InputAdornment>
                 ),
-                endAdornment: search && (
+                endAdornment: (search || selectedRole !== "all") && (
                   <InputAdornment position="end">
                     <IconButton
                       aria-label="clear search"
@@ -415,9 +414,9 @@ function FaceIdentificationSetting() {
                       <TableRow hover key={user.userId}>
                         <TableCell>
                           <Avatar 
-                            src={user.avatar} 
-                            alt={user.fullName} 
-                            sx={{ width: 32, height: 32 }}
+                            src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName)}&background=dddddd&color=555555`}
+                            alt={user.fullName}
+                            sx={{ width: 32, height: 32, bgcolor: '#dddddd', color: '#555555' }}
                           >
                             {user.fullName.charAt(0)}
                           </Avatar>

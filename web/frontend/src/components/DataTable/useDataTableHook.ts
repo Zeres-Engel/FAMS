@@ -274,8 +274,20 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
       dispatch(deleteUser(selectedUserToDelete.id));
     }
     if (selectedUserToDelete && typeDelete === "classDelete") {
-      console.log("Deleting Class:", selectedUserToDelete.id);
-      dispatch(deleteClass(String(selectedUserToDelete.id)));
+      // Sử dụng classId thay vì id để xóa lớp
+      const classIdToDelete = (selectedUserToDelete as ClassData).classId || selectedUserToDelete.id;
+      console.log("Deleting Class with classId:", classIdToDelete);
+      
+      // Dispatch action xóa lớp và đợi kết quả
+      dispatch(deleteClass(String(classIdToDelete)))
+        .then(() => {
+          console.log("Class deleted successfully, refreshing data...");
+          // Gọi lại fetchClasses để đảm bảo dữ liệu được cập nhật
+          dispatch(fetchClasses());
+        })
+        .catch((error) => {
+          console.error("Error deleting class:", error);
+        });
     }
     setIsDeleteDialogOpen(false);
     setSelectedUserToDelete(null);

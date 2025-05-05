@@ -268,4 +268,265 @@ exports.updateCurriculumSubjects = asyncHandler(async (req, res, next) => {
       error: error.message
     });
   }
+});
+
+// @desc    Xóa giáo trình
+// @route   DELETE /api/curriculum/:id
+// @access  Private (Admin)
+exports.deleteCurriculum = asyncHandler(async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    
+    // Tìm giáo trình theo ID
+    const curriculum = await Curriculum.findOne({ curriculumId: id });
+    
+    if (!curriculum) {
+      return res.status(404).json({
+        success: false,
+        message: `Không tìm thấy giáo trình với ID ${id}`
+      });
+    }
+
+    // Bắt đầu giao dịch
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    
+    try {
+      // Xóa tất cả liên kết môn học trong giáo trình
+      await CurriculumSubject.deleteMany({ curriculumId: id }, { session });
+      
+      // Đánh dấu giáo trình là không hoạt động thay vì xóa
+      // Hoặc xóa hoàn toàn nếu hệ thống không cần lưu trữ lịch sử
+      await Curriculum.updateOne(
+        { curriculumId: id },
+        { isActive: false },
+        { session }
+      );
+      
+      // Hoàn thành giao dịch
+      await session.commitTransaction();
+      
+      return res.status(200).json({
+        success: true,
+        message: `Đã xóa giáo trình với ID ${id}`
+      });
+    } catch (error) {
+      // Nếu có lỗi, hoàn tác giao dịch
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
+    }
+  } catch (error) {
+    console.error(`Error deleting curriculum with ID ${req.params.id}:`, error);
+    return res.status(500).json({
+      success: false,
+      message: 'Không thể xóa giáo trình',
+      error: error.message
+    });
+  }
+});
+
+// @desc    Thêm môn học vào giáo trình
+// @route   POST /api/curriculum/:id/subjects
+// @access  Private (Admin)
+exports.addSubjectToCurriculum = asyncHandler(async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { subjectId, subjectName, subjectType, description, sessions } = req.body;
+    
+    // Kiểm tra giáo trình tồn tại
+    const curriculum = await Curriculum.findOne({ curriculumId: id, isActive: true });
+    if (!curriculum) {
+      return res.status(404).json({
+        success: false,
+        message: `Không tìm thấy giáo trình với ID ${id}`
+      });
+    }
+    
+    let subject;
+    
+    // Nếu có subjectId, kiểm tra môn học đã tồn tại
+    if (subjectId) {
+      subject = await Subject.findOne({ subjectId, isActive: true });
+      if (!subject) {
+        return res.status(404).json({
+          success: false,
+          message: `Không tìm thấy môn học với ID ${subjectId}`
+        });
+      }
+    } 
+    // Nếu không có subjectId nhưng có subjectName, tạo môn học mới
+    else if (subjectName) {
+      if (!subjectType) {
+        return res.status(400).json({
+          success: false,
+          message: 'Vui lòng cung cấp loại môn học (subjectType)'
+        });
+      }
+
+      // Tìm subjectId lớn nhất hiện tại
+      const maxSubjectDoc = await Subject.findOne().sort('-subjectId');
+      const nextSubjectId = maxSubjectDoc ? maxSubjectDoc.subjectId + 1 : 1;
+
+      // Tạo môn học mới với subjectId được tạo tự động
+      subject = await Subject.create({
+        subjectId: nextSubjectId,
+        subjectName,
+        subjectType: subjectType || 'Chinh',
+        description: description || '',
+        isActive: true
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng cung cấp ID môn học hoặc thông tin để tạo môn học mới'
+      });
+    }
+    
+    // Kiểm tra xem môn học đã tồn tại trong giáo trình chưa
+    const existingRelation = await CurriculumSubject.findOne({
+      curriculumId: id,
+      subjectId: subject.subjectId,
+      isActive: true
+    });
+    
+    if (existingRelation) {
+      return res.status(400).json({
+        success: false,
+        message: `Môn học "${subject.subjectName}" đã tồn tại trong giáo trình này`
+      });
+    }
+    
+    // Tạo liên kết giáo trình-môn học mới
+    const newRelation = await CurriculumSubject.create({
+      curriculumId: id,
+      subjectId: subject.subjectId,
+      sessions: sessions || 2, // Mặc định 2 tiết nếu không chỉ định
+      isActive: true
+    });
+    
+    // Lấy thông tin đầy đủ
+    const result = {
+      subjectId: subject.subjectId,
+      subjectName: subject.subjectName,
+      subjectType: subject.subjectType,
+      sessions: newRelation.sessions,
+      description: subject.description
+    };
+    
+    return res.status(201).json({
+      success: true,
+      message: `Đã thêm môn học ${subject.subjectName} vào giáo trình`,
+      data: result
+    });
+  } catch (error) {
+    console.error(`Error adding subject to curriculum with ID ${req.params.id}:`, error);
+    return res.status(500).json({
+      success: false,
+      message: 'Không thể thêm môn học vào giáo trình',
+      error: error.message
+    });
+  }
+});
+
+// @desc    Xóa môn học khỏi giáo trình
+// @route   DELETE /api/curriculum/:id/subjects/:subjectId
+// @access  Private (Admin)
+exports.removeSubjectFromCurriculum = asyncHandler(async (req, res, next) => {
+  try {
+    const { id, subjectId } = req.params;
+    
+    // Tìm liên kết
+    const relation = await CurriculumSubject.findOne({
+      curriculumId: id,
+      subjectId,
+      isActive: true
+    });
+    
+    if (!relation) {
+      return res.status(404).json({
+        success: false,
+        message: `Không tìm thấy môn học với ID ${subjectId} trong giáo trình này`
+      });
+    }
+    
+    // Xóa (hoặc đánh dấu không hoạt động)
+    await CurriculumSubject.updateOne(
+      { curriculumId: id, subjectId },
+      { isActive: false }
+    );
+    
+    return res.status(200).json({
+      success: true,
+      message: `Đã xóa môn học với ID ${subjectId} khỏi giáo trình`
+    });
+  } catch (error) {
+    console.error(`Error removing subject ${req.params.subjectId} from curriculum ${req.params.id}:`, error);
+    return res.status(500).json({
+      success: false,
+      message: 'Không thể xóa môn học khỏi giáo trình',
+      error: error.message
+    });
+  }
+});
+
+// @desc    Cập nhật thông tin môn học trong giáo trình (số tiết)
+// @route   PUT /api/curriculum/:id/subjects/:subjectId
+// @access  Private (Admin)
+exports.updateSubjectInCurriculum = asyncHandler(async (req, res, next) => {
+  try {
+    const { id, subjectId } = req.params;
+    const { sessions } = req.body;
+    
+    if (sessions === undefined || sessions < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vui lòng cung cấp số tiết hợp lệ'
+      });
+    }
+    
+    // Tìm và cập nhật liên kết
+    const relation = await CurriculumSubject.findOne({
+      curriculumId: id,
+      subjectId,
+      isActive: true
+    });
+    
+    if (!relation) {
+      return res.status(404).json({
+        success: false,
+        message: `Không tìm thấy môn học với ID ${subjectId} trong giáo trình này`
+      });
+    }
+    
+    // Cập nhật số tiết
+    relation.sessions = sessions;
+    await relation.save();
+    
+    // Lấy thông tin môn học
+    const subject = await Subject.findOne({ subjectId, isActive: true });
+    
+    // Kết quả trả về
+    const result = {
+      subjectId: subject.subjectId,
+      subjectName: subject.subjectName,
+      subjectType: subject.subjectType,
+      sessions: relation.sessions,
+      description: subject.description
+    };
+    
+    return res.status(200).json({
+      success: true,
+      message: `Đã cập nhật số tiết môn học ${subject.subjectName} trong giáo trình`,
+      data: result
+    });
+  } catch (error) {
+    console.error(`Error updating subject ${req.params.subjectId} in curriculum ${req.params.id}:`, error);
+    return res.status(500).json({
+      success: false,
+      message: 'Không thể cập nhật thông tin môn học trong giáo trình',
+      error: error.message
+    });
+  }
 }); 

@@ -7,8 +7,23 @@ const ErrorResponse = require('../utils/errorResponse');
 // @access  Private
 exports.getAllScheduleFormats = asyncHandler(async (req, res, next) => {
   try {
+    const { dayOfWeek, showInactive } = req.query;
+    
+    // Xây dựng query dựa trên tham số
+    const query = {};
+    
+    // Nếu có chỉ định ngày, thêm vào điều kiện tìm kiếm
+    if (dayOfWeek) {
+      query.dayOfWeek = dayOfWeek;
+    }
+    
+    // Mặc định chỉ lấy các slot đang active trừ khi showInactive = true
+    if (showInactive !== 'true') {
+      query.isActive = true;
+    }
+    
     // Lấy tất cả khung giờ và sắp xếp theo ngày trong tuần và số thứ tự tiết học
-    const scheduleFormats = await ScheduleFormat.find()
+    const scheduleFormats = await ScheduleFormat.find(query)
       .sort({ dayOfWeek: 1, slotNumber: 1 });
     
     // Trả về kết quả
@@ -101,18 +116,23 @@ exports.getScheduleFormatsByDay = asyncHandler(async (req, res, next) => {
 // @access  Private (Admin)
 exports.createScheduleFormat = asyncHandler(async (req, res, next) => {
   try {
-    const { slotNumber, dayOfWeek, startTime, endTime } = req.body;
+    const { slotNumber, dayOfWeek, startTime, endTime, slotName, isActive } = req.body;
     
     // Kiểm tra dữ liệu đầu vào
-    if (!slotNumber || !dayOfWeek || !startTime || !endTime) {
+    if (!slotNumber || !dayOfWeek || !startTime || !endTime || !slotName) {
       return res.status(400).json({
         success: false,
-        message: 'Vui lòng cung cấp đầy đủ thông tin: slotNumber, dayOfWeek, startTime, endTime'
+        message: 'Vui lòng cung cấp đầy đủ thông tin: slotNumber, slotName, dayOfWeek, startTime, endTime'
       });
     }
     
     // Kiểm tra xem đã tồn tại khung giờ học với số thứ tự này trong ngày chưa
-    const existingSlot = await ScheduleFormat.findOne({ slotNumber, dayOfWeek });
+    const existingSlot = await ScheduleFormat.findOne({ 
+      slotNumber, 
+      dayOfWeek,
+      isActive: true
+    });
+    
     if (existingSlot) {
       return res.status(400).json({
         success: false,
@@ -120,12 +140,19 @@ exports.createScheduleFormat = asyncHandler(async (req, res, next) => {
       });
     }
     
+    // Tìm slotId lớn nhất hiện tại
+    const maxSlotDoc = await ScheduleFormat.findOne().sort('-slotId');
+    const nextSlotId = maxSlotDoc ? maxSlotDoc.slotId + 1 : 1;
+    
     // Tạo khung giờ học mới
     const scheduleFormat = await ScheduleFormat.create({
+      slotId: nextSlotId,
       slotNumber,
+      slotName,
       dayOfWeek,
       startTime,
-      endTime
+      endTime,
+      isActive: isActive !== undefined ? isActive : true
     });
     
     // Trả về kết quả
@@ -150,7 +177,7 @@ exports.createScheduleFormat = asyncHandler(async (req, res, next) => {
 exports.updateScheduleFormat = asyncHandler(async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { slotNumber, dayOfWeek, startTime, endTime } = req.body;
+    const { slotNumber, dayOfWeek, startTime, endTime, slotName, isActive } = req.body;
     
     // Tìm khung giờ học cần cập nhật
     let scheduleFormat = await ScheduleFormat.findOne({ slotId: id });
@@ -169,7 +196,8 @@ exports.updateScheduleFormat = asyncHandler(async (req, res, next) => {
       const existingSlot = await ScheduleFormat.findOne({ 
         slotNumber: slotNumber || scheduleFormat.slotNumber,
         dayOfWeek: dayOfWeek || scheduleFormat.dayOfWeek,
-        slotId: { $ne: id }
+        slotId: { $ne: id },
+        isActive: true
       });
       
       if (existingSlot) {
@@ -183,9 +211,11 @@ exports.updateScheduleFormat = asyncHandler(async (req, res, next) => {
     // Cập nhật thông tin
     const updateData = {};
     if (slotNumber) updateData.slotNumber = slotNumber;
+    if (slotName) updateData.slotName = slotName;
     if (dayOfWeek) updateData.dayOfWeek = dayOfWeek;
     if (startTime) updateData.startTime = startTime;
     if (endTime) updateData.endTime = endTime;
+    if (isActive !== undefined) updateData.isActive = isActive;
     
     // Thực hiện cập nhật
     scheduleFormat = await ScheduleFormat.findOneAndUpdate(
@@ -231,20 +261,67 @@ exports.deleteScheduleFormat = asyncHandler(async (req, res, next) => {
     // TODO: Kiểm tra xem khung giờ này có đang được sử dụng trong lịch học không
     // Nếu có, không cho phép xóa hoặc cảnh báo
     
-    // Thực hiện xóa
-    await scheduleFormat.remove();
+    // Thay vì xóa, chỉ đánh dấu là không hoạt động
+    await ScheduleFormat.findOneAndUpdate(
+      { slotId: id },
+      { isActive: false }
+    );
     
     // Trả về kết quả
     res.status(200).json({
       success: true,
-      message: 'Đã xóa khung giờ học thành công',
-      data: {}
+      message: 'Đã vô hiệu hóa khung giờ học thành công',
+      data: { slotId: id, isActive: false }
     });
   } catch (error) {
     console.error(`Error deleting schedule format with ID ${req.params.id}:`, error);
     return res.status(500).json({
       success: false,
       message: 'Không thể xóa khung giờ học',
+      error: error.message
+    });
+  }
+});
+
+// @desc    Thay đổi trạng thái kích hoạt khung giờ học
+// @route   PATCH /api/schedule-formats/:id/toggle-status
+// @access  Private (Admin)
+exports.toggleScheduleFormatStatus = asyncHandler(async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    
+    // Tìm khung giờ học cần cập nhật
+    const scheduleFormat = await ScheduleFormat.findOne({ slotId: id });
+    
+    // Kiểm tra nếu không tìm thấy
+    if (!scheduleFormat) {
+      return res.status(404).json({
+        success: false,
+        message: `Không tìm thấy khung giờ học với ID ${id}`
+      });
+    }
+    
+    // Đảo ngược trạng thái kích hoạt
+    const newActiveStatus = !scheduleFormat.isActive;
+    
+    // Cập nhật trạng thái
+    const updatedSlot = await ScheduleFormat.findOneAndUpdate(
+      { slotId: id },
+      { isActive: newActiveStatus },
+      { new: true }
+    );
+    
+    // Trả về kết quả
+    res.status(200).json({
+      success: true,
+      message: `Khung giờ học đã được ${newActiveStatus ? 'kích hoạt' : 'vô hiệu hóa'} thành công`,
+      data: updatedSlot
+    });
+  } catch (error) {
+    console.error(`Error toggling schedule format status with ID ${req.params.id}:`, error);
+    return res.status(500).json({
+      success: false,
+      message: 'Không thể thay đổi trạng thái khung giờ học',
       error: error.message
     });
   }

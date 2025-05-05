@@ -194,12 +194,31 @@ exports.createRFID = asyncHandler(async (req, res, next) => {
 // @access  Private (Admin)
 exports.updateRFID = asyncHandler(async (req, res, next) => {
   try {
-    let rfid = await RFID.findOne({ RFID_ID: req.params.id });
+    // Tìm kiếm RFID bằng cả RFID_ID hoặc UserID
+    let query = {};
+    if (mongoose.isValidObjectId(req.params.id)) {
+      query = { _id: req.params.id };
+    } else if (req.params.id.startsWith('user-')) {
+      // Format: user-{userId}
+      const userId = req.params.id.substring(5);
+      query = { userId: userId };
+    } else {
+      // Tìm kiếm theo RFID_ID (cách cũ) hoặc userId
+      query = { 
+        $or: [
+          { RFID_ID: req.params.id },
+          { rfidId: req.params.id },
+          { userId: req.params.id }
+        ]
+      };
+    }
+
+    let rfid = await RFID.findOne(query);
     
     if (!rfid) {
       return res.status(404).json({
         success: false,
-        message: `RFID with ID ${req.params.id} not found`,
+        message: `RFID with ID/UserID ${req.params.id} not found`,
         code: 'RFID_NOT_FOUND'
       });
     }
@@ -218,7 +237,7 @@ exports.updateRFID = asyncHandler(async (req, res, next) => {
       // Check if the new user already has an RFID card (except the current one)
       const existingUserRFID = await RFID.findOne({ 
         UserID: req.body.UserID, 
-        RFID_ID: { $ne: req.params.id } 
+        _id: { $ne: rfid._id } 
       });
   
       if (existingUserRFID) {
@@ -232,13 +251,31 @@ exports.updateRFID = asyncHandler(async (req, res, next) => {
   
     // Process expiry date if provided
     const updateData = { ...req.body };
-    if (req.body.ExpiryDate) {
+    
+    // Xử lý ExpiryDate từ số năm (0, 1, 2, 3)
+    if (req.body.ExpiryYears !== undefined) {
+      const years = parseInt(req.body.ExpiryYears, 10);
+      const issueDate = rfid.IssueDate || rfid.createdAt || new Date();
+      
+      // Nếu years = 0, ExpiryDate = null (thẻ không hết hạn)
+      if (years === 0) {
+        updateData.ExpiryDate = null;
+      } else {
+        // Tính ExpiryDate = IssueDate + số năm
+        const expiryDate = new Date(issueDate);
+        expiryDate.setFullYear(expiryDate.getFullYear() + years);
+        updateData.ExpiryDate = expiryDate;
+      }
+      
+      // Xóa trường ExpiryYears ra khỏi dữ liệu update
+      delete updateData.ExpiryYears;
+    } else if (req.body.ExpiryDate) {
       updateData.ExpiryDate = parseExpiryDate(req.body.ExpiryDate);
     }
     
     // Update RFID
     rfid = await RFID.findOneAndUpdate(
-      { RFID_ID: req.params.id },
+      query,
       updateData,
       { new: true, runValidators: true }
     );

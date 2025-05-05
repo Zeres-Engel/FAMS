@@ -18,6 +18,9 @@ router.post('/', protect, authorize('Admin'), scheduleFormatController.createSch
 // Route để cập nhật khung giờ học (chỉ Admin)
 router.put('/:id', protect, authorize('Admin'), scheduleFormatController.updateScheduleFormat);
 
+// Route để thay đổi trạng thái active của slot (chỉ Admin)
+router.patch('/:id/toggle-status', protect, authorize('Admin'), scheduleFormatController.toggleScheduleFormatStatus);
+
 // Route để xóa khung giờ học (chỉ Admin)
 router.delete('/:id', protect, authorize('Admin'), scheduleFormatController.deleteScheduleFormat);
 
