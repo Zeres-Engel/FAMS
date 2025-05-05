@@ -23,6 +23,8 @@ const studentInfoRoutes = require('./routes/studentInfoRoutes');
 const faceVectorRoutes = require('./routes/faceVectorRoutes');
 const curriculumRoutes = require('./routes/curriculumRoutes');
 const scheduleFormatRoutes = require('./routes/scheduleFormatRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const announcementRoutes = require('./routes/announcementRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -130,6 +132,8 @@ app.use('/api/student-info', studentInfoRoutes);
 app.use('/api/facevector', faceVectorRoutes);
 app.use('/api/curriculum', curriculumRoutes);
 app.use('/api/schedule-formats', scheduleFormatRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/announcements', announcementRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -183,6 +187,27 @@ app.get('/', (req, res) => {
           { method: 'POST', path: '/', description: 'Tạo thẻ RFID mới (Admin)' },
           { method: 'PUT', path: '/:id', description: 'Cập nhật thông tin thẻ RFID (Admin)' },
           { method: 'DELETE', path: '/:id', description: 'Xóa thẻ RFID (Admin)' }
+        ]
+      },
+      notifications: {
+        base: '/api/notifications',
+        endpoints: [
+          { method: 'GET', path: '/my-notifications', description: 'Lấy tất cả thông báo của người dùng hiện tại' },
+          { method: 'GET', path: '/:id', description: 'Lấy chi tiết một thông báo' },
+          { method: 'POST', path: '/', description: 'Tạo thông báo mới' },
+          { method: 'PATCH', path: '/:id/mark-as-read', description: 'Đánh dấu thông báo đã đọc' },
+          { method: 'PATCH', path: '/mark-all-as-read', description: 'Đánh dấu tất cả thông báo đã đọc' },
+          { method: 'DELETE', path: '/:id', description: 'Xóa thông báo' }
+        ]
+      },
+      announcements: {
+        base: '/api/announcements',
+        endpoints: [
+          { method: 'GET', path: '/', description: 'Lấy tất cả thông báo chung' },
+          { method: 'GET', path: '/:id', description: 'Lấy chi tiết một thông báo chung' },
+          { method: 'POST', path: '/', description: 'Tạo thông báo chung mới (Admin/Teacher)' },
+          { method: 'PUT', path: '/:id', description: 'Cập nhật thông báo chung (Admin/Teacher)' },
+          { method: 'DELETE', path: '/:id', description: 'Xóa thông báo chung (Admin)' }
         ]
       }
     },
