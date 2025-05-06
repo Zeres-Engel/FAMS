@@ -270,7 +270,7 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
           <Select
             labelId="slot-select-label"
             id="slot-select"
-            value={newEvent.slotId || ""}
+            value={newEvent.slotId ? String(newEvent.slotId) : ""}
             label="Slot"
             onChange={(e: SelectChangeEvent) => {
               const selectedSlot = e.target.value;

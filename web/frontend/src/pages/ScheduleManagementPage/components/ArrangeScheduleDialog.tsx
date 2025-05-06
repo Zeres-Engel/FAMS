@@ -218,11 +218,21 @@ const ArrangeScheduleDialog: React.FC<ArrangeScheduleDialogProps> = ({
                 setScheduleSuccess(true);
                 setScheduleMessage(response.data.message || "Schedule generation started successfully");
                 console.log(`${response.data.message}. The schedule generation is processing in the background.`);
+                
+                // Hiển thị thông báo trước khi đóng dialog
+                setTimeout(() => {
+                  onClose();
+                  // Hiển thị thông báo dưới dạng alert sau khi đóng dialog
+                  if (true) { // scheduleSuccess is set after this timeout
+                    alert(response.data.message + ". The schedule generation is processing in the background.");
+                  }
+                }, 500);
               } else {
                 // Hiển thị thông báo lỗi
                 setScheduleSuccess(false);
                 setScheduleMessage(response.data.message || "Failed to generate schedule");
                 console.error("API Error:", response.data);
+                onClose();
               }
             } catch (error) {
               // Hiển thị thông báo lỗi
@@ -232,16 +242,8 @@ const ArrangeScheduleDialog: React.FC<ArrangeScheduleDialogProps> = ({
                 "Error calling schedule generation API:",
                 error
               );
-            }
-
-            // Hiển thị thông báo trước khi đóng dialog
-            setTimeout(() => {
               onClose();
-              // Hiển thị thông báo dưới dạng alert sau khi đóng dialog
-              if (true) { // scheduleSuccess is set after this timeout
-                alert(response.data.message + ". The schedule generation is processing in the background.");
-              }
-            }, 500);
+            }
           }}
         >
           Submit

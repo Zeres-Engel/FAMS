@@ -126,6 +126,7 @@ interface DataTableProps {
   isRoleParent?: boolean;
   importUsersButton?: React.ReactNode;
   createButtonAction?: () => void;
+  renderCustomActionCell?: (row: any) => React.ReactNode;
 }
 
 export default function DataTable({
@@ -166,6 +167,7 @@ export default function DataTable({
   isRoleParent,
   importUsersButton,
   createButtonAction,
+  renderCustomActionCell,
 }: DataTableProps) {
   const { state, handler } = useDataTableHook({ tableMainData });
 
@@ -492,15 +494,15 @@ export default function DataTable({
                       !isAttendance &&
                       isUserManagement &&
                       row?.role !== "admin" &&
-                      renderActionCell(row)}
+                      (renderCustomActionCell ? renderCustomActionCell(row) : renderActionCell(row))}
                     {isClassManagement && renderClassManagementCells(row)}
-                    {isClassManagement && renderActionCell(row)}
+                    {isClassManagement && (renderCustomActionCell ? renderCustomActionCell(row) : renderActionCell(row))}
                     {isAttendance && renderAttendanceManagementCells(row)}
-                    {isAttendance && isRoleTeacher && renderActionCell(row)}
+                    {isAttendance && isRoleTeacher && (renderCustomActionCell ? renderCustomActionCell(row) : renderActionCell(row))}
                     {isClassArrangement && renderClassArrangementNewCells(row)}
                     {isNewSemester && renderNewSemesterArrangementNewCells(row)}
                     {isNotifyPage && renderNotifyNewCells(row)}
-                    {isNotifyPage && renderActionCell(row)}
+                    {isNotifyPage && (renderCustomActionCell ? renderCustomActionCell(row) : renderActionCell(row))}
                     {isRFIDPage && renderRFIDNewCells(row)}
                     {isClassPage && renderClassPageCells(row)}
                   </TableRow>

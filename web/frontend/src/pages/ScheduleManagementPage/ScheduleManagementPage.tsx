@@ -33,6 +33,7 @@ import useAttendanceHook from "./hooks/useAttendanceHook";
 import AttendanceView from "./components/AttendanceView";
 import AddScheduleDialog from "./components/AddScheduleDialog";
 import ArrangeScheduleDialog from "./components/ArrangeScheduleDialog";
+import EditScheduleDialog from "./components/EditScheduleDialog";
 
 // Import các config
 import { calendarFormats, calendarComponents, slotConfig, eventPropGetter } from "./config/ScheduleConfig";
@@ -208,6 +209,44 @@ const ScheduleManagementPage: React.FC = () => {
       });
     }
   }, [openCreateDialog, newEvent.scheduleDate, newEvent.slotId]);
+
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
+  
+  const handleSelectEvent = (event: ScheduleEvent) => {
+    setSelectedEvent(event);
+    setOpenEditDialog(true);
+  };
+
+  const handleSaveEvent = async (updatedEvent: ScheduleEvent) => {
+    try {
+      // Gọi API để cập nhật thông tin lịch học
+      const response = await fetch(`http://fams.io.vn/api-nodejs/schedules/${updatedEvent.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedEvent),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update schedule');
+      }
+
+      // Cập nhật state sau khi lưu thành công
+      handler.setEventShow(updatedEvent);
+      // Refresh danh sách events
+      handler.handleSearch();
+    } catch (error) {
+      console.error('Error updating schedule:', error);
+      alert('Failed to update schedule. Please try again.');
+    }
+  };
+
+  const handleViewAttendance = (scheduleId: number) => {
+    attendanceHook.actions.setSelectedScheduleId(scheduleId);
+    attendanceHook.actions.setViewMode('attendance');
+  };
 
   return (
     <LayoutComponent
@@ -482,22 +521,7 @@ const ScheduleManagementPage: React.FC = () => {
                   max={new Date(0, 0, 0, 19, 0)} // 7:00 PM
                   views={["month", "week", "day"]}
                   style={{ height: "100%", width: "100%", overflow: "visible" }}
-                  onSelectEvent={(event) => {
-                    // Hiển thị popup chọn tùy chọn khi nhấp vào event
-                    if ((role === "teacher" || role === "admin") && event.id) {
-                      const isAttendancePage = window.confirm("Bạn muốn mở trang điểm danh của lớp học này?");
-                      if (isAttendancePage) {
-                        // Chuyển đến trang điểm danh
-                        attendanceActions.fetchAttendanceData(event.id);
-                      } else {
-                        // Mở dialog thông tin event như thông thường
-                        handler.handleSelectEvent(event);
-                      }
-                    } else {
-                      // Với vai trò khác, vẫn mở dialog thông thường
-                      handler.handleSelectEvent(event);
-                    }
-                  }}
+                  onSelectEvent={handleSelectEvent}
                   onView={handler.handleSetView}
                   onNavigate={handler.handleSetDate}
                   eventPropGetter={eventPropGetter}
@@ -684,6 +708,19 @@ const ScheduleManagementPage: React.FC = () => {
             />
           </Paper>
         )}
+
+        <EditScheduleDialog
+          open={openEditDialog}
+          onClose={() => setOpenEditDialog(false)}
+          event={selectedEvent}
+          onSave={handleSaveEvent}
+          onViewAttendance={handleViewAttendance}
+          teachers={directTeachers}
+          academicYears={state.academicYears}
+          allClasses={state.allClasses}
+          subjectState={state.subjectState}
+          classrooms={state.classrooms}
+        />
       </Container>
     </LayoutComponent>
   );
