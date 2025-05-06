@@ -1,56 +1,23 @@
 import { useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/useStoreHook";
-import { fetchUser } from "../../store/slices/userSlice";
+import axios from "axios";
 import {
-  Data,
   HeadCell,
   NotifyHeadCell,
   NotifyProps,
 } from "../../model/tableModels/tableDataModels.model";
 
 function useNotifyPageHook() {
-  const fakeNotifies: NotifyProps[] = [
-    {
-      id: '1',
-      message: "Buổi học ngày mai sẽ bắt đầu lúc 7h sáng.",
-      sender: "admin",
-      receiver: "student01",
-      sendDate: new Date("2025-04-18T08:00:00").toISOString(),
-    },
-    {
-      id: '2',
-      message: "Bạn có bài kiểm tra vào thứ 5 tuần này.",
-      sender: "teacher01",
-      receiver: "student02",
-      sendDate: new Date("2025-04-17T10:30:00").toISOString(),
-    },
-    {
-      id: '3',
-      message: "Hệ thống sẽ bảo trì vào cuối tuần.",
-      sender: "system",
-      receiver: "all",
-      sendDate: new Date("2025-04-16T15:00:00").toISOString(),
-    },
-    {
-      id: '4',
-      message: "Lịch họp giáo viên được cập nhật.",
-      sender: "principal",
-      receiver: "teacher01",
-      sendDate: new Date("2025-04-15T09:00:00").toISOString(),
-    },
-    {
-      id: '5',
-      message: "Bạn đã được thêm vào lớp Toán 10A3.",
-      sender: "admin",
-      receiver: "student03",
-      sendDate: new Date("2025-04-14T12:00:00").toISOString(),
-    },
-  ];
-
   const dispatch = useAppDispatch();
   const role = useAppSelector(state => state.authUser.role);
-  const userState = useAppSelector(state => state.users);
-  const [userMainData, setUserMainData] = useState<NotifyProps[]>(fakeNotifies);
+  const [userMainData, setUserMainData] = useState<NotifyProps[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalItems, setTotalItems] = useState<number>(0);
+
   const headCellsData: NotifyHeadCell[] = [
     {
       id: "id",
@@ -83,17 +50,133 @@ function useNotifyPageHook() {
       label: "Receiver",
     },
   ];
+  
   const isCheckBox = false;
-  const tableTitle = "Notify";
-//   useEffect(() => {
-//     if (!userState.user) {
-//       dispatch(fetchUser());
-//     } else {
-//       // setUserMainData(userState?.user);
-//     }
-//   }, [dispatch, userState.user]);
-  const state = { headCellsData, userMainData, tableTitle, isCheckBox, role };
-  const handler = {};
+  const tableTitle = "Notifications";
+
+  // Fetch notifications from API
+  const fetchNotifications = async (page = 1, limit = 10) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await axios.get(`http://fams.io.vn/api-nodejs/notifications/my-notifications?page=${page}&limit=${limit}`);
+      
+      if (response.data && response.data.success) {
+        const { notifications, unreadCount, totalItems, totalPages, currentPage } = response.data.data;
+        
+        // Map API response to match our NotifyProps interface
+        const mappedNotifications = notifications.map((notification: any) => ({
+          id: notification.NotificationID.toString(),
+          message: notification.Message,
+          sender: notification.SenderID,
+          receiver: notification.ReceiverID,
+          sendDate: notification.SentDate,
+          readStatus: notification.ReadStatus,
+          senderInfo: notification.sender
+        }));
+        
+        setUserMainData(mappedNotifications);
+        setUnreadCount(unreadCount);
+        setTotalItems(totalItems);
+        setTotalPages(totalPages);
+        setCurrentPage(currentPage);
+      } else {
+        setError("Failed to fetch notifications");
+      }
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+      setError("Failed to fetch notifications. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Create a new notification
+  const createNotification = async (receiverId: string, message: string) => {
+    try {
+      setLoading(true);
+      const response = await axios.post('http://fams.io.vn/api-nodejs/notifications', {
+        receiverId,
+        message
+      });
+
+      if (response.data && response.data.success) {
+        // Refresh the notifications list after creating a new one
+        fetchNotifications();
+        return { success: true, data: response.data.data };
+      }
+      return { success: false, error: "Failed to create notification" };
+    } catch (err) {
+      console.error("Error creating notification:", err);
+      setError("Failed to create notification. Please try again later.");
+      return { success: false, error: "Failed to create notification" };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Mark notification as read
+  const markAsRead = async (notificationId: string) => {
+    try {
+      setLoading(true);
+      const response = await axios.patch(`http://fams.io.vn/api-nodejs/notifications/${notificationId}/mark-as-read`);
+      if (response.data && response.data.success) {
+        fetchNotifications(currentPage);
+      } else {
+        setError("Failed to mark notification as read");
+      }
+    } catch (err) {
+      console.error("Error marking notification as read:", err);
+      setError("Failed to mark notification as read");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Mark all notifications as read
+  const markAllAsRead = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.patch('http://fams.io.vn/api-nodejs/notifications/mark-all-as-read');
+      if (response.data && response.data.success) {
+        fetchNotifications(currentPage);
+      } else {
+        setError("Failed to mark all notifications as read");
+      }
+    } catch (err) {
+      console.error("Error marking all notifications as read:", err);
+      setError("Failed to mark all notifications as read");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load notifications on component mount
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const state = { 
+    headCellsData, 
+    userMainData, 
+    tableTitle, 
+    isCheckBox, 
+    role,
+    loading,
+    error,
+    unreadCount,
+    totalItems,
+    totalPages,
+    currentPage
+  };
+  
+  const handler = {
+    fetchNotifications,
+    createNotification,
+    markAsRead,
+    markAllAsRead,
+    setCurrentPage
+  };
 
   return { state, handler };
 }
