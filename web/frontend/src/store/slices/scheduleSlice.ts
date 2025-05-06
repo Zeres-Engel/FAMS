@@ -32,7 +32,8 @@ export interface Schedule {
   subject?: string;
   teacher?: string;
   teacherUserId?: string;
-
+  academicYear?:string;
+  className?:string;
 }
 
 export interface ScheduleAction {
