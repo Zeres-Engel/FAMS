@@ -261,6 +261,11 @@ function ClassManagementPage(): React.JSX.Element {
       ...classInfo,
       homeroomTeacherId: value ? value.userId : ""
     });
+    
+    // Check if there are no available teachers
+    if (availableTeachers.length === 0 && !isLoadingTeachers) {
+      showNotification("No available teachers found. All teachers are already assigned as homeroom teachers for other classes.", "warning");
+    }
   };
 
   // Check if class already exists
@@ -268,7 +273,6 @@ function ClassManagementPage(): React.JSX.Element {
     return allClasses.some(
       (cls: ClassData) => 
         cls.className === classInfo.className && 
-        cls.grade.toString() === classInfo.grade && 
         cls.academicYear === classInfo.academicYear
     );
   };
@@ -277,7 +281,7 @@ function ClassManagementPage(): React.JSX.Element {
   const handleNextToPreview = async () => {
     // Check if class already exists
     if (isClassDuplicate()) {
-      showNotification(`Class ${classInfo.className} for grade ${classInfo.grade} in academic year ${classInfo.academicYear} already exists. Please create a different class.`, "error");
+      showNotification(`Class ${classInfo.className} already exists in academic year ${classInfo.academicYear}. Please create a different class.`, "error");
       return;
     }
 
@@ -386,7 +390,7 @@ function ClassManagementPage(): React.JSX.Element {
   const handleCreateClass = async () => {
     // Check again if class already exists (in case it was created in another session while dialog was open)
     if (isClassDuplicate()) {
-      showNotification(`Class ${classInfo.className} for grade ${classInfo.grade} in academic year ${classInfo.academicYear} already exists. Please create a different class.`, "error");
+      showNotification(`Class ${classInfo.className} already exists in academic year ${classInfo.academicYear}. Please create a different class.`, "error");
       return;
     }
 
@@ -567,6 +571,9 @@ function ClassManagementPage(): React.JSX.Element {
           {tabValue === 0 && (
             <Box sx={{ mt: 3, p: 2 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                  Note: When selecting a homeroom teacher, only teachers who are not currently assigned as homeroom teacher for any class will be displayed.
+                </Typography>
                 <div>
                   <FormControl fullWidth>
                     <InputLabel>Academic Year *</InputLabel>
@@ -623,7 +630,8 @@ function ClassManagementPage(): React.JSX.Element {
                         {...params}
                         label="Homeroom Teacher *"
                         required
-                        helperText="Only showing teachers not assigned as homeroom teachers"
+                        helperText={`${availableTeachers.length} available teachers who are not assigned as homeroom teachers`}
+                        placeholder="Type to search teachers..."
                         InputProps={{
                           ...params.InputProps,
                           endAdornment: (
@@ -637,6 +645,18 @@ function ClassManagementPage(): React.JSX.Element {
                     )}
                     onChange={handleTeacherChange}
                     isOptionEqualToValue={(option, value) => option.userId === value.userId}
+                    filterOptions={(options, state) => {
+                      const inputValue = state.inputValue.toLowerCase().trim();
+                      if (inputValue === '') {
+                        return options;
+                      }
+                      
+                      return options.filter(
+                        (option) => 
+                          option.fullName.toLowerCase().includes(inputValue) || 
+                          option.userId.toLowerCase().includes(inputValue)
+                      );
+                    }}
                   />
                 </div>
               </div>
@@ -646,9 +666,31 @@ function ClassManagementPage(): React.JSX.Element {
           {tabValue === 1 && (
             <Box sx={{ mt: 3 }}>
               <Box mb={2}>
-                <Typography variant="subtitle1">
-                  Selected class: {classInfo.className} - Grade {classInfo.grade} - Academic Year {classInfo.academicYear}
-                </Typography>
+                <Paper elevation={1} sx={{ p: 2, backgroundColor: '#f5f5f5', borderRadius: 2 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, whiteSpace: 'normal', overflow: 'visible' }}>
+                    Selected Class Information
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+                    <Box sx={{ flex: '1 1 50%', minWidth: '250px' }}>
+                      <Typography variant="body1" sx={{ mb: 1, whiteSpace: 'normal', overflow: 'visible' }}>
+                        <strong>Class Name:</strong> {classInfo.className}
+                      </Typography>
+                      <Typography variant="body1" sx={{ mb: 1, whiteSpace: 'normal', overflow: 'visible' }}>
+                        <strong>Grade:</strong> {classInfo.grade}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ flex: '1 1 50%', minWidth: '250px' }}>
+                      <Typography variant="body1" sx={{ mb: 1, whiteSpace: 'normal', overflow: 'visible' }}>
+                        <strong>Academic Year:</strong> {classInfo.academicYear}
+                      </Typography>
+                      <Typography variant="body1" sx={{ mb: 1, whiteSpace: 'normal', overflow: 'visible' }}>
+                        <strong>Homeroom Teacher:</strong> {
+                          teachers.find(t => t.userId === classInfo.homeroomTeacherId)?.fullName || classInfo.homeroomTeacherId
+                        }
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Paper>
               </Box>
               
               {/* STUDENTS SECTION */}

@@ -771,87 +771,72 @@ export default function DataTable({
                 </Box>
               </Box>
             </Box>
+            
+            {/* Student List Section */}
+            <Box sx={{ mt: 4 }}>
+              <Typography variant="subtitle1" fontWeight="bold">
+                Students in {state.selectedClassToView.className}
+              </Typography>
+              
+              {state.isLoadingStudents ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                  <CircularProgress />
+                </Box>
+              ) : state.classStudents.length > 0 ? (
+                <TableContainer>
+                  <Table sx={{ minWidth: 650 }} aria-label="students table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>ID</TableCell>
+                        <TableCell>Avatar</TableCell>
+                        <TableCell>Full Name</TableCell>
+                        <TableCell>Email</TableCell>
+                        <TableCell>Phone</TableCell>
+                        <TableCell>Role</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {state.classStudents.map((student) => (
+                        <TableRow key={student.id} hover>
+                          <TableCell>{student.id}</TableCell>
+                          <TableCell>
+                            <img
+                              src={
+                                student.avatar
+                                  ? student.avatar
+                                  : `https://www.pngplay.com/wp-content/uploads/12/User-Avatar-Profile-Transparent-Clip-Art-PNG.png`
+                              }
+                              alt="Student Avatar"
+                              style={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: "50%",
+                                objectFit: "cover",
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>{student.fullName}</TableCell>
+                          <TableCell>{student.email}</TableCell>
+                          <TableCell>{student.phone}</TableCell>
+                          <TableCell>{student.role}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              ) : (
+                <Box sx={{ p: 3, textAlign: 'center' }}>
+                  <Typography color="text.secondary">
+                    No students found in this class
+                  </Typography>
+                </Box>
+              )}
+            </Box>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => handler.setIsViewDialogOpen(false)}>Close</Button>
           </DialogActions>
         </Dialog>
-      )}
-
-      {/* Class Students Table */}
-      {isClassManagement && state.selectedClassToView && (
-        <Paper
-          sx={{
-            width: "100%",
-            mt: 3,
-            borderRadius: "8px",
-            boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-          }}
-        >
-          <Box sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Students in {state.selectedClassToView.className}
-            </Typography>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Grade {state.selectedClassToView.grade} - Academic Year {state.selectedClassToView.academicYear}
-            </Typography>
-          </Box>
-          <Divider />
-          
-          {state.isLoadingStudents ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-              <CircularProgress />
-            </Box>
-          ) : state.classStudents.length > 0 ? (
-            <TableContainer>
-              <Table sx={{ minWidth: 850 }} aria-label="students table">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>ID</TableCell>
-                    <TableCell>Avatar</TableCell>
-                    <TableCell>Full Name</TableCell>
-                    <TableCell>Email</TableCell>
-                    <TableCell>Phone</TableCell>
-                    <TableCell>Role</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {state.classStudents.map((student) => (
-                    <TableRow key={student.id} hover>
-                      <TableCell>{student.id}</TableCell>
-                      <TableCell>
-                        <img
-                          src={
-                            student.avatar
-                              ? student.avatar
-                              : `https://www.pngplay.com/wp-content/uploads/12/User-Avatar-Profile-Transparent-Clip-Art-PNG.png`
-                          }
-                          alt="Student Avatar"
-                          style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: "50%",
-                            objectFit: "cover",
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>{student.fullName}</TableCell>
-                      <TableCell>{student.email}</TableCell>
-                      <TableCell>{student.phone}</TableCell>
-                      <TableCell>{student.role}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          ) : (
-            <Box sx={{ p: 3, textAlign: 'center' }}>
-              <Typography color="text.secondary">
-                No students found in this class
-              </Typography>
-            </Box>
-          )}
-        </Paper>
       )}
     </Box>
   );

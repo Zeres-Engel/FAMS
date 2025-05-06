@@ -262,6 +262,22 @@ function useClassManagementPageHook() {
   // Tạo lớp mới
   const handleCreateClass = async (classInfo: any, selectedUsers: any[]) => {
     try {
+      // Kiểm tra trước nếu lớp đã tồn tại trong cùng năm học
+      const existingClasses = await axios.get(`http://fams.io.vn/api-nodejs/classes?search=${classInfo.className}&academicYear=${classInfo.academicYear}`);
+      
+      if (existingClasses.data?.success && existingClasses.data.data.length > 0) {
+        const duplicateClass = existingClasses.data.data.find(
+          (cls: any) => cls.className === classInfo.className && cls.academicYear === classInfo.academicYear
+        );
+        
+        if (duplicateClass) {
+          return { 
+            success: false, 
+            message: `Class "${classInfo.className}" already exists in academic year ${classInfo.academicYear}.` 
+          };
+        }
+      }
+      
       // Chuẩn bị dữ liệu lớp học
       const classData = {
         className: classInfo.className,
@@ -310,14 +326,23 @@ function useClassManagementPageHook() {
           
           return { success: true, message: "Class created successfully" };
         } else {
-          return { success: false, message: "Failed to create class" };
+          return { success: false, message: response.data?.error || "Failed to create class" };
         }
       }
     } catch (error: any) {
       console.error("Error creating class:", error);
+      
+      // Kiểm tra nếu lỗi là do class đã tồn tại trong cùng năm học
+      if (error.response?.data?.code === 'DUPLICATE_CLASS_IN_ACADEMIC_YEAR') {
+        return { 
+          success: false, 
+          message: error.response.data.error || `Class already exists in the specified academic year` 
+        };
+      }
+      
       return { 
         success: false, 
-        message: error.response?.data?.message || error.message || "Error creating class" 
+        message: error.response?.data?.error || error.message || "Error creating class" 
       };
     }
   };

@@ -11,7 +11,7 @@ router.get('/', classController.getAllClasses);
 router.get('/user/:userId', protect, classController.getClassesByUserId);
 
 // GET /api/classes/:id/students - Get all students in a class
-router.get('/:classId/students', protect, classController.getStudentsByClassId);
+router.get('/:classId/students', classController.getStudentsByClassId);
 
 // GET /api/classes/:id - Get class by ID
 router.get('/:id', protect, classController.getClassById);

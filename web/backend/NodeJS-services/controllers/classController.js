@@ -29,14 +29,22 @@ const createClass = async (req, res) => {
       });
     }
 
-    // Check if class name already exists
-    const existingClass = await Class.findOne({ className });
-    if (existingClass) {
-      console.log(`Class with name ${className} already exists:`, JSON.stringify(existingClass));
+    if (!academicYear) {
       return res.status(400).json({
         success: false,
-        error: 'Class name already exists',
-        code: 'DUPLICATE_CLASSNAME'
+        error: 'Academic year is required',
+        code: 'MISSING_ACADEMIC_YEAR'
+      });
+    }
+
+    // Check if class name already exists IN THE SAME ACADEMIC YEAR
+    const existingClass = await Class.findOne({ className, academicYear });
+    if (existingClass) {
+      console.log(`Class with name ${className} already exists in academic year ${academicYear}:`, JSON.stringify(existingClass));
+      return res.status(400).json({
+        success: false,
+        error: `Class "${className}" already exists in academic year ${academicYear}`,
+        code: 'DUPLICATE_CLASS_IN_ACADEMIC_YEAR'
       });
     }
 
@@ -94,6 +102,17 @@ const createClass = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating class:', error);
+    
+    // Check for MongoDB duplicate key error (code 11000)
+    if (error.code === 11000 && error.keyPattern && 
+        error.keyPattern.className && error.keyPattern.academicYear) {
+      return res.status(400).json({
+        success: false,
+        error: `Class with this name already exists in academic year ${req.body.academicYear}`,
+        code: 'DUPLICATE_CLASS_IN_ACADEMIC_YEAR'
+      });
+    }
+    
     return res.status(500).json({
       success: false,
       error: error.message || 'An error occurred while creating the class',
@@ -688,10 +707,10 @@ const getStudentsByClassId = async (req, res) => {
  */
 const createClassWithStudents = async (req, res) => {
   try {
-    const { className, homeroomTeacherId, grade, academicYear, studentIds, teacherIds } = req.body;
+    const { className, grade, homeroomTeacherId, academicYear, studentIds = [], teacherIds = [] } = req.body;
     
-    console.log(`Attempting to create class with data and students:`, JSON.stringify(req.body));
-
+    console.log(`Attempting to create class with students:`, JSON.stringify(req.body));
+    
     // Validate required fields
     if (!className) {
       return res.status(400).json({
@@ -708,15 +727,23 @@ const createClassWithStudents = async (req, res) => {
         code: 'MISSING_GRADE'
       });
     }
-
-    // Check if class name already exists
-    const existingClass = await Class.findOne({ className });
-    if (existingClass) {
-      console.log(`Class with name ${className} already exists:`, JSON.stringify(existingClass));
+    
+    if (!academicYear) {
       return res.status(400).json({
         success: false,
-        error: 'Class name already exists',
-        code: 'DUPLICATE_CLASSNAME'
+        error: 'Academic year is required',
+        code: 'MISSING_ACADEMIC_YEAR'
+      });
+    }
+
+    // Check if class name already exists IN THE SAME ACADEMIC YEAR
+    const existingClass = await Class.findOne({ className, academicYear });
+    if (existingClass) {
+      console.log(`Class with name ${className} already exists in academic year ${academicYear}:`, JSON.stringify(existingClass));
+      return res.status(400).json({
+        success: false,
+        error: `Class "${className}" already exists in academic year ${academicYear}`,
+        code: 'DUPLICATE_CLASS_IN_ACADEMIC_YEAR'
       });
     }
 
@@ -748,151 +775,93 @@ const createClassWithStudents = async (req, res) => {
     const lastClass = await Class.findOne().sort({ classId: -1 });
     const classId = lastClass ? lastClass.classId + 1 : 1;
     console.log(`Generated new classId: ${classId}`);
-
-    // Create the new class with explicit grade independent of className
+    
+    // Create the new class without using transactions
     const newClass = await Class.create({
       className,
       classId,
       homeroomTeacherId,
-      grade: Number(grade), // Ensure grade is stored as a number
+      grade: Number(grade),
       academicYear,
       isActive: true
     });
-
-    // Kết quả xử lý
-    const results = {
-      students: { success: 0, total: 0 },
-      teachers: { success: 0, total: 0 }
-    };
     
-    // Danh sách học sinh và giáo viên đã được thêm
-    let updatedStudents = [];
-    let updatedTeachers = [];
+    console.log(`Created class: ${JSON.stringify(newClass)}`);
     
-    // Import model Student
-    const Student = require('../database/models/Student');
+    // Initialize counters
+    let studentsAdded = 0;
+    let studentsSkipped = 0;
+    let studentsErrors = [];
     
-    // Xử lý thêm học sinh vào lớp (nếu có)
-    if (studentIds && Array.isArray(studentIds) && studentIds.length > 0) {
-      console.log(`Adding ${studentIds.length} students to class ${classId}`);
-      results.students.total = studentIds.length;
+    // Process student IDs if provided
+    if (studentIds && studentIds.length > 0) {
+      console.log(`Processing ${studentIds.length} students`);
       
-      // Update classIds array for each student
-      const updatePromises = studentIds.map(async (userId) => {
+      // Get the Student model and add each student to the class
+      const Student = mongoose.model('Student');
+      
+      for (const studentId of studentIds) {
         try {
-          // Tìm học sinh theo userId
-          const student = await Student.findOne({ userId });
+          // Find the student
+          const student = await Student.findOne({ userId: studentId });
           
           if (!student) {
-            console.log(`Student with userId ${userId} not found`);
-            return null;
+            console.log(`Student with ID ${studentId} not found`);
+            studentsErrors.push({ id: studentId, error: 'Student not found' });
+            studentsSkipped++;
+            continue;
           }
           
-          // Thêm classId vào mảng classIds của học sinh (nếu chưa có)
+          // Update the student's classIds array
           if (!student.classIds) {
             student.classIds = [];
           }
           
-          // Kiểm tra nếu học sinh đã có trong lớp này rồi
+          // Add the classId if it's not already in the array
           if (!student.classIds.includes(classId)) {
             student.classIds.push(classId);
             await student.save();
-            
-            return {
-              userId: student.userId,
-              studentId: student.studentId,
-              fullName: student.fullName
-            };
+            studentsAdded++;
+            console.log(`Added student ${studentId} to class ${classId}`);
           } else {
-            console.log(`Student ${userId} already in class ${classId}`);
-            return null;
+            console.log(`Student ${studentId} already in class ${classId}`);
+            studentsSkipped++;
           }
-        } catch (err) {
-          console.error(`Error updating student ${userId}:`, err);
-          return null;
+        } catch (studentError) {
+          console.error(`Error adding student ${studentId}:`, studentError);
+          studentsErrors.push({ id: studentId, error: studentError.message });
+          studentsSkipped++;
         }
-      });
-      
-      // Đợi tất cả các cập nhật học sinh hoàn thành
-      const studentResults = await Promise.all(updatePromises);
-      
-      // Lọc ra các học sinh đã được cập nhật thành công
-      updatedStudents = studentResults.filter(result => result !== null);
-      results.students.success = updatedStudents.length;
+      }
     }
     
-    // Xử lý thêm giáo viên vào lớp (nếu có)
-    if (teacherIds && Array.isArray(teacherIds) && teacherIds.length > 0) {
-      console.log(`Adding ${teacherIds.length} teachers to class ${classId}`);
-      results.teachers.total = teacherIds.length;
-      
-      // Tạo bản ghi ClassTeacher để liên kết giáo viên với lớp
-      const ClassTeacher = mongoose.model('ClassTeacher');
-      
-      const teacherUpdatePromises = teacherIds.map(async (userId) => {
-        try {
-          // Tìm giáo viên theo userId
-          const teacher = await Teacher.findOne({ userId });
-          
-          if (!teacher) {
-            console.log(`Teacher with userId ${userId} not found`);
-            return null;
-          }
-          
-          // Kiểm tra xem giáo viên đã được liên kết với lớp chưa
-          const existingRelation = await ClassTeacher.findOne({
-            classId: classId,
-            teacherId: teacher.teacherId
-          });
-          
-          if (!existingRelation) {
-            // Tạo mới quan hệ giáo viên-lớp
-            await ClassTeacher.create({
-              classId: classId,
-              teacherId: teacher.teacherId
-            });
-            
-            return {
-              userId: teacher.userId,
-              teacherId: teacher.teacherId,
-              fullName: teacher.fullName || teacher.firstName + ' ' + teacher.lastName
-            };
-          } else {
-            console.log(`Teacher ${userId} is already linked to class ${classId}`);
-            return null;
-          }
-        } catch (err) {
-          console.error(`Error linking teacher ${userId} to class:`, err);
-          return null;
-        }
-      });
-      
-      // Đợi tất cả các cập nhật giáo viên hoàn thành
-      const teacherResults = await Promise.all(teacherUpdatePromises);
-      
-      // Lọc ra các giáo viên đã được cập nhật thành công
-      updatedTeachers = teacherResults.filter(result => result !== null);
-      results.teachers.success = updatedTeachers.length;
-    }
-
-    // Trả về thông tin lớp học với số lượng học sinh
-    const classWithStudentNumber = {
-      ...newClass.toObject(),
-      studentNumber: updatedStudents.length
-    };
-
-    console.log(`Created new class with ${updatedStudents.length} students and ${updatedTeachers.length} teachers:`, JSON.stringify(classWithStudentNumber));
-
+    // Return the result
     return res.status(201).json({
       success: true,
-      data: classWithStudentNumber,
-      students: updatedStudents,
-      teachers: updatedTeachers,
-      results: results,
-      message: `Class created successfully with ${updatedStudents.length} students and ${updatedTeachers.length} teachers`
+      data: {
+        class: {
+          ...newClass.toObject(),
+          studentNumber: studentsAdded
+        },
+        studentsAdded,
+        studentsSkipped,
+        studentsErrors: studentsErrors.length > 0 ? studentsErrors : undefined
+      },
+      message: 'Class created successfully'
     });
   } catch (error) {
     console.error('Error creating class with students:', error);
+    
+    // Check for MongoDB duplicate key error (code 11000)
+    if (error.code === 11000 && error.keyPattern && 
+        error.keyPattern.className && error.keyPattern.academicYear) {
+      return res.status(400).json({
+        success: false,
+        error: `Class with this name already exists in academic year ${req.body.academicYear}`,
+        code: 'DUPLICATE_CLASS_IN_ACADEMIC_YEAR'
+      });
+    }
+    
     return res.status(500).json({
       success: false,
       error: error.message || 'An error occurred while creating the class with students',

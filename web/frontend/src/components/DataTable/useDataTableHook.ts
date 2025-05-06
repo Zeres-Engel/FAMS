@@ -468,11 +468,12 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
 
   const handleViewClick = async (classData: ClassData) => {
     setSelectedClassToView(classData);
+    setIsViewDialogOpen(true);
     setIsLoadingStudents(true);
     
     try {
       // Gọi API để lấy danh sách học sinh của lớp
-      const response = await fetch(`http://fams.io.vn/api-nodejs/student-info?className=${classData.className}&academicYear=${classData.academicYear}`);
+      const response = await fetch(`http://fams.io.vn/api/classes/${classData.classId}/students`);
       const data = await response.json();
       
       if (data.success) {

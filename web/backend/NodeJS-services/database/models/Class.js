@@ -39,6 +39,9 @@ const ClassSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
+// Thêm compound index để đảm bảo className là unique trong cùng một năm học
+ClassSchema.index({ className: 1, academicYear: 1 }, { unique: true });
+
 // Virtual for getting homeroom teacher info
 ClassSchema.virtual('homeroomTeacher', {
   ref: 'Teacher',

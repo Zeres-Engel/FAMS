@@ -88,51 +88,15 @@ async def generate_class_schedules(request: ScheduleRequest, background_tasks: B
         )
     
     try:
-        # Tìm tất cả semester theo semesterNumber
+        # Tìm hoặc tạo semester theo semesterNumber và academicYear
         semester_name = f"Học kỳ {request.semesterNumber}"
         
-        # Nếu có academic_year, thêm vào query
-        semester_query = {"SemesterName": semester_name}
-        if request.academicYear:
-            semester_query["academicYear"] = request.academicYear
-            
-        existing_semesters = list(db.Semester.find(semester_query))
-        
-        if not existing_semesters:
-            message = f"Không tìm thấy dữ liệu nào cho {semester_name}"
-            if request.academicYear:
-                message += f" trong năm học {request.academicYear}"
-            return ScheduleResponse(
-                success=False,
-                message="Thất bại",
-                totalEntries=0,
-                warnings=[message]
-            )
-        
-        # Cập nhật StartDate và EndDate cho tất cả các semester có semesterName tương ứng
-        for semester in existing_semesters:
-            db.Semester.update_one(
-                {"_id": semester["_id"]},
-                {"$set": {
-                    "StartDate": request.startDate,
-                    "EndDate": request.endDate
-                }}
-            )
-            print(f"[INFO] Đã cập nhật {semester_name} cho khối {semester.get('grade', 'Unknown')}")
-        
-        # Lấy semester cho khối 12 để sử dụng trong thuật toán xếp lịch
-        # Vì thuật toán đã được sửa để lọc lớp theo tên (12A1, 12A2, ...)
-        target_semester = next(
-            (s for s in existing_semesters if s.get("grade") == 12), 
-            existing_semesters[0]  # Fallback to first semester if no grade 12
-        )
-        
+        # Chuẩn bị thông tin semester
         semester_info = {
             "semesterNumber": request.semesterNumber,
             "semesterName": semester_name,
             "startDate": request.startDate,
             "endDate": request.endDate,
-            "curriculumId": target_semester.get("CurriculumID", 1),
             "academicYear": request.academicYear  # Thêm thông tin năm học
         }
         
@@ -149,7 +113,6 @@ async def generate_class_schedules(request: ScheduleRequest, background_tasks: B
             totalEntries=0,
             details={
                 "status": "processing", 
-                "updatedSemesters": len(existing_semesters),
                 "note": "Hệ thống sẽ tự động tạo attendance logs với trạng thái 'Not Now' cho mỗi học sinh trong lịch học"
             }
         )
@@ -183,6 +146,68 @@ async def _generate_improved_schedules_task(semester_info: Dict[str, Any]):
         end_date = semester_info["endDate"]
         academic_year = semester_info.get("academicYear")
         
+        # Tìm hoặc tạo các bản ghi semester cho mỗi khối (grade)
+        # Chỉ sử dụng semester để theo dõi, không phụ thuộc vào nó để lấy lớp học
+        if academic_year:
+            # Tìm tất cả grade từ bảng Class
+            grades = set()
+            class_query = {"academicYear": academic_year, "isActive": True}
+            classes = list(db.Class.find(class_query))
+            
+            if not classes:
+                print(f"[WARNING] Không tìm thấy lớp học nào cho năm học {academic_year}")
+            else:
+                print(f"[INFO] Tìm thấy {len(classes)} lớp học cho năm học {academic_year}")
+                for cls in classes:
+                    if "grade" in cls:
+                        grades.add(cls["grade"])
+            
+            # Cập nhật hoặc tạo semester cho mỗi grade
+            for grade in grades:
+                # Tìm semester theo grade và academicYear
+                semester_query = {
+                    "SemesterName": semester_info["semesterName"], 
+                    "grade": grade,
+                    "academicYear": academic_year
+                }
+                
+                existing_semester = db.Semester.find_one(semester_query)
+                
+                if existing_semester:
+                    # Cập nhật thông tin
+                    db.Semester.update_one(
+                        {"_id": existing_semester["_id"]},
+                        {"$set": {
+                            "StartDate": start_date,
+                            "EndDate": end_date,
+                            "updatedAt": datetime.utcnow()
+                        }}
+                    )
+                    print(f"[INFO] Đã cập nhật {semester_info['semesterName']} cho khối {grade} năm học {academic_year}")
+                else:
+                    # Tạo semester mới
+                    # Lấy SemesterID tiếp theo
+                    last_semester = db.Semester.find_one(sort=[("SemesterID", -1)])
+                    next_semester_id = 1
+                    if last_semester and "SemesterID" in last_semester:
+                        next_semester_id = last_semester["SemesterID"] + 1
+                    
+                    new_semester = {
+                        "SemesterID": next_semester_id,
+                        "CurriculumID": 1,  # Default curriculum ID
+                        "SemesterName": semester_info["semesterName"],
+                        "StartDate": start_date,
+                        "EndDate": end_date,
+                        "grade": grade,
+                        "academicYear": academic_year,
+                        "createdAt": datetime.utcnow(),
+                        "updatedAt": datetime.utcnow(),
+                        "isActive": True
+                    }
+                    
+                    db.Semester.insert_one(new_semester)
+                    print(f"[INFO] Đã tạo mới {semester_info['semesterName']} cho khối {grade} năm học {academic_year}")
+        
         # Xác định query để xóa dữ liệu
         delete_query = {"semesterNumber": semester_number}
         if academic_year:
@@ -197,11 +222,7 @@ async def _generate_improved_schedules_task(semester_info: Dict[str, Any]):
         print(f"[INFO] Đã xóa {result.deleted_count} lịch học cũ")
         
         # Clean existing attendance logs related to this semester
-        # Attendance logs liên kết với schedules thông qua scheduleId, 
-        # nên nếu đã xóa schedules thì cũng chỉ cần xóa attendance logs liên quan
         if result.deleted_count > 0:
-            # Lấy danh sách scheduleId đã xóa (không khả thi, vì đã xóa rồi)
-            # Thay vào đó, sẽ xóa theo cùng điều kiện
             attendance_delete_result = db.AttendanceLog.delete_many({"semesterNumber": semester_number})
             print(f"[INFO] Đã xóa {attendance_delete_result.deleted_count} attendance logs cũ")
         
@@ -221,7 +242,7 @@ async def _generate_improved_schedules_task(semester_info: Dict[str, Any]):
             # Đảm bảo các trường đúng định dạng theo model ClassSchedule
             clean_schedule = {
                 "scheduleId": schedule["scheduleId"],
-                "semesterId": 1,  # Mặc định là 1
+                "semesterId": schedule.get("semesterId", 1),  # Mặc định là 1
                 "semesterNumber": schedule["semesterNumber"],
                 "classId": schedule["classId"],
                 "subjectId": schedule["subjectId"],
@@ -264,8 +285,8 @@ async def _generate_improved_schedules_task(semester_info: Dict[str, Any]):
             class_id = schedule["classId"]
             schedule_id = schedule["scheduleId"]
             
-            # Lấy danh sách học sinh trong lớp
-            students = list(db.Student.find({"classId": class_id, "isActive": True}))
+            # Lấy danh sách học sinh trong lớp - đã sửa từ classId thành classIds
+            students = list(db.Student.find({"classIds": class_id, "isActive": True}))
             
             # Tạo attendance log cho từng học sinh
             for student in students:
