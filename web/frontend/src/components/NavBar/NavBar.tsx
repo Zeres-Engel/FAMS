@@ -16,6 +16,17 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import useNavBarHook from "./useNavBarHook";
 import Skeleton from "@mui/material/Skeleton";
+// Thêm các icon cho menu
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import PersonIcon from "@mui/icons-material/Person";
+import SettingsIcon from "@mui/icons-material/Settings";
+import PeopleIcon from "@mui/icons-material/People"; 
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import ClassIcon from "@mui/icons-material/Class";
+import AssignmentTurnedInIcon from "@mui/icons-material/AssignmentTurnedIn";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import LogoutIcon from "@mui/icons-material/Logout";
+import { ListItemIcon } from "@mui/material";
 
 const drawerWidth = 240;
 
@@ -35,39 +46,94 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
     setMobileOpen(prev => !prev);
   };
 
+  // Function để lấy icon tương ứng với mỗi menu item
+  const getIcon = (item: string) => {
+    switch (item) {
+      case "HomePage Admin":
+      case "HomePage":
+        return <DashboardIcon />;
+      case "Profile":
+        return <PersonIcon />;
+      case "System Management":
+        return <SettingsIcon />;
+      case "User Management":
+        return <PeopleIcon />;
+      case "Schedule Management":
+      case "Schedule":
+        return <CalendarMonthIcon />;
+      case "Class Management":
+      case "Class":
+        return <ClassIcon />;
+      case "Attendance Management":
+      case "Attendance":
+        return <AssignmentTurnedInIcon />;
+      case "Notify Management":
+      case "Notify":
+        return <NotificationsIcon />;
+      case "Logout":
+        return <LogoutIcon />;
+      default:
+        return <DashboardIcon />;
+    }
+  };
+
+  // Tách riêng Logout ra khỏi các menu item khác (chỉ cho vertical mode)
+  const nonLogoutItems = isVertical 
+    ? state.navItems?.filter(item => item !== "Logout") || []
+    : state.navItems || [];
+  
+  const logoutItem = "Logout";
+
   const drawerContent = (
-    <Box sx={{ textAlign: "center" }}>
-      <Typography variant="h6" sx={{ my: 2 }}>
-        {state.formattedName || state.userFullName || "FAMS"}
-      </Typography>
-      <Box sx={{ display: 'flex', justifyContent: 'center', marginBottom: 2 }}>
-        {state.isLoading ? (
-          <Skeleton 
-            variant="circular"
-            width={60}
-            height={60}
-            animation="wave"
-          />
-        ) : (
-          <img
-            src={state.userAvatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"}
-            alt="User Avatar"
-            style={{ 
-              width: '60px', 
-              height: '60px', 
-              borderRadius: '50%',
-              cursor: 'pointer'
-            }}
-            onClick={() => {
-              handler.handleOnNavigate("Profile");
-              setMobileOpen(false);
-            }}
-          />
-        )}
+    <Box sx={{ 
+      textAlign: "center", 
+      height: "100%", 
+      display: "flex",
+      flexDirection: "column"
+    }}>
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, color: "#1b78ec", mb: 2 }}>
+          FAMS
+        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+          {state.isLoading ? (
+            <Skeleton 
+              variant="circular"
+              width={70}
+              height={70}
+              animation="wave"
+            />
+          ) : (
+            <img
+              src={state.userAvatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"}
+              alt="User Avatar"
+              style={{ 
+                width: '70px', 
+                height: '70px', 
+                borderRadius: '50%',
+                cursor: 'pointer',
+                border: '2px solid #1b78ec',
+                padding: '2px'
+              }}
+              onClick={() => {
+                handler.handleOnNavigate("Profile");
+                setMobileOpen(false);
+              }}
+            />
+          )}
+        </Box>
+        <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+          {state.formattedName || state.userFullName || "User"}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          {state.role === "admin" ? "Administrator" : "User"}
+        </Typography>
       </Box>
       <Divider />
-      <List>
-        {state.navItems?.map(item => (
+      
+      {/* Menu Items */}
+      <List sx={{ flexGrow: 1, py: 0 }}>
+        {nonLogoutItems.map(item => (
           <ListItem
             key={item}
             onClick={() => {
@@ -75,13 +141,65 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
               setMobileOpen(false);
             }}
             disablePadding
+            sx={{
+              '&:hover': {
+                backgroundColor: 'rgba(27, 120, 236, 0.08)',
+              }
+            }}
           >
-            <ListItemButton sx={{ textAlign: "center" }}>
-              <ListItemText primary={item} className="nav-Item" />
+            <ListItemButton sx={{ px: 3 }}>
+              <ListItemIcon sx={{ color: '#1b78ec', minWidth: '36px' }}>
+                {getIcon(item)}
+              </ListItemIcon>
+              <ListItemText 
+                primary={item} 
+                className="nav-Item" 
+                primaryTypographyProps={{ 
+                  fontSize: '0.85rem',
+                  fontWeight: 500,
+                  whiteSpace: 'nowrap'
+                }}
+              />
             </ListItemButton>
           </ListItem>
         ))}
       </List>
+      
+      {/* Logout Button (chỉ cho vertical layout) */}
+      {isVertical && (
+        <>
+          <Divider />
+          <List>
+            <ListItem
+              onClick={() => {
+                handler.handleOnNavigate(logoutItem);
+                setMobileOpen(false);
+              }}
+              disablePadding
+              sx={{
+                '&:hover': {
+                  backgroundColor: 'rgba(27, 120, 236, 0.08)',
+                }
+              }}
+            >
+              <ListItemButton sx={{ px: 3 }}>
+                <ListItemIcon sx={{ color: '#1b78ec', minWidth: '36px' }}>
+                  <LogoutIcon />
+                </ListItemIcon>
+                <ListItemText 
+                  primary={logoutItem} 
+                  className="nav-Item"
+                  primaryTypographyProps={{ 
+                    fontSize: '0.85rem',
+                    fontWeight: 500,
+                    whiteSpace: 'nowrap'
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          </List>
+        </>
+      )}
     </Box>
   );
 
@@ -91,8 +209,8 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
       
       {/* Chỉ hiển thị AppBar ngang khi variant là horizontal */}
       {!isVertical && (
-        <AppBar component="nav" className="navBar-Logo">
-          <Toolbar>
+        <AppBar component="nav" className="navBar-Logo" position="fixed" elevation={0}>
+          <Toolbar sx={{ justifyContent: 'space-between' }}>
             <IconButton
               color="inherit"
               aria-label="open drawer"
@@ -106,9 +224,9 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
               variant="h5"
               component="div"
               className="navBar-Logo-font"
-              sx={{ flexGrow: 1, display: { xs: "none", sm: "block" } }}
+              sx={{ display: { xs: "none", sm: "flex" }, alignItems: 'center' }}
             >
-              {state.formattedName || state.userFullName || "FAMS"}
+              <span style={{ fontWeight: 700, letterSpacing: '0.5px' }}>FAMS</span>
               <Box 
                 component="span" 
                 onClick={() => handler.handleOnNavigate("Profile")} 
@@ -145,6 +263,30 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
                   <Button
                     onClick={() => handler.handleOnNavigate(item)}
                     className="navBar-Item-Font"
+                    sx={{ 
+                      textTransform: 'uppercase',
+                      fontWeight: 600,
+                      position: 'relative',
+                      padding: '8px 16px',
+                      color: '#1b78ec',
+                      '&:hover': {
+                        backgroundColor: 'rgba(27, 120, 236, 0.08)',
+                      },
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        bottom: 0,
+                        left: '50%',
+                        width: '0%',
+                        height: '2px',
+                        backgroundColor: '#1b78ec',
+                        transition: 'all 0.3s ease',
+                        transform: 'translateX(-50%)'
+                      },
+                      '&:hover::after': {
+                        width: '80%'
+                      }
+                    }}
                   >
                     {item}
                   </Button>
@@ -152,7 +294,7 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
                     <Divider
                       orientation="vertical"
                       flexItem
-                      sx={{ bgcolor: "white", height: 35, }}
+                      sx={{ bgcolor: "#1b78ec", height: 20, opacity: 0.5 }}
                     />
                   )}
                 </React.Fragment>
@@ -205,6 +347,8 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
               [`& .MuiDrawer-paper`]: {
                 width: drawerWidth,
                 boxSizing: "border-box",
+                boxShadow: '0px 3px 10px rgba(0, 0, 0, 0.1)',
+                backgroundColor: "#fff"
               },
             }}
             open
