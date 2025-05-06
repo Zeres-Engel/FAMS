@@ -194,6 +194,10 @@ function CurriculumSetting(): React.JSX.Element {
         }
       } else {
         // Create a new subject or add existing one to curriculum
+        if(selectedCurriculum?.subjects.some(subject => subject.subjectName === formData.subjectName.trim())){
+        setError("Subject name cannot be duplicated!");
+        return;
+        }
         const response = await axiosInstance.post(
           `/curriculum/${selectedCurriculumId}/subjects`,
           { 
@@ -420,7 +424,7 @@ function CurriculumSetting(): React.JSX.Element {
                   multiline
                   rows={3}
                   margin="dense"
-                  disabled={editingIndex !== null}
+                  // disabled={editingIndex !== null}
                 />
 
                 <Button

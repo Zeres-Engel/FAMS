@@ -42,7 +42,8 @@ function useEditClassFormHook(formData: editClassForm) {
     const fetchTeachers = async () => {
       try {
         // Fetch all teachers
-        await dispatch(searchTeachers({ search: "", page: 1, limit: 100 }));
+        const isNotify = true; // Initialize isNotify with a default value
+        await dispatch(searchTeachers({ search: "", page: 1, limit: 100, isNotify }));
         
         // Fetch all classes to get list of homeroom teachers
         const classesResponse = await axios.get('http://fams.io.vn/api-nodejs/classes?search=&academicYear=');
