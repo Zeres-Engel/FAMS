@@ -101,10 +101,10 @@ router.post('/', isAuthenticated, async (req, res) => {
 
 /**
  * @route   POST /api/attendance/batch-update
- * @desc    Update multiple attendance logs at once
- * @access  Private
+ * @desc    Batch update attendance records
+ * @access  Public
  */
-router.post('/batch-update', isAuthenticated, async (req, res) => {
+router.post('/batch-update', async (req, res) => {
   try {
     const { attendanceUpdates } = req.body;
 
@@ -535,9 +535,9 @@ router.put('/class/:classId/date/:date/slot/:slotNumber', isAuthenticated, async
 /**
  * @route   PUT /api/attendance/check-in
  * @desc    Unified API for all attendance methods (teacher & Jetson Nano)
- * @access  Private
+ * @access  Public
  */
-router.put('/check-in', isAuthenticated, async (req, res) => {
+router.put('/check-in', async (req, res) => {
   try {
     const {
       userId,

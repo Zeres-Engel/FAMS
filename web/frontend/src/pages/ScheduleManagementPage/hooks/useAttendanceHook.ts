@@ -36,12 +36,11 @@ export interface AttendanceData {
   endTime?: string;
   sessionDate?: string;
   topic?: string;
-  // Các trường tương thích
   checkInTime?: string | null;
   avatar?: string;
   notes?: string;
   fullName?: string;
-  face?: string; // Trường để tương thích với AttendanceManagementPage
+  face?: string;
 }
 
 export interface UseAttendanceHookProps {

@@ -311,12 +311,12 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
                 } else {
                   // Slot thông thường
                   console.log("Setting up regular slot with times:", slotDetails.startTime, slotDetails.endTime);
-                  setSlotInfo({
-                    dayOfWeek: slotInfo?.dayOfWeek || "",
-                    startTime: slotDetails.startTime,
-                    endTime: slotDetails.endTime,
+                setSlotInfo({
+                  dayOfWeek: slotInfo?.dayOfWeek || "",
+                  startTime: slotDetails.startTime,
+                  endTime: slotDetails.endTime,
                     isExtraSlot: false
-                  });
+                });
                 }
                 
                 // Cập nhật customStartTime và customEndTime cho tất cả các loại slot
