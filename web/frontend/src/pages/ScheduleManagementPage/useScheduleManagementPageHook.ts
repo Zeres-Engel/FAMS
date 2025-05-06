@@ -390,7 +390,7 @@ function useScheduleManagementPageHook() {
     const updatedSchedule: ScheduleAction = {
       scheduleId: currentSchedule.scheduleId,
       semesterId: currentSchedule.semesterId || undefined,
-      classId: String(currentSchedule.classId),
+      classId: String(eventShow.classId),
       subjectId: eventShow.subjectId,
       classroomId: eventShow.classroomId,
       teacherId: eventShow.teacher,
@@ -398,6 +398,12 @@ function useScheduleManagementPageHook() {
       sessionDate: new Date(currentSchedule?.sessionDate)
         .toISOString()
         .split("T")[0],
+      slotId: eventShow.slotId?.toString(),
+      // Thêm thông tin cho custom time slots nếu cần
+      ...(eventShow.customStartTime && eventShow.customEndTime ? { 
+        customStartTime: eventShow.customStartTime,
+        customEndTime: eventShow.customEndTime 
+      } : {})
     };
     console.log("updatedSchedule", updatedSchedule);
 

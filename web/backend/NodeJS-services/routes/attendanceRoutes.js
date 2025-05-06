@@ -588,6 +588,55 @@ router.put('/check-in', isAuthenticated, async (req, res) => {
 });
 
 /**
+ * @route   GET /api/attendance/schedule/:scheduleId
+ * @desc    Get attendance logs for a specific schedule
+ * @access  Public
+ */
+router.get('/schedule/:scheduleId', async (req, res) => {
+  try {
+    const { scheduleId } = req.params;
+    const { page = 1, limit = 100 } = req.query;
+
+    // Validate scheduleId
+    if (!scheduleId || isNaN(parseInt(scheduleId))) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid schedule ID provided',
+        code: 'INVALID_SCHEDULE_ID'
+      });
+    }
+
+    // Prepare filters
+    const filters = {
+      scheduleId: parseInt(scheduleId)
+    };
+    
+    // Get attendance logs for the schedule
+    const { logs, total, pagination } = await attendanceService.getAttendanceLogs(
+      filters,
+      { page: parseInt(page), limit: parseInt(limit) }
+    );
+    
+    // Send response
+    res.status(200).json({
+      success: true,
+      count: logs.length,
+      total,
+      pagination,
+      data: logs
+    });
+  } catch (error) {
+    console.error('Error fetching attendance logs for schedule:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching attendance logs for schedule',
+      error: error.message,
+      code: 'SCHEDULE_ATTENDANCE_FETCH_ERROR'
+    });
+  }
+});
+
+/**
  * Helper function to validate date format
  * @param {string} dateString - Date string in YYYY-MM-DD format
  * @returns {boolean} - Whether the date is valid

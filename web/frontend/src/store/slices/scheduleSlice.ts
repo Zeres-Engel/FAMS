@@ -46,7 +46,9 @@ export interface ScheduleAction {
   slotId?: string;         
   topic?: string;           
   sessionDate?: string;     
-  isActive?: boolean;       
+  isActive?: boolean;
+  customStartTime?: string;
+  customEndTime?: string;
 }
 export interface ScheduleFilters {
   className?: string;
@@ -183,6 +185,8 @@ export const updateSchedule = createAsyncThunk(
           topic: updatedSchedule.topic,
           sessionDate: updatedSchedule.sessionDate,
           isActive: updatedSchedule.isActive,
+          customStartTime: updatedSchedule.customStartTime,
+          customEndTime: updatedSchedule.customEndTime
         }
       );
 

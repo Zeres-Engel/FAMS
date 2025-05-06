@@ -60,6 +60,14 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
   fetchClassesByAcademicYear,
   addEvent,
 }) => {
+  // Log slot config để debug
+  React.useEffect(() => {
+    if (open) {
+      console.log("Available slots in AddScheduleDialog:", slotConfig);
+      console.log("Current slotInfo:", slotInfo);
+    }
+  }, [open, slotInfo]);
+
   return (
     <Dialog
       open={open}
@@ -274,30 +282,48 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
             label="Slot"
             onChange={(e: SelectChangeEvent) => {
               const selectedSlot = e.target.value;
+              console.log("Selected slot:", selectedSlot);
+              
               setNewEvent({
                 ...newEvent,
                 slotId: selectedSlot,
               });
               
               // Kiểm tra xem có phải Slot Extra hay không
-              const isExtraSlot = Number(selectedSlot) === 11;
+              const slotNumber = Number(selectedSlot);
+              const isExtraSlot = slotNumber === 11;
+              console.log("Is Extra Slot?", isExtraSlot);
               
-              // Get slot info from configuration
-              const slotDetails = slotConfig.find(slot => slot.slotNumber === Number(selectedSlot));
+              // Tìm thông tin slot từ slotConfig
+              const slotDetails = slotConfig.find(slot => slot.slotNumber === slotNumber);
+              console.log("Found slot details:", slotDetails);
+              
               if (slotDetails) {
-                // Set slot info
-                setSlotInfo({
-                  dayOfWeek: slotInfo?.dayOfWeek || "",
-                  startTime: slotDetails.startTime,
-                  endTime: slotDetails.endTime,
-                  isExtraSlot: !!slotDetails.isExtra
-                });
+                // Đặc biệt xử lý cho slot 11 (Extra)
+                if (isExtraSlot) {
+                  console.log("Setting up Extra slot with empty times");
+                  setSlotInfo({
+                    dayOfWeek: slotInfo?.dayOfWeek || "",
+                    startTime: "",
+                    endTime: "",
+                    isExtraSlot: true
+                  });
+                } else {
+                  // Slot thông thường
+                  console.log("Setting up regular slot with times:", slotDetails.startTime, slotDetails.endTime);
+                  setSlotInfo({
+                    dayOfWeek: slotInfo?.dayOfWeek || "",
+                    startTime: slotDetails.startTime,
+                    endTime: slotDetails.endTime,
+                    isExtraSlot: false
+                  });
+                }
                 
-                // Update customStartTime and customEndTime for all slots
+                // Cập nhật customStartTime và customEndTime cho tất cả các loại slot
                 setNewEvent(prev => ({
                   ...prev,
-                  customStartTime: slotDetails.startTime,
-                  customEndTime: slotDetails.endTime
+                  customStartTime: isExtraSlot ? "" : slotDetails.startTime,
+                  customEndTime: isExtraSlot ? "" : slotDetails.endTime
                 }));
               }
             }}
@@ -337,10 +363,10 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
                 value={slotInfo?.startTime || ""}
                 fullWidth
                 margin="dense"
-                disabled={!slotInfo?.isExtraSlot}
-                type={slotInfo?.isExtraSlot ? "time" : "text"}
+                disabled={slotInfo?.isExtraSlot === false}
+                type="time"
                 InputProps={{
-                  readOnly: !slotInfo?.isExtraSlot,
+                  readOnly: slotInfo?.isExtraSlot === false,
                   sx: { 
                     backgroundColor: 'white',
                     '&.Mui-disabled': {
@@ -352,24 +378,26 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
                 }}
                 inputProps={{
                   step: 300, // 5 minutes step
-                  format: "24h" // Sử dụng định dạng 24h
                 }}
                 onChange={(e) => {
+                  const newStartTime = e.target.value;
+                  console.log("New start time:", newStartTime);
+                  
                   if (slotInfo?.isExtraSlot) {
                     setSlotInfo(prevSlotInfo => {
                       // Đảm bảo tất cả các trường bắt buộc
                       return {
                         dayOfWeek: prevSlotInfo?.dayOfWeek || "",
-                        startTime: e.target.value,
+                        startTime: newStartTime,
                         endTime: prevSlotInfo?.endTime || "",
-                        isExtraSlot: prevSlotInfo?.isExtraSlot || false
+                        isExtraSlot: true
                       };
                     });
                     
                     // Cập nhật giờ bắt đầu tùy chỉnh
                     setNewEvent({
                       ...newEvent,
-                      customStartTime: e.target.value
+                      customStartTime: newStartTime
                     });
                   }
                 }}
@@ -379,10 +407,10 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
                 value={slotInfo?.endTime || ""}
                 fullWidth
                 margin="dense"
-                disabled={!slotInfo?.isExtraSlot}
-                type={slotInfo?.isExtraSlot ? "time" : "text"}
+                disabled={slotInfo?.isExtraSlot === false}
+                type="time"
                 InputProps={{
-                  readOnly: !slotInfo?.isExtraSlot,
+                  readOnly: slotInfo?.isExtraSlot === false,
                   sx: { 
                     backgroundColor: 'white',
                     '&.Mui-disabled': {
@@ -394,24 +422,26 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
                 }}
                 inputProps={{
                   step: 300, // 5 minutes step
-                  format: "24h" // Sử dụng định dạng 24h
                 }}
                 onChange={(e) => {
+                  const newEndTime = e.target.value;
+                  console.log("New end time:", newEndTime);
+                  
                   if (slotInfo?.isExtraSlot) {
                     setSlotInfo(prevSlotInfo => {
                       // Đảm bảo tất cả các trường bắt buộc
                       return {
                         dayOfWeek: prevSlotInfo?.dayOfWeek || "",
                         startTime: prevSlotInfo?.startTime || "",
-                        endTime: e.target.value,
-                        isExtraSlot: prevSlotInfo?.isExtraSlot || false
+                        endTime: newEndTime,
+                        isExtraSlot: true
                       };
                     });
                     
                     // Cập nhật giờ kết thúc tùy chỉnh
                     setNewEvent({
                       ...newEvent,
-                      customEndTime: e.target.value
+                      customEndTime: newEndTime
                     });
                   }
                 }}
@@ -509,29 +539,15 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
                 });
               }
             } catch (error) {
-              // Xử lý lỗi nếu có
-              console.error("Lỗi khi tạo lịch học:", error);
-              
-              // Xử lý error.message một cách an toàn
-              let errorMessage = "Unknown error";
-              if (error instanceof Error) {
-                errorMessage = error.message;
-              } else if (typeof error === 'object' && error !== null && 'message' in error) {
-                errorMessage = (error as { message: string }).message;
-              } else if (typeof error === 'string') {
-                errorMessage = error;
-              }
-              
-              console.error(`Lỗi khi tạo lịch học: ${errorMessage}`);
+              console.error("Error adding event:", error);
+              // Display error to user
+              alert(`Failed to create schedule: ${error}`);
             }
           }}
         >
           Add
         </Button>
-        <Button
-          variant="outlined"
-          onClick={onClose}
-        >
+        <Button variant="outlined" onClick={onClose}>
           Cancel
         </Button>
       </DialogActions>

@@ -58,37 +58,108 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
     isExtraSlot: false
   });
   const [directTeachers, setDirectTeachers] = useState<{ userId: string; fullName: string }[]>(teachers);
+  const [hasApiClassName, setHasApiClassName] = useState(false);
 
   useEffect(() => {
     if (event) {
-      setEditedEvent(event);
+      console.log("API Event data received:", JSON.stringify(event, null, 2));
       
-      // Xác định thứ trong tuần từ ngày đã chọn
-      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-      const scheduleDate = event.scheduleDate || new Date();
-      const dayOfWeek = days[scheduleDate.getDay()];
+      // Handle the case where event might come from the API with different field names
+      const scheduleId = (event as any).scheduleId || event.id;
+      const teacherId = (event as any).teacherUserId || (event as any).teacherId || event.teacher;
+      const classroomId = (event as any).classroomId || (event as any).classroomNumber || event.classroomNumber;
+      const sessionDate = (event as any).sessionDate || (event as any).SessionDate || event.scheduleDate;
+      const slotNumber = (event as any).slotId || (event as any).SlotID || event.slotId;
+      const startTimeVal = (event as any).startTime || event.customStartTime || "";
+      const endTimeVal = (event as any).endTime || event.customEndTime || "";
+      const dayOfWeekVal = (event as any).dayOfWeek || "";
       
-      // Lấy thông tin slot từ slotConfig
-      const slotDetails = slotConfig.find(slot => slot.slotNumber === Number(event.slotId));
+      // Explicitly check all possible keys for academicYear and classId from API
+      let academicYearVal = "";
+      if (typeof (event as any).academicYear === "string") {
+        academicYearVal = (event as any).academicYear;
+        console.log("Found academicYear in API:", academicYearVal);
+      }
       
-      // Khởi tạo slotInfo với thông tin từ event
-      setSlotInfo({
-        dayOfWeek: dayOfWeek,
-        startTime: event.customStartTime || (slotDetails?.startTime || ""),
-        endTime: event.customEndTime || (slotDetails?.endTime || ""),
-        isExtraSlot: event.slotId === "11"
+      let classIdVal = "";
+      if ((event as any).classId !== undefined) {
+        classIdVal = String((event as any).classId);
+        console.log("Found classId in API:", classIdVal);
+      }
+      
+      let classNameVal = (event as any).className || "";
+      let subjectIdVal = (event as any).subjectId;
+      
+      console.log("Critical values extracted:", {
+        scheduleId,
+        academicYearVal,
+        classIdVal,
+        classNameVal,
+        slotNumber,
+        dayOfWeekVal,
+        startTimeVal,
+        endTimeVal
       });
 
-      // Nếu có subjectId, fetch teachers cho subject này
-      if (event.subjectId) {
-        fetchTeachersBySubject(event.subjectId);
+      // Create the updated event object with explicitly set values
+      const updatedEvent = {
+        id: scheduleId,
+        title: (event as any).title || (event as any).subject || "",
+        start: new Date(),
+        end: new Date(),
+        subject: (event as any).subject || (event as any).subjectName || "",
+        academicYear: academicYearVal,
+        classId: classIdVal,
+        subjectId: subjectIdVal,
+        teacher: teacherId || "",
+        classroomNumber: classroomId || "",
+        scheduleDate: sessionDate ? new Date(sessionDate) : new Date(),
+        slotId: slotNumber ? String(slotNumber) : "",
+        customStartTime: startTimeVal,
+        customEndTime: endTimeVal,
+        className: classNameVal,
+      };
+
+      console.log("Setting editedEvent:", updatedEvent);
+      setEditedEvent(updatedEvent);
+      
+      // Force update for class dropdown when academicYear is available
+      if (academicYearVal) {
+        fetchClassesByAcademicYear(academicYearVal)
+          .then(classes => {
+            console.log(`Loaded ${classes.length} classes for academic year ${academicYearVal}`);
+          })
+          .catch(error => {
+            console.error("Error loading classes for academic year:", error);
+          });
+      }
+      
+      setHasApiClassName(!!classNameVal);
+      
+      // Calculate day of week if not provided in API
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const scheduleDate = sessionDate ? new Date(sessionDate) : new Date();
+      const calculatedDayOfWeek = days[scheduleDate.getDay()];
+      
+      // Find slot details
+      const slotDetails = slotConfig.find(slot => slot.slotNumber === Number(slotNumber));
+      console.log("Slot details:", slotDetails);
+      
+      setSlotInfo({
+        dayOfWeek: dayOfWeekVal || calculatedDayOfWeek,
+        startTime: startTimeVal || (slotDetails?.startTime || ""),
+        endTime: endTimeVal || (slotDetails?.endTime || ""),
+        isExtraSlot: String(slotNumber) === "11" || (slotDetails?.isExtra || false)
+      });
+
+      if (subjectIdVal) {
+        fetchTeachersBySubject(subjectIdVal);
       }
     }
-  }, [event]);
+  }, [event, academicYears, allClasses]);
 
   useEffect(() => {
     if (editedEvent && open) {
-      // Đảm bảo slotInfo luôn được cập nhật khi dialog mở
       const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       const scheduleDate = editedEvent.scheduleDate || new Date();
       const dayOfWeek = days[scheduleDate.getDay()];
@@ -129,7 +200,6 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
         setDirectTeachers(data.data);
       } else {
         console.error("API returned success: false or empty data", data);
-        // Fallback to using all teachers
         console.log("Falling back to all teachers");
         if (teachers && teachers.length > 0) {
           setDirectTeachers(teachers);
@@ -137,7 +207,6 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
       }
     } catch (error) {
       console.error("Error fetching teachers for subject:", error);
-      // Fallback to using all teachers
       if (teachers && teachers.length > 0) {
         setDirectTeachers(teachers);
       }
@@ -170,6 +239,11 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
 
   if (!editedEvent) return null;
 
+  const getClassNameFromId = (classId: string) => {
+    const classObj = allClasses.find(c => String(c.classId) === String(classId));
+    return classObj ? classObj.className : '';
+  };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Edit Schedule</DialogTitle>
@@ -179,17 +253,17 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
           <Select
             labelId="academic-year-select-label"
             id="academic-year-select"
-            value={editedEvent.academicYear || ""}
+            value={editedEvent?.academicYear || ""}
             label="Academic Year"
             onChange={(e: SelectChangeEvent) => {
               const selectedYear = e.target.value;
-              setEditedEvent({
-                ...editedEvent,
+              console.log("Changing academicYear to:", selectedYear);
+              setEditedEvent(prev => ({
+                ...prev!,
                 academicYear: selectedYear,
-                classId: "", // Reset class when year changes
-              });
+                classId: "",
+              }));
 
-              // Fetch classes for this academic year
               if (selectedYear) {
                 fetchClassesByAcademicYear(selectedYear)
                   .then(classes => {
@@ -201,11 +275,34 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
               }
             }}
           >
-            {academicYears.map(year => (
-              <MenuItem key={year} value={year}>
-                {year}
-              </MenuItem>
-            ))}
+            {(() => {
+              // Debug output outside of JSX
+              console.log("Academic Years in dropdown:", academicYears);
+              console.log("Current selected academicYear:", editedEvent?.academicYear);
+              
+              // Prepare menu items
+              const menuItems = [];
+              
+              // If academicYears array is empty, add the current value to ensure it's visible
+              if (academicYears.length === 0 && editedEvent?.academicYear) {
+                menuItems.push(
+                  <MenuItem key={editedEvent.academicYear} value={editedEvent.academicYear}>
+                    {editedEvent.academicYear}
+                  </MenuItem>
+                );
+              }
+              
+              // Add all available academic years
+              academicYears.forEach(year => {
+                menuItems.push(
+                  <MenuItem key={year} value={year}>
+                    {year}
+                  </MenuItem>
+                );
+              });
+              
+              return menuItems;
+            })()}
           </Select>
         </FormControl>
 
@@ -214,45 +311,79 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
           <Select
             labelId="class-select-label"
             id="class-select"
-            value={editedEvent.classId || ""}
+            value={editedEvent?.classId || ""}
             label="Class"
-            onChange={(e: SelectChangeEvent) =>
-              setEditedEvent({
-                ...editedEvent,
+            onChange={(e: SelectChangeEvent) => {
+              console.log("Changing classId to:", e.target.value);
+              setEditedEvent(prev => ({
+                ...prev!,
                 classId: e.target.value,
-              })
-            }
-            disabled={!editedEvent.academicYear} // Disable until academic year is selected
+                className: getClassNameFromId(e.target.value),
+              }))
+            }}
+            disabled={!editedEvent?.academicYear}
           >
-            {/* Filter the classes based on the selected academic year */}
-            {allClasses
-              .filter(classData => classData.academicYear === editedEvent.academicYear)
-              .map(classData => (
-                <MenuItem
-                  key={classData.classId}
-                  value={classData.classId.toString()}
-                >
-                  {classData.className}
-                </MenuItem>
-              ))}
+            {(() => {
+              // Debug output outside of JSX
+              console.log("Classes filtered by academicYear:", 
+                allClasses.filter(classData => classData.academicYear === editedEvent?.academicYear)
+                  .map(c => ({id: c.classId, name: c.className})));
+              console.log("Current selected classId:", editedEvent?.classId);
+              
+              // Prepare menu items
+              const menuItems = [];
+              
+              // If no matching classes found but we have a classId, add current class to ensure it's visible
+              if (allClasses.filter(classData => classData.academicYear === editedEvent?.academicYear).length === 0 && 
+                 editedEvent?.classId && editedEvent?.className) {
+                menuItems.push(
+                  <MenuItem key={editedEvent.classId} value={editedEvent.classId.toString()}>
+                    {editedEvent.className}
+                  </MenuItem>
+                );
+              }
+              
+              // Add all available classes for selected academic year
+              allClasses
+                .filter(classData => classData.academicYear === editedEvent?.academicYear)
+                .forEach(classData => {
+                  menuItems.push(
+                    <MenuItem
+                      key={classData.classId}
+                      value={classData.classId.toString()}
+                    >
+                      {classData.className}
+                    </MenuItem>
+                  );
+                });
+              
+              return menuItems;
+            })()}
           </Select>
         </FormControl>
+
+        {hasApiClassName && editedEvent?.className && (
+          <Box sx={{ mb: 2, p: 1, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+            <Typography variant="body2" color="primary">
+              <strong>Class Name from API:</strong> {editedEvent.className}
+            </Typography>
+          </Box>
+        )}
 
         <FormControl fullWidth sx={{ mb: 2 }}>
           <InputLabel id="subject-select-label">Subject</InputLabel>
           <Select
             labelId="subject-select-label"
             id="subject-select"
-            value={editedEvent.subjectId ? String(editedEvent.subjectId) : ""}
+            value={editedEvent?.subjectId ? String(editedEvent.subjectId) : ""}
             label="Subject"
             onChange={(e: SelectChangeEvent) => {
               const subjectId = Number(e.target.value);
-              setEditedEvent({
-                ...editedEvent,
+              setEditedEvent(prev => ({
+                ...prev!,
                 subjectId: subjectId,
-              });
+              }));
 
-              // Fetch teachers for this subject
               if (subjectId) {
                 fetchTeachersBySubject(subjectId);
               }
@@ -269,14 +400,14 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
         <TextField
           type="date"
           label="Date"
-          value={moment(editedEvent.scheduleDate || new Date()).format("YYYY-MM-DD")}
+          value={moment(editedEvent?.scheduleDate || new Date()).format("YYYY-MM-DD")}
           onChange={(e) => {
             const selectedDate = new Date(e.target.value);
             
-            setEditedEvent({
-              ...editedEvent,
+            setEditedEvent(prev => ({
+              ...prev!,
               scheduleDate: selectedDate,
-            });
+            }));
             
             const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
             const dayOfWeek = days[selectedDate.getDay()];
@@ -296,10 +427,12 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
           <Select
             labelId="slot-select-label"
             id="slot-select"
-            value={editedEvent.slotId ? String(editedEvent.slotId) : ""}
+            value={editedEvent?.slotId ? String(editedEvent.slotId) : ""}
             label="Slot"
             onChange={(e: SelectChangeEvent) => {
               const selectedSlot = e.target.value;
+              console.log("Changing slotId to:", selectedSlot);
+              
               setEditedEvent({
                 ...editedEvent,
                 slotId: selectedSlot,
@@ -308,6 +441,8 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
               const isExtraSlot = Number(selectedSlot) === 11;
               
               const slotDetails = slotConfig.find(slot => slot.slotNumber === Number(selectedSlot));
+              console.log("Selected slot details:", slotDetails);
+              
               if (slotDetails) {
                 setSlotInfo({
                   dayOfWeek: slotInfo.dayOfWeek,
@@ -319,6 +454,7 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
                 if (editedEvent) {
                   setEditedEvent({
                     ...editedEvent,
+                    slotId: selectedSlot,
                     customStartTime: slotDetails.startTime,
                     customEndTime: slotDetails.endTime
                   });
@@ -326,11 +462,35 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
               }
             }}
           >
-            {slotConfig.map(slot => (
-              <MenuItem key={slot.slotNumber} value={slot.slotNumber}>
-                {slot.isExtra ? "Slot Extra (Custom)" : `Slot ${slot.slotNumber}`}
-              </MenuItem>
-            ))}
+            {(() => {
+              // Debug output outside of JSX
+              console.log("Available slots:", slotConfig.map(s => ({number: s.slotNumber, extra: s.isExtra})));
+              console.log("Current selected slotId:", editedEvent?.slotId);
+              
+              // Prepare menu items
+              const menuItems = [];
+              
+              // If no matching slot found but we have a slotId, add current slot to ensure it's visible
+              if (!slotConfig.some(slot => String(slot.slotNumber) === String(editedEvent?.slotId)) && 
+                  editedEvent?.slotId) {
+                menuItems.push(
+                  <MenuItem key={editedEvent.slotId} value={String(editedEvent.slotId)}>
+                    {Number(editedEvent.slotId) === 11 ? "Slot Extra (Custom)" : `Slot ${editedEvent.slotId}`}
+                  </MenuItem>
+                );
+              }
+              
+              // Add all available slots
+              slotConfig.forEach(slot => {
+                menuItems.push(
+                  <MenuItem key={slot.slotNumber} value={slot.slotNumber}>
+                    {slot.isExtra ? "Slot Extra (Custom)" : `Slot ${slot.slotNumber}`}
+                  </MenuItem>
+                );
+              });
+              
+              return menuItems;
+            })()}
           </Select>
         </FormControl>
 
@@ -483,17 +643,21 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
       <DialogActions>
         <Button 
           onClick={() => {
-            // For extra slot, ensure we have valid times
             if (editedEvent.slotId === "11" && (!slotInfo.startTime || !slotInfo.endTime)) {
               alert("Please specify both start and end times for the extra slot");
               return;
             }
             
-            // Create a copy of the editedEvent with custom times if needed
             const eventToUpdate = {...editedEvent};
             if (slotInfo.isExtraSlot) {
               eventToUpdate.customStartTime = slotInfo.startTime;
               eventToUpdate.customEndTime = slotInfo.endTime;
+            }
+            
+            if (hasApiClassName && event?.className) {
+              eventToUpdate.className = event.className;
+            } else if (eventToUpdate.classId) {
+              eventToUpdate.className = getClassNameFromId(String(eventToUpdate.classId));
             }
             
             onSave(eventToUpdate);
@@ -506,7 +670,7 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
           variant="contained"
           color="secondary"
           onClick={() => {
-            onClose(); // Đóng dialog trước
+            onClose();
             onViewAttendance(editedEvent.id);
           }}
         >
@@ -523,4 +687,4 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
   );
 };
 
-export default EditScheduleDialog; 
+export default EditScheduleDialog;

@@ -244,6 +244,9 @@ const ScheduleManagementPage: React.FC = () => {
   };
 
   const handleViewAttendance = (scheduleId: number) => {
+    // Gọi API để lấy dữ liệu điểm danh
+    attendanceHook.actions.fetchAttendanceData(scheduleId);
+    // Chuyển chế độ sang màn hình điểm danh
     attendanceHook.actions.setSelectedScheduleId(scheduleId);
     attendanceHook.actions.setViewMode('attendance');
   };
@@ -631,7 +634,7 @@ const ScheduleManagementPage: React.FC = () => {
                       handler.handleSelectEvent();
                       // Gọi API và chuyển sang trang attendance
                       if (state.eventShow?.id) {
-                        attendanceActions.fetchAttendanceData(state.eventShow.id);
+                        handleViewAttendance(state.eventShow.id);
                       }
                     }}
                   >
@@ -705,6 +708,8 @@ const ScheduleManagementPage: React.FC = () => {
               date={state.eventShow?.start || new Date()}
               onBack={attendanceActions.handleBackToCalendar}
               attendanceData={attendanceState.attendanceData}
+              loading={attendanceState.loading}
+              error={attendanceState.error}
             />
           </Paper>
         )}
