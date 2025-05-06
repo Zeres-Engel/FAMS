@@ -27,7 +27,8 @@ export const searchTeachers = createAsyncThunk(
       search = "",
       page = 1,
       limit = 100,
-    }: { search?: string; page?: number; limit?: number },
+      isNotify = false
+    }: { search?: string; page?: number; limit?: number, isNotify?:boolean },
     thunkAPI
   ) => {
     try {
@@ -35,7 +36,7 @@ export const searchTeachers = createAsyncThunk(
       const response = await axiosInstance.get(
         `/teachers/search?search=${search}&page=${page}&limit=${limit}`
       );
-
+      if(!isNotify){
       thunkAPI.dispatch(
         addNotify({
           type: "success",
@@ -43,7 +44,7 @@ export const searchTeachers = createAsyncThunk(
           duration: 3000,
         })
       );
-
+    }
       return response.data.data as Teacher[];
     } catch (error: any) {
       thunkAPI.dispatch(
