@@ -362,6 +362,9 @@ function useScheduleManagementPageHook() {
         classroomNumber: item.classroomNumber,
         classroomId: item.classroomId,
         subjectId: item.subjectId,
+        academicYear: item.academicYear,
+        classId: item.classId.toString(),
+        className: item.className,
       }));
       setEvents(mappedEvents);
     }
