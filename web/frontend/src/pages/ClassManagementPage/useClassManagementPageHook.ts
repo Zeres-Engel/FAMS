@@ -322,27 +322,6 @@ function useClassManagementPageHook() {
     }
   };
   
-  // Add new methods for handling edit and delete
-  const handleEditClassClick = async (classData: any, classId: string) => {
-    try {
-      // Here you would typically open an edit dialog or navigate to an edit page
-      console.log("Editing class:", classData, "with ID:", classId);
-      // You can implement the actual edit logic here or in the component
-    } catch (error) {
-      console.error("Error handling edit class click:", error);
-    }
-  };
-
-  const handleDeleteClick = async (classData: any) => {
-    try {
-      // Here you would typically show a confirmation dialog
-      console.log("Deleting class:", classData);
-      // You can implement the actual delete logic here or in the component
-    } catch (error) {
-      console.error("Error handling delete click:", error);
-    }
-  };
-
   const headCellsData: ClassHeadCell[] = [
     {
       id: "classId",
@@ -415,9 +394,7 @@ function useClassManagementPageHook() {
     setAcademicYear,
     fetchClasses,
     fetchUsers,
-    handleCreateClass,
-    handleEditClassClick,
-    handleDeleteClick
+    handleCreateClass
   };
 
   return { state, handler };

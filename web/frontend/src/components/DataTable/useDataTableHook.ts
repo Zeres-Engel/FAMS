@@ -68,6 +68,10 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
   const [editingClass, setEditingClass] = useState<editClassForm | null>(null);
   const [editingClassID, setEditingClassID] = useState<string>('');
   const [editingAttendance, setEditingAttendance] = useState<EditAttendanceFormProps | null>(null);
+  const [selectedClassToView, setSelectedClassToView] = useState<ClassData | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [classStudents, setClassStudents] = useState<any[]>([]);
+  const [isLoadingStudents, setIsLoadingStudents] = useState(false);
 
   // Cập nhật rows khi tableMainData thay đổi
   useEffect(() => {
@@ -462,6 +466,29 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
     [order, orderBy, page, rowsPerPage, rows]
   );
 
+  const handleViewClick = async (classData: ClassData) => {
+    setSelectedClassToView(classData);
+    setIsLoadingStudents(true);
+    
+    try {
+      // Gọi API để lấy danh sách học sinh của lớp
+      const response = await fetch(`http://fams.io.vn/api-nodejs/student-info?className=${classData.className}&academicYear=${classData.academicYear}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setClassStudents(data.data);
+      } else {
+        console.error("Failed to fetch students:", data);
+        setClassStudents([]);
+      }
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      setClassStudents([]);
+    } finally {
+      setIsLoadingStudents(false);
+    }
+  };
+
   const state = {
     emptyRows,
     visibleRows,
@@ -483,6 +510,10 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
     isShowNotifyOpen,
     selectedNotify,
     editingUserId,
+    selectedClassToView,
+    isViewDialogOpen,
+    classStudents,
+    isLoadingStudents
   };
   const handler = {
     handleRequestSort,
@@ -507,6 +538,8 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
     handlerClassDistribution,
     handleShowNotify,
     setIsShowNotifyOpen,
+    handleViewClick,
+    setIsViewDialogOpen
   };
 
   return { state, handler };

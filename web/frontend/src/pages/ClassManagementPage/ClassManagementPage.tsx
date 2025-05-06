@@ -89,11 +89,6 @@ function ClassManagementPage(): React.JSX.Element {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error" | "info" | "warning">("info");
-  
-  // New state for viewed class and students
-  const [viewedClass, setViewedClass] = useState<ClassData | null>(null);
-  const [viewedClassStudents, setViewedClassStudents] = useState<any[]>([]);
-  const [isLoadingStudents, setIsLoadingStudents] = useState(false);
 
   // Generate academic year options based on current year
   useEffect(() => {
@@ -521,34 +516,6 @@ function ClassManagementPage(): React.JSX.Element {
     setTeacherSearchTerm(event.target.value);
   };
 
-  // New function to handle viewing a class
-  const handleViewClass = async (classData: ClassData) => {
-    setViewedClass(classData);
-    setIsLoadingStudents(true);
-    try {
-      // Fetch students for this class
-      const response = await axios.get(`http://fams.io.vn/api-nodejs/class-users?classId=${classData.classId}`);
-      if (response.data?.success) {
-        setViewedClassStudents(response.data.data);
-      } else {
-        setViewedClassStudents([]);
-        showNotification("Failed to load students for this class", "error");
-      }
-    } catch (error) {
-      console.error("Error loading class students:", error);
-      setViewedClassStudents([]);
-      showNotification("Error loading students for this class", "error");
-    } finally {
-      setIsLoadingStudents(false);
-    }
-  };
-
-  // Function to close the viewed class detail
-  const handleCloseViewClass = () => {
-    setViewedClass(null);
-    setViewedClassStudents([]);
-  };
-
   return (
     <LayoutComponent pageHeader="Class Management">
       <Container maxWidth={false} className="classManagementPage-Container">
@@ -566,115 +533,7 @@ function ClassManagementPage(): React.JSX.Element {
               availableAcademicYears={state.academicYearOptions}
               classYears={state.classYears}
               createButtonAction={handleOpenCreateDialog} 
-              // Pass a custom render action cell function
-              renderCustomActionCell={(row: any) => (
-                <TableCell align="left">
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      // Call handleViewClass with the row data
-                      handleViewClass(row);
-                    }}
-                    sx={{ mr: 1 }}
-                  >
-                    VIEW
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      handler.handleEditClassClick(
-                        {
-                          className: row.className,
-                          grade: row.grade,
-                          teacherId: row.homeroomTeacherId,
-                          academicYear: row.academicYear,
-                        },
-                        row.id
-                      );
-                    }}
-                    sx={{ mr: 1 }}
-                  >
-                    EDIT
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handler.handleDeleteClick(row);
-                    }}
-                  >
-                    DELETE
-                  </Button>
-                </TableCell>
-              )}
             />
-            
-            {/* Class Students View Section */}
-            {viewedClass && (
-              <Paper 
-                elevation={3} 
-                sx={{ 
-                  mt: 3, 
-                  p: 3, 
-                  borderRadius: 2,
-                  position: 'relative'
-                }}
-              >
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                  <Typography variant="h6">
-                    Students in Class: {viewedClass.className} - Grade {viewedClass.grade} ({viewedClass.academicYear})
-                  </Typography>
-                  <IconButton onClick={handleCloseViewClass}>
-                    <CloseIcon />
-                  </IconButton>
-                </Box>
-                
-                <Divider sx={{ mb: 2 }} />
-                
-                {isLoadingStudents ? (
-                  <Box display="flex" justifyContent="center" my={3}>
-                    <Typography>Loading students...</Typography>
-                  </Box>
-                ) : viewedClassStudents.length > 0 ? (
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Student ID</TableCell>
-                          <TableCell>Name</TableCell>
-                          <TableCell>Email</TableCell>
-                          <TableCell>Phone</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {viewedClassStudents.map((student) => (
-                          <TableRow key={student.userId}>
-                            <TableCell>{student.userId}</TableCell>
-                            <TableCell>{student.fullName}</TableCell>
-                            <TableCell>{student.email}</TableCell>
-                            <TableCell>{student.phone}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                ) : (
-                  <Box display="flex" justifyContent="center" my={3}>
-                    <Typography>No students found in this class</Typography>
-                  </Box>
-                )}
-              </Paper>
-            )}
           </Grid>
         </Grid>
       </Container>
