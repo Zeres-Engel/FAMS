@@ -81,6 +81,10 @@ const ScheduleManagementPage: React.FC = () => {
     academicYear: "",
   });
   
+  // State cho edit và delete event
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
+  
   // State cho semester
   const [semester, setSemester] = useState("Semester 1");
   const [semesterDateFrom, setSemesterDateFrom] = useState("");
@@ -210,9 +214,6 @@ const ScheduleManagementPage: React.FC = () => {
     }
   }, [openCreateDialog, newEvent.scheduleDate, newEvent.slotId]);
 
-  const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
-  
   const handleSelectEvent = (event: ScheduleEvent) => {
     setSelectedEvent(event);
     setOpenEditDialog(true);
@@ -249,6 +250,34 @@ const ScheduleManagementPage: React.FC = () => {
     // Chuyển chế độ sang màn hình điểm danh
     attendanceHook.actions.setSelectedScheduleId(scheduleId);
     attendanceHook.actions.setViewMode('attendance');
+  };
+
+  // Handler cho việc xóa event
+  const handleDeleteEvent = (scheduleId: number) => {
+    console.log(`Deleting schedule with ID: ${scheduleId}`);
+    
+    // Gọi API xóa event từ useScheduleManagementPageHook trực tiếp
+    import('axios').then(axios => {
+      axios.default.delete(
+        `http://fams.io.vn/api-nodejs/schedules/${scheduleId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json"
+          }
+        }
+      )
+      .then((response) => {
+        console.log("Schedule deleted successfully", response.data);
+        // Đóng dialog nếu đang mở
+        setOpenEditDialog(false);
+        // Refresh danh sách events
+        handler.handleSearch();
+      })
+      .catch((error: Error) => {
+        console.error("Error deleting schedule:", error);
+      });
+    });
   };
 
   return (
@@ -610,6 +639,7 @@ const ScheduleManagementPage: React.FC = () => {
           event={selectedEvent}
           onSave={handleSaveEvent}
           onViewAttendance={handleViewAttendance}
+          onDelete={handleDeleteEvent}
           teachers={directTeachers}
           academicYears={state.academicYears}
           allClasses={state.allClasses}

@@ -939,6 +939,66 @@ router.put('/:scheduleId', async (req, res) => {
     if (isActive !== undefined) updateData.isActive = isActive;
     if (customStartTime !== undefined) updateData.customStartTime = customStartTime;
     if (customEndTime !== undefined) updateData.customEndTime = customEndTime;
+    
+    // Validate slotId exists in ScheduleFormat
+    if (slotId !== undefined) {
+      const scheduleFormat = await mongoose.connection.db.collection('ScheduleFormat')
+        .findOne({ slotId: parseInt(slotId) });
+        
+      if (!scheduleFormat) {
+        return res.status(404).json({
+          success: false,
+          message: `Slot with ID ${slotId} not found in ScheduleFormat`,
+          code: 'SLOT_NOT_FOUND'
+        });
+      }
+    }
+    
+    // If custom time and day are provided but slotId is not, try to find matching slot or create new one
+    if (customStartTime && customEndTime && req.body.dayOfWeek && slotId === undefined) {
+      // Check if a slot with these parameters already exists
+      const existingSlot = await mongoose.connection.db.collection('ScheduleFormat')
+        .findOne({ 
+          startTime: customStartTime, 
+          endTime: customEndTime,
+          dayOfWeek: req.body.dayOfWeek
+        });
+      
+      if (existingSlot) {
+        // Use existing slot
+        updateData.slotId = existingSlot.slotId;
+      } else {
+        // Create a new slot
+        // First, find max slotId to generate next one
+        const maxSlotResult = await mongoose.connection.db.collection('ScheduleFormat')
+          .find()
+          .sort({ slotId: -1 })
+          .limit(1)
+          .toArray();
+        
+        const nextSlotId = maxSlotResult.length > 0 ? maxSlotResult[0].slotId + 1 : 1;
+        const nextSlotNumber = maxSlotResult.length > 0 ? maxSlotResult[0].slotNumber + 1 : 1;
+        
+        const newSlot = {
+          slotId: nextSlotId,
+          slotNumber: nextSlotNumber,
+          slotName: `Slot ${nextSlotNumber}`,
+          dayOfWeek: req.body.dayOfWeek,
+          startTime: customStartTime,
+          endTime: customEndTime,
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        // Insert new slot
+        await mongoose.connection.db.collection('ScheduleFormat').insertOne(newSlot);
+        console.log(`Created new slot with ID ${nextSlotId}`);
+        
+        // Use the new slot ID
+        updateData.slotId = nextSlotId;
+      }
+    }
       
     // If session date is provided, update sessionDate and calculate sessionWeek
     if (sessionDate) {

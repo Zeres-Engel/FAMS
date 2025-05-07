@@ -365,9 +365,18 @@ function useScheduleManagementPageHook() {
         const start = combineDateAndTime(item.sessionDate, item.startTime || "00:00");
         const end = combineDateAndTime(item.sessionDate, item.endTime || "00:00");
   
+        // In dữ liệu response từ API để debug
+        console.log("API Schedule data:", {
+          id: item.scheduleId,
+          slotNumber: item.slotNumber,
+          slotId: item.SlotID,
+          startTime: item.startTime,
+          endTime: item.endTime,
+        });
+  
         return {
           id: Number(item.scheduleId),
-          title: item.topic || `${item.subjectName} - slot ${item.SlotID}`,
+          title: item.topic || `${item.subjectName} - slot ${item.slotNumber || item.SlotID}`,
           start,
           end,
           subjectName: item.subjectName || "",
@@ -379,8 +388,14 @@ function useScheduleManagementPageHook() {
           academicYear: item.academicYear,
           classId: item.classId.toString(),
           className: item.className,
+          slotNumber: item.slotNumber, // Sử dụng trực tiếp slotNumber từ API
+          slotId: item.slotNumber ? String(item.slotNumber) : String(item.SlotID), // Sử dụng slotNumber nếu có, nếu không dùng SlotID
+          customStartTime: item.startTime,
+          customEndTime: item.endTime,
         };
       });
+      
+      console.log("Mapped events from API:", mappedEvents);
       setEvents(mappedEvents);
     }
   }, [schedules]);
@@ -541,20 +556,21 @@ function useScheduleManagementPageHook() {
         subjectId: newEvent.subjectId,
         classroomId: newEvent.classroomNumber,
         teacherUserId: newEvent.teacher,
-        topic: newEvent.title || `Buổi học ${newEvent.slotId || ''}`,
+        topic: newEvent.title || `Buổi học ${newEvent.slotNumber || newEvent.slotId || ''}`,
         sessionDate: moment(selectedDate).format("YYYY-MM-DD"),
         dayOfWeek: dayOfWeek,
-        slotNumber: newEvent.slotId || 1,
+        slotNumber: newEvent.slotNumber || Number(newEvent.slotId) || 1, // Ưu tiên slotNumber, nhưng cũng có thể lấy từ slotId
         startTime: startTime,
         endTime: endTime
       };
       
       // Log the time values for debugging
-      console.log("Time values:", {
-        providedStart: newEvent.customStartTime,
-        providedEnd: newEvent.customEndTime,
-        usedStart: scheduleData.startTime,
-        usedEnd: scheduleData.endTime
+      console.log("Time values for API request:", {
+        slotNumber: scheduleData.slotNumber,
+        providedStartTime: newEvent.customStartTime,
+        providedEndTime: newEvent.customEndTime,
+        usedStartTime: scheduleData.startTime,
+        usedEndTime: scheduleData.endTime
       });
       
       console.log("Sending data to API:", scheduleData);

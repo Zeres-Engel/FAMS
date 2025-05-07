@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -13,6 +13,7 @@ import {
   Box,
   Typography,
   SelectChangeEvent,
+  FormHelperText,
 } from "@mui/material";
 import moment from "moment";
 import { ScheduleEvent } from "../../../model/scheduleModels/scheduleModels.model";
@@ -60,13 +61,153 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
   fetchClassesByAcademicYear,
   addEvent,
 }) => {
+  // Form validation state
+  const [errors, setErrors] = useState({
+    academicYear: false,
+    classId: false,
+    subjectId: false,
+    teacher: false,
+    classroomNumber: false,
+    slotId: false,
+    startTime: false,
+    endTime: false,
+    scheduleDate: false
+  });
+  
+  // Khởi tạo ngày và thời gian khi dialog mở
+  useEffect(() => {
+    if (open) {
+      const today = new Date();
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const dayOfWeek = days[today.getDay()];
+      
+      // Format giờ hiện tại theo định dạng HH:MM
+      const currentHour = today.getHours().toString().padStart(2, '0');
+      const currentMinute = today.getMinutes().toString().padStart(2, '0');
+      const currentTime = `${currentHour}:${currentMinute}`;
+      
+      // Ước tính thời gian kết thúc (1 giờ sau thời gian hiện tại)
+      const endHour = (today.getHours() + 1).toString().padStart(2, '0');
+      const endTime = `${endHour}:${currentMinute}`;
+      
+      console.log("[INIT DIALOG] Initializing with today's date and current time");
+      
+      // Cập nhật tất cả các giá trị mặc định khi dialog mở
+      setNewEvent(prev => {
+        const updatedEvent = {
+          ...prev,
+          scheduleDate: today,
+          slotId: "11", // Mặc định chọn Slot Extra
+          slotNumber: 11, // Đồng bộ slotNumber với slotId
+          customStartTime: currentTime,
+          customEndTime: endTime
+        };
+        console.log("[INIT DIALOG] Initial event data:", updatedEvent);
+        return updatedEvent;
+      });
+      
+      // Thiết lập thông tin slot ban đầu với Slot Extra
+      const initialSlotInfo = {
+        dayOfWeek: dayOfWeek,
+        startTime: currentTime,
+        endTime: endTime,
+        isExtraSlot: true // Đặt là true để có thể chỉnh sửa thời gian ngay lập tức
+      };
+      console.log("[INIT DIALOG] Setting initial slot info:", initialSlotInfo);
+      
+      // Đảm bảo setSlotInfo hoàn thành trước khi component re-render
+      setTimeout(() => {
+        setSlotInfo(initialSlotInfo);
+        console.log("[INIT DIALOG - AFTER TIMEOUT] SlotInfo initialized:", initialSlotInfo);
+      }, 0);
+      
+      // Xóa lỗi liên quan đến slot và thời gian
+      setErrors(prev => ({
+        ...prev,
+        slotId: false,
+        startTime: false,
+        endTime: false,
+        scheduleDate: false
+      }));
+    }
+  }, [open, setNewEvent, setSlotInfo]);
+
   // Log slot config để debug
-  React.useEffect(() => {
+  useEffect(() => {
     if (open) {
       console.log("Available slots in AddScheduleDialog:", slotConfig);
       console.log("Current slotInfo:", slotInfo);
+      console.log("Current newEvent:", newEvent);
     }
-  }, [open, slotInfo]);
+  }, [open, slotInfo, newEvent]);
+  
+  // Validate all form fields
+  const validateForm = () => {
+    const newErrors = {
+      academicYear: !newEvent.academicYear,
+      classId: !newEvent.classId,
+      subjectId: !newEvent.subjectId,
+      teacher: !newEvent.teacher,
+      classroomNumber: !newEvent.classroomNumber,
+      slotId: !newEvent.slotId,
+      startTime: newEvent.slotId === "11" && !slotInfo?.startTime,
+      endTime: newEvent.slotId === "11" && !slotInfo?.endTime,
+      scheduleDate: !newEvent.scheduleDate
+    };
+    
+    setErrors(newErrors);
+    
+    // Return true if form is valid (no errors)
+    return !Object.values(newErrors).some(error => error);
+  };
+
+  // Hàm xử lý khi thay đổi ngày
+  const handleDateChange = (date: Date | null) => {
+    if (date) {
+      console.log("Date changed to:", date);
+      
+      // Lấy thứ trong tuần từ ngày đã chọn
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const dayOfWeek = days[date.getDay()];
+      
+      // Cập nhật ngày và thứ trong tuần
+      setNewEvent({
+        ...newEvent,
+        scheduleDate: date
+      });
+      
+      // Giữ nguyên thông tin start/end time hiện tại nếu đã có
+      const currentStartTime = slotInfo?.startTime || "";
+      const currentEndTime = slotInfo?.endTime || "";
+      const isCurrentExtraSlot = slotInfo?.isExtraSlot || false;
+      
+      // Cập nhật thông tin slot với thứ trong tuần mới
+      setSlotInfo({
+        dayOfWeek: dayOfWeek,
+        startTime: currentStartTime,
+        endTime: currentEndTime,
+        isExtraSlot: isCurrentExtraSlot
+      });
+      
+      console.log("Updated slot info after date change:", {
+        dayOfWeek,
+        startTime: currentStartTime,
+        endTime: currentEndTime,
+        isExtraSlot: isCurrentExtraSlot
+      });
+    }
+  };
+
+  // Debug status của các input
+  useEffect(() => {
+    console.log("Current slotInfo in AddScheduleDialog:", {
+      slotInfo,
+      isExtraSlot: slotInfo?.isExtraSlot,
+      timeFieldsDisabled: !(slotInfo?.isExtraSlot),
+      slotId: newEvent.slotId,
+      currentDate: newEvent.scheduleDate
+    });
+  }, [slotInfo, newEvent.slotId, newEvent.scheduleDate]);
 
   return (
     <Dialog
@@ -77,15 +218,15 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
     >
       <DialogTitle>Add new Schedule</DialogTitle>
       <DialogContent dividers>
-        <FormControl fullWidth sx={{ mb: 2 }}>
+        <FormControl fullWidth sx={{ mb: 2 }} error={errors.academicYear}>
           <InputLabel id="academic-year-select-label">
-            Academic Year
+            Academic Year *
           </InputLabel>
           <Select
             labelId="academic-year-select-label"
             id="academic-year-select"
             value={newEvent.academicYear || ""}
-            label="Academic Year"
+            label="Academic Year *"
             onChange={(e: SelectChangeEvent) => {
               const selectedYear = e.target.value;
               setNewEvent({
@@ -93,6 +234,9 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
                 academicYear: selectedYear,
                 classId: "", // Reset class when year changes
               });
+              
+              // Clear validation error
+              setErrors(prev => ({...prev, academicYear: false}));
 
               // Fetch classes for this academic year
               if (selectedYear) {
@@ -114,21 +258,25 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
               </MenuItem>
             ))}
           </Select>
+          {errors.academicYear && <FormHelperText>Academic Year is required</FormHelperText>}
         </FormControl>
 
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel id="class-select-label">Class</InputLabel>
+        <FormControl fullWidth sx={{ mb: 2 }} error={errors.classId}>
+          <InputLabel id="class-select-label">Class *</InputLabel>
           <Select
             labelId="class-select-label"
             id="class-select"
             value={newEvent.classId || ""}
-            label="Class"
-            onChange={(e: SelectChangeEvent) =>
+            label="Class *"
+            onChange={(e: SelectChangeEvent) => {
               setNewEvent({
                 ...newEvent,
                 classId: e.target.value,
-              })
-            }
+              });
+              
+              // Clear validation error
+              setErrors(prev => ({...prev, classId: false}));
+            }}
             disabled={!newEvent.academicYear} // Disable until academic year is selected
           >
             {/* Filter the classes based on the selected academic year */}
@@ -143,21 +291,25 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
                 </MenuItem>
               ))}
           </Select>
+          {errors.classId && <FormHelperText>Class is required</FormHelperText>}
         </FormControl>
 
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel id="subject-select-label">Subject</InputLabel>
+        <FormControl fullWidth sx={{ mb: 2 }} error={errors.subjectId}>
+          <InputLabel id="subject-select-label">Subject *</InputLabel>
           <Select
             labelId="subject-select-label"
             id="subject-select"
             value={newEvent.subjectId ? String(newEvent.subjectId) : ""}
-            label="Subject"
+            label="Subject *"
             onChange={(e: SelectChangeEvent) => {
               const subjectId = Number(e.target.value);
               setNewEvent({
                 ...newEvent,
                 subjectId: subjectId,
               });
+              
+              // Clear validation error
+              setErrors(prev => ({...prev, subjectId: false}));
 
               // Fetch teachers for this subject
               if (subjectId) {
@@ -232,99 +384,139 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
               </MenuItem>
             ))}
           </Select>
+          {errors.subjectId && <FormHelperText>Subject is required</FormHelperText>}
         </FormControl>
         <TextField
-          type="date"
           label="Date"
-          value={moment(newEvent.scheduleDate || new Date()).format(
-            "YYYY-MM-DD"
-          )}
-          onChange={(e) => {
-            const selectedDate = new Date(e.target.value);
-            
-            // Cập nhật ngày cho sự kiện mới
-            setNewEvent({
-              ...newEvent,
-              scheduleDate: selectedDate,
-            });
-            
-            // Xác định thứ trong tuần từ ngày đã chọn - dùng tiếng Anh
-            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            const dayOfWeek = days[selectedDate.getDay()];
-            
-            // Cập nhật thông tin slot với day of week mới ngay lập tức
-            setSlotInfo(prevSlotInfo => {
-              // Cung cấp các giá trị mặc định nếu prevSlotInfo là null
-              const dayOfWeekValue = dayOfWeek;
-              const startTime = prevSlotInfo?.startTime || "";
-              const endTime = prevSlotInfo?.endTime || "";
-              const isExtraSlot = prevSlotInfo?.isExtraSlot || false;
-              
-              // Trả về đối tượng mới với tất cả các trường bắt buộc
-              return {
-                dayOfWeek: dayOfWeekValue,
-                startTime,
-                endTime,
-                isExtraSlot
-              };
-            });
-          }}
+          type="date"
+          required
           fullWidth
-          margin="normal"
+          margin="dense"
+          value={newEvent.scheduleDate ? new Date(newEvent.scheduleDate).toISOString().split('T')[0] : ''}
+          onChange={(e) => {
+            const dateValue = e.target.value;
+            const date = dateValue ? new Date(dateValue) : null;
+            handleDateChange(date);
+          }}
           InputLabelProps={{ shrink: true }}
+          error={!!errors.scheduleDate}
+          helperText={errors.scheduleDate}
         />
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel id="slot-select-label">Slot</InputLabel>
+        <FormControl fullWidth sx={{ mb: 2 }} error={errors.slotId}>
+          <InputLabel id="slot-select-label">Slot *</InputLabel>
           <Select
             labelId="slot-select-label"
             id="slot-select"
             value={newEvent.slotId ? String(newEvent.slotId) : ""}
-            label="Slot"
+            label="Slot *"
             onChange={(e: SelectChangeEvent) => {
               const selectedSlot = e.target.value;
               console.log("Selected slot:", selectedSlot);
               
-              setNewEvent({
-                ...newEvent,
-                slotId: selectedSlot,
-              });
+              // Clear validation errors
+              setErrors(prev => ({
+                ...prev, 
+                slotId: false,
+                startTime: false,
+                endTime: false
+              }));
               
               // Kiểm tra xem có phải Slot Extra hay không
               const slotNumber = Number(selectedSlot);
               const isExtraSlot = slotNumber === 11;
-              console.log("Is Extra Slot?", isExtraSlot);
+              console.log("[SELECT CHANGE] Is Extra Slot?", isExtraSlot);
+              
+              // QUAN TRỌNG: Luôn đặt giá trị isExtraSlot trong slotInfo dựa trên slot đã chọn
+              const currentSlotInfo = slotInfo || { dayOfWeek: "", startTime: "", endTime: "", isExtraSlot: false };
+              if (currentSlotInfo.isExtraSlot !== isExtraSlot) {
+                console.log(`[SELECT CHANGE] Updating isExtraSlot from ${currentSlotInfo.isExtraSlot} to ${isExtraSlot}`);
+              }
               
               // Tìm thông tin slot từ slotConfig
               const slotDetails = slotConfig.find(slot => slot.slotNumber === slotNumber);
-              console.log("Found slot details:", slotDetails);
+              console.log("[SELECT CHANGE] Found slot details:", slotDetails);
+              
+              // Giữ lại giá trị ngày đã chọn
+              const currentDate = newEvent.scheduleDate;
+              console.log("[SELECT CHANGE] Current selected date (preserving):", currentDate);
+              
+              // Cập nhật slotId trong newEvent, giữ nguyên scheduleDate
+              setNewEvent(prev => ({
+                ...prev,
+                slotId: selectedSlot,
+                slotNumber: Number(selectedSlot), // Đồng bộ slotNumber với slotId
+                scheduleDate: currentDate, // Giữ nguyên ngày đã chọn
+              }));
               
               if (slotDetails) {
-                // Đặc biệt xử lý cho slot 11 (Extra)
-                if (isExtraSlot) {
-                  console.log("Setting up Extra slot with empty times");
-                  setSlotInfo({
-                    dayOfWeek: slotInfo?.dayOfWeek || "",
-                    startTime: "",
-                    endTime: "",
-                    isExtraSlot: true
-                  });
-                } else {
-                  // Slot thông thường
-                  console.log("Setting up regular slot with times:", slotDetails.startTime, slotDetails.endTime);
-                setSlotInfo({
-                  dayOfWeek: slotInfo?.dayOfWeek || "",
-                  startTime: slotDetails.startTime,
-                  endTime: slotDetails.endTime,
-                    isExtraSlot: false
-                });
+                // Lấy thứ trong tuần từ ngày đã chọn hoặc giữ nguyên giá trị hiện tại
+                let dayOfWeekValue = currentSlotInfo.dayOfWeek || "";
+                
+                // Nếu có ngày, tính lại day of week từ ngày
+                if (currentDate) {
+                  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                  dayOfWeekValue = days[new Date(currentDate).getDay()];
+                  console.log("[SELECT CHANGE] Recalculated day of week from date:", dayOfWeekValue);
                 }
                 
-                // Cập nhật customStartTime và customEndTime cho tất cả các loại slot
-                setNewEvent(prev => ({
-                  ...prev,
-                  customStartTime: isExtraSlot ? "" : slotDetails.startTime,
-                  customEndTime: isExtraSlot ? "" : slotDetails.endTime
-                }));
+                if (isExtraSlot) {
+                  // ĐẶC BIỆT XỬ LÝ CHO SLOT EXTRA
+                  console.log("[SELECT CHANGE] Setting up Extra slot with current time");
+                  
+                  // Lấy giờ hiện tại cho Extra slot
+                  const now = new Date();
+                  const currentHour = now.getHours().toString().padStart(2, '0');
+                  const currentMinute = now.getMinutes().toString().padStart(2, '0');
+                  const currentTime = `${currentHour}:${currentMinute}`;
+                  
+                  // Ước tính thời gian kết thúc (1 giờ sau thời gian hiện tại)
+                  const endHour = (now.getHours() + 1).toString().padStart(2, '0');
+                  const endTime = `${endHour}:${currentMinute}`;
+                  
+                  // QUAN TRỌNG: Đặt isExtraSlot thành true
+                  const updatedSlotInfo = {
+                    dayOfWeek: dayOfWeekValue,
+                    startTime: currentTime,
+                    endTime: endTime,
+                    isExtraSlot: true // Luôn đặt true cho Slot Extra
+                  };
+                  console.log("[SELECT CHANGE] Setting slot info for Extra slot:", updatedSlotInfo);
+                  
+                  // ĐẢM BẢO setSlotInfo được gọi trước khi component re-render
+                  setTimeout(() => {
+                    setSlotInfo(updatedSlotInfo);
+                    console.log("[SELECT CHANGE - AFTER TIMEOUT] SlotInfo updated to:", updatedSlotInfo);
+                  }, 0);
+                  
+                  // Set current time for custom input
+                  setNewEvent(prev => ({
+                    ...prev,
+                    customStartTime: currentTime,
+                    customEndTime: endTime,
+                    scheduleDate: currentDate, // Bảo đảm ngày không bị mất
+                  }));
+                } else {
+                  // XỬ LÝ CHO SLOT THƯỜNG
+                  console.log("[SELECT CHANGE] Setting up regular slot with times:", slotDetails.startTime, slotDetails.endTime);
+                  
+                  // QUAN TRỌNG: Đặt isExtraSlot thành false
+                  const updatedSlotInfo = {
+                    dayOfWeek: dayOfWeekValue,
+                    startTime: slotDetails.startTime,
+                    endTime: slotDetails.endTime,
+                    isExtraSlot: false // Luôn đặt false cho slot thường 
+                  };
+                  console.log("[SELECT CHANGE] Setting slot info for regular slot:", updatedSlotInfo);
+                  setSlotInfo(updatedSlotInfo);
+                  
+                  // Update times for regular slot
+                  setNewEvent(prev => ({
+                    ...prev,
+                    customStartTime: slotDetails.startTime,
+                    customEndTime: slotDetails.endTime,
+                    scheduleDate: currentDate, // Bảo đảm ngày không bị mất
+                  }));
+                }
               }
             }}
           >
@@ -334,17 +526,40 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
               </MenuItem>
             ))}
           </Select>
+          {errors.slotId && <FormHelperText>Slot is required</FormHelperText>}
         </FormControl>
-        {(newEvent.scheduleDate) && (
-          <Box sx={{ mt: 2, mb: 2, p: 2, bgcolor: '#f9f9f9', borderRadius: 1, border: '1px solid #eaeaea' }}>
+        
+        <Box sx={{ mt: 2, mb: 2, p: 2, bgcolor: '#f9f9f9', borderRadius: 1, border: '1px solid #eaeaea' }}>
+          <TextField
+            label="Day of Week"
+            value={slotInfo?.dayOfWeek || ""}
+            fullWidth
+            margin="dense"
+            disabled
+            InputProps={{
+              readOnly: true,
+              sx: { 
+                backgroundColor: 'white',
+                '&.Mui-disabled': {
+                  color: '#1976d2',
+                  fontWeight: 500,
+                  opacity: 0.9
+                }
+              }
+            }}
+            sx={{ mb: 2 }}
+          />
+          
+          <Box sx={{ display: 'flex', gap: 2 }}>
             <TextField
-              label="Day of Week"
-              value={slotInfo?.dayOfWeek || ""}
+              label="Start Time *"
+              value={slotInfo?.startTime || ""}
               fullWidth
               margin="dense"
-              disabled
+              disabled={Number(newEvent.slotId) !== 11}
+              type="time"
               InputProps={{
-                readOnly: true,
+                readOnly: Number(newEvent.slotId) !== 11,
                 sx: { 
                   backgroundColor: 'white',
                   '&.Mui-disabled': {
@@ -354,119 +569,120 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
                   }
                 }
               }}
-              sx={{ mb: 2 }}
+              inputProps={{
+                step: 300, // 5 minutes step
+              }}
+              onChange={(e) => {
+                const newStartTime = e.target.value;
+                console.log("New start time:", newStartTime);
+                
+                // Clear validation error
+                setErrors(prev => ({...prev, startTime: false}));
+                
+                // Kiểm tra trực tiếp nếu đang ở Slot Extra
+                const isCurrentlyExtraSlot = Number(newEvent.slotId) === 11;
+                console.log("isCurrentlyExtraSlot when changing start time:", isCurrentlyExtraSlot);
+                
+                if (isCurrentlyExtraSlot) {
+                  setSlotInfo(prevSlotInfo => {
+                    // Đảm bảo tất cả các trường bắt buộc
+                    return {
+                      dayOfWeek: prevSlotInfo?.dayOfWeek || "",
+                      startTime: newStartTime,
+                      endTime: prevSlotInfo?.endTime || "",
+                      isExtraSlot: true
+                    };
+                  });
+                  
+                  // Cập nhật giờ bắt đầu tùy chỉnh
+                  setNewEvent(prev => ({
+                    ...prev,
+                    customStartTime: newStartTime,
+                    scheduleDate: prev.scheduleDate // Bảo tồn ngày đã chọn
+                  }));
+                }
+              }}
+              error={errors.startTime}
+              helperText={errors.startTime ? "Start time is required" : ""}
             />
-            
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <TextField
-                label="Start Time"
-                value={slotInfo?.startTime || ""}
-                fullWidth
-                margin="dense"
-                disabled={slotInfo?.isExtraSlot === false}
-                type="time"
-                InputProps={{
-                  readOnly: slotInfo?.isExtraSlot === false,
-                  sx: { 
-                    backgroundColor: 'white',
-                    '&.Mui-disabled': {
-                      color: '#1976d2',
-                      fontWeight: 500,
-                      opacity: 0.9
-                    }
+            <TextField
+              label="End Time *"
+              value={slotInfo?.endTime || ""}
+              fullWidth
+              margin="dense"
+              disabled={Number(newEvent.slotId) !== 11}
+              type="time"
+              InputProps={{
+                readOnly: Number(newEvent.slotId) !== 11,
+                sx: { 
+                  backgroundColor: 'white',
+                  '&.Mui-disabled': {
+                    color: '#1976d2',
+                    fontWeight: 500,
+                    opacity: 0.9
                   }
-                }}
-                inputProps={{
-                  step: 300, // 5 minutes step
-                }}
-                onChange={(e) => {
-                  const newStartTime = e.target.value;
-                  console.log("New start time:", newStartTime);
+                }
+              }}
+              inputProps={{
+                step: 300, // 5 minutes step
+              }}
+              onChange={(e) => {
+                const newEndTime = e.target.value;
+                console.log("New end time:", newEndTime);
+                
+                // Clear validation error
+                setErrors(prev => ({...prev, endTime: false}));
+                
+                // Kiểm tra trực tiếp nếu đang ở Slot Extra
+                const isCurrentlyExtraSlot = Number(newEvent.slotId) === 11;
+                console.log("isCurrentlyExtraSlot when changing end time:", isCurrentlyExtraSlot);
+                
+                if (isCurrentlyExtraSlot) {
+                  setSlotInfo(prevSlotInfo => {
+                    // Đảm bảo tất cả các trường bắt buộc
+                    return {
+                      dayOfWeek: prevSlotInfo?.dayOfWeek || "",
+                      startTime: prevSlotInfo?.startTime || "",
+                      endTime: newEndTime,
+                      isExtraSlot: true
+                    };
+                  });
                   
-                  if (slotInfo?.isExtraSlot) {
-                    setSlotInfo(prevSlotInfo => {
-                      // Đảm bảo tất cả các trường bắt buộc
-                      return {
-                        dayOfWeek: prevSlotInfo?.dayOfWeek || "",
-                        startTime: newStartTime,
-                        endTime: prevSlotInfo?.endTime || "",
-                        isExtraSlot: true
-                      };
-                    });
-                    
-                    // Cập nhật giờ bắt đầu tùy chỉnh
-                    setNewEvent({
-                      ...newEvent,
-                      customStartTime: newStartTime
-                    });
-                  }
-                }}
-              />
-              <TextField
-                label="End Time"
-                value={slotInfo?.endTime || ""}
-                fullWidth
-                margin="dense"
-                disabled={slotInfo?.isExtraSlot === false}
-                type="time"
-                InputProps={{
-                  readOnly: slotInfo?.isExtraSlot === false,
-                  sx: { 
-                    backgroundColor: 'white',
-                    '&.Mui-disabled': {
-                      color: '#1976d2',
-                      fontWeight: 500,
-                      opacity: 0.9
-                    }
-                  }
-                }}
-                inputProps={{
-                  step: 300, // 5 minutes step
-                }}
-                onChange={(e) => {
-                  const newEndTime = e.target.value;
-                  console.log("New end time:", newEndTime);
-                  
-                  if (slotInfo?.isExtraSlot) {
-                    setSlotInfo(prevSlotInfo => {
-                      // Đảm bảo tất cả các trường bắt buộc
-                      return {
-                        dayOfWeek: prevSlotInfo?.dayOfWeek || "",
-                        startTime: prevSlotInfo?.startTime || "",
-                        endTime: newEndTime,
-                        isExtraSlot: true
-                      };
-                    });
-                    
-                    // Cập nhật giờ kết thúc tùy chỉnh
-                    setNewEvent({
-                      ...newEvent,
-                      customEndTime: newEndTime
-                    });
-                  }
-                }}
-              />
-            </Box>
-            {slotInfo?.isExtraSlot && (
-              <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'text.secondary' }}>
-                Please specify custom start and end times for this extra slot
-              </Typography>
-            )}
+                  // Cập nhật giờ kết thúc tùy chỉnh
+                  setNewEvent(prev => ({
+                    ...prev,
+                    customEndTime: newEndTime,
+                    scheduleDate: prev.scheduleDate // Bảo tồn ngày đã chọn
+                  }));
+                }
+              }}
+              error={errors.endTime}
+              helperText={errors.endTime ? "End time is required" : ""}
+            />
           </Box>
-        )}
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel id="classroom-select-label">Classroom</InputLabel>
+          {slotInfo?.isExtraSlot && (
+            <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'text.secondary' }}>
+              Please specify custom start and end times for this extra slot
+            </Typography>
+          )}
+        </Box>
+        
+        <FormControl fullWidth sx={{ mb: 2 }} error={errors.classroomNumber}>
+          <InputLabel id="classroom-select-label">Classroom *</InputLabel>
           <Select
             labelId="classroom-select-label"
             id="classroom-select"
             value={String(newEvent.classroomNumber || "")}
-            label="Classroom"
-            onChange={(e: SelectChangeEvent) =>
+            label="Classroom *"
+            onChange={(e: SelectChangeEvent) => {
               setNewEvent({
                 ...newEvent,
                 classroomNumber: e.target.value,
-              })
-            }
+              });
+              
+              // Clear validation error
+              setErrors(prev => ({...prev, classroomNumber: false}));
+            }}
           >
             {classrooms.map(room => (
               <MenuItem key={room.classroomId} value={room.classroomId}>
@@ -474,17 +690,21 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
               </MenuItem>
             ))}
           </Select>
+          {errors.classroomNumber && <FormHelperText>Classroom is required</FormHelperText>}
         </FormControl>
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel id="new-event-teacher-label">Teacher</InputLabel>
+        <FormControl fullWidth sx={{ mb: 2 }} error={errors.teacher}>
+          <InputLabel id="new-event-teacher-label">Teacher *</InputLabel>
           <Select
             labelId="new-event-teacher-label"
             id="new-event-teacher"
             value={newEvent.teacher || ""}
-            label="Teacher"
-            onChange={(e: SelectChangeEvent) =>
-              setNewEvent({ ...newEvent, teacher: e.target.value })
-            }
+            label="Teacher *"
+            onChange={(e: SelectChangeEvent) => {
+              setNewEvent({ ...newEvent, teacher: e.target.value });
+              
+              // Clear validation error
+              setErrors(prev => ({...prev, teacher: false}));
+            }}
           >
             {(directTeachers.length > 0
               ? directTeachers
@@ -495,30 +715,51 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
               </MenuItem>
             ))}
           </Select>
+          {errors.teacher && <FormHelperText>Teacher is required</FormHelperText>}
         </FormControl>
       </DialogContent>
       <DialogActions>
         <Button
           variant="contained"
           onClick={async () => {
-            // For extra slot, ensure we have valid times
-            if (newEvent.slotId === "11" && (!slotInfo?.startTime || !slotInfo?.endTime)) {
-              alert("Please specify both start and end times for the extra slot");
+            // Validate all form fields
+            if (!validateForm()) {
+              alert("Please fill in all required fields");
               return;
             }
             
+            console.log("Submitting form with data:", newEvent);
+            console.log("Slot info:", slotInfo);
+            
             // Create a copy of the newEvent with custom times if needed
             const eventToAdd = {...newEvent};
+            
+            // Đảm bảo ngày được cài đặt chính xác
+            if (!eventToAdd.scheduleDate) {
+              console.error("Missing schedule date, using today as fallback");
+              eventToAdd.scheduleDate = new Date();
+            }
+            
+            // Đảm bảo thời gian được cài đặt chính xác dựa vào loại slot
             if (slotInfo?.isExtraSlot) {
+              console.log("Using custom time for Extra slot");
+              eventToAdd.customStartTime = slotInfo.startTime;
+              eventToAdd.customEndTime = slotInfo.endTime;
+            } else if (slotInfo) {
+              // Đối với slot thường, sử dụng thời gian từ cấu hình
+              console.log("Using predefined time for regular slot");
               eventToAdd.customStartTime = slotInfo.startTime;
               eventToAdd.customEndTime = slotInfo.endTime;
             }
+            
+            console.log("Final event data to submit:", eventToAdd);
             
             try {
               // Sử dụng await để đợi thêm event xong
               const createdEvent = await addEvent(eventToAdd);
               
               if (createdEvent && createdEvent.id) {
+                console.log("Event created successfully:", createdEvent);
                 // Đóng dialog khi thêm thành công
                 onClose();
                 

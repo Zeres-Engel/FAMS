@@ -12,6 +12,7 @@ interface ScheduleEvent {
     classId?: string;
     scheduleDate?: Date;
     slotId?: string | number;
+    slotNumber?: number;
     academicYear?: string;
     semesterId?: number;
     semesterNumber?: number;

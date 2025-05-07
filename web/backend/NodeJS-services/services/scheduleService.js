@@ -644,6 +644,7 @@ const formatScheduleData = async (schedules, format = 'daily') => {
         if (slot) {
           normalizedSchedule.startTime = slot.startTime;
           normalizedSchedule.endTime = slot.endTime;
+          normalizedSchedule.slotNumber = slot.slotNumber;
         }
         
         console.log(`Đã chuẩn hóa lịch học ID ${normalizedSchedule.scheduleId}, tiết ${normalizedSchedule.slotId}, subject ${normalizedSchedule.subjectId}`);
