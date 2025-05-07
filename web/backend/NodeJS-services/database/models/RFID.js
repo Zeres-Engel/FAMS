@@ -16,6 +16,16 @@ const RFIDSchema = new mongoose.Schema({
     required: true,
     ref: 'UserAccount'
   },
+  rfidId: {
+    type: String
+  },
+  userId: {
+    type: String
+  },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
   IssueDate: {
     type: Date,
     default: Date.now

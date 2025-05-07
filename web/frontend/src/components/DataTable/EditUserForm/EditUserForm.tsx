@@ -279,7 +279,22 @@ export default function EditUserModal({
             <TextField
               fullWidth
               label="Full Name"
-              {...register("fullName", { required: "Full name is required" })}
+              {...register("fullName", {
+                required: "Full name is required",
+                maxLength: {
+                  value: 50,
+                  message: "Full name must be at most 50 characters",
+                },
+                pattern: {
+                  value: /^[A-Za-zÀ-ỹ\s\-]+$/,
+                  message: "Only letters, spaces, and hyphens are allowed",
+                },
+              })}
+              onChange={e => {
+                const value = e.target.value;
+                const filtered = value.replace(/[^A-Za-zÀ-ỹ\s\-]/g, "");
+                e.target.value = filtered;
+              }}
               error={!!errors.fullName}
               helperText={errors.fullName?.message}
             />
@@ -443,7 +458,54 @@ export default function EditUserModal({
                 type="date"
                 label="Date of Birth"
                 InputLabelProps={{ shrink: true }}
-                {...register("dob", { required: "Date of birth is required" })}
+                {...register("dob", {
+                  required: "Date of birth is required",
+                  validate: value => {
+                    const selectedDate = new Date(value);
+                    const today = new Date();
+
+                    let minAge = 0, maxAge = 0; // Default values
+                    if (userType === "student") {
+                      minAge = 14;
+                      maxAge = 20;
+                    } else if (userType === "teacher") {
+                      minAge = 22;
+                      maxAge = 65;
+                    }
+
+                    const maxBirthDate = new Date();
+                    maxBirthDate.setFullYear(today.getFullYear() - minAge);
+
+                    const minBirthDate = new Date();
+                    minBirthDate.setFullYear(today.getFullYear() - maxAge);
+
+                    if (selectedDate > maxBirthDate) {
+                      return `Must be at least ${minAge} years old`;
+                    }
+                    if (selectedDate < minBirthDate) {
+                      return `Must be under ${maxAge} years old`;
+                    }
+                    return true;
+                  },
+                })}
+                inputProps={{
+                  max: new Date(
+                    new Date().setFullYear(
+                      new Date().getFullYear() -
+                        (userType === "student" ? 14 : 22)
+                    )
+                  )
+                    .toISOString()
+                    .split("T")[0],
+                  min: new Date(
+                    new Date().setFullYear(
+                      new Date().getFullYear() -
+                        (userType === "student" ? 20 : 65)
+                    )
+                  )
+                    .toISOString()
+                    .split("T")[0],
+                }}
                 error={!!errors.dob}
                 helperText={errors.dob?.message}
               />
@@ -494,8 +556,14 @@ export default function EditUserModal({
               label="Phone"
               {...register("phone", {
                 required: "Phone is required",
-                pattern: { value: /^[0-9]+$/, message: "Numbers only" },
+                validate: value =>
+                  /^[0-9]{10,11}$/.test(value) || "Phone must be 10–11 digits",
               })}
+              inputProps={{ maxLength: 11 }}
+              onChange={e => {
+                const onlyNums = e.target.value.replace(/[^0-9]/g, "");
+                e.target.value = onlyNums;
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">+84</InputAdornment>
@@ -706,17 +774,32 @@ export default function EditUserModal({
                     <TextField
                       fullWidth
                       label={`Parent ${parentIndex + 1} Name`}
-                      {...register(`parentNames.${parentIndex}` as const)}
+                      {...register(`parentNames.${parentIndex}` as const, {
+                        required: "Name is required",
+                        pattern: {
+                          value: /^[A-Za-zÀ-ỹ\s\-]+$/,
+                          message: "Name must contain only letters and spaces",
+                        },
+                        maxLength: {
+                          value: 50,
+                          message: "Max 50 characters allowed",
+                        },
+                      })}
+                      error={!!errors.parentNames?.[parentIndex]}
+                      helperText={errors.parentNames?.[parentIndex]?.message}
                     />
+
                     <TextField
                       fullWidth
                       label={`Parent ${parentIndex + 1} Phone`}
                       {...register(`parentPhones.${parentIndex}` as const, {
+                        required: "Phone is required",
                         pattern: {
-                          value: /^[0-9]+$/,
-                          message: "Numbers only",
+                          value: /^[0-9]{10,11}$/,
+                          message: "Phone must be 10–11 digits",
                         },
                       })}
+                      inputProps={{ maxLength: 11 }}
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">+84</InputAdornment>
@@ -725,10 +808,12 @@ export default function EditUserModal({
                       error={!!errors.parentPhones?.[parentIndex]}
                       helperText={errors.parentPhones?.[parentIndex]?.message}
                     />
+
                     <TextField
                       fullWidth
                       label={`Parent ${parentIndex + 1} Email`}
                       {...register(`parentEmails.${parentIndex}` as const, {
+                        required: "Email is required",
                         pattern: {
                           value: /^\S+@\S+\.\S+$/,
                           message: "Invalid email format",
@@ -737,11 +822,21 @@ export default function EditUserModal({
                       error={!!errors.parentEmails?.[parentIndex]}
                       helperText={errors.parentEmails?.[parentIndex]?.message}
                     />
+
                     <TextField
                       fullWidth
                       label={`Parent ${parentIndex + 1} Career`}
-                      {...register(`parentCareers.${parentIndex}` as const)}
+                      {...register(`parentCareers.${parentIndex}` as const, {
+                        required: "Career is required",
+                        maxLength: {
+                          value: 50,
+                          message: "Max 50 characters allowed",
+                        },
+                      })}
+                      error={!!errors.parentCareers?.[parentIndex]}
+                      helperText={errors.parentCareers?.[parentIndex]?.message}
                     />
+
                     <Box sx={{ width: "100%" }}>
                       <FormLabel>{`Parent ${
                         parentIndex + 1
@@ -749,23 +844,31 @@ export default function EditUserModal({
                       <Controller
                         control={control}
                         name={`parentGenders.${parentIndex}` as const}
+                        rules={{ required: "Gender is required" }}
                         render={({ field }) => (
-                          <RadioGroup
-                            row
-                            value={field.value}
-                            onChange={e => field.onChange(e.target.value)}
-                          >
-                            <FormControlLabel
-                              value="Male"
-                              control={<Radio />}
-                              label="Male"
-                            />
-                            <FormControlLabel
-                              value="Female"
-                              control={<Radio />}
-                              label="Female"
-                            />
-                          </RadioGroup>
+                          <>
+                            <RadioGroup
+                              row
+                              value={field.value}
+                              onChange={e => field.onChange(e.target.value)}
+                            >
+                              <FormControlLabel
+                                value="Male"
+                                control={<Radio />}
+                                label="Male"
+                              />
+                              <FormControlLabel
+                                value="Female"
+                                control={<Radio />}
+                                label="Female"
+                              />
+                            </RadioGroup>
+                            {errors.parentGenders?.[parentIndex] && (
+                              <Typography variant="caption" color="error">
+                                {errors.parentGenders?.[parentIndex]?.message}
+                              </Typography>
+                            )}
+                          </>
                         )}
                       />
                     </Box>
@@ -773,6 +876,7 @@ export default function EditUserModal({
                 ))}
               </>
             )}
+
             {userType === "parent" && (
               <>
                 <TextField

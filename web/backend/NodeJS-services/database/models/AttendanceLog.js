@@ -131,4 +131,12 @@ AttendanceLogSchema.virtual('device', {
   justOne: true
 });
 
+// Thêm virtual để populate thông tin student
+AttendanceLogSchema.virtual('student', {
+  ref: 'Student',
+  localField: 'userId',
+  foreignField: 'userId',
+  justOne: true
+});
+
 module.exports = mongoose.model('AttendanceLog', AttendanceLogSchema); 

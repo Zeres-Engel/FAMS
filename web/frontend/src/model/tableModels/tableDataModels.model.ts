@@ -89,6 +89,12 @@ interface NotifyProps {
   receiver: string;
   sendDate: string;
   role?: string;
+  readStatus?: boolean;
+  senderInfo?: {
+    FullName?: string;
+    [key: string]: any;
+  };
+  archived?: boolean;
 }
 interface NotifyHeadCell {
   disablePadding: boolean;

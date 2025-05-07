@@ -20,6 +20,10 @@ const CurriculumSubjectSchema = new mongoose.Schema({
     type: Number,
     required: true,
     default: 2
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, {
   timestamps: true,

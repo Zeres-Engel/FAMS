@@ -14,8 +14,11 @@ const ScheduleFormatSchema = new mongoose.Schema({
   },
   slotNumber: {
     type: Number,
-    required: true,
-    unique: true
+    required: true
+  },
+  slotName: {
+    type: String,
+    required: true
   },
   dayOfWeek: {
     type: String,
@@ -29,6 +32,10 @@ const ScheduleFormatSchema = new mongoose.Schema({
   endTime: {
     type: String,
     required: true
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, {
   timestamps: true,

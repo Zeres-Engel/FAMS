@@ -605,8 +605,15 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
               }}
               displayEmpty={false}
             >
-              {state.academicYearsForClass &&
-              state.academicYearsForClass.length > 0 ? (
+              <MenuItem value="">All Academic Years</MenuItem>
+              {availableAcademicYears && availableAcademicYears.length > 0 ? (
+                availableAcademicYears.map((year, index) => (
+                  <MenuItem key={index} value={year}>
+                    {year}
+                  </MenuItem>
+                ))
+              ) : state.academicYearsForClass &&
+                state.academicYearsForClass.length > 0 ? (
                 state.academicYearsForClass.map((year, index) => (
                   <MenuItem key={index} value={year}>
                     {year}
@@ -659,7 +666,8 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             </Select>
           </FormControl>
           <TextField
-            label="User ID"
+            label="Homeroom Teacher ID"
+            placeholder="Enter teacher ID..."
             value={filters.userID || ""}
             onChange={e => handleFilterChange("userID", e.target.value)}
             fullWidth={isMobile}
@@ -897,26 +905,33 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
         <TextField
           label="Name"
           value={filters.name || ""}
-          onChange={e => handleFilterChange("name", e.target.value)}
+          onChange={e => {
+            const value = e.target.value;
+            if (value.length <= 50) {
+              handleFilterChange("name", value);
+            }
+          }}
           onKeyDown={e => {
             if (e.key === "Enter") {
               onSubmit();
             }
           }}
           fullWidth={isMobile}
+          inputProps={{ maxLength: 50 }}
           sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
         />
 
         <TextField
           label="Phone"
           value={filters.phone || ""}
-          onChange={e => handleFilterChange("phone", e.target.value)}
-          onKeyDown={e => {
-            if (e.key === "Enter") {
-              onSubmit();
+          onChange={e => {
+            const value = e.target.value;
+            if (/^\d{0,11}$/.test(value)) {
+              handleFilterChange("phone", value);
             }
           }}
           fullWidth={isMobile}
+          inputProps={{ maxLength: 11 }}
           sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
         />
         <Box sx={{ flex: isMobile ? "1 1 100%" : "1 1 250px" }}>
@@ -967,8 +982,15 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
       onAcademicYearChange(newAcademicYear);
     }
 
-    // Submit filter ngay sau khi đổi năm học
-    setTimeout(() => onSubmit(), 100);
+    // Submit filter ngay sau khi đổi năm học - đảm bảo academicYearOptions không bị thay đổi
+    setTimeout(() => {
+      if (setFiltersClass) {
+        setFiltersClass(prevFilters => ({
+          ...prevFilters,
+          academicYear: newAcademicYear,
+        }));
+      }
+    }, 100);
   };
 
   // Xử lý khi chọn Class thay đổi

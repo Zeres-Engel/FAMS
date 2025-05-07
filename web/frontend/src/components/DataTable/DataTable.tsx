@@ -9,12 +9,21 @@ import {
   TableContainer,
   TablePagination,
   TableRow,
+  TableHead,
   Checkbox,
   Button,
   MenuItem,
   InputLabel,
   FormControl,
   Select,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Typography,
+  Divider,
+  IconButton,
+  CircularProgress,
 } from "@mui/material";
 import "./DataTable.scss";
 import TableToolBar from "./TableToolBar/TableToolBar";
@@ -57,6 +66,8 @@ import EditAttendanceForm from "./EditAttendanceForm/EditAttendanceForm";
 import CreateNotifyForm from "./CreateNotifyForm/CreateNotifyForm";
 import ShowNotify from "./ShowNotify/ShowNotify";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import CloseIcon from "@mui/icons-material/Close";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 // Thêm interface cho pagination
 interface PaginationProps {
@@ -171,6 +182,22 @@ export default function DataTable({
 
   const renderActionCell = (row: any) => (
     <TableCell align="left">
+      {isClassManagement && (
+        <Button
+          variant="outlined"
+          color="info"
+          size="small"
+          startIcon={<VisibilityIcon />}
+          onClick={e => {
+            e.stopPropagation();
+            e.preventDefault();
+            handler.handleViewClick(row);
+          }}
+          sx={{ mr: 1 }}
+        >
+          View
+        </Button>
+      )}
       <Button
         variant="outlined"
         color="primary"
@@ -183,7 +210,7 @@ export default function DataTable({
               {
                 className: row.className,
                 grade: row.grade,
-                teacherId: row.homeroomTeacherd,
+                teacherId: row.homeroomTeacherId,
                 academicYear: row.academicYear,
               },
               row.id
@@ -243,7 +270,7 @@ export default function DataTable({
         )}
       </TableCell>
       <TableCell component="th" id={labelId} scope="row" padding="none">
-        {row.id}
+        {isClassManagement ? row.classId : row.id}
       </TableCell>
       {/* <TableCell align="left">{row.name}</TableCell> */}
     </>
@@ -306,7 +333,7 @@ export default function DataTable({
     <>
       <TableCell align="left">{row.className}</TableCell>
       <TableCell align="left">{row.grade}</TableCell>
-      <TableCell align="left">{row.homeroomTeacherd || "none"}</TableCell>
+      <TableCell align="left">{row.homeroomTeacherId || "none"}</TableCell>
       <TableCell align="left">{row.studentNumber || 0}</TableCell>
       {/* <TableCell align="left">{row.batchId}</TableCell> */}
       <TableCell align="left">{row.academicYear}</TableCell>
@@ -414,12 +441,9 @@ export default function DataTable({
         sx={{
           width: "100%",
           mb: 2,
-          border: "1px solid #ddd",
-          borderRadius: 2,
-          boxShadow: "0px 2px 10px rgba(0,0,0,0.05)",
-          overflow: "hidden",
+          borderRadius: "8px",
+          boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
         }}
-        className="dataTable-Table"
       >
         <TableToolBar
           isClassPage={isClassPage}
@@ -688,6 +712,131 @@ export default function DataTable({
           onClose={() => handler.setIsShowNotifyOpen(false)}
           notifyData={state.selectedNotify}
         />
+      )}
+
+      {/* View Class Dialog */}
+      {isClassManagement && state.selectedClassToView && (
+        <Dialog
+          open={state.isViewDialogOpen}
+          onClose={() => handler.setIsViewDialogOpen(false)}
+          fullWidth
+          maxWidth="md"
+        >
+          <DialogTitle>
+            <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Typography variant="h6">Class Details</Typography>
+              <IconButton
+                aria-label="close"
+                onClick={() => handler.setIsViewDialogOpen(false)}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <Divider />
+          <DialogContent>
+            <Box sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                {state.selectedClassToView.className}
+              </Typography>
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Class Information
+                </Typography>
+                <Box sx={{ mt: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Class ID</Typography>
+                    <Typography variant="body1">{state.selectedClassToView.classId}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Grade</Typography>
+                    <Typography variant="body1">{state.selectedClassToView.grade}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Academic Year</Typography>
+                    <Typography variant="body1">{state.selectedClassToView.academicYear}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Homeroom Teacher</Typography>
+                    <Typography variant="body1">{state.selectedClassToView.homeroomTeacherId || "Not assigned"}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Number of Students</Typography>
+                    <Typography variant="body1">{state.selectedClassToView.studentNumber || 0}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">Created At</Typography>
+                    <Typography variant="body1">{new Date(state.selectedClassToView.createdAt).toLocaleDateString()}</Typography>
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+            
+            {/* Student List Section */}
+            <Box sx={{ mt: 4 }}>
+              <Typography variant="subtitle1" fontWeight="bold">
+                Students in {state.selectedClassToView.className}
+              </Typography>
+              
+              {state.isLoadingStudents ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                  <CircularProgress />
+                </Box>
+              ) : state.classStudents.length > 0 ? (
+                <TableContainer>
+                  <Table sx={{ minWidth: 650 }} aria-label="students table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>ID</TableCell>
+                        <TableCell>Avatar</TableCell>
+                        <TableCell>Full Name</TableCell>
+                        <TableCell>Email</TableCell>
+                        <TableCell>Phone</TableCell>
+                        <TableCell>Role</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {state.classStudents.map((student) => (
+                        <TableRow key={student.id} hover>
+                          <TableCell>{student.id}</TableCell>
+                          <TableCell>
+                            <img
+                              src={
+                                student.avatar
+                                  ? student.avatar
+                                  : `https://www.pngplay.com/wp-content/uploads/12/User-Avatar-Profile-Transparent-Clip-Art-PNG.png`
+                              }
+                              alt="Student Avatar"
+                              style={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: "50%",
+                                objectFit: "cover",
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>{student.fullName}</TableCell>
+                          <TableCell>{student.email}</TableCell>
+                          <TableCell>{student.phone}</TableCell>
+                          <TableCell>{student.role}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              ) : (
+                <Box sx={{ p: 3, textAlign: 'center' }}>
+                  <Typography color="text.secondary">
+                    No students found in this class
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => handler.setIsViewDialogOpen(false)}>Close</Button>
+          </DialogActions>
+        </Dialog>
       )}
     </Box>
   );

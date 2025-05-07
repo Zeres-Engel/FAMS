@@ -135,6 +135,12 @@ exports.getAttendanceLogs = async (filters = {}, pagination = { page: 1, limit: 
       .populate({
         path: 'user',
         select: 'avatar firstName lastName fullName'
+      })
+      // Thêm populate thông tin student nếu là bản ghi của học sinh
+      .populate({
+        path: 'student',
+        select: 'userId fullName',
+        match: { userId: { $exists: true } }
       });
       
     // Add schedule details to each attendance log
@@ -163,8 +169,41 @@ exports.getAttendanceLogs = async (filters = {}, pagination = { page: 1, limit: 
       return logObj;
     });
       
+    // Xử lý bổ sung studentName từ bảng Student cho các bản ghi có userRole: "student"
+    const finalLogs = await Promise.all(enhancedLogs.map(async (logObj) => {
+      // Nếu là sinh viên nhưng không có studentName
+      if (logObj.userRole === 'student' && !logObj.studentName) {
+        // Sử dụng dữ liệu student đã populated (nếu có)
+        if (logObj.student && logObj.student.fullName) {
+          logObj.studentName = logObj.student.fullName;
+        } else {
+          // Nếu không populate được, thực hiện truy vấn trực tiếp
+          try {
+            const Student = mongoose.model('Student');
+            const student = await Student.findOne({ userId: logObj.userId });
+            
+            if (student) {
+              logObj.studentName = student.fullName;
+              console.log(`Added studentName (${student.fullName}) for userId ${logObj.userId}`);
+            } else {
+              console.log(`No student found for userId ${logObj.userId}`);
+            }
+          } catch (error) {
+            console.error(`Error fetching student name for userId ${logObj.userId}:`, error);
+          }
+        }
+      }
+      
+      // Loại bỏ trường student trong kết quả trả về
+      if (logObj.student) {
+        delete logObj.student;
+      }
+      
+      return logObj;
+    }));
+    
     return {
-      logs: enhancedLogs,
+      logs: finalLogs,
       total,
       pagination: {
         current: page,

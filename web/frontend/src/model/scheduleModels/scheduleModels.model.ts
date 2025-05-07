@@ -17,6 +17,7 @@ interface ScheduleEvent {
     semesterNumber?: number;
     customStartTime?: string;
     customEndTime?: string;
+    className?: string;
 }
 export type{
     ScheduleEvent

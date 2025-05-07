@@ -24,7 +24,7 @@ import {
 } from "../../store/slices/userSlice";
 import { ClassData } from "../../model/classModels/classModels.model";
 import { fetchUserPaginated } from "../../store/slices/userSlice";
-import { deleteClass, editClass } from "../../store/slices/classSlice";
+import { deleteClass, editClass, fetchClasses } from "../../store/slices/classSlice";
 import { editAttendance } from "../../store/slices/attendanceSlice";
 
 interface UseDataTableHookProps {
@@ -68,6 +68,10 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
   const [editingClass, setEditingClass] = useState<editClassForm | null>(null);
   const [editingClassID, setEditingClassID] = useState<string>('');
   const [editingAttendance, setEditingAttendance] = useState<EditAttendanceFormProps | null>(null);
+  const [selectedClassToView, setSelectedClassToView] = useState<ClassData | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [classStudents, setClassStudents] = useState<any[]>([]);
+  const [isLoadingStudents, setIsLoadingStudents] = useState(false);
 
   // Cập nhật rows khi tableMainData thay đổi
   useEffect(() => {
@@ -239,7 +243,13 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
   const handleEditClassClick = (classData: editClassForm, editID: string) => {
     setEditingClass(classData);
     setIsEditOpen(true);
-    setEditingClassID(editID);
+    // Chuyển đổi để sử dụng classId thay vì _id cho API
+    // Sử dụng type assertion để tránh lỗi TypeScript với union type
+    const typedRows = rows as Array<{id?: string, _id?: string, classId?: number | string}>;
+    const row = typedRows.find(r => r.id === editID || r._id === editID);
+    console.log("Found class row:", row);
+    // Đảm bảo luôn sử dụng classId để gọi API
+    setEditingClassID(row?.classId?.toString() || row?.id?.toString() || editID);
   };
   const handleEditAttendanceClick = (
     attendanceStatus: EditAttendanceFormProps
@@ -268,8 +278,20 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
       dispatch(deleteUser(selectedUserToDelete.id));
     }
     if (selectedUserToDelete && typeDelete === "classDelete") {
-      console.log("Deleting Class:", selectedUserToDelete.id);
-      dispatch(deleteClass(String(selectedUserToDelete.id)));
+      // Sử dụng classId thay vì id để xóa lớp
+      const classIdToDelete = (selectedUserToDelete as ClassData).classId || selectedUserToDelete.id;
+      console.log("Deleting Class with classId:", classIdToDelete);
+      
+      // Dispatch action xóa lớp và đợi kết quả
+      dispatch(deleteClass(String(classIdToDelete)))
+        .then(() => {
+          console.log("Class deleted successfully, refreshing data...");
+          // Gọi lại fetchClasses để đảm bảo dữ liệu được cập nhật
+          dispatch(fetchClasses());
+        })
+        .catch((error) => {
+          console.error("Error deleting class:", error);
+        });
     }
     setIsDeleteDialogOpen(false);
     setSelectedUserToDelete(null);
@@ -338,9 +360,28 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
       grade: classFormData.grade,
       academicYear: classFormData.academicYear,
     };
-    console.log("Saving edited class:", classFormData);
-    console.log("Saving edited class ID:", editingClassID);
-    dispatch(editClass({ id: editingClassID, ...payload }));
+    
+    // Log ra để debug
+    console.log("[handleEditClassSave] Dữ liệu form:", classFormData);
+    console.log("[handleEditClassSave] Payload gửi API:", payload);
+    console.log("[handleEditClassSave] Class ID được sử dụng:", editingClassID);
+    console.log("[handleEditClassSave] Kiểu của classId:", typeof editingClassID);
+    
+    // Đảm bảo gửi classId chứ không phải _id và theo dõi kết quả sau khi hoàn thành
+    const updatePromise = dispatch(editClass({ id: editingClassID, ...payload }));
+    
+    // Đợi cập nhật hoàn tất trước khi đóng form
+    updatePromise.then(() => {
+      console.log("[handleEditClassSave] Cập nhật thành công, đang làm mới dữ liệu");
+      // Gọi lại fetchClasses để đảm bảo dữ liệu được cập nhật
+      dispatch(fetchClasses());
+      
+      // Kích hoạt sự kiện custom để thông báo việc cập nhật dữ liệu
+      window.dispatchEvent(new Event('class-updated'));
+    }).catch((error) => {
+      console.error("[handleEditClassSave] Lỗi khi cập nhật:", error);
+    });
+    
     setIsEditOpen(false);
   };
   const handleEditAttendanceSave = (
@@ -425,6 +466,30 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
     [order, orderBy, page, rowsPerPage, rows]
   );
 
+  const handleViewClick = async (classData: ClassData) => {
+    setSelectedClassToView(classData);
+    setIsViewDialogOpen(true);
+    setIsLoadingStudents(true);
+    
+    try {
+      // Gọi API để lấy danh sách học sinh của lớp
+      const response = await fetch(`http://fams.io.vn/api/classes/${classData.classId}/students`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setClassStudents(data.data);
+      } else {
+        console.error("Failed to fetch students:", data);
+        setClassStudents([]);
+      }
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      setClassStudents([]);
+    } finally {
+      setIsLoadingStudents(false);
+    }
+  };
+
   const state = {
     emptyRows,
     visibleRows,
@@ -446,6 +511,10 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
     isShowNotifyOpen,
     selectedNotify,
     editingUserId,
+    selectedClassToView,
+    isViewDialogOpen,
+    classStudents,
+    isLoadingStudents
   };
   const handler = {
     handleRequestSort,
@@ -470,6 +539,8 @@ const useDataTableHook = ({ tableMainData }: UseDataTableHookProps) => {
     handlerClassDistribution,
     handleShowNotify,
     setIsShowNotifyOpen,
+    handleViewClick,
+    setIsViewDialogOpen
   };
 
   return { state, handler };

@@ -3,6 +3,329 @@ const csv = require('fast-csv');
 const fs = require('fs');
 const ClassSchedule = require('../database/models/ClassSchedule');
 const databaseService = require('../services/databaseService');
+const mongoose = require('mongoose');
+const Class = require('../database/models/Class');
+
+// Lấy danh sách tất cả sinh viên với phân trang và lọc
+exports.getAllStudents = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    // Xây dựng query filter từ các tham số
+    const filter = {};
+    if (req.query.fullName) {
+      filter.fullName = { $regex: req.query.fullName, $options: 'i' };
+    }
+    if (req.query.batchId) {
+      filter.batchId = parseInt(req.query.batchId);
+    }
+    if (req.query.classId) {
+      filter.classIds = parseInt(req.query.classId);
+    }
+    if (req.query.gender !== undefined) {
+      const genderValue = req.query.gender.toLowerCase() === 'male' || req.query.gender === 'true';
+      filter.gender = genderValue;
+    }
+
+    // Tìm kiếm theo search term nếu có
+    if (req.query.q) {
+      filter.$or = [
+        { fullName: { $regex: req.query.q, $options: 'i' } },
+        { address: { $regex: req.query.q, $options: 'i' } },
+        { phone: { $regex: req.query.q, $options: 'i' } },
+        { email: { $regex: req.query.q, $options: 'i' } },
+        { userId: { $regex: req.query.q, $options: 'i' } }
+      ];
+    }
+
+    // Xử lý tìm kiếm học sinh không có lớp
+    if (req.query.noClass === 'true') {
+      // Tìm học sinh có mảng classIds rỗng hoặc không tồn tại
+      filter.$or = filter.$or || [];
+      filter.$or.push({ classIds: { $size: 0 } });
+      filter.$or.push({ classIds: { $exists: false } });
+      
+      // Truy vấn thông thường cho học sinh không có lớp
+      const students = await Student.find(filter)
+        .populate('user', 'email avatar role isActive')
+        .populate('classes', 'className classId academicYear grade homeroomTeacherId')
+        .skip(skip)
+        .limit(limit)
+        .sort({ studentId: 1 });
+      
+      // Đếm tổng số sinh viên
+      const total = await Student.countDocuments(filter);
+      
+      return res.status(200).json({
+        success: true,
+        data: students,
+        pagination: {
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit)
+        }
+      });
+    }
+    
+    // Xử lý tìm kiếm học sinh không có năm học
+    if (req.query.noAcademicYear === 'true') {
+      // Tìm tất cả các lớp để lấy danh sách classIds
+      const allClasses = await Class.find({});
+      const allClassIds = allClasses.map(c => c.classId);
+      
+      // Tìm học sinh không có classId nào trong danh sách
+      filter.classIds = { $nin: allClassIds };
+      
+      // Hoặc tìm học sinh với mảng classIds rỗng
+      if (!filter.$or) filter.$or = [];
+      filter.$or.push({ classIds: { $size: 0 } });
+      filter.$or.push({ classIds: { $exists: false } });
+      
+      // Truy vấn cho học sinh không có năm học
+      const students = await Student.find(filter)
+        .populate('user', 'email avatar role isActive')
+        .populate('classes', 'className classId academicYear grade homeroomTeacherId')
+        .skip(skip)
+        .limit(limit)
+        .sort({ studentId: 1 });
+      
+      // Đếm tổng số sinh viên
+      const total = await Student.countDocuments(filter);
+      
+      return res.status(200).json({
+        success: true,
+        data: students,
+        pagination: {
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit)
+        }
+      });
+    }
+
+    // Tìm classIds dựa trên các điều kiện của className hoặc academicYear
+    let classIdsToFilter = null;
+
+    // Xử lý lọc theo className nếu có
+    if (req.query.className) {
+      const classesWithName = await Class.find({ 
+        className: { $regex: req.query.className, $options: 'i' } 
+      });
+      
+      if (classesWithName.length > 0) {
+        classIdsToFilter = classesWithName.map(c => c.classId);
+      } else {
+        // Không tìm thấy lớp nào có tên phù hợp
+        return res.status(200).json({
+          success: true,
+          data: [],
+          pagination: {
+            total: 0,
+            page,
+            limit,
+            pages: 0
+          }
+        });
+      }
+    }
+
+    // Xử lý lọc theo academicYear nếu có
+    if (req.query.academicYear) {
+      const classesInYear = await Class.find({ academicYear: req.query.academicYear });
+      
+      if (classesInYear.length === 0) {
+        // Không tìm thấy lớp nào trong năm học này
+        return res.status(200).json({
+          success: true,
+          data: [],
+          pagination: {
+            total: 0,
+            page,
+            limit,
+            pages: 0
+          }
+        });
+      }
+      
+      const yearClassIds = classesInYear.map(c => c.classId);
+      
+      // Nếu đã có lọc theo className, thì lấy giao của 2 điều kiện
+      if (classIdsToFilter) {
+        classIdsToFilter = classIdsToFilter.filter(id => yearClassIds.includes(id));
+        
+        if (classIdsToFilter.length === 0) {
+          // Không có lớp nào thỏa mãn cả 2 điều kiện
+          return res.status(200).json({
+            success: true,
+            data: [],
+            pagination: {
+              total: 0,
+              page,
+              limit,
+              pages: 0
+            }
+          });
+        }
+      } else {
+        classIdsToFilter = yearClassIds;
+      }
+    }
+
+    // Nếu có lọc theo className hoặc academicYear
+    if (classIdsToFilter) {
+      // Tìm học sinh có ít nhất một classId nằm trong danh sách này
+      const studentFilter = {
+        ...filter,
+        classIds: { $in: classIdsToFilter }
+      };
+      
+      const studentsWithClass = await Student.find(studentFilter)
+        .populate('user', 'email avatar role isActive')
+        .skip(skip)
+        .limit(limit)
+        .sort({ studentId: 1 });
+      
+      // Lấy students đã lọc và populate toàn bộ classes
+      const studentIds = studentsWithClass.map(s => s._id);
+      const students = await Student.find({ _id: { $in: studentIds } })
+        .populate('user', 'email avatar role isActive')
+        .populate('classes', 'className classId academicYear grade homeroomTeacherId')
+        .sort({ studentId: 1 });
+      
+      // Đếm tổng số sinh viên
+      const total = await Student.countDocuments(studentFilter);
+      
+      res.status(200).json({
+        success: true,
+        data: students,
+        pagination: {
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit)
+        }
+      });
+    } else {
+      // Truy vấn thông thường nếu không có lọc theo className hoặc academicYear
+      const students = await Student.find(filter)
+        .populate('user', 'email avatar role isActive')
+        .populate('classes', 'className classId academicYear grade homeroomTeacherId')
+        .skip(skip)
+        .limit(limit)
+        .sort({ studentId: 1 });
+      
+      // Đếm tổng số sinh viên
+      const total = await Student.countDocuments(filter);
+      
+      res.status(200).json({
+        success: true,
+        data: students,
+        pagination: {
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit)
+        }
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Lấy sinh viên theo studentId
+exports.getStudentById = async (req, res) => {
+  try {
+    const studentId = parseInt(req.params.id);
+    
+    // Kiểm tra studentId có hợp lệ không
+    if (isNaN(studentId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Student ID không hợp lệ'
+      });
+    }
+    
+    const student = await Student.findOne({ studentId })
+      .populate('user', 'email avatar role isActive')
+      .populate('classes', 'className classId academicYear grade homeroomTeacherId')
+      .populate({
+        path: 'parents',
+        populate: {
+          path: 'parentId',
+          model: 'Parent',
+          select: 'fullName phone email gender'
+        }
+      });
+    
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy sinh viên'
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      data: student
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// Tìm kiếm sinh viên nâng cao
+exports.searchStudents = async (req, res) => {
+  try {
+    const searchQuery = req.query.q || '';
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    // Xây dựng điều kiện tìm kiếm
+    const searchCondition = {
+      $or: [
+        { fullName: { $regex: searchQuery, $options: 'i' } },
+        { address: { $regex: searchQuery, $options: 'i' } },
+        { phone: { $regex: searchQuery, $options: 'i' } }
+      ]
+    };
+    
+    const students = await Student.find(searchCondition)
+      .populate('user', 'email avatar')
+      .skip(skip)
+      .limit(limit)
+      .sort({ studentId: 1 });
+    
+    const total = await Student.countDocuments(searchCondition);
+    
+    res.status(200).json({
+      success: true,
+      data: students,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
 
 // @desc    Get all students
 // @route   GET /api/students

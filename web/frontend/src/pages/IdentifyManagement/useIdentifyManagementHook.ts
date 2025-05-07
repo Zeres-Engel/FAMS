@@ -3,8 +3,35 @@ import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../store/store";
 import { addNotify } from "../../store/slices/notifySlice";
 import { HeadCell, RFIDData, RFIDHeadCell } from "../../model/tableModels/tableDataModels.model";
+import axios from "axios";
 
-// Giả lập API call
+// API call thực tế cho RFID
+const fetchRFIDData = async (): Promise<RFIDData[]> => {
+  try {
+    // Không cần gửi token authentication
+    const response = await axios.get("/api-nodejs/rfid/users");
+
+    if (response.data.success) {
+      // Chuyển đổi dữ liệu API sang định dạng RFIDData
+      return response.data.data.map((item: any) => ({
+        id: item._id || item.id || "",
+        userid: item.userID || "",
+        rfid: item.rfid || "",
+        expTime: item.expireTime || "",
+        faceAttendance: item.faceAttendance || "disabled", // Default value
+        role: item.role || "unknown",
+      }));
+    } else {
+      console.error("Failed to fetch RFID data:", response.data.message);
+      return [];
+    }
+  } catch (error) {
+    console.error("Error fetching RFID data:", error);
+    return [];
+  }
+};
+
+// Giả lập API call cho user search (có thể thay bằng API thật sau này)
 const fetchUsers = (
   role: "teacher" | "student",
   keyword: string
@@ -33,49 +60,6 @@ const fetchUsers = (
 
 function useIdentifyManagementHook() {
   const dispatch = useDispatch<AppDispatch>();
-  const sampleRFIDData: RFIDData[] = [
-    {
-      id: "1",
-      userid: "stu_001",
-      rfid: "1234567890",
-      expTime: "2025-12-31T23:59:59Z",
-      faceAttendance: "enabled",
-      role: "student",
-    },
-    {
-      id: "2",
-      userid: "tea_001",
-      rfid: "0987654321",
-      expTime: "2026-06-30T23:59:59Z",
-      faceAttendance: "enabled",
-      role: "teacher",
-    },
-    {
-      id: "3",
-      userid: "stu_002",
-      rfid: "1122334455",
-      expTime: "2025-09-01T00:00:00Z",
-      faceAttendance: "disabled",
-      role: "student",
-    },
-    {
-      id: "4",
-      userid: "tea_002",
-      rfid: "6677889900",
-      expTime: "2026-01-15T12:00:00Z",
-      faceAttendance: "enabled",
-      role: "teacher",
-    },
-    {
-      id: "5",
-      userid: "admin_001",
-      rfid: "5555555555",
-      expTime: "2027-01-01T00:00:00Z",
-      faceAttendance: "enabled",
-      role: "admin",
-    },
-  ];
-  
   const [role, setRole] = useState<"teacher" | "student">("teacher");
   const [users, setUsers] = useState<any[]>([]);
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -91,43 +75,71 @@ function useIdentifyManagementHook() {
     const startYear = 2022 + i;
     return `${startYear} - ${startYear + 3}`;
   });
-    const [userMainData, setUserMainData] = useState<RFIDData[]>(sampleRFIDData);
-    const headCellsData: RFIDHeadCell[] = [
-      {
-        id: "id",
-        numeric: false,
-        disablePadding: true,
-        label: "ID",
-      },
-      {
-        id: "userid",
-        numeric: false,
-        disablePadding: true,
-        label: "User Id",
-      },
-      {
-        id: "rfid",
-        numeric: false,
-        disablePadding: false,
-        label: "RFID",
-      },
-      {
-        id: "expTime",
-        numeric: false,
-        disablePadding: false,
-        label: "Expired Time",
-      },
-      {
-        id: "faceAttendance",
-        numeric: false,
-        disablePadding: false,
-        label: "Face Attendance",
+  
+  const [userMainData, setUserMainData] = useState<RFIDData[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const headCellsData: RFIDHeadCell[] = [
+    {
+      id: "userid",
+      numeric: false,
+      disablePadding: true,
+      label: "User Id",
+    },
+    {
+      id: "role",
+      numeric: false,
+      disablePadding: false,
+      label: "Role",
+    },
+    {
+      id: "rfid",
+      numeric: false,
+      disablePadding: false,
+      label: "RFID",
+    },
+    {
+      id: "expTime",
+      numeric: false,
+      disablePadding: false,
+      label: "Expired Time",
+    },
+    {
+      id: "faceAttendance",
+      numeric: false,
+      disablePadding: false,
+      label: "Face Attendance",
+    }
+  ];
+  const isCheckBox = false;
+  const tableTitle = "RFID Data";
+
+  // Fetch RFID data from API when component mounts
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchRFIDData();
+        setUserMainData(data);
+        setError(null);
+      } catch (err) {
+        console.error("Error in fetchRFIDData:", err);
+        setError("Failed to load RFID data");
+        dispatch(
+          addNotify({
+            type: "error",
+            message: "Failed to load RFID data",
+            duration: 3000,
+          })
+        );
+      } finally {
+        setLoading(false);
       }
-    ];
-    const isCheckBox = false;
-    const tableTitle = "RFID Data";
+    };
 
-
+    fetchData();
+  }, [dispatch]);
 
   const handleDeviceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedDevice(event.target.value);
@@ -213,6 +225,34 @@ function useIdentifyManagementHook() {
     setSearchKeyword(value);
   };
 
+  // Refresh RFID data
+  const refreshRFIDData = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchRFIDData();
+      setUserMainData(data);
+      setError(null);
+      dispatch(
+        addNotify({
+          type: "success",
+          message: "RFID data refreshed successfully",
+          duration: 3000,
+        })
+      );
+    } catch (err) {
+      console.error("Error refreshing RFID data:", err);
+      setError("Failed to refresh RFID data");
+      dispatch(
+        addNotify({
+          type: "error",
+          message: "Failed to refresh RFID data",
+          duration: 3000,
+        })
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return {
     state: {
@@ -228,7 +268,9 @@ function useIdentifyManagementHook() {
       batchYears,
       headCellsData,
       userMainData,
-      tableTitle
+      tableTitle,
+      loading,
+      error
     },
     handler: {
       handleRoleChange,
@@ -238,6 +280,7 @@ function useIdentifyManagementHook() {
       handleDeviceChange,
       handleFileChange,
       handleSendToDevice,
+      refreshRFIDData
     },
     rfidInputRef,
   };

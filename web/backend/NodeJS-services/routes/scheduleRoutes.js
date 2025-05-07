@@ -432,13 +432,13 @@ router.get('/all', async (req, res) => {
       }
     }
     
-    // User ID filter (works for students, teachers, parents)
+    // User ID filter
     if (userId) {
-      // First get user info to determine role
-      const user = await mongoose.connection.db.collection('User')
+      // First need to determine if this is a student or teacher
+      const userData = await mongoose.connection.db.collection('UserAccount')
         .findOne({ userId: userId });
-        
-      if (!user) {
+      
+      if (!userData) {
         return res.status(404).json({
           success: false,
           message: `User with ID ${userId} not found`,
@@ -446,13 +446,14 @@ router.get('/all', async (req, res) => {
         });
       }
       
-      if (user.role === 'Student' || user.role === 'student') {
-        // Find student's class
-        const student = await mongoose.connection.db.collection('Student')
+      // Handle based on user role
+      if (userData.role === 'student' || userData.role === 'Student') {
+        // Get student's class
+        const studentData = await mongoose.connection.db.collection('Student')
           .findOne({ userId: userId });
           
-        if (student && student.classId) {
-          query.classId = student.classId;
+        if (studentData && studentData.classId) {
+          query.classId = studentData.classId;
         } else {
           return res.status(404).json({
             success: false,
@@ -460,59 +461,34 @@ router.get('/all', async (req, res) => {
             code: 'NO_CLASS_ASSIGNED'
           });
         }
-      } else if (user.role === 'Teacher' || user.role === 'teacher') {
-        // Find teacher's ID
-        const teacher = await mongoose.connection.db.collection('Teacher')
+      } else if (userData.role === 'teacher' || userData.role === 'Teacher') {
+        // Get teacher's ID
+        const teacherData = await mongoose.connection.db.collection('Teacher')
           .findOne({ userId: userId });
           
-        if (teacher && teacher.teacherId) {
-          query.teacherId = teacher.teacherId;
+        if (teacherData && teacherData.teacherId) {
+          query.teacherId = teacherData.teacherId;
         } else {
           return res.status(404).json({
             success: false,
-            message: `No teacherId found for user with ID ${userId}`,
-            code: 'NO_TEACHER_FOUND'
-          });
-        }
-      } else if (user.role === 'Parent' || user.role === 'parent') {
-        // Find parent's children
-        const parent = await mongoose.connection.db.collection('Parent')
-          .findOne({ userId: userId });
-          
-        if (parent && parent.studentIds && parent.studentIds.length > 0) {
-          // Get first child's class by default (or use student query param)
-          const studentId = req.query.studentId || parent.studentIds[0];
-          const student = await mongoose.connection.db.collection('Student')
-            .findOne({ studentId: parseInt(studentId) });
-            
-          if (student && student.classId) {
-            query.classId = student.classId;
-          } else {
-            return res.status(404).json({
-              success: false,
-              message: `No class assigned to student with ID ${studentId}`,
-              code: 'NO_CLASS_ASSIGNED'
-            });
-          }
-        } else {
-          return res.status(404).json({
-            success: false,
-            message: `No children found for parent with ID ${userId}`,
-            code: 'NO_CHILDREN_FOUND'
+            message: `No teacher data found for user ID ${userId}`,
+            code: 'NO_TEACHER_DATA'
           });
         }
       }
     }
     
-    // Direct filters
-    if (classId && !query.classId) {
+    // Class ID filter
+    if (classId) {
       query.classId = parseInt(classId);
     }
     
+    // Teacher ID filter
     if (teacherId) {
       query.teacherId = parseInt(teacherId);
     }
     
+    // Subject ID filter
     if (subjectId) {
       query.subjectId = parseInt(subjectId);
     }
@@ -580,10 +556,31 @@ router.get('/all', async (req, res) => {
     // Add additional info from related collections
     const enhancedSchedules = await scheduleService.formatScheduleData(schedules, 'list');
     
+    // Get class details for each schedule
+    const uniqueClassIds = [...new Set(enhancedSchedules.map(schedule => schedule.classId).filter(Boolean))];
+    const classesData = uniqueClassIds.length > 0 ?
+      await mongoose.connection.db.collection('Class')
+        .find({ classId: { $in: uniqueClassIds } })
+        .toArray() : 
+      [];
+      
+    // Create a map of class data for quick lookup
+    const classMap = new Map(classesData.map(cls => [cls.classId, cls]));
+    
+    // Enhance each schedule with class info
+    const finalSchedules = enhancedSchedules.map(schedule => {
+      const classInfo = classMap.get(schedule.classId);
+      if (classInfo) {
+        schedule.className = classInfo.className;
+        schedule.academicYear = classInfo.academicYear;
+      }
+      return schedule;
+    });
+    
     res.json({
       success: true,
-      count: schedules.length,
-      data: enhancedSchedules,
+      count: finalSchedules.length,
+      data: finalSchedules,
       query: query
     });
   } catch (error) {
@@ -890,7 +887,9 @@ router.put('/:scheduleId', async (req, res) => {
       slotId,
       topic,
       sessionDate,
-      isActive
+      isActive,
+      customStartTime,
+      customEndTime
     } = req.body;
     
     // Find the existing schedule
@@ -938,6 +937,8 @@ router.put('/:scheduleId', async (req, res) => {
     if (slotId !== undefined) updateData.slotId = parseInt(slotId);
     if (topic !== undefined) updateData.topic = topic;
     if (isActive !== undefined) updateData.isActive = isActive;
+    if (customStartTime !== undefined) updateData.customStartTime = customStartTime;
+    if (customEndTime !== undefined) updateData.customEndTime = customEndTime;
       
     // If session date is provided, update sessionDate and calculate sessionWeek
     if (sessionDate) {

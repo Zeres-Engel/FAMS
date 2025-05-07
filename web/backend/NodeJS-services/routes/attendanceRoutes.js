@@ -101,10 +101,10 @@ router.post('/', isAuthenticated, async (req, res) => {
 
 /**
  * @route   POST /api/attendance/batch-update
- * @desc    Update multiple attendance logs at once
- * @access  Private
+ * @desc    Batch update attendance records
+ * @access  Public
  */
-router.post('/batch-update', isAuthenticated, async (req, res) => {
+router.post('/batch-update', async (req, res) => {
   try {
     const { attendanceUpdates } = req.body;
 
@@ -535,9 +535,9 @@ router.put('/class/:classId/date/:date/slot/:slotNumber', isAuthenticated, async
 /**
  * @route   PUT /api/attendance/check-in
  * @desc    Unified API for all attendance methods (teacher & Jetson Nano)
- * @access  Private
+ * @access  Public
  */
-router.put('/check-in', isAuthenticated, async (req, res) => {
+router.put('/check-in', async (req, res) => {
   try {
     const {
       userId,
@@ -583,6 +583,55 @@ router.put('/check-in', isAuthenticated, async (req, res) => {
       message: 'Server error processing attendance check-in',
       error: error.message,
       code: 'CHECKIN_ERROR'
+    });
+  }
+});
+
+/**
+ * @route   GET /api/attendance/schedule/:scheduleId
+ * @desc    Get attendance logs for a specific schedule
+ * @access  Public
+ */
+router.get('/schedule/:scheduleId', async (req, res) => {
+  try {
+    const { scheduleId } = req.params;
+    const { page = 1, limit = 100 } = req.query;
+
+    // Validate scheduleId
+    if (!scheduleId || isNaN(parseInt(scheduleId))) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid schedule ID provided',
+        code: 'INVALID_SCHEDULE_ID'
+      });
+    }
+
+    // Prepare filters
+    const filters = {
+      scheduleId: parseInt(scheduleId)
+    };
+    
+    // Get attendance logs for the schedule
+    const { logs, total, pagination } = await attendanceService.getAttendanceLogs(
+      filters,
+      { page: parseInt(page), limit: parseInt(limit) }
+    );
+    
+    // Send response
+    res.status(200).json({
+      success: true,
+      count: logs.length,
+      total,
+      pagination,
+      data: logs
+    });
+  } catch (error) {
+    console.error('Error fetching attendance logs for schedule:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching attendance logs for schedule',
+      error: error.message,
+      code: 'SCHEDULE_ATTENDANCE_FETCH_ERROR'
     });
   }
 });

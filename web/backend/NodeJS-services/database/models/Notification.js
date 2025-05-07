@@ -1,60 +1,56 @@
 const mongoose = require('mongoose');
-const { COLLECTIONS } = require('../constants');
+const Schema = mongoose.Schema;
 
-/**
- * Notification Schema
- * Represents notifications sent between users
- */
-const NotificationSchema = new mongoose.Schema({
-  notificationId: {
+// Schema definition based on SQL schema
+const notificationSchema = new Schema({
+  NotificationID: {
     type: Number,
     required: true,
-    unique: true,
-    auto: true
+    unique: true
   },
-  senderId: {
-    type: Number,
+  SenderID: {
+    type: String,
     required: true,
     ref: 'UserAccount'
   },
-  receiverId: {
-    type: Number,
+  ReceiverID: {
+    type: String,
     required: true,
     ref: 'UserAccount'
   },
-  message: {
+  Message: {
     type: String,
     required: true
   },
-  sentDate: {
+  SentDate: {
     type: Date,
     default: Date.now
   },
-  readStatus: {
+  ReadStatus: {
     type: Boolean,
     default: false
+  },
+  CreatedAt: {
+    type: Date,
+    default: Date.now
+  },
+  UpdatedAt: {
+    type: Date,
+    default: Date.now
+  },
+  IsActive: {
+    type: Boolean,
+    default: true
   }
 }, {
-  timestamps: true,
-  versionKey: false,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  collection: 'Notification' // Ensure we're using the correct collection name
 });
 
-// Virtual for getting sender info
-NotificationSchema.virtual('sender', {
-  ref: 'UserAccount',
-  localField: 'senderId',
-  foreignField: 'userId',
-  justOne: true
+// Middleware để cập nhật trường UpdatedAt trước khi save
+notificationSchema.pre('save', function(next) {
+  this.UpdatedAt = new Date();
+  next();
 });
 
-// Virtual for getting receiver info
-NotificationSchema.virtual('receiver', {
-  ref: 'UserAccount',
-  localField: 'receiverId',
-  foreignField: 'userId',
-  justOne: true
-});
-
-module.exports = mongoose.model('Notification', NotificationSchema, COLLECTIONS.NOTIFICATION);
+// Tạo và xuất model
+module.exports = mongoose.model('Notification', notificationSchema); 

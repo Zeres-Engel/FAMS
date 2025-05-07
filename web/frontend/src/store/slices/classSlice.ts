@@ -49,6 +49,7 @@ export const fetchClasses = createAsyncThunk(
           className: element.className,
           grade: element.grade,
           homeroomTeacherd: element.homeroomTeacherId,
+          homeroomTeacherId: element.homeroomTeacherId,
           createdAt: element.createdAt,
           updatedAt: element.updatedAt,
           academicYear: element.academicYear,
@@ -77,6 +78,7 @@ export const deleteClass = createAsyncThunk(
   "class/deleteClass",
   async (classId: string, thunkAPI) => {
     try {
+      console.log("Attempting to delete class with ID:", classId);
       thunkAPI.dispatch(showLoading());
       await axiosInstance.delete(`/classes/${classId}`);
       thunkAPI.dispatch(
@@ -87,8 +89,16 @@ export const deleteClass = createAsyncThunk(
         })
       );
       thunkAPI.dispatch(fetchClasses());
+      
+      // Kích hoạt sự kiện custom để thông báo việc cập nhật dữ liệu
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('class-updated'));
+      }
+      
       return classId;
     } catch (error: any) {
+      console.error("Error deleting class:", error.response?.data || error.message);
+      console.error("Request URL:", `/classes/${classId}`);
       thunkAPI.dispatch(
         addNotify({
           type: "error",
@@ -149,6 +159,9 @@ export const editClass = createAsyncThunk(
   async (data: EditClassPayload, thunkAPI) => {
     try {
       const { id, ...payload } = data;
+      console.log("Class update API call with ID:", id);
+      console.log("Class update payload:", JSON.stringify(payload));
+      
       const response = await axiosInstance.put(`/classes/${id}`, payload);
 
       thunkAPI.dispatch(
@@ -161,6 +174,7 @@ export const editClass = createAsyncThunk(
       thunkAPI.dispatch(fetchClasses());
       return response.data;
     } catch (error: any) {
+      console.error("Error updating class:", error.response?.data || error.message);
       thunkAPI.dispatch(
         addNotify({
           type: "error",
@@ -193,6 +207,7 @@ export const searchClassById = createAsyncThunk(
         className: element.className,
         grade: element.grade,
         homeroomTeacherd: element.homeroomTeacherId,
+        homeroomTeacherId: element.homeroomTeacherId,
         createdAt: element.createdAt,
         updatedAt: element.updatedAt,
         academicYear: element.academicYear,
@@ -225,8 +240,8 @@ export const searchClasses = createAsyncThunk(
       const params = new URLSearchParams();
       if (filters.search) params.append("search", filters.search);
       if (filters.grade) params.append("grade", filters.grade);
-      if (filters.homeroomTeacherd)
-        params.append("homeroomTeacherd", filters.homeroomTeacherd);
+      if (filters.homeroomTeacherId)
+        params.append("homeroomTeacherId", filters.homeroomTeacherId);
       if (filters.academicYear)
         params.append("academicYear", filters.academicYear);
 
@@ -246,6 +261,7 @@ export const searchClasses = createAsyncThunk(
           className: element.className,
           grade: element.grade,
           homeroomTeacherd: element.homeroomTeacherId,
+          homeroomTeacherId: element.homeroomTeacherId,
           createdAt: element.createdAt,
           updatedAt: element.updatedAt,
           academicYear: element.academicYear,
