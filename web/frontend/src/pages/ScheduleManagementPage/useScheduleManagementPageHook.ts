@@ -338,34 +338,49 @@ function useScheduleManagementPageHook() {
   ];
 
   function combineDateAndTime(dateString: string, timeString: string): Date {
+    if (!dateString || !timeString) {
+      console.error("Invalid dateString or timeString:", { dateString, timeString });
+      return new Date(); // Trả về ngày hiện tại nếu dữ liệu không hợp lệ
+    }
+  
     const localDate = new Date(dateString);
     const [hours, minutes] = timeString.split(":").map(Number);
-
+  
+    if (isNaN(hours) || isNaN(minutes)) {
+      console.error("Invalid time format:", timeString);
+      return new Date(); // Trả về ngày hiện tại nếu định dạng thời gian không hợp lệ
+    }
+  
     localDate.setHours(hours);
     localDate.setMinutes(minutes);
     localDate.setSeconds(0);
     localDate.setMilliseconds(0);
-
+  
     return new Date(localDate);
   }
 
   useEffect(() => {
     if (schedules.length) {
-      const mappedEvents: ScheduleEvent[] = schedules.map((item: Schedule) => ({
-        id: Number(item.scheduleId),
-        title: item.topic || `${item.subjectName} - slot ${item.SlotID}`,
-        start: combineDateAndTime(item.sessionDate, item.startTime),
-        end: combineDateAndTime(item.sessionDate, item.endTime),
-        subjectName: item.subjectName || "",
-        subject: item.subjectName || "",
-        teacher: item.teacherUserId || "",
-        classroomNumber: item.classroomNumber,
-        classroomId: item.classroomId,
-        subjectId: item.subjectId,
-        academicYear: item.academicYear,
-        classId: item.classId.toString(),
-        className: item.className,
-      }));
+      const mappedEvents: ScheduleEvent[] = schedules.map((item: Schedule) => {
+        const start = combineDateAndTime(item.sessionDate, item.startTime || "00:00");
+        const end = combineDateAndTime(item.sessionDate, item.endTime || "00:00");
+  
+        return {
+          id: Number(item.scheduleId),
+          title: item.topic || `${item.subjectName} - slot ${item.SlotID}`,
+          start,
+          end,
+          subjectName: item.subjectName || "",
+          subject: item.subjectName || "",
+          teacher: item.teacherUserId || "",
+          classroomNumber: item.classroomNumber,
+          classroomId: item.classroomId,
+          subjectId: item.subjectId,
+          academicYear: item.academicYear,
+          classId: item.classId.toString(),
+          className: item.className,
+        };
+      });
       setEvents(mappedEvents);
     }
   }, [schedules]);
