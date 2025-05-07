@@ -20,7 +20,7 @@ export const calendarComponents: Components<ScheduleEvent, object> = {
     const { event } = props;
     return (
       <div className="custom-event">
-        <div className="event-title">{event.subject}</div>
+        <div className="event-title">{event.subject} - {event.className}</div>
         <div className="event-details">
           <div>Giáo viên: {event.teacher}</div>
           <div>Phòng: {event.classroomNumber}</div>
