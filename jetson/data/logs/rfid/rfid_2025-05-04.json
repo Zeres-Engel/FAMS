@@ -1,0 +1,36 @@
+[
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-04 16:31:58",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-04 16:31:59",
+    "RFID_ID": "0005563074",
+    "face_name": "thanhnpst1",
+    "is_match": true,
+    "face_score": 0.5264357328414917,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-04 19:29:14",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-04 19:29:16",
+    "RFID_ID": "0005563074",
+    "face_name": "thanhnpst1",
+    "is_match": true,
+    "face_score": 0.4580516815185547,
+    "is_live_face": true,
+    "deviceId": 1
+  }
+]

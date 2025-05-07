@@ -1,0 +1,19 @@
+[
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-06 21:20:54",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-06 21:20:56",
+    "RFID_ID": "0005563074",
+    "face_name": "thanhnpst1",
+    "is_match": true,
+    "face_score": 0.5006206035614014,
+    "is_live_face": true,
+    "deviceId": 1
+  }
+]

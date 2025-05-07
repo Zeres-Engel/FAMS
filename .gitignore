@@ -3,3 +3,5 @@ jetson/assets/weights/retinaface.onnx
 *.pyc
 /web/backend/Python-services/models
 web/backend/NodeJS-services/public/avatars/thanhnpst1-1745245666699-811398132_processed.jpg
+AI lab/data/video/Xôn xao clip ghép đôi hai em nhỏ ở phố đi bộ khiến dư luận bất bình.mp4
+*.mp4
