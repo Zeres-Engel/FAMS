@@ -245,11 +245,38 @@ const ScheduleManagementPage: React.FC = () => {
   };
 
   const handleViewAttendance = (scheduleId: number) => {
-    // Gọi API để lấy dữ liệu điểm danh
-    attendanceHook.actions.fetchAttendanceData(scheduleId);
-    // Chuyển chế độ sang màn hình điểm danh
-    attendanceHook.actions.setSelectedScheduleId(scheduleId);
-    attendanceHook.actions.setViewMode('attendance');
+    // Log thông tin về lịch học trước khi gọi API điểm danh
+    console.log('Selected schedule ID for attendance:', scheduleId);
+    console.log('Current event data:', selectedEvent);
+    
+    // Lấy dữ liệu từ API schedule để có thêm thông tin
+    fetch(`http://fams.io.vn/api-nodejs/schedules/${scheduleId}`)
+      .then(response => response.json())
+      .then(scheduleData => {
+        if (scheduleData.success && scheduleData.data) {
+          console.log('Schedule details from API:', scheduleData.data);
+          
+          // Cập nhật eventShow với dữ liệu từ API
+          if (selectedEvent) {
+            const updatedEvent = {
+              ...selectedEvent,
+              className: scheduleData.data.className || selectedEvent.className,
+              classId: scheduleData.data.classId || selectedEvent.classId
+            };
+            
+            console.log('Updated event with className:', updatedEvent);
+            handler.setEventShow(updatedEvent);
+          }
+        }
+        
+        // Gọi API điểm danh sau khi đã cập nhật thông tin
+        attendanceHook.actions.fetchAttendanceData(scheduleId);
+      })
+      .catch(error => {
+        console.error('Error fetching schedule details:', error);
+        // Vẫn gọi API điểm danh ngay cả khi có lỗi
+        attendanceHook.actions.fetchAttendanceData(scheduleId);
+      });
   };
 
   // Handler cho việc xóa event
@@ -622,13 +649,21 @@ const ScheduleManagementPage: React.FC = () => {
             <AttendanceView 
               scheduleId={attendanceState.selectedScheduleId}
               subjectName={state.eventShow?.subject || ""}
-              className={state.eventShow?.classId || ""}
+              className={state.eventShow?.className || state.eventShow?.classId || ""}
               teacher={state.eventShow?.teacher || ""}
               date={state.eventShow?.start || new Date()}
               onBack={attendanceActions.handleBackToCalendar}
               attendanceData={attendanceState.attendanceData}
               loading={attendanceState.loading}
               error={attendanceState.error}
+              setAttendanceData={(data) => {
+                // Handle setting attendance data through the hook actions if needed
+                console.log("AttendanceView is updating attendance data", data.length);
+              }}
+              onAttendanceUpdate={(data) => {
+                console.log("AttendanceView triggered attendance update", data.length);
+              }}
+              fetchAttendanceData={attendanceActions.fetchAttendanceData}
             />
           </Paper>
         )}

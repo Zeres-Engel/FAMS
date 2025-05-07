@@ -52,6 +52,7 @@ export interface AttendanceViewProps {
   error?: string | null;
   setAttendanceData?: React.Dispatch<React.SetStateAction<AttendanceData[]>>;
   onAttendanceUpdate?: (updatedAttendance: AttendanceData[]) => void;
+  fetchAttendanceData?: (scheduleId: number) => Promise<void>;
 }
 
 const AttendanceView: React.FC<AttendanceViewProps> = ({
@@ -65,7 +66,8 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
   loading = false,
   error = null,
   setAttendanceData,
-  onAttendanceUpdate
+  onAttendanceUpdate,
+  fetchAttendanceData
 }) => {
   const [tabValue, setTabValue] = useState(0);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -75,49 +77,74 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showFaceDialog, setShowFaceDialog] = useState(false);
   const [selectedFaceImage, setSelectedFaceImage] = useState<string | null>(null);
-  const [isSubmittingBatch, setIsSubmittingBatch] = useState(false);
-  const [selectedStudents, setSelectedStudents] = useState<number[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
-  const [webcamOpen, setWebcamOpen] = useState(false);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const webcamRef = useRef<any>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
-  // Add refreshAttendanceData function
+  // Updated refresh function to use the hook's fetchAttendanceData
   const refreshAttendanceData = async () => {
     if (!scheduleId) return;
     
     try {
       // Show loading state
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-      };
+      setIsRefreshing(true);
       
-      // Only add token if it exists
-      const token = localStorage.getItem('token');
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      const response = await fetch(`http://fams.io.vn/api-nodejs/attendance/schedule/${scheduleId}`, {
-        headers
-      });
-      
-      const data = await response.json();
-      
-      if (data.success && data.data) {
-        // Update local state directly with fresh data from API
+      if (fetchAttendanceData) {
+        // Use the same function that initially loaded the attendance data
+        console.log(`Using hook's fetchAttendanceData for schedule ${scheduleId}...`);
+        await fetchAttendanceData(scheduleId);
+        console.log("Attendance data refreshed successfully via hook function");
+      } else {
+        // Fallback to the old implementation if fetchAttendanceData is not provided
+        console.log("fetchAttendanceData not provided, using fallback implementation");
+        
+        // Show loading state if setAttendanceData is available
         if (typeof setAttendanceData === 'function') {
-          setAttendanceData(data.data);
+          // Create a temporary loading state by marking all records as "loading"
+          const loadingData = attendanceData.map(item => ({
+            ...item,
+            isRefreshing: true
+          }));
+          setAttendanceData(loadingData as any);
         }
         
-        if (typeof onAttendanceUpdate === 'function') {
-          onAttendanceUpdate(data.data);
+        // Prepare headers
+        const headers: Record<string, string> = {
+          'Content-Type': 'application/json'
+        };
+        
+        // Only add token if it exists
+        const token = localStorage.getItem('token');
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
         }
         
-        console.log("Attendance data refreshed successfully");
+        console.log(`Fetching fresh attendance data for schedule ${scheduleId}...`);
+        const response = await fetch(`http://fams.io.vn/api-nodejs/attendance/schedule/${scheduleId}`, {
+          headers
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          console.log("Fresh attendance data received:", data.data.length, "records");
+          
+          // Update local state directly with fresh data from API
+          if (typeof setAttendanceData === 'function') {
+            setAttendanceData(data.data);
+          }
+          
+          if (typeof onAttendanceUpdate === 'function') {
+            onAttendanceUpdate(data.data);
+          }
+          
+          console.log("Attendance data refreshed successfully");
+        } else {
+          console.error("API returned success=false or no data:", data);
+        }
       }
     } catch (error) {
       console.error("Error refreshing attendance data:", error);
+    } finally {
+      setIsRefreshing(false);
     }
   };
   
@@ -169,6 +196,28 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
         headers['Authorization'] = `Bearer ${token}`;
       }
       
+      // Immediately update the UI for better responsiveness
+      const updatedAttendanceData = attendanceData.map(item => 
+        item.attendanceId === currentAttendance?.attendanceId
+          ? {
+              ...item,
+              status: typedStatus,
+              note: editNote,
+              notes: editNote,
+              checkInTime: item.checkIn ? new Date(item.checkIn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : item.checkInTime
+            }
+          : item
+      ) as AttendanceData[];
+      
+      // Update UI immediately
+      if (typeof setAttendanceData === 'function') {
+        setAttendanceData(updatedAttendanceData);
+      }
+      
+      if (typeof onAttendanceUpdate === 'function') {
+        onAttendanceUpdate(updatedAttendanceData);
+      }
+      
       // Gọi API để cập nhật trạng thái điểm danh
       const response = await fetch(`http://fams.io.vn/api-nodejs/attendance/check-in`, {
         method: 'PUT',
@@ -184,41 +233,16 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
       const data = await response.json();
       
       if (data.success) {
-        // Cập nhật dữ liệu local trực tiếp với dữ liệu trả về từ API
-        const updatedAttendanceData = attendanceData.map(item => 
-          item.attendanceId === currentAttendance.attendanceId
-            ? {
-                ...item,
-                ...data.data, // Sử dụng dữ liệu từ server
-                status: typedStatus,
-                note: editNote,
-                notes: editNote, // Cập nhật cả trường notes để đảm bảo nhất quán
-                checkIn: data.data.checkIn || item.checkIn,
-                checkInTime: data.data.checkIn ? new Date(data.data.checkIn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : item.checkInTime
-              }
-            : item
-        ) as AttendanceData[];
-        
-        // Cập nhật state thông qua các callback có sẵn
-        if (typeof setAttendanceData === 'function') {
-          setAttendanceData(updatedAttendanceData);
-        }
-        
-        // Hoặc sử dụng callback riêng nếu có
-        if (typeof onAttendanceUpdate === 'function') {
-          onAttendanceUpdate(updatedAttendanceData);
-        }
-        
-        console.log("Attendance updated successfully:", data);
-        
-        // Hiển thị thông báo thành công
-        alert("Attendance updated successfully");
-        
         // Đóng dialog
         setEditDialogOpen(false);
         setCurrentAttendance(null);
+        console.log("Attendance updated successfully:", data);
         
-        // Không cần gọi refreshAttendanceData vì đã cập nhật trực tiếp
+        // Refresh data from API immediately to get the latest data
+        setTimeout(() => {
+          console.log("Refreshing attendance data from API after successful update...");
+          refreshAttendanceData();
+        }, 300); // Small delay to ensure server has processed the update
       } else {
         throw new Error(data.message || "Failed to update attendance");
       }
@@ -244,11 +268,18 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
   };
 
   const getStudentsList = () => {
-    return attendanceData.filter(item => item.userRole === 'student');
+    const students = attendanceData.filter(item => item.userRole === 'student');
+    console.log("Students list:", students);
+    return students;
   };
   
   const getTeachersList = () => {
-    return attendanceData.filter(item => item.userRole === 'teacher');
+    const teachers = attendanceData.filter(item => 
+      item.userRole === 'teacher' || 
+      item.userRole?.toLowerCase() === 'teacher'
+    );
+    console.log("Teachers list:", teachers);
+    return teachers;
   };
 
   const getPresentCount = () => {
@@ -279,293 +310,6 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
     return url;
   };
 
-  // Handle checkbox selection for individual students
-  const handleSelectStudent = (attendanceId: number) => {
-    setSelectedStudents(prev => {
-      if (prev.includes(attendanceId)) {
-        return prev.filter(id => id !== attendanceId);
-      } else {
-        return [...prev, attendanceId];
-      }
-    });
-  };
-
-  // Handle select all checkbox
-  const handleSelectAll = () => {
-    setSelectAll(!selectAll);
-    if (!selectAll) {
-      // Select all student IDs
-      const allStudentIds = getStudentsList().map(student => student.attendanceId);
-      setSelectedStudents(allStudentIds);
-    } else {
-      // Deselect all
-      setSelectedStudents([]);
-    }
-  };
-
-  // Function to mark all students as present
-  const handleMarkAllPresent = async () => {
-    if (window.confirm("Are you sure you want to mark all students as present?")) {
-      await handleBatchUpdateStatus("Present");
-    }
-  };
-
-  // Function to mark all students as absent
-  const handleMarkAllAbsent = async () => {
-    if (window.confirm("Are you sure you want to mark all students as absent?")) {
-      await handleBatchUpdateStatus("Absent");
-    }
-  };
-
-  // Function to mark selected students with specific status
-  const handleMarkSelected = async (status: "Present" | "Absent" | "Late" | "Not Now") => {
-    if (selectedStudents.length === 0) {
-      alert("Please select at least one student");
-      return;
-    }
-    
-    if (window.confirm(`Are you sure you want to mark ${selectedStudents.length} selected students as ${status}?`)) {
-      await handleBatchUpdateStatus(status, selectedStudents);
-    }
-  };
-
-  // Batch update attendance status
-  const handleBatchUpdateStatus = async (status: "Present" | "Absent" | "Late" | "Not Now", studentIds?: number[]) => {
-    setIsSubmittingBatch(true);
-    
-    try {
-      // Get students to update (either selected or all)
-      const studentsToUpdate = studentIds 
-        ? getStudentsList().filter(student => studentIds.includes(student.attendanceId)) 
-        : getStudentsList();
-      
-      if (studentsToUpdate.length === 0) {
-        alert("No students to update");
-        setIsSubmittingBatch(false);
-        return;
-      }
-      
-      // Prepare updates array
-      const attendanceUpdates = studentsToUpdate.map(student => ({
-        attendanceId: student.attendanceId,
-        userId: student.userId,
-        scheduleId: student.scheduleId,
-        status,
-        note: `Batch updated to ${status} on ${new Date().toLocaleString()}`,
-        checkIn: status === 'Present' || status === 'Late' ? new Date().toISOString() : null
-      }));
-      
-      // Prepare headers
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-      };
-      
-      // Only add token if it exists
-      const token = localStorage.getItem('token');
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      // Call batch update API
-      const response = await fetch(`http://fams.io.vn/api-nodejs/attendance/batch-update`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ attendanceUpdates })
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        // Create new array for updated attendance data
-        const newAttendanceData = [...attendanceData];
-        
-        // Update each item that was changed using the data returned from the API
-        if (data.data && data.data.updated && Array.isArray(data.data.updated)) {
-          data.data.updated.forEach((updatedItem: {
-            attendanceId?: number;
-            userId?: string;
-            scheduleId?: number;
-            status?: "Present" | "Absent" | "Late" | "Not Now";
-            note?: string;
-            checkIn?: string | null;
-          }) => {
-            const index = newAttendanceData.findIndex(item => 
-              item.attendanceId === updatedItem.attendanceId || 
-              (item.userId === updatedItem.userId && item.scheduleId === updatedItem.scheduleId)
-            );
-            
-            if (index !== -1) {
-              newAttendanceData[index] = {
-                ...newAttendanceData[index],
-                ...updatedItem,
-                status: updatedItem.status || status,
-                note: updatedItem.note || `Batch updated to ${status}`,
-                notes: updatedItem.note || `Batch updated to ${status}`,
-                checkIn: updatedItem.checkIn || (status === 'Present' || status === 'Late' ? new Date().toISOString() : null),
-                checkInTime: updatedItem.checkIn ? new Date(updatedItem.checkIn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : null
-              };
-            }
-          });
-        } else {
-          // Fallback to original update method if no updated data returned
-          attendanceUpdates.forEach(update => {
-            const index = newAttendanceData.findIndex(item => item.attendanceId === update.attendanceId);
-            if (index !== -1) {
-              newAttendanceData[index] = {
-                ...newAttendanceData[index],
-                status: update.status,
-                note: update.note,
-                notes: update.note, // Update both note fields
-                checkIn: update.checkIn,
-                checkInTime: update.checkIn ? new Date(update.checkIn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : null
-              };
-            }
-          });
-        }
-        
-        // Cập nhật state thông qua các callback có sẵn
-        if (typeof setAttendanceData === 'function') {
-          setAttendanceData(newAttendanceData as AttendanceData[]);
-        }
-        
-        // Hoặc sử dụng callback riêng nếu có
-        if (typeof onAttendanceUpdate === 'function') {
-          onAttendanceUpdate(newAttendanceData as AttendanceData[]);
-        }
-        
-        // Show success message
-        alert(`Successfully updated ${data.data?.updated?.length || attendanceUpdates.length} attendance records`);
-        
-        // Clear selections
-        setSelectedStudents([]);
-        setSelectAll(false);
-        
-        // Không cần gọi refreshAttendanceData vì đã cập nhật trực tiếp
-      } else {
-        throw new Error(data.message || "Failed to update attendance");
-      }
-    } catch (error) {
-      console.error("Error updating attendance:", error);
-      alert("Failed to update attendance. Please try again.");
-    } finally {
-      setIsSubmittingBatch(false);
-    }
-  };
-
-  // Toggle webcam dialog
-  const handleToggleWebcam = () => {
-    setWebcamOpen(!webcamOpen);
-    setCapturedImage(null);
-  };
-
-  // Capture image from webcam
-  const handleCaptureImage = () => {
-    if (webcamRef.current) {
-      const imageSrc = webcamRef.current.getScreenshot();
-      setCapturedImage(imageSrc);
-    }
-  };
-
-  // Use captured image for check-in
-  const handleUseImage = () => {
-    if (!capturedImage || !currentAttendance) return;
-    
-    // Update dialog UI with captured image
-    setWebcamOpen(false);
-    
-    // Here we'll implement the API call to update the check-in with face image
-    handleSaveAttendanceWithFace(capturedImage);
-  };
-
-  // Cancel webcam capture
-  const handleCancelCapture = () => {
-    setCapturedImage(null);
-    setWebcamOpen(false);
-  };
-
-  // Save attendance with face image
-  const handleSaveAttendanceWithFace = async (faceImage: string) => {
-    if (!currentAttendance) return;
-    
-    setIsSubmitting(true);
-    
-    try {
-      // Ensure status is properly typed
-      const typedStatus = editStatus as "Present" | "Absent" | "Late" | "Not Now";
-      
-      // Prepare headers
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-      };
-      
-      // Only add token if it exists
-      const token = localStorage.getItem('token');
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      
-      // Gọi API để cập nhật trạng thái điểm danh với ảnh khuôn mặt
-      const response = await fetch(`http://fams.io.vn/api-nodejs/attendance/check-in`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify({
-          userId: currentAttendance.userId,
-          scheduleId: currentAttendance.scheduleId,
-          status: typedStatus,
-          note: editNote,
-          checkInFace: faceImage
-        })
-      });
-
-      const data = await response.json();
-      
-      if (data.success) {
-        // Cập nhật dữ liệu local trực tiếp từ response API
-        const updatedAttendanceData = attendanceData.map(item => 
-          item.attendanceId === currentAttendance.attendanceId
-            ? {
-                ...item,
-                ...data.data, // Sử dụng dữ liệu từ server
-                status: typedStatus,
-                note: editNote,
-                notes: editNote,
-                checkInFace: faceImage,
-                checkIn: data.data.checkIn || item.checkIn,
-                checkInTime: data.data.checkIn ? new Date(data.data.checkIn).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) : item.checkInTime
-              }
-            : item
-        ) as AttendanceData[];
-        
-        // Cập nhật state
-        if (typeof setAttendanceData === 'function') {
-          setAttendanceData(updatedAttendanceData);
-        }
-        
-        if (typeof onAttendanceUpdate === 'function') {
-          onAttendanceUpdate(updatedAttendanceData);
-        }
-        
-        console.log("Attendance with face updated successfully:", data);
-        
-        // Hiển thị thông báo thành công
-        alert("Attendance with face image updated successfully");
-        
-        // Đóng dialog
-        setEditDialogOpen(false);
-        setCurrentAttendance(null);
-        
-        // Không cần gọi refreshAttendanceData vì đã cập nhật trực tiếp
-      } else {
-        throw new Error(data.message || "Failed to update attendance with face");
-      }
-    } catch (error) {
-      console.error("Error updating attendance with face:", error);
-      alert("Failed to update attendance with face. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   // Render trạng thái loading
   if (loading) {
     return (
@@ -594,19 +338,48 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+        <Box sx={{ maxWidth: '80%' }}>
           <Typography variant="h5" component="h2" gutterBottom>
             Attendance Management
           </Typography>
-          <Typography variant="subtitle1" gutterBottom>
-            Subject: {subjectName} | Class: {className}
-          </Typography>
-          <Typography variant="subtitle2" gutterBottom>
-            Teacher: {teacher} | Date: {moment(date).format('DD/MM/YYYY')}
-            {attendanceData.length > 0 && attendanceData[0].slotNumber && (
-              <> | Slot: {attendanceData[0].slotNumber} ({attendanceData[0].startTime} - {attendanceData[0].endTime})</>
-            )}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mb: 1 }}>
+            <Typography variant="subtitle1">
+              <strong>Subject:</strong> {attendanceData.length > 0 && attendanceData[0].subjectName ? attendanceData[0].subjectName : subjectName}
+            </Typography>
+            <Typography variant="subtitle1">
+              <strong>Class:</strong> {attendanceData.length > 0 && attendanceData[0].className ? attendanceData[0].className : className}
+            </Typography>
+          </Box>
+          
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            <Typography variant="subtitle2">
+              <strong>Teacher:</strong> {attendanceData.length > 0 && attendanceData[0].teacherName ? attendanceData[0].teacherName : teacher} | 
+              <strong> Date:</strong> {moment(date).format('DD/MM/YYYY')}
+              {attendanceData.length > 0 && (
+                <>
+                  {attendanceData[0].slotNumber && (
+                    <> | <strong>Slot:</strong> {attendanceData[0].slotNumber} ({attendanceData[0].startTime} - {attendanceData[0].endTime})</>
+                  )}
+                  {attendanceData[0].topic && (
+                    <> | <strong>Topic:</strong> {attendanceData[0].topic}</>
+                  )}
+                  {attendanceData[0].dayOfWeek && (
+                    <> | <strong>Day:</strong> {attendanceData[0].dayOfWeek}</>
+                  )}
+                  {attendanceData[0].classroomName && (
+                    <> | <strong>Room:</strong> {attendanceData[0].classroomName}</>
+                  )}
+                </>
+              )}
+            </Typography>
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Present: <strong style={{ color: '#4caf50' }}>{getPresentCount()}</strong> | 
+            Late: <strong style={{ color: '#ff9800' }}>{getLateCount()}</strong> | 
+            Absent: <strong style={{ color: '#f44336' }}>{getAbsentCount()}</strong> | 
+            Not Marked: <strong>{getNotNowCount()}</strong> | 
+            Total Students: <strong>{getStudentsList().length}</strong>
           </Typography>
         </Box>
         <Button 
@@ -631,42 +404,8 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
         <>
           {/* Batch action buttons */}
           <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-            <Button 
-              variant="contained" 
-              color="success" 
-              onClick={handleMarkAllPresent}
-              disabled={isSubmittingBatch || getStudentsList().length === 0}
-            >
-              {isSubmittingBatch ? <CircularProgress size={24} /> : 'Mark All Present'}
-            </Button>
-            
-            <Button 
-              variant="contained" 
-              color="error" 
-              onClick={handleMarkAllAbsent}
-              disabled={isSubmittingBatch || getStudentsList().length === 0}
-            >
-              {isSubmittingBatch ? <CircularProgress size={24} /> : 'Mark All Absent'}
-            </Button>
-            
-            <FormControl sx={{ minWidth: 150 }}>
-              <InputLabel id="mark-selected-label">With Selected</InputLabel>
-              <Select
-                labelId="mark-selected-label"
-                label="With Selected"
-                value=""
-                disabled={isSubmittingBatch || selectedStudents.length === 0}
-                onChange={(e) => handleMarkSelected(e.target.value as "Present" | "Absent" | "Late" | "Not Now")}
-              >
-                <MenuItem value="Present">Mark Present</MenuItem>
-                <MenuItem value="Late">Mark Late</MenuItem>
-                <MenuItem value="Absent">Mark Absent</MenuItem>
-                <MenuItem value="Not Now">Mark Not Now</MenuItem>
-              </Select>
-            </FormControl>
-            
             <Typography variant="body2" color="text.secondary">
-              {selectedStudents.length} of {getStudentsList().length} students selected
+              Total students: <strong>{getStudentsList().length}</strong>
             </Typography>
           </Box>
           
@@ -674,13 +413,6 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell padding="checkbox">
-                    <Checkbox
-                      checked={selectAll}
-                      onChange={handleSelectAll}
-                      disabled={isSubmittingBatch}
-                    />
-                  </TableCell>
                   <TableCell>User Avatar</TableCell>
                   <TableCell>Check-in Face</TableCell>
                   <TableCell>User ID</TableCell>
@@ -695,13 +427,6 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
                 {getStudentsList().length > 0 ? (
                   getStudentsList().map((student) => (
                     <TableRow key={student.attendanceId}>
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={selectedStudents.includes(student.attendanceId)}
-                          onChange={() => handleSelectStudent(student.attendanceId)}
-                          disabled={isSubmittingBatch}
-                        />
-                      </TableCell>
                       <TableCell>
                         <Tooltip title="View user avatar">
                           <Avatar 
@@ -784,7 +509,7 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {getTeachersList().length > 0 ? (
+              {attendanceData.length > 0 ? (
                 getTeachersList().map((teacher) => (
                   <TableRow key={teacher.attendanceId}>
                     <TableCell>
@@ -918,12 +643,12 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
                 </Grid>
                 <Grid sx={{ gridColumn: '2 / 3' }}>
                   <Typography variant="subtitle2" gutterBottom>Check-in Face Image</Typography>
-                  {capturedImage || isValidImageUrl(currentAttendance.checkInFace) ? (
+                  {isValidImageUrl(currentAttendance.checkInFace) ? (
                     <Avatar 
-                      src={capturedImage || getImageUrl(currentAttendance.checkInFace, DEFAULT_FACE)} 
+                      src={getImageUrl(currentAttendance.checkInFace, DEFAULT_FACE)} 
                       alt="Check-in Face" 
                       sx={{ width: 80, height: 80, cursor: 'pointer' }}
-                      onClick={() => handleViewFace(capturedImage || currentAttendance.checkInFace as string)}
+                      onClick={() => handleViewFace(currentAttendance.checkInFace as string)}
                     />
                   ) : (
                     <Avatar 
@@ -933,14 +658,6 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
                       onClick={() => handleViewFace(DEFAULT_FACE)}
                     />
                   )}
-                  <IconButton 
-                    color="primary"
-                    onClick={handleToggleWebcam}
-                    size="small"
-                    sx={{ mt: 1 }}
-                  >
-                    <span className="material-icons">photo_camera</span>
-                  </IconButton>
                 </Grid>
               </Grid>
               
@@ -1021,77 +738,6 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseFaceDialog}>Close</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Webcam Dialog */}
-      <Dialog open={webcamOpen} onClose={handleCancelCapture} maxWidth="sm" fullWidth>
-        <DialogTitle>Capture Face Image</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2 }}>
-            {!capturedImage ? (
-              <>
-                {/* Show webcam component when available */}
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Please align your face in the center of the camera
-                </Typography>
-                <Box sx={{ width: '100%', height: 300, bgcolor: 'grey.300', display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 2 }}>
-                  {/* This is just a placeholder for the Webcam component */}
-                  {/* In a real implementation, you would import and use a webcam component like react-webcam */}
-                  <Typography>Camera preview would appear here</Typography>
-                  {/* Example of how to use react-webcam:
-                  <Webcam
-                    audio={false}
-                    ref={webcamRef}
-                    screenshotFormat="image/jpeg"
-                    width="100%"
-                    height={300}
-                    videoConstraints={{ facingMode: "user" }}
-                  />
-                  */}
-                </Box>
-                <Button 
-                  variant="contained" 
-                  color="primary" 
-                  onClick={handleCaptureImage}
-                >
-                  Capture Photo
-                </Button>
-              </>
-            ) : (
-              <>
-                {/* Show captured image */}
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Review your photo
-                </Typography>
-                <Box sx={{ width: '100%', mb: 2 }}>
-                  <img 
-                    src={capturedImage} 
-                    alt="Captured face" 
-                    style={{ width: '100%', maxHeight: '300px', objectFit: 'contain' }} 
-                  />
-                </Box>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <Button 
-                    variant="outlined" 
-                    onClick={() => setCapturedImage(null)}
-                  >
-                    Retake Photo
-                  </Button>
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
-                    onClick={handleUseImage}
-                  >
-                    Use This Photo
-                  </Button>
-                </Box>
-              </>
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelCapture}>Cancel</Button>
         </DialogActions>
       </Dialog>
     </Box>

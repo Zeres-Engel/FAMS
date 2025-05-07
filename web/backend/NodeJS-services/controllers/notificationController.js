@@ -6,7 +6,7 @@ const UserAccount = require('../database/models/UserAccount');
 // Lấy tất cả thông báo của người dùng hiện tại
 exports.getMyNotifications = async (req, res) => {
   try {
-    const { page = 1, limit = 10, unreadOnly = false } = req.query;
+    const { page = 1, limit = 10, unreadOnly = false, archived = false, category = 'all' } = req.query;
     
     // Set default userId for testing when auth is disabled
     const userId = req.user?.userId || 'admin';
@@ -15,6 +15,20 @@ exports.getMyNotifications = async (req, res) => {
       ReceiverID: userId, 
       IsActive: true 
     };
+    
+    // Lọc theo danh mục
+    if (category === 'unread') {
+      query.ReadStatus = false;
+    } else if (category === 'read') {
+      query.ReadStatus = true;
+    } else if (category === 'archive') {
+      query.Archived = true;
+    } else if (category === 'all') {
+      // Nếu là all và không yêu cầu xem archived, loại bỏ các thông báo đã lưu trữ
+      if (archived === 'false' || !archived) {
+        query.Archived = false;
+      }
+    }
     
     // Thêm điều kiện chỉ lấy những thông báo chưa đọc nếu unreadOnly = true
     if (unreadOnly === 'true') {
@@ -56,7 +70,12 @@ exports.getMyNotifications = async (req, res) => {
       }
     });
   } catch (error) {
-    errorService.handleError(error, req, res);
+    console.error("Error in getMyNotifications:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi lấy thông báo',
+      code: 'SERVER_ERROR'
+    });
   }
 };
 
@@ -94,7 +113,12 @@ exports.getNotificationById = async (req, res) => {
       }
     });
   } catch (error) {
-    errorService.handleError(error, req, res);
+    console.error("Error in getNotificationById:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi lấy chi tiết thông báo',
+      code: 'SERVER_ERROR'
+    });
   }
 };
 
@@ -149,7 +173,12 @@ exports.createNotification = async (req, res) => {
       data: newNotification
     });
   } catch (error) {
-    errorService.handleError(error, req, res);
+    console.error("Error in createNotification:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi tạo thông báo mới',
+      code: 'SERVER_ERROR'
+    });
   }
 };
 
@@ -190,7 +219,12 @@ exports.markAsRead = async (req, res) => {
       message: 'Đã đánh dấu thông báo là đã đọc'
     });
   } catch (error) {
-    errorService.handleError(error, req, res);
+    console.error("Error in markAsRead:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi đánh dấu thông báo đã đọc',
+      code: 'SERVER_ERROR'
+    });
   }
 };
 
@@ -219,7 +253,12 @@ exports.markAllAsRead = async (req, res) => {
       message: `Đã đánh dấu ${result.modifiedCount} thông báo là đã đọc`
     });
   } catch (error) {
-    errorService.handleError(error, req, res);
+    console.error("Error in markAllAsRead:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi đánh dấu tất cả thông báo đã đọc',
+      code: 'SERVER_ERROR'
+    });
   }
 };
 
@@ -260,7 +299,12 @@ exports.deleteNotification = async (req, res) => {
       message: 'Đã xóa thông báo thành công'
     });
   } catch (error) {
-    errorService.handleError(error, req, res);
+    console.error("Error in deleteNotification:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi xóa thông báo',
+      code: 'SERVER_ERROR'
+    });
   }
 };
 
@@ -280,7 +324,11 @@ async function createNotificationBatch(receiverIds, senderId, message, additiona
     });
     
     if (!receivers.length) {
-      throw new Error('Không tìm thấy người nhận');
+      return { 
+        success: false, 
+        message: 'Không tìm thấy người nhận',
+        code: 'RECEIVER_NOT_FOUND'
+      };
     }
     
     const validReceiverIds = receivers.map(r => r.userId);
@@ -316,7 +364,11 @@ async function createNotificationBatch(receiverIds, senderId, message, additiona
     };
   } catch (error) {
     console.error('Lỗi khi tạo thông báo hàng loạt:', error);
-    throw error;
+    return {
+      success: false,
+      message: error.message || 'Lỗi khi tạo thông báo hàng loạt',
+      code: 'BATCH_NOTIFICATION_ERROR'
+    };
   }
 }
 
@@ -327,7 +379,7 @@ exports.createNotificationBatch = createNotificationBatch;
 exports.sendNotificationToAllStudents = async (req, res) => {
   try {
     const { message, title } = req.body;
-    const senderId = req.user.userId;
+    const senderId = req.user?.userId || 'admin';
     
     if (!message) {
       return res.status(400).json({
@@ -344,9 +396,28 @@ exports.sendNotificationToAllStudents = async (req, res) => {
     
     const studentIds = students.map(student => student.UserID);
     
+    if (studentIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'Không có học sinh nào trong hệ thống',
+        data: {
+          recipientCount: 0,
+          recipientType: 'Students'
+        }
+      });
+    }
+    
     const result = await createNotificationBatch(studentIds, senderId, message, { Title: title });
     
-    res.status(201).json({
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: result.message,
+        code: result.code
+      });
+    }
+    
+    return res.status(201).json({
       success: result.success,
       message: result.message,
       data: {
@@ -355,7 +426,12 @@ exports.sendNotificationToAllStudents = async (req, res) => {
       }
     });
   } catch (error) {
-    errorService.handleError(error, req, res);
+    console.error("Error in sendNotificationToAllStudents:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi gửi thông báo cho tất cả học sinh',
+      code: 'SERVER_ERROR'
+    });
   }
 };
 
@@ -363,7 +439,7 @@ exports.sendNotificationToAllStudents = async (req, res) => {
 exports.sendNotificationToAllTeachers = async (req, res) => {
   try {
     const { message, title } = req.body;
-    const senderId = req.user.userId;
+    const senderId = req.user?.userId || 'admin';
     
     if (!message) {
       return res.status(400).json({
@@ -380,9 +456,28 @@ exports.sendNotificationToAllTeachers = async (req, res) => {
     
     const teacherIds = teachers.map(teacher => teacher.UserID);
     
+    if (teacherIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'Không có giáo viên nào trong hệ thống',
+        data: {
+          recipientCount: 0,
+          recipientType: 'Teachers'
+        }
+      });
+    }
+    
     const result = await createNotificationBatch(teacherIds, senderId, message, { Title: title });
     
-    res.status(201).json({
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: result.message,
+        code: result.code
+      });
+    }
+    
+    return res.status(201).json({
       success: result.success,
       message: result.message,
       data: {
@@ -391,7 +486,12 @@ exports.sendNotificationToAllTeachers = async (req, res) => {
       }
     });
   } catch (error) {
-    errorService.handleError(error, req, res);
+    console.error("Error in sendNotificationToAllTeachers:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi gửi thông báo cho tất cả giáo viên',
+      code: 'SERVER_ERROR'
+    });
   }
 };
 
@@ -399,7 +499,7 @@ exports.sendNotificationToAllTeachers = async (req, res) => {
 exports.sendNotificationToAllAdmins = async (req, res) => {
   try {
     const { message, title } = req.body;
-    const senderId = req.user.userId;
+    const senderId = req.user?.userId || 'admin';
     
     if (!message) {
       return res.status(400).json({
@@ -416,9 +516,28 @@ exports.sendNotificationToAllAdmins = async (req, res) => {
     
     const adminIds = admins.map(admin => admin.UserID);
     
+    if (adminIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'Không có admin nào trong hệ thống',
+        data: {
+          recipientCount: 0,
+          recipientType: 'Admins'
+        }
+      });
+    }
+    
     const result = await createNotificationBatch(adminIds, senderId, message, { Title: title });
     
-    res.status(201).json({
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: result.message,
+        code: result.code
+      });
+    }
+    
+    return res.status(201).json({
       success: result.success,
       message: result.message,
       data: {
@@ -427,7 +546,12 @@ exports.sendNotificationToAllAdmins = async (req, res) => {
       }
     });
   } catch (error) {
-    errorService.handleError(error, req, res);
+    console.error("Error in sendNotificationToAllAdmins:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi gửi thông báo cho tất cả quản trị viên',
+      code: 'SERVER_ERROR'
+    });
   }
 };
 
@@ -435,7 +559,7 @@ exports.sendNotificationToAllAdmins = async (req, res) => {
 exports.sendNotificationToAllParents = async (req, res) => {
   try {
     const { message, title } = req.body;
-    const senderId = req.user.userId;
+    const senderId = req.user?.userId || 'admin';
     
     if (!message) {
       return res.status(400).json({
@@ -452,9 +576,28 @@ exports.sendNotificationToAllParents = async (req, res) => {
     
     const parentIds = parents.map(parent => parent.UserID);
     
+    if (parentIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'Không có phụ huynh nào trong hệ thống',
+        data: {
+          recipientCount: 0,
+          recipientType: 'Parents'
+        }
+      });
+    }
+    
     const result = await createNotificationBatch(parentIds, senderId, message, { Title: title });
     
-    res.status(201).json({
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: result.message,
+        code: result.code
+      });
+    }
+    
+    return res.status(201).json({
       success: result.success,
       message: result.message,
       data: {
@@ -463,15 +606,20 @@ exports.sendNotificationToAllParents = async (req, res) => {
       }
     });
   } catch (error) {
-    errorService.handleError(error, req, res);
+    console.error("Error in sendNotificationToAllParents:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi gửi thông báo cho tất cả phụ huynh',
+      code: 'SERVER_ERROR'
+    });
   }
 };
 
-// Gửi thông báo cho một userId cụ thể
+// Gửi thông báo cho một người dùng cụ thể
 exports.sendNotificationToUser = async (req, res) => {
   try {
     const { message, title, userId } = req.body;
-    const senderId = req.user.userId;
+    const senderId = req.user?.userId || 'admin';
     
     if (!message || !userId) {
       return res.status(400).json({
@@ -498,8 +646,16 @@ exports.sendNotificationToUser = async (req, res) => {
     
     const result = await createNotificationBatch([userId], senderId, message, { Title: title });
     
-    res.status(201).json({
-      success: result.success,
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: result.message,
+        code: result.code
+      });
+    }
+    
+    return res.status(201).json({
+      success: true,
       message: 'Đã gửi thông báo thành công',
       data: {
         recipient: userId,
@@ -510,7 +666,12 @@ exports.sendNotificationToUser = async (req, res) => {
       }
     });
   } catch (error) {
-    errorService.handleError(error, req, res);
+    console.error("Error in sendNotificationToUser:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi gửi thông báo cho người dùng',
+      code: 'SERVER_ERROR'
+    });
   }
 };
 
@@ -518,7 +679,7 @@ exports.sendNotificationToUser = async (req, res) => {
 exports.sendNotificationToClassStudents = async (req, res) => {
   try {
     const { message, title, classId } = req.body;
-    const senderId = req.user.userId;
+    const senderId = req.user?.userId || 'admin';
     
     if (!message || !classId) {
       return res.status(400).json({
@@ -565,7 +726,15 @@ exports.sendNotificationToClassStudents = async (req, res) => {
       ClassName: classObj.ClassName 
     });
     
-    res.status(201).json({
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: result.message,
+        code: result.code
+      });
+    }
+    
+    return res.status(201).json({
       success: result.success,
       message: result.message,
       data: {
@@ -575,7 +744,12 @@ exports.sendNotificationToClassStudents = async (req, res) => {
       }
     });
   } catch (error) {
-    errorService.handleError(error, req, res);
+    console.error("Error in sendNotificationToClassStudents:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi gửi thông báo cho học sinh của lớp',
+      code: 'SERVER_ERROR'
+    });
   }
 };
 
@@ -602,7 +776,15 @@ exports.sendNotificationToMultipleUsers = async (req, res) => {
     // Sử dụng hàm createNotificationBatch để gửi thông báo
     const result = await createNotificationBatch(recipients, senderId, message);
     
-    res.status(201).json({
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: result.message,
+        code: result.code
+      });
+    }
+    
+    return res.status(201).json({
       success: true,
       message: `Đã gửi thông báo thành công đến ${result.count} người nhận`,
       data: {
@@ -614,6 +796,122 @@ exports.sendNotificationToMultipleUsers = async (req, res) => {
       }
     });
   } catch (error) {
-    errorService.handleError(error, req, res);
+    console.error("Error in sendNotificationToMultipleUsers:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi gửi thông báo cho nhiều người dùng',
+      code: 'SERVER_ERROR'
+    });
+  }
+};
+
+// Lưu trữ và bỏ lưu trữ thông báo
+exports.toggleArchiveNotification = async (req, res) => {
+  try {
+    const notificationId = parseInt(req.params.id);
+    const { archived } = req.body;
+    
+    // Kiểm tra xem archived có phải là boolean
+    if (typeof archived !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        message: 'Trường archived phải là true hoặc false'
+      });
+    }
+    
+    // Set default userId for testing when auth is disabled
+    const userId = req.user?.userId || 'admin';
+    
+    const notification = await Notification.findOne({
+      NotificationID: notificationId,
+      ReceiverID: userId,
+      IsActive: true
+    });
+    
+    if (!notification) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy thông báo'
+      });
+    }
+    
+    // Cập nhật trạng thái lưu trữ
+    await Notification.updateOne(
+      { NotificationID: notificationId },
+      { 
+        $set: { 
+          Archived: archived,
+          UpdatedAt: new Date()
+        } 
+      }
+    );
+    
+    res.status(200).json({
+      success: true,
+      message: archived ? 'Đã lưu trữ thông báo thành công' : 'Đã bỏ lưu trữ thông báo thành công'
+    });
+  } catch (error) {
+    console.error("Error in toggleArchiveNotification:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi lưu trữ thông báo',
+      code: 'SERVER_ERROR'
+    });
+  }
+};
+
+// Lấy thông báo đã gửi của người dùng hiện tại
+exports.getSentNotifications = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    
+    // Set default userId for testing when auth is disabled
+    const userId = req.user?.userId || 'admin';
+    
+    const query = { 
+      SenderID: userId, 
+      IsActive: true 
+    };
+    
+    // Đếm tổng số thông báo thỏa mãn
+    const total = await Notification.countDocuments(query);
+    
+    // Lấy danh sách thông báo với phân trang
+    const notifications = await Notification
+      .find(query)
+      .sort({ SentDate: -1 }) // Sắp xếp theo thời gian gửi, mới nhất lên đầu
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit));
+    
+    // Lấy thông tin người nhận
+    const receiverIds = [...new Set(notifications.map(notif => notif.ReceiverID))];
+    const receivers = await UserAccount
+      .find({ userId: { $in: receiverIds } })
+      .select('userId FullName avatar');
+    
+    const receiversMap = new Map(receivers.map(receiver => [receiver.userId, receiver]));
+    
+    // Thêm thông tin người nhận vào kết quả
+    const enhancedNotifications = notifications.map(notif => ({
+      ...notif.toObject(),
+      receiver: receiversMap.get(notif.ReceiverID) || null
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalItems: total,
+        totalPages: Math.ceil(total / limit),
+        currentPage: parseInt(page),
+        notifications: enhancedNotifications
+      }
+    });
+  } catch (error) {
+    console.error("Error in getSentNotifications:", error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Lỗi khi lấy thông báo đã gửi',
+      code: 'SERVER_ERROR'
+    });
   }
 }; 

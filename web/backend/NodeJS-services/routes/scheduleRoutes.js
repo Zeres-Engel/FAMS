@@ -556,31 +556,10 @@ router.get('/all', async (req, res) => {
     // Add additional info from related collections
     const enhancedSchedules = await scheduleService.formatScheduleData(schedules, 'list');
     
-    // Get class details for each schedule
-    const uniqueClassIds = [...new Set(enhancedSchedules.map(schedule => schedule.classId).filter(Boolean))];
-    const classesData = uniqueClassIds.length > 0 ?
-      await mongoose.connection.db.collection('Class')
-        .find({ classId: { $in: uniqueClassIds } })
-        .toArray() : 
-      [];
-      
-    // Create a map of class data for quick lookup
-    const classMap = new Map(classesData.map(cls => [cls.classId, cls]));
-    
-    // Enhance each schedule with class info
-    const finalSchedules = enhancedSchedules.map(schedule => {
-      const classInfo = classMap.get(schedule.classId);
-      if (classInfo) {
-        schedule.className = classInfo.className;
-        schedule.academicYear = classInfo.academicYear;
-      }
-      return schedule;
-    });
-    
     res.json({
       success: true,
-      count: finalSchedules.length,
-      data: finalSchedules,
+      count: enhancedSchedules.length,
+      data: enhancedSchedules,
       query: query
     });
   } catch (error) {

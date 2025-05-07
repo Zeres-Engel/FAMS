@@ -19,6 +19,10 @@ interface ScheduleEvent {
     customStartTime?: string;
     customEndTime?: string;
     className?: string;
+    grade?: number;
+    dayOfWeek?: string;
+    startTime?: string;
+    endTime?: string;
 }
 export type{
     ScheduleEvent

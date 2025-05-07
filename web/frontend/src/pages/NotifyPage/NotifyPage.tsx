@@ -370,68 +370,146 @@ function NotifyPage(): React.JSX.Element {
   };
 
   const handleSendMessage = () => {
-    // Determine receiver based on send mode
-    let receiver = '';
+    if (!messageRef.current?.value) {
+      alert('Please enter a message');
+      return;
+    }
+    
+    // Check for required fields based on send mode
+    if (sendMode === 'user' && !userIds) {
+      alert('Please enter at least one user ID');
+      return;
+    }
+    
+    if (sendMode === 'class' && !selectedClass) {
+      alert('Please select a class');
+      return;
+    }
+    
+    setLoading(true);
+    
+    const message = messageRef.current.value;
+    const subject = subjectRef.current?.value || 'Thông báo mới';
+    
+    // Các API mới tương ứng với các chế độ gửi
+    let sendPromise;
+    
     switch (sendMode) {
       case 'user':
-        receiver = userIds;
+        // Gửi cho danh sách người dùng
+        const userIdList = userIds.split(',').map(id => id.trim()).filter(id => id);
+        
+        if (userIdList.length === 1) {
+          // Nếu chỉ có một người nhận, sử dụng API gửi cho một người dùng
+          sendPromise = handler.sendNotificationToUser(userIdList[0], message, subject);
+        } else {
+          // Nhiều người nhận, sử dụng API gửi cho nhiều người dùng
+          sendPromise = handler.sendNotificationToUsers(userIdList, message, subject);
+        }
         break;
+        
       case 'class':
-        receiver = selectedClass ? `class:${selectedClass.value}` : '';
+        // Gửi cho một lớp cụ thể
+        if (selectedClass) {
+          sendPromise = handler.sendNotificationToClass(parseInt(selectedClass.value), message, subject);
+        } else {
+          alert('Please select a class');
+          setLoading(false);
+          return;
+        }
         break;
+        
       case 'student':
-        receiver = 'students';
+        // Gửi cho tất cả học sinh
+        sendPromise = handler.sendNotificationToAllStudents(message, subject);
         break;
+        
       case 'teacher':
-        receiver = 'teachers';
+        // Gửi cho tất cả giáo viên
+        sendPromise = handler.sendNotificationToAllTeachers(message, subject);
         break;
+        
       case 'all':
+        // Gửi cho tất cả người dùng - sử dụng cả 3 API riêng biệt
+        Promise.all([
+          handler.sendNotificationToAllStudents(message, subject),
+          handler.sendNotificationToAllTeachers(message, subject),
+          handler.sendNotificationToAllParents(message, subject)
+        ])
+        .then(() => {
+          setLoading(false);
+          alert('Notification sent to all users successfully');
+          
+          // Reset form
+          setIsComposing(false);
+          setSelectedNotification(null);
+          setEditingDraft({
+            id: '',
+            receiver: '',
+            subject: '',
+            message: '',
+            sendDate: '',
+            isDraft: true,
+            isNew: false
+          });
+        })
+        .catch(error => {
+          console.error('Error sending notification to all users:', error);
+          setLoading(false);
+          alert('Failed to send notification to all users. Please try again.');
+        });
+        return; // Thoát khỏi hàm vì đã xử lý Promise.all ở trên
+        
       default:
-        receiver = 'all';
-        break;
+        alert('Please select a valid send mode');
+        setLoading(false);
+        return;
     }
     
-    const message = messageRef.current?.value || editingDraft.message;
-    
-    // Only send if essential fields are filled
-    if (!receiver || !message) return;
-    
-    // Create a sent message copy for the sent folder
-    const sentMessage = {
-      id: `sent-${Date.now()}`,
-      receiver,
-      message,
-      sendDate: new Date().toISOString(),
-      readStatus: true,
-      senderInfo: { FullName: 'Me' },
-      isSent: true
-    };
-    
-    setSentMessages([sentMessage, ...sentMessages]);
-    
-    // Send the notification through the API
-    handler.createNotification(receiver, message);
-    
-    // Delete the draft if it was saved
-    if (editingDraft.id && !editingDraft.isNew) {
-      handleDeleteDraft(editingDraft.id);
-    }
-    
-    // Reset state
-    setSelectedNotification(sentMessage);
-    setIsComposing(false);
-    setEditingDraft({
-      id: '',
-      receiver: '',
-      message: '',
-      sendDate: '',
-      isDraft: true,
-      isNew: false
+    // Xử lý kết quả
+    sendPromise?.then(result => {
+      if (result && result.success) {
+        // Thêm thông báo đã gửi vào danh sách (nếu cần)
+        const sentNotification = {
+          id: Date.now().toString(), // Tạm thời sử dụng timestamp làm ID
+          message,
+          subject,
+          receiver: sendMode === 'user' ? userIds : 
+                  sendMode === 'class' ? `Class ${selectedClass?.label}` : 
+                  `All ${sendMode === 'student' ? 'Students' : 
+                        sendMode === 'teacher' ? 'Teachers' : 'Users'}`,
+          sendDate: new Date().toISOString(),
+          isSent: true,
+          isDraft: false
+        };
+        
+        setSentMessages([sentNotification, ...sentMessages]);
+        
+        alert('Notification sent successfully!');
+        
+        // Reset form
+        setIsComposing(false);
+        setSelectedNotification(null);
+        setEditingDraft({
+          id: '',
+          receiver: '',
+          subject: '',
+          message: '',
+          sendDate: '',
+          isDraft: true,
+          isNew: false
+        });
+      } else {
+        alert('Failed to send notification. Please try again.');
+      }
+    })
+    .catch(error => {
+      console.error('Error sending notification:', error);
+      alert('Error sending notification. Please try again.');
+    })
+    .finally(() => {
+      setLoading(false);
     });
-    
-    // Switch to sent section
-    setSelectedSection('sent');
-    setSelectedCategory('sent');
   };
 
   const getReceiverDisplay = (receiver: string) => {
