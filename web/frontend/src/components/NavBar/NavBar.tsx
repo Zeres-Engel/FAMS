@@ -294,7 +294,7 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
                     <Divider
                       orientation="vertical"
                       flexItem
-                      sx={{ bgcolor: "#1b78ec", height: 20, opacity: 0.5 }}
+                      sx={{ bgcolor: "#1b78ec", height: 30, opacity: 0.5,margin:'auto' }}
                     />
                   )}
                 </React.Fragment>
