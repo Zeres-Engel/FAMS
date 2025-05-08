@@ -25,6 +25,7 @@ function useClassPageHook() {
   const hoomroomTeacherList = classList.map(item => ({
     homeroomTeacherId: item.homeroomTeacherId,
     className: `${item.className} - ${item.academicYear}`,
+    classId:item.classId
   }));
   const classPageData = useSelector(
     (state: RootState) => state.classUser.students

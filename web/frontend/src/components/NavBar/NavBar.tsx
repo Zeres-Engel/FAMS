@@ -327,12 +327,12 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
       </nav>
 
       {/* Chỉ hiển thị box spacing khi là horizontal */}
-      {!isVertical && (
+      {/* {!isVertical && (
         <Box component="main" sx={{ p: 3 }}>
           <Toolbar />
           <Typography></Typography>
         </Box>
-      )}
+      )} */}
 
       {/* Chỉ hiển thị sidebar bên trái khi variant là vertical */}
       {isVertical && (
