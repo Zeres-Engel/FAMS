@@ -42,6 +42,7 @@ interface EditScheduleDialogProps {
   allClasses: any[];
   subjectState: any[];
   classrooms: any[];
+  userRole: string;
 }
 
 const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
@@ -56,6 +57,7 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
   allClasses,
   subjectState,
   classrooms,
+  userRole,
 }) => {
   const [editedEvent, setEditedEvent] = useState<ScheduleEvent | null>(null);
   const [slotInfo, setSlotInfo] = useState<SlotInfo>({
@@ -68,6 +70,10 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
   
   // State cho confirm dialog khi xóa
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+  // Xác định quyền dựa trên userRole
+  const isAdmin = userRole === "admin";
+  const isTeacher = userRole === "teacher";
 
   // Mở confirm dialog khi nhấn nút Delete
   const handleDeleteClick = () => {
@@ -309,7 +315,9 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Edit Schedule</DialogTitle>
+      <DialogTitle>
+        {isAdmin ? "Edit Schedule" : "Schedule Details"}
+      </DialogTitle>
       <DialogContent dividers>
         <FormControl fullWidth sx={{ mb: 2 }}>
           <InputLabel id="academic-year-select-label">Academic Year</InputLabel>
@@ -337,6 +345,7 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
                   });
               }
             }}
+            disabled={!isAdmin}
           >
             {(() => {
               // Debug output outside of JSX
@@ -384,7 +393,7 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
                 className: getClassNameFromId(e.target.value),
               }))
             }}
-            disabled={!editedEvent?.academicYear}
+            disabled={!isAdmin || !editedEvent?.academicYear}
           >
             {(() => {
               // Debug output outside of JSX
@@ -475,6 +484,7 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
           fullWidth
           margin="normal"
           InputLabelProps={{ shrink: true }}
+          disabled={!isAdmin}
         />
 
         <FormControl fullWidth sx={{ mb: 2 }}>
@@ -555,9 +565,9 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
             value={slotInfo.dayOfWeek || ""}
             fullWidth
             margin="dense"
-            disabled
+            disabled={!isAdmin}
             InputProps={{
-              readOnly: true,
+              readOnly: !isAdmin,
               sx: { 
                 backgroundColor: 'white',
                 '&.Mui-disabled': {
@@ -576,10 +586,10 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
               value={slotInfo.startTime || ""}
               fullWidth
               margin="dense"
-              disabled={!slotInfo.isExtraSlot}
+              disabled={!isAdmin || !slotInfo.isExtraSlot}
               type={slotInfo.isExtraSlot ? "time" : "text"}
               InputProps={{
-                readOnly: !slotInfo.isExtraSlot,
+                readOnly: !isAdmin || !slotInfo.isExtraSlot,
                 sx: { 
                   backgroundColor: 'white',
                   '&.Mui-disabled': {
@@ -594,7 +604,7 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
                 format: "24h"
               }}
               onChange={(e) => {
-                if (slotInfo.isExtraSlot && editedEvent) {
+                if (slotInfo.isExtraSlot && editedEvent && isAdmin) {
                   setSlotInfo(prevSlotInfo => ({
                     ...prevSlotInfo,
                     startTime: e.target.value,
@@ -612,10 +622,10 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
               value={slotInfo.endTime || ""}
               fullWidth
               margin="dense"
-              disabled={!slotInfo.isExtraSlot}
+              disabled={!isAdmin || !slotInfo.isExtraSlot}
               type={slotInfo.isExtraSlot ? "time" : "text"}
               InputProps={{
-                readOnly: !slotInfo.isExtraSlot,
+                readOnly: !isAdmin || !slotInfo.isExtraSlot,
                 sx: { 
                   backgroundColor: 'white',
                   '&.Mui-disabled': {
@@ -630,7 +640,7 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
                 format: "24h"
               }}
               onChange={(e) => {
-                if (slotInfo.isExtraSlot && editedEvent) {
+                if (slotInfo.isExtraSlot && editedEvent && isAdmin) {
                   setSlotInfo(prevSlotInfo => ({
                     ...prevSlotInfo,
                     endTime: e.target.value,
@@ -694,47 +704,65 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
             ))}
           </Select>
         </FormControl>
+
+        {/* Hiển thị read-only form nếu là giáo viên */}
+        {!isAdmin && (
+          <Box sx={{ mt: 3, mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+              You are viewing this schedule in read-only mode.
+            </Typography>
+          </Box>
+        )}
       </DialogContent>
       <DialogActions>
-        <Button 
-          onClick={handleDeleteClick} 
-          variant="outlined" 
-          color="error"
-          size="medium"
-          sx={{ 
-            marginRight: 'auto',
-            textTransform: 'none',
-            fontWeight: 400,
-            fontSize: '0.875rem'
-          }} 
-        >
-          Delete
-        </Button>
-        <Button 
-          onClick={() => {
-            if (editedEvent.slotId === "11" && (!slotInfo.startTime || !slotInfo.endTime)) {
-              alert("Please specify both start and end times for the extra slot");
-              return;
-            }
-            
-            const eventToUpdate = {...editedEvent};
-            if (slotInfo.isExtraSlot) {
-              eventToUpdate.customStartTime = slotInfo.startTime;
-              eventToUpdate.customEndTime = slotInfo.endTime;
-            }
-            
-            if (eventToUpdate.classId) {
-              eventToUpdate.className = getClassNameFromId(String(eventToUpdate.classId));
-            }
-            
-            onSave(eventToUpdate);
-          }} 
-          variant="contained"
-          size="medium"
-          sx={{ textTransform: 'none', fontWeight: 500 }}
-        >
-          Save Changes
-        </Button>
+        {/* Nút Delete chỉ hiển thị cho admin */}
+        {isAdmin && (
+          <Button 
+            onClick={handleDeleteClick} 
+            variant="outlined" 
+            color="error"
+            size="medium"
+            sx={{ 
+              marginRight: 'auto',
+              textTransform: 'none',
+              fontWeight: 400,
+              fontSize: '0.875rem'
+            }} 
+          >
+            Delete
+          </Button>
+        )}
+        
+        {/* Nút Save Changes chỉ hiển thị cho admin */}
+        {isAdmin && (
+          <Button 
+            onClick={() => {
+              if (editedEvent.slotId === "11" && (!slotInfo.startTime || !slotInfo.endTime)) {
+                alert("Please specify both start and end times for the extra slot");
+                return;
+              }
+              
+              const eventToUpdate = {...editedEvent};
+              if (slotInfo.isExtraSlot) {
+                eventToUpdate.customStartTime = slotInfo.startTime;
+                eventToUpdate.customEndTime = slotInfo.endTime;
+              }
+              
+              if (eventToUpdate.classId) {
+                eventToUpdate.className = getClassNameFromId(String(eventToUpdate.classId));
+              }
+              
+              onSave(eventToUpdate);
+            }} 
+            variant="contained"
+            size="medium"
+            sx={{ textTransform: 'none', fontWeight: 500 }}
+          >
+            Save Changes
+          </Button>
+        )}
+        
+        {/* Nút View Attendance hiển thị cho cả admin và giáo viên */}
         <Button
           variant="contained"
           color="secondary"
@@ -747,70 +775,73 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
         >
           View Attendance
         </Button>
+        
         <Button
           variant="outlined"
           size="medium"
           sx={{ textTransform: 'none', fontWeight: 400 }}
           onClick={onClose}
         >
-          Cancel
+          {isAdmin ? "Cancel" : "Close"}
         </Button>
       </DialogActions>
 
-      {/* Confirm Dialog for Delete */}
-      <ConfirmDialog
-        open={confirmDeleteOpen}
-        onClose={handleCloseConfirmDelete}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: '8px'
-          }
-        }}
-      >
-        <ConfirmDialogTitle sx={{ 
-          fontSize: '1.1rem', 
-          fontWeight: 500,
-          padding: '16px 24px'
-        }}>
-          Confirm Delete
-        </ConfirmDialogTitle>
-        <ConfirmDialogContent>
-          <DialogContentText sx={{ 
-            fontSize: '0.9rem',
-            color: 'text.primary',
-            lineHeight: 1.5
+      {/* Confirm Dialog for Delete - chỉ hiển thị cho admin */}
+      {isAdmin && (
+        <ConfirmDialog
+          open={confirmDeleteOpen}
+          onClose={handleCloseConfirmDelete}
+          maxWidth="xs"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: '8px'
+            }
+          }}
+        >
+          <ConfirmDialogTitle sx={{ 
+            fontSize: '1.1rem', 
+            fontWeight: 500,
+            padding: '16px 24px'
           }}>
-            Are you sure you want to delete this schedule? This action cannot be undone.
-            <Box sx={{ mt: 1, opacity: 0.8 }}>
-              <Typography variant="body2" component="span" sx={{ fontWeight: 500 }}>
-                Note:
-              </Typography>{' '}
-              All attendance logs associated with this schedule will also be deleted.
-            </Box>
-          </DialogContentText>
-        </ConfirmDialogContent>
-        <ConfirmDialogActions sx={{ padding: '16px 24px' }}>
-          <Button 
-            onClick={handleCloseConfirmDelete} 
-            variant="outlined"
-            size="medium"
-            sx={{ textTransform: 'none', fontWeight: 400 }}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleConfirmDelete} 
-            variant="contained" 
-            color="error"
-            size="medium"
-            sx={{ textTransform: 'none', fontWeight: 500 }}
-          >
-            Delete
-          </Button>
-        </ConfirmDialogActions>
-      </ConfirmDialog>
+            Confirm Delete
+          </ConfirmDialogTitle>
+          <ConfirmDialogContent>
+            <DialogContentText sx={{ 
+              fontSize: '0.9rem',
+              color: 'text.primary',
+              lineHeight: 1.5
+            }}>
+              Are you sure you want to delete this schedule? This action cannot be undone.
+              <Box sx={{ mt: 1, opacity: 0.8 }}>
+                <Typography variant="body2" component="span" sx={{ fontWeight: 500 }}>
+                  Note:
+                </Typography>{' '}
+                All attendance logs associated with this schedule will also be deleted.
+              </Box>
+            </DialogContentText>
+          </ConfirmDialogContent>
+          <ConfirmDialogActions sx={{ padding: '16px 24px' }}>
+            <Button 
+              onClick={handleCloseConfirmDelete} 
+              variant="outlined"
+              size="medium"
+              sx={{ textTransform: 'none', fontWeight: 400 }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmDelete} 
+              variant="contained" 
+              color="error"
+              size="medium"
+              sx={{ textTransform: 'none', fontWeight: 500 }}
+            >
+              Delete
+            </Button>
+          </ConfirmDialogActions>
+        </ConfirmDialog>
+      )}
     </Dialog>
   );
 };

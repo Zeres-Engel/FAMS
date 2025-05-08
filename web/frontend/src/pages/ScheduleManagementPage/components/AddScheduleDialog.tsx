@@ -14,6 +14,7 @@ import {
   Typography,
   SelectChangeEvent,
   FormHelperText,
+  Autocomplete,
 } from "@mui/material";
 import moment from "moment";
 import { ScheduleEvent } from "../../../model/scheduleModels/scheduleModels.model";
@@ -24,6 +25,24 @@ interface SlotInfo {
   startTime: string;
   endTime: string;
   isExtraSlot: boolean;
+}
+
+interface ClassData {
+  _id?: string;
+  className: string;
+  grade?: number;
+  homeroomTeacherId?: string;
+  academicYear?: string;
+  createdAt?: string;
+  isActive?: boolean;
+  classId: number;
+  id?: string;
+}
+
+interface ClassOption {
+  label: string;
+  value: string;
+  grade?: number;
 }
 
 interface AddScheduleDialogProps {
@@ -74,6 +93,9 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
     scheduleDate: false
   });
   
+  // State để lưu danh sách lớp theo năm học
+  const [classOptions, setClassOptions] = useState<ClassOption[]>([]);
+  
   // Khởi tạo ngày và thời gian khi dialog mở
   useEffect(() => {
     if (open) {
@@ -93,7 +115,7 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
       console.log("[INIT DIALOG] Initializing with today's date and current time");
       
       // Cập nhật tất cả các giá trị mặc định khi dialog mở
-      setNewEvent(prev => {
+      setNewEvent((prev: ScheduleEvent) => {
         const updatedEvent = {
           ...prev,
           scheduleDate: today,
@@ -209,6 +231,35 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
     });
   }, [slotInfo, newEvent.slotId, newEvent.scheduleDate]);
 
+  // Lấy danh sách lớp khi thay đổi academic year
+  const loadClassesByAcademicYear = async (year: string) => {
+    try {
+      const classes = await fetchClassesByAcademicYear(year);
+      console.log(`Loaded ${classes.length} classes for academic year ${year}`);
+      
+      // Chuyển đổi dữ liệu lớp thành options cho dropdown
+      const options = classes.map((cls: ClassData) => ({
+        label: cls.className,
+        value: cls.classId.toString(),
+        grade: cls.grade || 0
+      }));
+      
+      // Sắp xếp các lớp theo thứ tự khối lớp từ cao xuống thấp
+      const sortedOptions = options.sort((a: ClassOption, b: ClassOption) => {
+        // Sắp xếp theo khối lớp (nếu có)
+        if ('grade' in a && 'grade' in b) {
+          return (b.grade ?? 0) - (a.grade ?? 0); // Sử dụng nullish coalescing để tránh undefined
+        }
+        // Nếu không có grade, sắp xếp theo tên
+        return a.label.localeCompare(b.label);
+      });
+      
+      setClassOptions(sortedOptions);
+    } catch (error) {
+      console.error("Error loading classes for academic year:", error);
+    }
+  };
+
   return (
     <Dialog
       open={open}
@@ -218,7 +269,7 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
     >
       <DialogTitle>Add new Schedule</DialogTitle>
       <DialogContent dividers>
-        <FormControl fullWidth sx={{ mb: 2 }} error={errors.academicYear}>
+        <FormControl fullWidth sx={{ mb: 3 }} error={errors.academicYear}>
           <InputLabel id="academic-year-select-label">
             Academic Year *
           </InputLabel>
@@ -240,19 +291,11 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
 
               // Fetch classes for this academic year
               if (selectedYear) {
-                // Using the new method to fetch classes by academic year
-                fetchClassesByAcademicYear(selectedYear)
-                  .then(classes => {
-                    console.log(`Loaded ${classes.length} classes for academic year ${selectedYear}`);
-                    // No need to update state here, we'll filter in the render
-                  })
-                  .catch(error => {
-                    console.error("Error loading classes for academic year:", error);
-                  });
+                loadClassesByAcademicYear(selectedYear);
               }
             }}
           >
-            {academicYears.map(year => (
+            {academicYears.map((year: string) => (
               <MenuItem key={year} value={year}>
                 {year}
               </MenuItem>
@@ -261,40 +304,34 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
           {errors.academicYear && <FormHelperText>Academic Year is required</FormHelperText>}
         </FormControl>
 
-        <FormControl fullWidth sx={{ mb: 2 }} error={errors.classId}>
-          <InputLabel id="class-select-label">Class *</InputLabel>
-          <Select
-            labelId="class-select-label"
-            id="class-select"
-            value={newEvent.classId || ""}
-            label="Class *"
-            onChange={(e: SelectChangeEvent) => {
+        <FormControl fullWidth sx={{ mb: 3 }} error={errors.classId}>
+          <Autocomplete
+            id="class-select-autocomplete"
+            options={classOptions}
+            getOptionLabel={(option: ClassOption) => option.label}
+            value={classOptions.find(opt => opt.value === newEvent.classId) || null}
+            onChange={(_event, newValue: ClassOption | null) => {
               setNewEvent({
                 ...newEvent,
-                classId: e.target.value,
+                classId: newValue?.value || "",
               });
               
               // Clear validation error
               setErrors(prev => ({...prev, classId: false}));
             }}
             disabled={!newEvent.academicYear} // Disable until academic year is selected
-          >
-            {/* Filter the classes based on the selected academic year */}
-            {allClasses
-              .filter(classData => classData.academicYear === newEvent.academicYear)
-              .map(classData => (
-                <MenuItem
-                  key={classData.classId}
-                  value={classData.classId.toString()}
-                >
-                  {classData.className}
-                </MenuItem>
-              ))}
-          </Select>
-          {errors.classId && <FormHelperText>Class is required</FormHelperText>}
+            renderInput={(params) => (
+              <TextField 
+                {...params} 
+                label="Class *" 
+                error={errors.classId}
+                helperText={errors.classId ? "Class is required" : ""}
+              />
+            )}
+          />
         </FormControl>
 
-        <FormControl fullWidth sx={{ mb: 2 }} error={errors.subjectId}>
+        <FormControl fullWidth sx={{ mb: 3 }} error={errors.subjectId}>
           <InputLabel id="subject-select-label">Subject *</InputLabel>
           <Select
             labelId="subject-select-label"
@@ -378,7 +415,7 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
               }
             }}
           >
-            {subjectState.map(subject => (
+            {subjectState.map((subject: any) => (
               <MenuItem key={subject.subjectId} value={subject.subjectId}>
                 {subject.subjectName}
               </MenuItem>
@@ -391,9 +428,10 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
           type="date"
           required
           fullWidth
-          margin="dense"
+          margin="normal"
+          sx={{ mb: 2 }}
           value={newEvent.scheduleDate ? new Date(newEvent.scheduleDate).toISOString().split('T')[0] : ''}
-          onChange={(e) => {
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             const dateValue = e.target.value;
             const date = dateValue ? new Date(dateValue) : null;
             handleDateChange(date);
@@ -402,7 +440,7 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
           error={!!errors.scheduleDate}
           helperText={errors.scheduleDate}
         />
-        <FormControl fullWidth sx={{ mb: 2 }} error={errors.slotId}>
+        <FormControl fullWidth sx={{ mb: 3 }} error={errors.slotId}>
           <InputLabel id="slot-select-label">Slot *</InputLabel>
           <Select
             labelId="slot-select-label"
@@ -520,7 +558,7 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
               }
             }}
           >
-            {slotConfig.map(slot => (
+            {slotConfig.map((slot: any) => (
               <MenuItem key={slot.slotNumber} value={slot.slotNumber}>
                 {slot.isExtra ? "Slot Extra (Custom)" : `Slot ${slot.slotNumber}`}
               </MenuItem>
@@ -529,7 +567,7 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
           {errors.slotId && <FormHelperText>Slot is required</FormHelperText>}
         </FormControl>
         
-        <Box sx={{ mt: 2, mb: 2, p: 2, bgcolor: '#f9f9f9', borderRadius: 1, border: '1px solid #eaeaea' }}>
+        <Box sx={{ mt: 0, mb: 3, p: 2, bgcolor: '#f9f9f9', borderRadius: 1, border: '1px solid #eaeaea' }}>
           <TextField
             label="Day of Week"
             value={slotInfo?.dayOfWeek || ""}
@@ -572,7 +610,7 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
               inputProps={{
                 step: 300, // 5 minutes step
               }}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 const newStartTime = e.target.value;
                 console.log("New start time:", newStartTime);
                 
@@ -626,7 +664,7 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
               inputProps={{
                 step: 300, // 5 minutes step
               }}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 const newEndTime = e.target.value;
                 console.log("New end time:", newEndTime);
                 
@@ -667,7 +705,7 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
           )}
         </Box>
         
-        <FormControl fullWidth sx={{ mb: 2 }} error={errors.classroomNumber}>
+        <FormControl fullWidth sx={{ mb: 3 }} error={errors.classroomNumber}>
           <InputLabel id="classroom-select-label">Classroom *</InputLabel>
           <Select
             labelId="classroom-select-label"
@@ -684,7 +722,7 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
               setErrors(prev => ({...prev, classroomNumber: false}));
             }}
           >
-            {classrooms.map(room => (
+            {classrooms.map((room: any) => (
               <MenuItem key={room.classroomId} value={room.classroomId}>
                 {room.classroomName}
               </MenuItem>
@@ -692,7 +730,7 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
           </Select>
           {errors.classroomNumber && <FormHelperText>Classroom is required</FormHelperText>}
         </FormControl>
-        <FormControl fullWidth sx={{ mb: 2 }} error={errors.teacher}>
+        <FormControl fullWidth sx={{ mb: 3 }} error={errors.teacher}>
           <InputLabel id="new-event-teacher-label">Teacher *</InputLabel>
           <Select
             labelId="new-event-teacher-label"
@@ -709,7 +747,7 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
             {(directTeachers.length > 0
               ? directTeachers
               : teachers
-            ).map(teacher => (
+            ).map((teacher: any) => (
               <MenuItem key={teacher.userId} value={teacher.userId}>
                 {teacher.fullName} - {teacher.userId}
               </MenuItem>
@@ -785,6 +823,7 @@ const AddScheduleDialog: React.FC<AddScheduleDialogProps> = ({
               alert(`Failed to create schedule: ${error}`);
             }
           }}
+          sx={{ fontWeight: 'normal', textTransform: 'none' }}
         >
           Add
         </Button>

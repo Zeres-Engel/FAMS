@@ -14,13 +14,72 @@ export const calendarFormats = {
     `${moment(start).format("HH:mm")} - ${moment(end).format("HH:mm")}`,
 };
 
+// Status badge styles based on attendance status
+const getStatusStyle = (status?: string) => {
+  if (!status) return {};
+  
+  switch (status.toLowerCase()) {
+    case 'present':
+      return { 
+        backgroundColor: '#4caf50', 
+        color: 'white',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+        border: '1px solid rgba(255,255,255,0.2)'
+      };
+    case 'late':
+      return { 
+        backgroundColor: '#ff9800', 
+        color: 'white',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+        border: '1px solid rgba(255,255,255,0.2)'
+      };
+    case 'absent':
+      return { 
+        backgroundColor: '#f44336', 
+        color: 'white',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+        border: '1px solid rgba(255,255,255,0.2)'
+      };
+    default:
+      return { 
+        backgroundColor: '#9e9e9e', 
+        color: 'white',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+        border: '1px solid rgba(255,255,255,0.2)'
+      };
+  }
+};
+
 // Components tùy chỉnh cho events
 export const calendarComponents: Components<ScheduleEvent, object> = {
   event: (props: { event: ScheduleEvent }) => {
     const { event } = props;
+    const hasAttendance = 'attendanceStatus' in event;
+    
     return (
       <div className="custom-event">
-        <div className="event-title">{event.subject} - {event.className}</div>
+        <div className="event-header">
+          <div className="event-title">{event.subject} - {event.className}</div>
+          {hasAttendance && (
+            <div 
+              className="attendance-badge" 
+              style={{
+                ...getStatusStyle(event.attendanceStatus),
+                padding: '2px 6px',
+                borderRadius: '12px',
+                fontSize: '10px',
+                fontWeight: 'bold',
+                display: 'inline-block',
+                marginLeft: '4px',
+                letterSpacing: '0.5px',
+                textTransform: 'uppercase',
+                textShadow: '0px 1px 1px rgba(0,0,0,0.2)'
+              }}
+            >
+              {event.attendanceStatus || 'N/A'}
+            </div>
+          )}
+        </div>
         <div className="event-details">
           <div>Giáo viên: {event.teacher}</div>
           <div>Phòng: {event.classroomNumber}</div>

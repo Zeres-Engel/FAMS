@@ -243,32 +243,45 @@ button[type="submit"].MuiButton-contained {
 
 /* Tùy chỉnh hiển thị của event */
 .custom-event {
-  width: 100%;
+  padding: 4px;
   height: 100%;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-
+  
+  .event-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  
   .event-title {
     font-weight: bold;
-    font-size: 1rem;
-    margin-bottom: 4px;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    flex: 1;
   }
-
+  
+  .attendance-badge {
+    min-width: 40px;
+    text-align: center;
+    text-transform: uppercase;
+    margin-left: 4px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 10px;
+    padding: 2px 6px;
+    display: inline-block;
+    letter-spacing: 0.5px;
+    text-shadow: 0px 1px 1px rgba(0,0,0,0.2);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+  }
+  
   .event-details {
-    font-size: 0.9rem;
-    overflow: hidden;
-    
-    div {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      line-height: 1.5;
-    }
+    font-size: 0.8rem;
+    opacity: 0.8;
   }
 }
 
@@ -282,12 +295,24 @@ button[type="submit"].MuiButton-contained {
   }
 
   .custom-event {
+    .event-header {
+      display: flex;
+      align-items: center;
+      flex-wrap: nowrap;
+    }
+    
     .event-title {
       font-size: 0.82rem;
       max-width: 100%;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+    
+    .attendance-badge {
+      min-width: 36px;
+      padding: 1px 4px;
+      font-size: 8px;
     }
     
     .event-details {

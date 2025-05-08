@@ -7,6 +7,29 @@ import {
   NotifyProps,
 } from "../../model/tableModels/tableDataModels.model";
 
+// Cấu hình axios interceptor để gửi token xác thực trong mỗi request
+const api = axios.create({
+  baseURL: 'http://fams.io.vn/api-nodejs'
+});
+
+// Thêm interceptor để gửi token trong header của mỗi request
+api.interceptors.request.use(
+  config => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    console.log('Request headers:', config.headers);
+    console.log('Token from localStorage:', token);
+    
+    return config;
+  },
+  error => {
+    return Promise.reject(error);
+  }
+);
+
 // Extend NotifyProps interface locally to ensure type safety
 interface ExtendedNotifyProps extends NotifyProps {
   readStatus: boolean;
@@ -87,6 +110,9 @@ function useNotifyPageHook() {
       filtered = sentNotifications;
       setViewMode('sent');
       return filtered;
+    } else if (category === 'all') {
+      // Nếu là "all", hiển thị cả tin đã gửi và đã nhận
+      filtered = [...userMainData, ...sentNotifications];
     }
     
     if (category !== 'sent') {
@@ -112,45 +138,61 @@ function useNotifyPageHook() {
       setLoading(true);
       setError(null);
       
-      // API URL for received notifications
-      const apiUrl = `http://fams.io.vn/api-nodejs/notifications/my-notifications?page=${page}&limit=${limit}&category=${category}`;
+      // API URL for received notifications - Đảm bảo URL chính xác 
+      const apiUrl = `/notifications/my-notifications?page=${page}&limit=${limit}${category ? `&category=${category}` : ''}${query ? `&search=${query}` : ''}`;
       
-      const response = await axios.get(apiUrl);
+      const response = await api.get(apiUrl);
       
       if (response.data && response.data.success) {
         const { notifications, unreadCount, totalItems, totalPages, currentPage } = response.data.data;
         
+        // Phân loại thông báo thành "đã nhận" và "đã gửi"
+        const receivedNotifications: ExtendedNotifyProps[] = [];
+        const sentNotifications: ExtendedNotifyProps[] = [];
+        
         // Map API response to match our NotifyProps interface
-        const mappedNotifications = notifications.map((notification: any) => ({
-          id: notification.NotificationID.toString(),
-          message: notification.Message,
-          sender: notification.SenderID,
-          receiver: notification.ReceiverID,
-          sendDate: notification.SentDate,
-          readStatus: notification.ReadStatus || false,
-          senderInfo: notification.sender,
-          title: notification.Title || 'Thông báo mới',
-          archived: notification.Archived || false
-        })) as ExtendedNotifyProps[];
+        notifications.forEach((notification: any) => {
+          const mappedNotification = {
+            id: notification.NotificationID.toString(),
+            message: notification.Message,
+            sender: notification.SenderID,
+            receiver: notification.ReceiverID,
+            sendDate: notification.SentDate,
+            readStatus: notification.ReadStatus || false,
+            senderInfo: notification.sender,
+            receiverInfo: notification.receiver,
+            title: notification.Title || 'Thông báo mới',
+            archived: notification.Archived || false,
+            type: notification.type // 'received' hoặc 'sent'
+          } as ExtendedNotifyProps;
+          
+          // Phân loại theo loại thông báo
+          if (notification.type === 'sent') {
+            sentNotifications.push(mappedNotification);
+          } else {
+            receivedNotifications.push(mappedNotification);
+          }
+        });
         
-        setUserMainData(mappedNotifications);
+        // Cập nhật các state
+        setUserMainData(receivedNotifications);
+        setSentNotifications(sentNotifications);
         
-        // Filtering based on category and search query
-        if (query) {
-          filterNotifications(category, mappedNotifications, query);
+        // Filtering based on view mode, category and search query
+        if (viewMode === 'sent') {
+          setFilteredData(sentNotifications);
         } else {
-          setFilteredData(mappedNotifications);
+          if (query) {
+            filterNotifications(category, receivedNotifications, query);
+          } else {
+            setFilteredData(receivedNotifications);
+          }
         }
         
         setUnreadCount(unreadCount);
         setTotalItems(totalItems);
         setTotalPages(totalPages);
         setCurrentPage(currentPage);
-        
-        // If we're in the sent view mode, also fetch sent notifications
-        if (viewMode === 'sent' || category === 'sent') {
-          fetchSentNotifications();
-        }
       } else {
         setError("Failed to fetch notifications");
       }
@@ -167,10 +209,10 @@ function useNotifyPageHook() {
     try {
       setLoading(true);
       
-      // API URL for sent notifications
-      const apiUrl = `http://fams.io.vn/api-nodejs/notifications/sent-notifications?page=${page}&limit=${limit}`;
+      // API URL for sent notifications - sử dụng api instance
+      const apiUrl = `/notifications/sent-notifications?page=${page}&limit=${limit}`;
       
-      const response = await axios.get(apiUrl);
+      const response = await api.get(apiUrl);
       
       if (response.data && response.data.success) {
         const { notifications, totalItems, totalPages, currentPage } = response.data.data;
@@ -208,11 +250,15 @@ function useNotifyPageHook() {
   // View notification details - Marks as read when viewing
   const viewNotificationDetails = async (notificationId: string) => {
     try {
+      console.log("viewNotificationDetails - Viewing notification with ID:", notificationId);
+      
       // First mark as read
-      await markAsRead(notificationId);
+      const markResult = await markAsRead(notificationId);
+      console.log("viewNotificationDetails - Mark as read result:", markResult);
       
       // Then optionally fetch the notification details if needed
-      const response = await axios.get(`http://fams.io.vn/api-nodejs/notifications/${notificationId}`);
+      const response = await api.get(`/notifications/${notificationId}`);
+      console.log("viewNotificationDetails - Fetch details response:", response.data);
       
       if (response.data && response.data.success) {
         return response.data.data;
@@ -241,7 +287,7 @@ function useNotifyPageHook() {
   const createNotification = async (receiverId: string, message: string, title?: string) => {
     try {
       setLoading(true);
-      const response = await axios.post('http://fams.io.vn/api-nodejs/notifications', {
+      const response = await api.post('/notifications', {
         receiverId,
         message,
         title
@@ -266,7 +312,7 @@ function useNotifyPageHook() {
   const sendNotificationToUsers = async (userIds: string[], message: string, title?: string) => {
     try {
       setLoading(true);
-      const response = await axios.post('http://fams.io.vn/api-nodejs/notifications/send-to-users', {
+      const response = await api.post('/notifications/send-to-users', {
         userIds,
         message,
         title
@@ -276,8 +322,18 @@ function useNotifyPageHook() {
         return { success: true, data: response.data.data };
       }
       return { success: false, error: "Failed to send notification to users" };
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error sending notification to users:", err);
+      // Kiểm tra lỗi quyền hạn
+      if (err.response?.status === 403) {
+        const errorMessage = err.response.data?.message || 'Bạn không có quyền gửi thông báo cho một số người dùng';
+        setError(errorMessage);
+        return {
+          success: false,
+          message: errorMessage,
+          error: 'PERMISSION_DENIED'
+        };
+      }
       setError("Failed to send notification to users. Please try again later.");
       return { success: false, error: "Failed to send notification to users" };
     } finally {
@@ -289,7 +345,7 @@ function useNotifyPageHook() {
   const sendNotificationToClass = async (classId: number, message: string, title?: string) => {
     try {
       setLoading(true);
-      const response = await axios.post('http://fams.io.vn/api-nodejs/notifications/send-to-class', {
+      const response = await api.post('/notifications/send-to-class', {
         classId,
         message,
         title
@@ -299,8 +355,18 @@ function useNotifyPageHook() {
         return { success: true, data: response.data.data };
       }
       return { success: false, error: "Failed to send notification to class" };
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error sending notification to class:", err);
+      // Kiểm tra lỗi quyền hạn
+      if (err.response?.status === 403) {
+        const errorMessage = err.response.data?.message || 'Bạn không có quyền gửi thông báo cho lớp học';
+        setError(errorMessage);
+        return {
+          success: false,
+          message: errorMessage,
+          error: 'PERMISSION_DENIED'
+        };
+      }
       setError("Failed to send notification to class. Please try again later.");
       return { success: false, error: "Failed to send notification to class" };
     } finally {
@@ -312,7 +378,7 @@ function useNotifyPageHook() {
   const sendNotificationToAllStudents = async (message: string, title?: string) => {
     try {
       setLoading(true);
-      const response = await axios.post('http://fams.io.vn/api-nodejs/notifications/send-all-students', {
+      const response = await api.post('/notifications/send-all-students', {
         message,
         title
       });
@@ -321,8 +387,18 @@ function useNotifyPageHook() {
         return { success: true, data: response.data.data };
       }
       return { success: false, error: "Failed to send notification to all students" };
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error sending notification to all students:", err);
+      // Kiểm tra lỗi quyền hạn
+      if (err.response?.status === 403) {
+        const errorMessage = err.response.data?.message || 'Bạn không có quyền gửi thông báo cho tất cả học sinh';
+        setError(errorMessage);
+        return {
+          success: false,
+          message: errorMessage,
+          error: 'PERMISSION_DENIED'
+        };
+      }
       setError("Failed to send notification to all students. Please try again later.");
       return { success: false, error: "Failed to send notification to all students" };
     } finally {
@@ -334,7 +410,7 @@ function useNotifyPageHook() {
   const sendNotificationToAllTeachers = async (message: string, title?: string) => {
     try {
       setLoading(true);
-      const response = await axios.post('http://fams.io.vn/api-nodejs/notifications/send-all-teachers', {
+      const response = await api.post('/notifications/send-all-teachers', {
         message,
         title
       });
@@ -343,8 +419,18 @@ function useNotifyPageHook() {
         return { success: true, data: response.data.data };
       }
       return { success: false, error: "Failed to send notification to all teachers" };
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error sending notification to all teachers:", err);
+      // Kiểm tra lỗi quyền hạn
+      if (err.response?.status === 403) {
+        const errorMessage = err.response.data?.message || 'Bạn không có quyền gửi thông báo cho tất cả giáo viên';
+        setError(errorMessage);
+        return {
+          success: false,
+          message: errorMessage,
+          error: 'PERMISSION_DENIED'
+        };
+      }
       setError("Failed to send notification to all teachers. Please try again later.");
       return { success: false, error: "Failed to send notification to all teachers" };
     } finally {
@@ -356,7 +442,7 @@ function useNotifyPageHook() {
   const sendNotificationToAllParents = async (message: string, title?: string) => {
     try {
       setLoading(true);
-      const response = await axios.post('http://fams.io.vn/api-nodejs/notifications/send-all-parents', {
+      const response = await api.post('/notifications/send-all-parents', {
         message,
         title
       });
@@ -378,20 +464,42 @@ function useNotifyPageHook() {
   const sendNotificationToUser = async (userId: string, message: string, title?: string) => {
     try {
       setLoading(true);
-      const response = await axios.post('http://fams.io.vn/api-nodejs/notifications/send-to-user', {
+      
+      const response = await api.post('/notifications/send-to-user', {
         userId,
         message,
-        title
+        title: title || 'Thông báo mới'
       });
-
+      
       if (response.data && response.data.success) {
-        return { success: true, data: response.data.data };
+        return {
+          success: true,
+          message: 'Đã gửi thông báo thành công',
+          data: response.data.data
+        };
+      } else {
+        return {
+          success: false,
+          message: response.data?.message || 'Không thể gửi thông báo',
+          error: 'API_ERROR'
+        };
       }
-      return { success: false, error: "Failed to send notification to user" };
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error sending notification to user:", err);
-      setError("Failed to send notification to user. Please try again later.");
-      return { success: false, error: "Failed to send notification to user" };
+      // Kiểm tra lỗi quyền hạn
+      if (err.response?.status === 403) {
+        setError(err.response.data?.message || 'Bạn không có quyền gửi thông báo cho người dùng này');
+        return {
+          success: false,
+          message: err.response.data?.message || 'Bạn không có quyền gửi thông báo cho người dùng này',
+          error: 'PERMISSION_DENIED'
+        };
+      }
+      return {
+        success: false,
+        message: err.response?.data?.message || 'Không thể gửi thông báo',
+        error: 'REQUEST_ERROR'
+      };
     } finally {
       setLoading(false);
     }
@@ -401,7 +509,11 @@ function useNotifyPageHook() {
   const markAsRead = async (notificationId: string) => {
     try {
       setLoading(true);
-      const response = await axios.patch(`http://fams.io.vn/api-nodejs/notifications/${notificationId}/mark-as-read`);
+      console.log("FE markAsRead - Sending request for ID:", notificationId);
+      
+      const response = await api.patch(`/notifications/${notificationId}/mark-as-read`);
+      console.log("FE markAsRead - Response:", response.data);
+      
       if (response.data && response.data.success) {
         // Update local state to mark as read
         const updatedData = userMainData.map((notification: ExtendedNotifyProps) => 
@@ -421,12 +533,17 @@ function useNotifyPageHook() {
         if (wasUnread) {
           setUnreadCount((prev: number) => Math.max(0, prev - 1));
         }
+        
+        return { success: true, message: 'Notification marked as read' };
       } else {
-        setError("Failed to mark notification as read");
+        console.error("FE markAsRead - Failed:", response.data);
+        setError("Could not mark notification as read");
+        return { success: false, error: "Could not mark notification as read", details: response.data };
       }
     } catch (err) {
-      console.error("Error marking notification as read:", err);
-      setError("Failed to mark notification as read");
+      console.error("FE markAsRead - Error:", err);
+      setError("Could not mark notification as read");
+      return { success: false, error: "Could not mark notification as read", details: err };
     } finally {
       setLoading(false);
     }
@@ -436,7 +553,7 @@ function useNotifyPageHook() {
   const markAllAsRead = async () => {
     try {
       setLoading(true);
-      const response = await axios.patch('http://fams.io.vn/api-nodejs/notifications/mark-all-as-read');
+      const response = await api.patch('/notifications/mark-all-as-read');
       if (response.data && response.data.success) {
         // Update local state to mark all as read
         const updatedData = userMainData.map(notification => ({ 
@@ -462,7 +579,7 @@ function useNotifyPageHook() {
     try {
       setLoading(true);
       // Sử dụng API endpoint mới để lưu trữ thông báo
-      const response = await axios.patch(`http://fams.io.vn/api-nodejs/notifications/${notificationId}/archive`, {
+      const response = await api.patch(`/notifications/${notificationId}/archive`, {
         archived: archive
       });
       
@@ -494,10 +611,110 @@ function useNotifyPageHook() {
   // Switch between received and sent views
   const switchViewMode = (mode: 'received' | 'sent') => {
     setViewMode(mode);
+    
     if (mode === 'sent') {
-      fetchSentNotifications();
+      // Khi chuyển sang xem thông báo đã gửi, sử dụng danh sách sentNotifications
+      setFilteredData(sentNotifications);
+      setActiveCategory('sent');
     } else {
-      fetchNotifications(1, 10, 'all');
+      // Khi chuyển sang xem thông báo đã nhận, sử dụng danh sách userMainData (đã nhận)
+      setFilteredData(userMainData);
+      setActiveCategory('all');
+    }
+  };
+
+  // Thêm hàm xóa thông báo
+  const deleteNotification = async (notificationId: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await api.delete(`/notifications/${notificationId}`);
+      
+      if (response.data && response.data.success) {
+        // Cập nhật danh sách thông báo sau khi xóa
+        const updatedMainData = userMainData.filter((notification: ExtendedNotifyProps) => notification.id !== notificationId);
+        setUserMainData(updatedMainData);
+        
+        const updatedSentData = sentNotifications.filter((notification: ExtendedNotifyProps) => notification.id !== notificationId);
+        setSentNotifications(updatedSentData);
+        
+        // Nếu đang xem loại thông báo nào, cập nhật filteredData cho loại đó
+        if (viewMode === 'sent') {
+          setFilteredData(updatedSentData);
+        } else {
+          setFilteredData(updatedMainData);
+        }
+        
+        // Giảm số lượng thông báo chưa đọc nếu xóa 1 thông báo chưa đọc
+        const deletedItem = userMainData.find((notification: ExtendedNotifyProps) => notification.id === notificationId);
+        if (deletedItem && !deletedItem.readStatus) {
+          setUnreadCount((prev: number) => Math.max(0, prev - 1));
+        }
+        
+        // Refresh danh sách sau khi xóa - không cần gọi fetchNotifications vì chúng ta đã cập nhật state
+        // Nhưng phải gọi để đồng bộ với backend trong trường hợp xóa vĩnh viễn
+        fetchNotifications(currentPage);
+        
+        return { success: true, message: 'Notification successfully deleted' };
+      } else {
+        setError("Could not delete notification");
+        return { success: false, error: "Could not delete notification" };
+      }
+    } catch (err) {
+      console.error("Error deleting notification:", err);
+      setError("Error deleting notification. Please try again later.");
+      return { success: false, error: "Error deleting notification" };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Gửi thông báo cho tất cả người dùng
+  const sendNotificationToAllUsers = async (message: string, title?: string) => {
+    try {
+      setLoading(true);
+      const response = await api.post('/notifications/send-all-users', {
+        message,
+        title
+      });
+
+      if (response.data && response.data.success) {
+        return { success: true, data: response.data.data };
+      }
+      return { success: false, error: "Failed to send notification to all users" };
+    } catch (err: any) {
+      console.error("Error sending notification to all users:", err);
+      // Kiểm tra lỗi quyền hạn
+      if (err.response?.status === 403) {
+        const errorMessage = err.response.data?.message || 'Bạn không có quyền gửi thông báo cho tất cả người dùng';
+        setError(errorMessage);
+        return {
+          success: false,
+          message: errorMessage,
+          error: 'PERMISSION_DENIED'
+        };
+      }
+      setError("Failed to send notification to all users. Please try again later.");
+      return { success: false, error: "Failed to send notification to all users" };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Debug notification issues (admin only)
+  const debugNotification = async (notificationId: string) => {
+    try {
+      console.log("debugNotification - Sending request for ID:", notificationId);
+      const response = await api.get(`/notifications/debug-notification/${notificationId}`);
+      console.log("DEBUG NOTIFICATION RESULT:", response.data);
+      return response.data;
+    } catch (err) {
+      console.error("Error in debug notification:", err);
+      return { 
+        success: false, 
+        error: "Không thể debug thông báo. Có thể bạn không có quyền admin." 
+      };
     }
   };
 
@@ -506,45 +723,46 @@ function useNotifyPageHook() {
     fetchNotifications();
   }, []);
 
-  const state = { 
-    headCellsData, 
-    userMainData: filteredData, // Use filtered data instead of all data
-    tableTitle, 
-    isCheckBox, 
-    role,
-    loading,
-    error,
-    unreadCount,
-    totalItems,
-    totalPages,
-    currentPage,
-    activeCategory,
-    searchQuery,
-    viewMode,
-    sentNotifications
+  return {
+    state: {
+      userMainData,
+      filteredData,
+      sentNotifications,
+      loading,
+      error,
+      unreadCount,
+      currentPage,
+      totalPages,
+      totalItems,
+      activeCategory,
+      searchQuery,
+      viewMode,
+      headCellsData,
+      isCheckBox,
+      tableTitle
+    },
+    handler: {
+      fetchNotifications,
+      fetchSentNotifications,
+      viewNotificationDetails,
+      searchNotifications,
+      createNotification,
+      sendNotificationToUsers,
+      sendNotificationToClass,
+      sendNotificationToAllStudents,
+      sendNotificationToAllTeachers,
+      sendNotificationToAllParents,
+      sendNotificationToUser,
+      markAsRead,
+      markAllAsRead,
+      toggleArchive,
+      switchViewMode,
+      filterNotifications,
+      deleteNotification,
+      sendNotificationToAllUsers,
+      debugNotification
+    }
   };
-  
-  const handler = {
-    fetchNotifications,
-    fetchSentNotifications,
-    createNotification,
-    markAsRead,
-    markAllAsRead,
-    searchNotifications,
-    setCurrentPage,
-    filterNotifications,
-    toggleArchive,
-    sendNotificationToUsers,
-    sendNotificationToClass,
-    sendNotificationToAllStudents,
-    sendNotificationToAllTeachers,
-    sendNotificationToAllParents,
-    sendNotificationToUser,
-    viewNotificationDetails,
-    switchViewMode
-  };
-
-  return { state, handler };
 }
 
 export default useNotifyPageHook;

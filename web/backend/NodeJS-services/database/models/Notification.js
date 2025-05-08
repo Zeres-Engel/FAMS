@@ -55,7 +55,11 @@ const notificationSchema = new Schema({
     type: Date,
     default: Date.now
   },
-  IsActive: {
+  IsActiveSender: {
+    type: Boolean,
+    default: true
+  },
+  IsActiveReceiver: {
     type: Boolean,
     default: true
   }

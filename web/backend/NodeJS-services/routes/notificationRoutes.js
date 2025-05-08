@@ -4,14 +4,16 @@ const notificationController = require('../controllers/notificationController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 // Middleware bảo vệ tất cả các routes
-// Temporarily commented out to allow all roles to access
-// router.use(authMiddleware.protect);
+router.use(authMiddleware.protect);
 
 // Lấy tất cả thông báo của người dùng đăng nhập
 router.get('/my-notifications', notificationController.getMyNotifications);
 
 // Lấy thông báo đã gửi của người dùng
 router.get('/sent-notifications', notificationController.getSentNotifications);
+
+// API debug thông báo (đặt trước route có tham số)
+router.get('/debug-notification/:id', notificationController.debugNotification);
 
 // Lấy chi tiết một thông báo
 router.get('/:id', notificationController.getNotificationById);
@@ -33,6 +35,9 @@ router.post('/send-all-parents', notificationController.sendNotificationToAllPar
 
 // Gửi thông báo cho một người dùng cụ thể
 router.post('/send-to-user', notificationController.sendNotificationToUser);
+
+// Gửi thông báo cho tất cả người dùng
+router.post('/send-all-users', notificationController.sendNotificationToAllUsers);
 
 // Tạo thông báo mới (cho một người dùng - giữ lại cho khả năng tương thích)
 router.post('/', notificationController.createNotification);

@@ -20,6 +20,8 @@ import {
   Select,
   MenuItem,
   FormHelperText,
+  Chip,
+  Tooltip,
 } from "@mui/material";
 import moment from "moment";
 import LayoutComponent from "../../components/Layout/Layout";
@@ -46,6 +48,33 @@ interface SlotInfo {
   startTime: string;
   endTime: string;
   isExtraSlot: boolean;
+}
+
+// Interface cho UserAttendance
+interface UserAttendance {
+  attendanceId: number;
+  scheduleId: number;
+  userId: string;
+  status: string;
+  checkIn: string | null;
+  note: string;
+  createdAt: string;
+  updatedAt: string;
+  userRole: string;
+  teacherId?: number;
+  teacherName?: string;
+  subjectId?: number;
+  subjectName?: string;
+  classId?: number;
+  className?: string;
+  classroomId?: number;
+  classroomName?: string;
+  slotNumber?: number;
+  dayOfWeek?: string;
+  startTime?: string;
+  endTime?: string;
+  sessionDate?: string;
+  topic?: string;
 }
 
 const ScheduleManagementPage: React.FC = () => {
@@ -105,6 +134,21 @@ const ScheduleManagementPage: React.FC = () => {
   // Destructure từ attendance hook
   const { state: attendanceState, actions: attendanceActions } = attendanceHook;
   
+  // Thêm state cho dữ liệu điểm danh của user
+  const [userAttendance, setUserAttendance] = useState<UserAttendance[]>([]);
+  const userData = useSelector((state: RootState) => state.login.loginData);
+
+  // Thêm useEffect để lấy dữ liệu điểm danh khi component mount
+  useEffect(() => {
+    if ((role === "student" || role === "teacher") && userData?.userId) {
+      const fetchAttendance = async () => {
+        const attendanceData = await handler.fetchUserAttendance(userData.userId);
+        setUserAttendance(attendanceData);
+      };
+      fetchAttendance();
+    }
+  }, [userData?.userId, role]);
+
   // Load Material Icons và fetch teachers
   useEffect(() => {
     const link = document.createElement("link");
@@ -215,6 +259,19 @@ const ScheduleManagementPage: React.FC = () => {
   }, [openCreateDialog, newEvent.scheduleDate, newEvent.slotId]);
 
   const handleSelectEvent = (event: ScheduleEvent) => {
+    // Học sinh không được phép mở dialog edit và không hiện thông báo
+    if (role === "student") {
+      // Không làm gì cả, chỉ return
+      return;
+    }
+    
+    // Giáo viên chỉ được phép xem điểm danh, không được edit lịch
+    if (role === "teacher") {
+      handleViewAttendance(event.id);
+      return;
+    }
+    
+    // Admin được phép mở dialog edit
     setSelectedEvent(event);
     setOpenEditDialog(true);
   };
@@ -305,6 +362,50 @@ const ScheduleManagementPage: React.FC = () => {
         console.error("Error deleting schedule:", error);
       });
     });
+  };
+
+  // Thêm hàm này để lấy trạng thái điểm danh mới nhất của ngày hôm nay
+  const getUserTodayAttendanceStatus = () => {
+    if (!userAttendance || userAttendance.length === 0) return "Not Now";
+    
+    // Sắp xếp theo thời gian tạo mới nhất
+    const sortedAttendance = [...userAttendance].sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+    
+    // Lấy trạng thái mới nhất
+    return sortedAttendance[0]?.status || "Not Now";
+  };
+
+  // Thêm hàm này để lấy màu tương ứng với trạng thái
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "present":
+        return "success";
+      case "late":
+        return "warning";
+      case "absent":
+        return "error";
+      default:
+        return "default";
+    }
+  };
+
+  // Thêm hàm để lấy thông tin chi tiết về điểm danh
+  const getLatestAttendanceDetail = () => {
+    if (!userAttendance || userAttendance.length === 0) return null;
+    
+    // Sắp xếp theo thời gian tạo mới nhất
+    const sortedAttendance = [...userAttendance].sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+    
+    return sortedAttendance[0];
+  };
+
+  // Thêm hàm để kiểm tra xem các events có attendance data không
+  const hasEventsWithAttendanceData = () => {
+    return state.events.some(event => 'attendanceStatus' in event);
   };
 
   return (
@@ -507,8 +608,8 @@ const ScheduleManagementPage: React.FC = () => {
                 </Box>
               )}
 
-              {/* Student view filters */}
-              {role === "student" && (
+              {/* Student view filters - only show if no events have attendance data */}
+              {role === "student" && !hasEventsWithAttendanceData() && (
                 <Box
                   sx={{
                     display: "flex",
@@ -518,12 +619,40 @@ const ScheduleManagementPage: React.FC = () => {
                     alignItems: "center",
                   }}
                 >
-                  {/* Student filter controls */}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Typography variant="body2">Trạng thái điểm danh:</Typography>
+                    <Tooltip
+                      title={
+                        (() => {
+                          const latest = getLatestAttendanceDetail();
+                          if (!latest) return "Chưa có dữ liệu điểm danh";
+                          
+                          return (
+                            <>
+                              <div><strong>Môn học:</strong> {latest.subjectName || "N/A"}</div>
+                              <div><strong>Lớp:</strong> {latest.className || "N/A"}</div>
+                              <div><strong>Phòng:</strong> {latest.classroomName || "N/A"}</div>
+                              <div><strong>Thời gian:</strong> {latest.startTime || "N/A"} - {latest.endTime || "N/A"}</div>
+                              <div><strong>Ngày:</strong> {latest.sessionDate ? new Date(latest.sessionDate).toLocaleDateString() : "N/A"}</div>
+                              <div><strong>Giáo viên:</strong> {latest.teacherName || "N/A"}</div>
+                            </>
+                          );
+                        })()
+                      }
+                      arrow
+                    >
+                      <Chip 
+                        label={getUserTodayAttendanceStatus()} 
+                        color={getStatusColor(getUserTodayAttendanceStatus()) as any} 
+                        size="small" 
+                      />
+                    </Tooltip>
+                  </Box>
                 </Box>
               )}
 
-              {/* Teacher view filters */}
-              {role === "teacher" && (
+              {/* Teacher view filters - only show if no events have attendance data */}
+              {role === "teacher" && !hasEventsWithAttendanceData() && (
                 <Box
                   sx={{
                     display: "flex",
@@ -533,7 +662,34 @@ const ScheduleManagementPage: React.FC = () => {
                     alignItems: "center",
                   }}
                 >
-                  {/* Teacher filter controls */}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Typography variant="body2">Trạng thái điểm danh:</Typography>
+                    <Tooltip
+                      title={
+                        (() => {
+                          const latest = getLatestAttendanceDetail();
+                          if (!latest) return "Chưa có dữ liệu điểm danh";
+                          
+                          return (
+                            <>
+                              <div><strong>Môn học:</strong> {latest.subjectName || "N/A"}</div>
+                              <div><strong>Lớp:</strong> {latest.className || "N/A"}</div>
+                              <div><strong>Phòng:</strong> {latest.classroomName || "N/A"}</div>
+                              <div><strong>Thời gian:</strong> {latest.startTime || "N/A"} - {latest.endTime || "N/A"}</div>
+                              <div><strong>Ngày:</strong> {latest.sessionDate ? new Date(latest.sessionDate).toLocaleDateString() : "N/A"}</div>
+                            </>
+                          );
+                        })()
+                      }
+                      arrow
+                    >
+                      <Chip 
+                        label={getUserTodayAttendanceStatus()} 
+                        color={getStatusColor(getUserTodayAttendanceStatus()) as any} 
+                        size="small" 
+                      />
+                    </Tooltip>
+                  </Box>
                 </Box>
               )}
 
@@ -664,6 +820,7 @@ const ScheduleManagementPage: React.FC = () => {
                 console.log("AttendanceView triggered attendance update", data.length);
               }}
               fetchAttendanceData={attendanceActions.fetchAttendanceData}
+              userRole={role || ""}
             />
           </Paper>
         )}
@@ -675,11 +832,12 @@ const ScheduleManagementPage: React.FC = () => {
           onSave={handleSaveEvent}
           onViewAttendance={handleViewAttendance}
           onDelete={handleDeleteEvent}
-          teachers={directTeachers}
-          academicYears={state.academicYears}
-          allClasses={state.allClasses}
-          subjectState={state.subjectState}
-          classrooms={state.classrooms}
+          teachers={state.teachers || []}
+          academicYears={state.academicYears || []}
+          allClasses={state.allClasses || []}
+          subjectState={state.subjectState || []}
+          classrooms={state.classrooms || []}
+          userRole={role || ""}
         />
       </Container>
     </LayoutComponent>

@@ -55,6 +55,7 @@ export interface AttendanceViewProps {
   setAttendanceData?: React.Dispatch<React.SetStateAction<AttendanceData[]>>;
   onAttendanceUpdate?: (updatedAttendance: AttendanceData[]) => void;
   fetchAttendanceData?: (scheduleId: number) => Promise<void>;
+  userRole: string;
 }
 
 const AttendanceView: React.FC<AttendanceViewProps> = ({
@@ -70,6 +71,7 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
   setAttendanceData,
   onAttendanceUpdate,
   fetchAttendanceData,
+  userRole,
 }) => {
   const [tabValue, setTabValue] = useState(0);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -187,7 +189,22 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
     setTabValue(newValue);
   };
 
+  // Xác định quyền chỉnh sửa
+  const canEditStudentAttendance = userRole === "admin" || userRole === "teacher";
+  const canEditTeacherAttendance = userRole === "admin"; // Chỉ admin mới được chỉnh sửa điểm danh giáo viên
+
   const handleEditClick = (attendance: AttendanceDataItem) => {
+    // Kiểm tra quyền trước khi cho phép chỉnh sửa
+    if (attendance.userRole === "teacher" && !canEditTeacherAttendance) {
+      alert("Bạn không có quyền chỉnh sửa điểm danh của giáo viên.");
+      return;
+    }
+    
+    if (attendance.userRole === "student" && !canEditStudentAttendance) {
+      alert("Bạn không có quyền chỉnh sửa điểm danh.");
+      return;
+    }
+
     setCurrentAttendance(attendance);
     setEditStatus(attendance.status);
     setEditNote(attendance.note || "");
@@ -195,8 +212,7 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
       scheduleId: attendance.scheduleId,
       userId: attendance.userId,
     });
-    console.log(attendance);
-
+    
     setEditDialogOpen(true);
   };
 
@@ -626,13 +642,19 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
                       </TableCell>
                       <TableCell>{student.note || "-"}</TableCell>
                       <TableCell>
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => handleEditClick(student)}
-                        >
-                          <span className="material-icons">edit</span>
-                        </IconButton>
+                        {canEditStudentAttendance ? (
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleEditClick(student)}
+                          >
+                            <span className="material-icons">edit</span>
+                          </IconButton>
+                        ) : (
+                          <IconButton size="small" disabled>
+                            <span className="material-icons" style={{opacity: 0.5}}>visibility</span>
+                          </IconButton>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
@@ -736,13 +758,19 @@ const AttendanceView: React.FC<AttendanceViewProps> = ({
                     </TableCell>
                     <TableCell>{teacher.note || "-"}</TableCell>
                     <TableCell>
-                      <IconButton
-                        size="small"
-                        color="primary"
-                        onClick={() => handleEditClick(teacher)}
-                      >
-                        <span className="material-icons">edit</span>
-                      </IconButton>
+                      {canEditTeacherAttendance ? (
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => handleEditClick(teacher)}
+                        >
+                          <span className="material-icons">edit</span>
+                        </IconButton>
+                      ) : (
+                        <IconButton size="small" disabled>
+                          <span className="material-icons" style={{opacity: 0.5}}>visibility</span>
+                        </IconButton>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

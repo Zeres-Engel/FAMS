@@ -23,6 +23,11 @@ interface ScheduleEvent {
     dayOfWeek?: string;
     startTime?: string;
     endTime?: string;
+    // Attendance-related fields
+    attendanceStatus?: string;
+    attendanceId?: number;
+    checkIn?: string | null;
+    note?: string;
 }
 export type{
     ScheduleEvent
