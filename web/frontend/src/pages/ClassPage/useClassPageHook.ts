@@ -46,6 +46,14 @@ function useClassPageHook() {
       dispatch(searchUsers({search:userData?.userId}))
     }
   },[dispatch, role, userData?.userId])
+  useEffect(() => {
+    if (classList.length > 0 && !filters && role !== "parent") {
+      const lastClass = classList[classList.length - 1];
+      if (lastClass?.classId) {
+        setFiltersClassPage(lastClass.classId);
+      }
+    }
+  }, [classList, filters, role]);  
   const [userMainData, setUserMainData] = useState<ClassStudent[]>([]);
   const headCellsData: ClassStudentHeadCell[] = [
     {

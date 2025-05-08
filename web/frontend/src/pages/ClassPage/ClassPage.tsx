@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import LayoutComponent from "../../components/Layout/Layout";
 import {
   Box,
@@ -27,7 +27,14 @@ function ClassPage(): React.JSX.Element {
     setSelectedClassId(classId);
     handler.setFiltersClassPage(classId);
   };
-
+  useEffect(() => {
+    if (!selectedClassId && state.classPageList.length > 0) {
+      const lastClass = state.classPageList[state.classPageList.length - 1];
+      if (lastClass?.classId) {
+        setSelectedClassId(lastClass.classId);
+      }
+    }
+  }, [state.classPageList, selectedClassId]);
   return (
     <LayoutComponent pageHeader="Class Page">
       <Box
