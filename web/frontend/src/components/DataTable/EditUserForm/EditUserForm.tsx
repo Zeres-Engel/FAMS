@@ -23,7 +23,7 @@ import {
   FormControl,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import {
   ClassID,
   EditUserForm,
@@ -189,7 +189,21 @@ export default function EditUserModal({
       // Academic year is already set to current
     }
   };
+  const watchParentNames = useWatch({ control, name: "parentNames" });
+  const watchParentPhones = useWatch({ control, name: "parentPhones" });
+  const watchParentEmails = useWatch({ control, name: "parentEmails" });
+  const watchParentCareers = useWatch({ control, name: "parentCareers" });
+  const watchParentGenders = useWatch({ control, name: "parentGenders" });
 
+  const isParentFieldTouched = (index: number) => {
+    return (
+      watchParentNames?.[index] ||
+      watchParentPhones?.[index] ||
+      watchParentEmails?.[index] ||
+      watchParentCareers?.[index] ||
+      watchParentGenders?.[index]
+    );
+  };
   const onSubmit = (data: EditUserForm) => {
     console.log("Submitting user ID:", idUser);
 
@@ -464,7 +478,8 @@ export default function EditUserModal({
                     const selectedDate = new Date(value);
                     const today = new Date();
 
-                    let minAge = 0, maxAge = 0; // Default values
+                    let minAge = 0,
+                      maxAge = 0; // Default values
                     if (userType === "student") {
                       minAge = 14;
                       maxAge = 20;
@@ -761,6 +776,7 @@ export default function EditUserModal({
                 <Typography variant="h6" sx={{ mt: 2, width: "100%" }}>
                   Parent Information
                 </Typography>
+
                 {[0, 1].map(parentIndex => (
                   <Box
                     key={`parent-${parentIndex}-${idUser}`}
@@ -775,7 +791,10 @@ export default function EditUserModal({
                       fullWidth
                       label={`Parent ${parentIndex + 1} Name`}
                       {...register(`parentNames.${parentIndex}` as const, {
-                        required: "Name is required",
+                        validate: value =>
+                          isParentFieldTouched(parentIndex) && !value
+                            ? "Name is required if other fields are filled"
+                            : true,
                         pattern: {
                           value: /^[A-Za-zÀ-ỹ\s\-]+$/,
                           message: "Name must contain only letters and spaces",
@@ -793,7 +812,10 @@ export default function EditUserModal({
                       fullWidth
                       label={`Parent ${parentIndex + 1} Phone`}
                       {...register(`parentPhones.${parentIndex}` as const, {
-                        required: "Phone is required",
+                        validate: value =>
+                          isParentFieldTouched(parentIndex) && !value
+                            ? "Phone is required if other fields are filled"
+                            : true,
                         pattern: {
                           value: /^[0-9]{10,11}$/,
                           message: "Phone must be 10–11 digits",
@@ -813,7 +835,10 @@ export default function EditUserModal({
                       fullWidth
                       label={`Parent ${parentIndex + 1} Email`}
                       {...register(`parentEmails.${parentIndex}` as const, {
-                        required: "Email is required",
+                        validate: value =>
+                          isParentFieldTouched(parentIndex) && !value
+                            ? "Email is required if other fields are filled"
+                            : true,
                         pattern: {
                           value: /^\S+@\S+\.\S+$/,
                           message: "Invalid email format",
@@ -827,7 +852,10 @@ export default function EditUserModal({
                       fullWidth
                       label={`Parent ${parentIndex + 1} Career`}
                       {...register(`parentCareers.${parentIndex}` as const, {
-                        required: "Career is required",
+                        validate: value =>
+                          isParentFieldTouched(parentIndex) && !value
+                            ? "Career is required if other fields are filled"
+                            : true,
                         maxLength: {
                           value: 50,
                           message: "Max 50 characters allowed",
@@ -844,7 +872,12 @@ export default function EditUserModal({
                       <Controller
                         control={control}
                         name={`parentGenders.${parentIndex}` as const}
-                        rules={{ required: "Gender is required" }}
+                        rules={{
+                          validate: value =>
+                            isParentFieldTouched(parentIndex) && !value
+                              ? "Gender is required if other fields are filled"
+                              : true,
+                        }}
                         render={({ field }) => (
                           <>
                             <RadioGroup
