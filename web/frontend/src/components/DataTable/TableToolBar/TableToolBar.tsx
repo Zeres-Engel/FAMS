@@ -566,12 +566,23 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
           </FormControl>
 
           <TextField
-            label="Date"
+            label="Date From"
             type="date"
-            value={filters.date}
-            onChange={e => handleFilterChange("date", e.target.value)}
-            fullWidth={isMobile}
+            required
+            value={filters.dateFrom}
+            onChange={e => handleFilterChange("dateFrom", e.target.value)}
             InputLabelProps={{ shrink: true }}
+            fullWidth={isMobile}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+          />
+          <TextField
+            label="Date To"
+            type="date"
+            required
+            value={filters.dateTo}
+            onChange={e => handleFilterChange("dateTo", e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            fullWidth={isMobile}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
           />
         </>
@@ -776,11 +787,21 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
 
           {/* Date */}
           <TextField
-            label="Date"
+            label="Date From"
             type="date"
             required
-            value={filters.date}
-            onChange={e => handleFilterChange("date", e.target.value)}
+            value={filters.dateFrom}
+            onChange={e => handleFilterChange("dateFrom", e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            fullWidth={isMobile}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+          />
+          <TextField
+            label="Date To"
+            type="date"
+            required
+            value={filters.dateTo}
+            onChange={e => handleFilterChange("dateTo", e.target.value)}
             InputLabelProps={{ shrink: true }}
             fullWidth={isMobile}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
@@ -1070,7 +1091,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
                 Search
               </Button>
 
-              {isTeacher && !isRoleStudent && (
+              {/* {isTeacher && !isRoleStudent && (
                 <Button
                   variant="outlined"
                   color="secondary"
@@ -1080,7 +1101,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
                 >
                   Show My Attendance
                 </Button>
-              )}
+              )} */}
             </>
           </Box>
         </Box>

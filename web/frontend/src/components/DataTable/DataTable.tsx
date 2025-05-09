@@ -523,7 +523,7 @@ export default function DataTable({
                     {isClassManagement && renderClassManagementCells(row)}
                     {isClassManagement && renderActionCell(row)}
                     {isAttendance && renderAttendanceManagementCells(row)}
-                    {isAttendance && isRoleTeacher && renderActionCell(row)}
+                    {/* {isAttendance && isRoleTeacher && renderActionCell(row)} */}
                     {isClassArrangement && renderClassArrangementNewCells(row)}
                     {isNewSemester && renderNewSemesterArrangementNewCells(row)}
                     {isNotifyPage && renderNotifyNewCells(row)}
