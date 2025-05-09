@@ -733,7 +733,7 @@ const ScheduleManagementPage: React.FC = () => {
                   startAccessor="start"
                   endAccessor="end"
                   min={new Date(0, 0, 0, 7, 0)} // 7:00 AM
-                  max={new Date(0, 0, 0, 19, 0)} // 7:00 PM
+                  max={new Date(0, 0, 0, 22, 0)} // 7:00 PM
                   views={["month", "week", "day"]}
                   style={{ height: "100%", width: "100%", overflow: "visible" }}
                   onSelectEvent={handleSelectEvent}
