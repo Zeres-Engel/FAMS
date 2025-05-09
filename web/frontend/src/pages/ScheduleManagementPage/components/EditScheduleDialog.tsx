@@ -13,6 +13,11 @@ import {
   Box,
   Typography,
   SelectChangeEvent,
+  Dialog as ConfirmDialog,
+  DialogTitle as ConfirmDialogTitle,
+  DialogContent as ConfirmDialogContent,
+  DialogContentText,
+  DialogActions as ConfirmDialogActions,
 } from '@mui/material';
 import { ScheduleEvent } from '../../../model/scheduleModels/scheduleModels.model';
 import moment from 'moment';
@@ -31,11 +36,13 @@ interface EditScheduleDialogProps {
   event: ScheduleEvent | null;
   onSave: (updatedEvent: ScheduleEvent) => void;
   onViewAttendance: (scheduleId: number) => void;
+  onDelete: (scheduleId: number) => void;
   teachers: { userId: string; fullName: string }[];
   academicYears: string[];
   allClasses: any[];
   subjectState: any[];
   classrooms: any[];
+  userRole: string;
 }
 
 const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
@@ -44,11 +51,13 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
   event,
   onSave,
   onViewAttendance,
+  onDelete,
   teachers,
   academicYears,
   allClasses,
   subjectState,
   classrooms,
+  userRole,
 }) => {
   const [editedEvent, setEditedEvent] = useState<ScheduleEvent | null>(null);
   const [slotInfo, setSlotInfo] = useState<SlotInfo>({
@@ -58,7 +67,51 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
     isExtraSlot: false
   });
   const [directTeachers, setDirectTeachers] = useState<{ userId: string; fullName: string }[]>(teachers);
-  const [hasApiClassName, setHasApiClassName] = useState(false);
+  
+  // State cho confirm dialog khi xóa
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+  // Xác định quyền dựa trên userRole
+  const isAdmin = userRole === "admin";
+  const isTeacher = userRole === "teacher";
+
+  // Mở confirm dialog khi nhấn nút Delete
+  const handleDeleteClick = () => {
+    setConfirmDeleteOpen(true);
+  };
+
+  // Đóng confirm dialog
+  const handleCloseConfirmDelete = () => {
+    setConfirmDeleteOpen(false);
+  };
+
+  // Xác nhận xóa và gọi API
+  const handleConfirmDelete = () => {
+    if (editedEvent && editedEvent.id) {
+      console.log(`Confirming delete for schedule ID: ${editedEvent.id}`);
+      onDelete(editedEvent.id);
+      setConfirmDeleteOpen(false);
+      onClose(); // Đóng dialog sau khi xác nhận xóa
+    } else {
+      console.error("Cannot delete: Missing schedule ID");
+    }
+  };
+
+  // Tìm slot dựa trên startTime và endTime
+  const findSlotFromTimes = (startTime: string, endTime: string): string => {
+    // Tìm slot tương ứng từ slotConfig thay vì dùng SlotTimeMapping
+    const matchedSlot = slotConfig.find(
+      slot => slot.startTime === startTime && slot.endTime === endTime
+    );
+    
+    // Nếu tìm thấy, trả về số slot
+    if (matchedSlot) {
+      return String(matchedSlot.slotNumber);
+    }
+    
+    // Nếu không tìm thấy, đặt là slot extra (11)
+    return "11";
+  };
 
   useEffect(() => {
     if (event) {
@@ -69,10 +122,28 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
       const teacherId = (event as any).teacherUserId || (event as any).teacherId || event.teacher;
       const classroomId = (event as any).classroomId || (event as any).classroomNumber || event.classroomNumber;
       const sessionDate = (event as any).sessionDate || (event as any).SessionDate || event.scheduleDate;
-      const slotNumber = (event as any).slotId || (event as any).SlotID || event.slotId;
       const startTimeVal = (event as any).startTime || event.customStartTime || "";
       const endTimeVal = (event as any).endTime || event.customEndTime || "";
       const dayOfWeekVal = (event as any).dayOfWeek || "";
+      
+      // Ưu tiên sử dụng slotNumber trực tiếp từ API
+      let slotNumberVal = (event as any).slotNumber;
+      
+      // Nếu không có slotNumber, thử lấy từ slotId
+      if (!slotNumberVal) {
+        const apiSlotId = (event as any).slotId || (event as any).SlotID || event.slotId;
+        slotNumberVal = apiSlotId;
+      }
+      
+      // Nếu vẫn không có, tìm slot dựa trên thời gian
+      if (!slotNumberVal && startTimeVal && endTimeVal) {
+        const matchedSlot = slotConfig.find(
+          slot => slot.startTime === startTimeVal && slot.endTime === endTimeVal
+        );
+        slotNumberVal = matchedSlot?.slotNumber || 11; // 11 là slot extra
+      }
+      
+      console.log(`Resolved slot information: slotNumber=${slotNumberVal}, time=${startTimeVal}-${endTimeVal}`);
       
       // Explicitly check all possible keys for academicYear and classId from API
       let academicYearVal = "";
@@ -95,7 +166,7 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
         academicYearVal,
         classIdVal,
         classNameVal,
-        slotNumber,
+        slotNumberVal,
         dayOfWeekVal,
         startTimeVal,
         endTimeVal
@@ -114,7 +185,7 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
         teacher: teacherId || "",
         classroomNumber: classroomId || "",
         scheduleDate: sessionDate ? new Date(sessionDate) : new Date(),
-        slotId: slotNumber ? String(slotNumber) : "",
+        slotId: String(slotNumberVal),
         customStartTime: startTimeVal,
         customEndTime: endTimeVal,
         className: classNameVal,
@@ -134,22 +205,20 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
           });
       }
       
-      setHasApiClassName(!!classNameVal);
-      
       // Calculate day of week if not provided in API
       const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
       const scheduleDate = sessionDate ? new Date(sessionDate) : new Date();
       const calculatedDayOfWeek = days[scheduleDate.getDay()];
       
       // Find slot details
-      const slotDetails = slotConfig.find(slot => slot.slotNumber === Number(slotNumber));
+      const slotDetails = slotConfig.find(slot => slot.slotNumber === slotNumberVal);
       console.log("Slot details:", slotDetails);
       
       setSlotInfo({
         dayOfWeek: dayOfWeekVal || calculatedDayOfWeek,
         startTime: startTimeVal || (slotDetails?.startTime || ""),
         endTime: endTimeVal || (slotDetails?.endTime || ""),
-        isExtraSlot: String(slotNumber) === "11" || (slotDetails?.isExtra || false)
+        isExtraSlot: slotNumberVal === "11" || (slotDetails?.isExtra || false)
       });
 
       if (subjectIdVal) {
@@ -246,7 +315,9 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Edit Schedule</DialogTitle>
+      <DialogTitle>
+        {isAdmin ? "Edit Schedule" : "Schedule Details"}
+      </DialogTitle>
       <DialogContent dividers>
         <FormControl fullWidth sx={{ mb: 2 }}>
           <InputLabel id="academic-year-select-label">Academic Year</InputLabel>
@@ -274,6 +345,7 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
                   });
               }
             }}
+            disabled={!isAdmin}
           >
             {(() => {
               // Debug output outside of JSX
@@ -321,7 +393,7 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
                 className: getClassNameFromId(e.target.value),
               }))
             }}
-            disabled={!editedEvent?.academicYear}
+            disabled={!isAdmin || !editedEvent?.academicYear}
           >
             {(() => {
               // Debug output outside of JSX
@@ -361,14 +433,6 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
             })()}
           </Select>
         </FormControl>
-
-        {hasApiClassName && editedEvent?.className && (
-          <Box sx={{ mb: 2, p: 1, bgcolor: '#f5f5f5', borderRadius: 1 }}>
-            <Typography variant="body2" color="primary">
-              <strong>Class Name from API:</strong> {editedEvent.className}
-            </Typography>
-          </Box>
-        )}
 
         <FormControl fullWidth sx={{ mb: 2 }}>
           <InputLabel id="subject-select-label">Subject</InputLabel>
@@ -420,6 +484,7 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
           fullWidth
           margin="normal"
           InputLabelProps={{ shrink: true }}
+          disabled={!isAdmin}
         />
 
         <FormControl fullWidth sx={{ mb: 2 }}>
@@ -500,9 +565,9 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
             value={slotInfo.dayOfWeek || ""}
             fullWidth
             margin="dense"
-            disabled
+            disabled={!isAdmin}
             InputProps={{
-              readOnly: true,
+              readOnly: !isAdmin,
               sx: { 
                 backgroundColor: 'white',
                 '&.Mui-disabled': {
@@ -521,10 +586,10 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
               value={slotInfo.startTime || ""}
               fullWidth
               margin="dense"
-              disabled={!slotInfo.isExtraSlot}
+              disabled={!isAdmin || !slotInfo.isExtraSlot}
               type={slotInfo.isExtraSlot ? "time" : "text"}
               InputProps={{
-                readOnly: !slotInfo.isExtraSlot,
+                readOnly: !isAdmin || !slotInfo.isExtraSlot,
                 sx: { 
                   backgroundColor: 'white',
                   '&.Mui-disabled': {
@@ -539,7 +604,7 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
                 format: "24h"
               }}
               onChange={(e) => {
-                if (slotInfo.isExtraSlot && editedEvent) {
+                if (slotInfo.isExtraSlot && editedEvent && isAdmin) {
                   setSlotInfo(prevSlotInfo => ({
                     ...prevSlotInfo,
                     startTime: e.target.value,
@@ -557,10 +622,10 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
               value={slotInfo.endTime || ""}
               fullWidth
               margin="dense"
-              disabled={!slotInfo.isExtraSlot}
+              disabled={!isAdmin || !slotInfo.isExtraSlot}
               type={slotInfo.isExtraSlot ? "time" : "text"}
               InputProps={{
-                readOnly: !slotInfo.isExtraSlot,
+                readOnly: !isAdmin || !slotInfo.isExtraSlot,
                 sx: { 
                   backgroundColor: 'white',
                   '&.Mui-disabled': {
@@ -575,7 +640,7 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
                 format: "24h"
               }}
               onChange={(e) => {
-                if (slotInfo.isExtraSlot && editedEvent) {
+                if (slotInfo.isExtraSlot && editedEvent && isAdmin) {
                   setSlotInfo(prevSlotInfo => ({
                     ...prevSlotInfo,
                     endTime: e.target.value,
@@ -639,36 +704,70 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
             ))}
           </Select>
         </FormControl>
+
+        {/* Hiển thị read-only form nếu là giáo viên */}
+        {!isAdmin && (
+          <Box sx={{ mt: 3, mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+              You are viewing this schedule in read-only mode.
+            </Typography>
+          </Box>
+        )}
       </DialogContent>
       <DialogActions>
-        <Button 
-          onClick={() => {
-            if (editedEvent.slotId === "11" && (!slotInfo.startTime || !slotInfo.endTime)) {
-              alert("Please specify both start and end times for the extra slot");
-              return;
-            }
-            
-            const eventToUpdate = {...editedEvent};
-            if (slotInfo.isExtraSlot) {
-              eventToUpdate.customStartTime = slotInfo.startTime;
-              eventToUpdate.customEndTime = slotInfo.endTime;
-            }
-            
-            if (hasApiClassName && event?.className) {
-              eventToUpdate.className = event.className;
-            } else if (eventToUpdate.classId) {
-              eventToUpdate.className = getClassNameFromId(String(eventToUpdate.classId));
-            }
-            
-            onSave(eventToUpdate);
-          }} 
-          variant="contained"
-        >
-          Save Changes
-        </Button>
+        {/* Nút Delete chỉ hiển thị cho admin */}
+        {isAdmin && (
+          <Button 
+            onClick={handleDeleteClick} 
+            variant="outlined" 
+            color="error"
+            size="medium"
+            sx={{ 
+              marginRight: 'auto',
+              textTransform: 'none',
+              fontWeight: 400,
+              fontSize: '0.875rem'
+            }} 
+          >
+            Delete
+          </Button>
+        )}
+        
+        {/* Nút Save Changes chỉ hiển thị cho admin */}
+        {isAdmin && (
+          <Button 
+            onClick={() => {
+              if (editedEvent.slotId === "11" && (!slotInfo.startTime || !slotInfo.endTime)) {
+                alert("Please specify both start and end times for the extra slot");
+                return;
+              }
+              
+              const eventToUpdate = {...editedEvent};
+              if (slotInfo.isExtraSlot) {
+                eventToUpdate.customStartTime = slotInfo.startTime;
+                eventToUpdate.customEndTime = slotInfo.endTime;
+              }
+              
+              if (eventToUpdate.classId) {
+                eventToUpdate.className = getClassNameFromId(String(eventToUpdate.classId));
+              }
+              
+              onSave(eventToUpdate);
+            }} 
+            variant="contained"
+            size="medium"
+            sx={{ textTransform: 'none', fontWeight: 500 }}
+          >
+            Save Changes
+          </Button>
+        )}
+        
+        {/* Nút View Attendance hiển thị cho cả admin và giáo viên */}
         <Button
           variant="contained"
           color="secondary"
+          size="medium"
+          sx={{ textTransform: 'none', fontWeight: 500 }}
           onClick={() => {
             onClose();
             onViewAttendance(editedEvent.id);
@@ -676,13 +775,73 @@ const EditScheduleDialog: React.FC<EditScheduleDialogProps> = ({
         >
           View Attendance
         </Button>
+        
         <Button
           variant="outlined"
+          size="medium"
+          sx={{ textTransform: 'none', fontWeight: 400 }}
           onClick={onClose}
         >
-          Cancel
+          {isAdmin ? "Cancel" : "Close"}
         </Button>
       </DialogActions>
+
+      {/* Confirm Dialog for Delete - chỉ hiển thị cho admin */}
+      {isAdmin && (
+        <ConfirmDialog
+          open={confirmDeleteOpen}
+          onClose={handleCloseConfirmDelete}
+          maxWidth="xs"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: '8px'
+            }
+          }}
+        >
+          <ConfirmDialogTitle sx={{ 
+            fontSize: '1.1rem', 
+            fontWeight: 500,
+            padding: '16px 24px'
+          }}>
+            Confirm Delete
+          </ConfirmDialogTitle>
+          <ConfirmDialogContent>
+            <DialogContentText sx={{ 
+              fontSize: '0.9rem',
+              color: 'text.primary',
+              lineHeight: 1.5
+            }}>
+              Are you sure you want to delete this schedule? This action cannot be undone.
+              <Box sx={{ mt: 1, opacity: 0.8 }}>
+                <Typography variant="body2" component="span" sx={{ fontWeight: 500 }}>
+                  Note:
+                </Typography>{' '}
+                All attendance logs associated with this schedule will also be deleted.
+              </Box>
+            </DialogContentText>
+          </ConfirmDialogContent>
+          <ConfirmDialogActions sx={{ padding: '16px 24px' }}>
+            <Button 
+              onClick={handleCloseConfirmDelete} 
+              variant="outlined"
+              size="medium"
+              sx={{ textTransform: 'none', fontWeight: 400 }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleConfirmDelete} 
+              variant="contained" 
+              color="error"
+              size="medium"
+              sx={{ textTransform: 'none', fontWeight: 500 }}
+            >
+              Delete
+            </Button>
+          </ConfirmDialogActions>
+        </ConfirmDialog>
+      )}
     </Dialog>
   );
 };

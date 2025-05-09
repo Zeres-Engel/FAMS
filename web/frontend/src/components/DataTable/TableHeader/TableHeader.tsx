@@ -128,7 +128,7 @@ function TableHeader(props: EnhancedTableProps): React.JSX.Element {
         {isAdmin && !isClassArrangement && !isNewSemester && !isRFIDPage && (
           <TableCell align="left">Action</TableCell>
         )}
-        {isTeacher && <TableCell align="left">Action</TableCell>}
+        {/* {isTeacher && <TableCell align="left">Action</TableCell>} */}
       </TableRow>
     </TableHead>
   );

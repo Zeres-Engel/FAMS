@@ -434,7 +434,7 @@ router.get('/all', async (req, res) => {
     
     // User ID filter
     if (userId) {
-      // First need to determine if this is a student or teacher
+      // First need to determine if this is a student, teacher or parent
       const userData = await mongoose.connection.db.collection('UserAccount')
         .findOne({ userId: userId });
       
@@ -448,16 +448,17 @@ router.get('/all', async (req, res) => {
       
       // Handle based on user role
       if (userData.role === 'student' || userData.role === 'Student') {
-        // Get student's class
+        // Get student's classes
         const studentData = await mongoose.connection.db.collection('Student')
           .findOne({ userId: userId });
           
-        if (studentData && studentData.classId) {
-          query.classId = studentData.classId;
+        if (studentData && studentData.classIds && studentData.classIds.length > 0) {
+          // Tìm tất cả lịch của các lớp học sinh đã tham gia
+          query.classId = { $in: studentData.classIds };
         } else {
           return res.status(404).json({
             success: false,
-            message: `No class assigned to student with ID ${userId}`,
+            message: `No classes assigned to student with ID ${userId}`,
             code: 'NO_CLASS_ASSIGNED'
           });
         }
@@ -475,16 +476,71 @@ router.get('/all', async (req, res) => {
             code: 'NO_TEACHER_DATA'
           });
         }
+      } else if (userData.role === 'parent' || userData.role === 'Parent') {
+        // Get parent's ID
+        const parentData = await mongoose.connection.db.collection('Parent')
+          .findOne({ userId: userId });
+          
+        if (!parentData || !parentData.parentId) {
+          return res.status(404).json({
+            success: false,
+            message: `No parent data found for user ID ${userId}`,
+            code: 'NO_PARENT_DATA'
+          });
+        }
+        
+        // Lấy danh sách con qua bảng ParentStudent
+        const parentStudentRelations = await mongoose.connection.db.collection('ParentStudent')
+          .find({ parentId: parentData.parentId })
+          .toArray();
+        
+        if (!parentStudentRelations || parentStudentRelations.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: `No children found for parent with ID ${userId}`,
+            code: 'NO_CHILDREN_FOUND'
+          });
+        }
+        
+        // Lấy danh sách id học sinh
+        const studentIds = parentStudentRelations.map(rel => rel.studentId);
+        
+        // Lấy thông tin các học sinh
+        const students = await mongoose.connection.db.collection('Student')
+          .find({ studentId: { $in: studentIds } })
+          .toArray();
+        
+        // Lấy tất cả lớp của các học sinh
+        const allClassIds = [];
+        students.forEach(student => {
+          if (student.classIds && student.classIds.length > 0) {
+            allClassIds.push(...student.classIds);
+          }
+        });
+        
+        // Loại bỏ các classId trùng nhau
+        const uniqueClassIds = [...new Set(allClassIds)];
+        
+        if (uniqueClassIds.length === 0) {
+          return res.status(404).json({
+            success: false,
+            message: `No classes found for children of parent with ID ${userId}`,
+            code: 'NO_CLASSES_FOUND'
+          });
+        }
+        
+        // Tìm lịch học của tất cả lớp của các con
+        query.classId = { $in: uniqueClassIds };
       }
     }
     
-    // Class ID filter
-    if (classId) {
+    // Class ID filter (nếu không được thiết lập bởi userId)
+    if (classId && !query.classId) {
       query.classId = parseInt(classId);
     }
     
-    // Teacher ID filter
-    if (teacherId) {
+    // Teacher ID filter (nếu không được thiết lập bởi userId)
+    if (teacherId && !query.teacherId) {
       query.teacherId = parseInt(teacherId);
     }
     
@@ -556,31 +612,10 @@ router.get('/all', async (req, res) => {
     // Add additional info from related collections
     const enhancedSchedules = await scheduleService.formatScheduleData(schedules, 'list');
     
-    // Get class details for each schedule
-    const uniqueClassIds = [...new Set(enhancedSchedules.map(schedule => schedule.classId).filter(Boolean))];
-    const classesData = uniqueClassIds.length > 0 ?
-      await mongoose.connection.db.collection('Class')
-        .find({ classId: { $in: uniqueClassIds } })
-        .toArray() : 
-      [];
-      
-    // Create a map of class data for quick lookup
-    const classMap = new Map(classesData.map(cls => [cls.classId, cls]));
-    
-    // Enhance each schedule with class info
-    const finalSchedules = enhancedSchedules.map(schedule => {
-      const classInfo = classMap.get(schedule.classId);
-      if (classInfo) {
-        schedule.className = classInfo.className;
-        schedule.academicYear = classInfo.academicYear;
-      }
-      return schedule;
-    });
-    
     res.json({
       success: true,
-      count: finalSchedules.length,
-      data: finalSchedules,
+      count: enhancedSchedules.length,
+      data: enhancedSchedules,
       query: query
     });
   } catch (error) {
@@ -939,6 +974,66 @@ router.put('/:scheduleId', async (req, res) => {
     if (isActive !== undefined) updateData.isActive = isActive;
     if (customStartTime !== undefined) updateData.customStartTime = customStartTime;
     if (customEndTime !== undefined) updateData.customEndTime = customEndTime;
+    
+    // Validate slotId exists in ScheduleFormat
+    if (slotId !== undefined) {
+      const scheduleFormat = await mongoose.connection.db.collection('ScheduleFormat')
+        .findOne({ slotId: parseInt(slotId) });
+        
+      if (!scheduleFormat) {
+        return res.status(404).json({
+          success: false,
+          message: `Slot with ID ${slotId} not found in ScheduleFormat`,
+          code: 'SLOT_NOT_FOUND'
+        });
+      }
+    }
+    
+    // If custom time and day are provided but slotId is not, try to find matching slot or create new one
+    if (customStartTime && customEndTime && req.body.dayOfWeek && slotId === undefined) {
+      // Check if a slot with these parameters already exists
+      const existingSlot = await mongoose.connection.db.collection('ScheduleFormat')
+        .findOne({ 
+          startTime: customStartTime, 
+          endTime: customEndTime,
+          dayOfWeek: req.body.dayOfWeek
+        });
+      
+      if (existingSlot) {
+        // Use existing slot
+        updateData.slotId = existingSlot.slotId;
+      } else {
+        // Create a new slot
+        // First, find max slotId to generate next one
+        const maxSlotResult = await mongoose.connection.db.collection('ScheduleFormat')
+          .find()
+          .sort({ slotId: -1 })
+          .limit(1)
+          .toArray();
+        
+        const nextSlotId = maxSlotResult.length > 0 ? maxSlotResult[0].slotId + 1 : 1;
+        const nextSlotNumber = maxSlotResult.length > 0 ? maxSlotResult[0].slotNumber + 1 : 1;
+        
+        const newSlot = {
+          slotId: nextSlotId,
+          slotNumber: nextSlotNumber,
+          slotName: `Slot ${nextSlotNumber}`,
+          dayOfWeek: req.body.dayOfWeek,
+          startTime: customStartTime,
+          endTime: customEndTime,
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        // Insert new slot
+        await mongoose.connection.db.collection('ScheduleFormat').insertOne(newSlot);
+        console.log(`Created new slot with ID ${nextSlotId}`);
+        
+        // Use the new slot ID
+        updateData.slotId = nextSlotId;
+      }
+    }
       
     // If session date is provided, update sessionDate and calculate sessionWeek
     if (sessionDate) {
@@ -1060,6 +1155,258 @@ router.delete('/:scheduleId', async (req, res) => {
       success: false,
       message: error.message,
       code: 'SCHEDULE_DELETE_ERROR'
+    });
+  }
+});
+
+// Tạo endpoint mới trong scheduleRoutes.js
+router.get('/my-schedules', async (req, res) => {
+  try {
+    // Lấy token từ header
+    const token = req.headers.authorization ? 
+      req.headers.authorization.split(' ')[1] : null;
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Không tìm thấy token xác thực',
+        code: 'UNAUTHORIZED'
+      });
+    }
+    
+    // Giải mã token
+    const jwt = require('jsonwebtoken');
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
+    } catch (error) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token không hợp lệ hoặc đã hết hạn',
+        code: 'INVALID_TOKEN'
+      });
+    }
+    
+    // Lấy thông tin người dùng từ token
+    const userId = decoded.userId;
+    const userRole = decoded.role;
+    
+    if (!userId || !userRole) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token không chứa đầy đủ thông tin người dùng',
+        code: 'INVALID_TOKEN_DATA'
+      });
+    }
+    
+    // Lấy tham số filter
+    const { fromDate, toDate, weekRange } = req.query;
+    let dateQuery = {};
+    
+    // Xử lý filter theo ngày hoặc tuần
+    if (fromDate || toDate) {
+      dateQuery.SessionDate = {};
+      if (fromDate) dateQuery.SessionDate.$gte = fromDate;
+      if (toDate) dateQuery.SessionDate.$lte = toDate;
+    } else if (weekRange) {
+      const { startDate, endDate } = scheduleService.parseWeekRange(weekRange);
+      if (startDate && endDate) {
+        const startDateStr = startDate.toISOString().split('T')[0];
+        const endDateStr = endDate.toISOString().split('T')[0];
+        dateQuery.$or = [
+          { sessionWeek: `${startDateStr} to ${endDateStr}` },
+          { SessionWeek: `${startDateStr} to ${endDateStr}` },
+          { 
+            $or: [
+              { SessionDate: { $gte: startDateStr, $lte: endDateStr } },
+              { sessionDate: { $gte: startDateStr, $lte: endDateStr } }
+            ]
+          }
+        ];
+      }
+    }
+    
+    let schedules = [];
+    let contextData = { userId, role: userRole };
+    
+    // Xử lý theo từng role
+    if (userRole.toLowerCase() === 'student') {
+      // Lấy thông tin học sinh
+      const student = await mongoose.connection.db.collection('Student')
+        .findOne({ userId: userId });
+        
+      if (!student || !student.classIds || student.classIds.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy thông tin lớp học của học sinh',
+          code: 'NO_CLASS_ASSIGNED'
+        });
+      }
+      
+      // Tạo query để lấy lịch học của tất cả lớp mà học sinh tham gia
+      const classQuery = { 
+        classId: { $in: student.classIds },
+        ...dateQuery
+      };
+      
+      schedules = await mongoose.connection.db.collection('ClassSchedule')
+        .find(classQuery)
+        .sort({ SessionDate: 1, SlotID: 1 })
+        .toArray();
+      
+      contextData.student = student;
+      contextData.classIds = student.classIds;
+      
+    } else if (userRole.toLowerCase() === 'teacher') {
+      // Lấy thông tin giáo viên
+      const teacher = await mongoose.connection.db.collection('Teacher')
+        .findOne({ userId: userId });
+        
+      if (!teacher || !teacher.teacherId) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy thông tin giáo viên',
+          code: 'TEACHER_NOT_FOUND'
+        });
+      }
+      
+      // Tạo query để lấy lịch dạy của giáo viên
+      const teacherQuery = {
+        teacherId: teacher.teacherId,
+        ...dateQuery
+      };
+      
+      schedules = await mongoose.connection.db.collection('ClassSchedule')
+        .find(teacherQuery)
+        .sort({ SessionDate: 1, SlotID: 1 })
+        .toArray();
+      
+      contextData.teacher = teacher;
+      contextData.teacherId = teacher.teacherId;
+      
+    } else if (userRole.toLowerCase() === 'parent') {
+      // Lấy thông tin phụ huynh
+      const parent = await mongoose.connection.db.collection('Parent')
+        .findOne({ userId: userId });
+        
+      if (!parent || !parent.parentId) {
+        return res.status(404).json({
+          success: false, 
+          message: 'Không tìm thấy thông tin phụ huynh',
+          code: 'PARENT_NOT_FOUND'
+        });
+      }
+      
+      // Lấy danh sách con qua bảng ParentStudent
+      const parentStudentRelations = await mongoose.connection.db.collection('ParentStudent')
+        .find({ parentId: parent.parentId })
+        .toArray();
+      
+      if (!parentStudentRelations || parentStudentRelations.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy thông tin học sinh con',
+          code: 'NO_CHILDREN_FOUND'
+        });
+      }
+      
+      // Lấy danh sách id học sinh
+      const studentIds = parentStudentRelations.map(rel => rel.studentId);
+      
+      // Lấy thông tin các học sinh
+      const students = await mongoose.connection.db.collection('Student')
+        .find({ studentId: { $in: studentIds } })
+        .toArray();
+      
+      // Lấy tất cả lớp của các học sinh
+      const allClassIds = [];
+      students.forEach(student => {
+        if (student.classIds && student.classIds.length > 0) {
+          allClassIds.push(...student.classIds);
+        }
+      });
+      
+      // Loại bỏ các classId trùng nhau
+      const uniqueClassIds = [...new Set(allClassIds)];
+      
+      if (uniqueClassIds.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy thông tin lớp học của các con',
+          code: 'NO_CLASSES_FOUND'
+        });
+      }
+      
+      // Tạo query để lấy lịch học của tất cả lớp
+      const classQuery = {
+        classId: { $in: uniqueClassIds },
+        ...dateQuery
+      };
+      
+      schedules = await mongoose.connection.db.collection('ClassSchedule')
+        .find(classQuery)
+        .sort({ SessionDate: 1, SlotID: 1 })
+        .toArray();
+      
+      contextData.parent = parent;
+      contextData.students = students;
+      contextData.classIds = uniqueClassIds;
+      
+    } else if (userRole.toLowerCase() === 'admin') {
+      // Admin có thể xem tất cả lịch, nhưng cần có filter
+      // Nếu không có filter gì, chỉ lấy lịch trong tuần hiện tại
+      if (Object.keys(dateQuery).length === 0) {
+        const currentDate = new Date();
+        const startOfWeek = scheduleService.getStartOfWeek(currentDate);
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(endOfWeek.getDate() + 6);
+        
+        const startDateStr = startOfWeek.toISOString().split('T')[0];
+        const endDateStr = endOfWeek.toISOString().split('T')[0];
+        
+        dateQuery.$or = [
+          { sessionWeek: `${startDateStr} to ${endDateStr}` },
+          { SessionWeek: `${startDateStr} to ${endDateStr}` },
+          { 
+            $or: [
+              { SessionDate: { $gte: startDateStr, $lte: endDateStr } },
+              { sessionDate: { $gte: startDateStr, $lte: endDateStr } }
+            ]
+          }
+        ];
+      }
+      
+      // Lấy lịch học với filter đã xác định
+      schedules = await mongoose.connection.db.collection('ClassSchedule')
+        .find(dateQuery)
+        .sort({ SessionDate: 1, SlotID: 1 })
+        .limit(100) // Giới hạn kết quả cho admin
+        .toArray();
+    } else {
+      return res.status(403).json({
+        success: false,
+        message: 'Role không được hỗ trợ',
+        code: 'UNSUPPORTED_ROLE'
+      });
+    }
+    
+    // Format kết quả với thông tin bổ sung
+    const enhancedSchedules = await scheduleService.formatScheduleData(schedules, 'list');
+    
+    // Trả về kết quả
+    return res.json({
+      success: true,
+      count: enhancedSchedules.length,
+      context: contextData,
+      data: enhancedSchedules
+    });
+    
+  } catch (error) {
+    console.error('Lỗi khi lấy lịch học theo token:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      code: 'SERVER_ERROR'
     });
   }
 });

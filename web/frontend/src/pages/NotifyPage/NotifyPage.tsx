@@ -61,9 +61,11 @@ import {
   People as PeopleIcon,
   Face as FaceIcon,
   SupervisorAccount as TeacherIcon,
-  Group as GroupIcon
+  Group as GroupIcon,
+  AdminPanelSettings as AdminIcon
 } from '@mui/icons-material';
 import axios from "axios";
+import NotifyBar from "../../components/NotifyBar/NotifyBar";
 
 // Alias Grid to avoid TypeScript errors with item prop
 const Grid = MuiGrid;
@@ -92,6 +94,8 @@ function NotifyPage(): React.JSX.Element {
   const [draftMessages, setDraftMessages] = useState<any[]>([]);
   const [sentMessages, setSentMessages] = useState<any[]>([]);
   const [isComposing, setIsComposing] = useState(false);
+  const [showSuccessNotify, setShowSuccessNotify] = useState(false);
+  const [notifyId, setNotifyId] = useState(0);
   const [editingDraft, setEditingDraft] = useState<any>({
     id: '',
     receiver: '',
@@ -103,17 +107,57 @@ function NotifyPage(): React.JSX.Element {
   });
 
   // New states for enhanced receiver selection
-  const [sendMode, setSendMode] = useState('all'); // 'user', 'class', 'student', 'teacher', 'all'
+  const [sendMode, setSendMode] = useState('all'); // 'user', 'class', 'student', 'teacher', 'all', 'admin'
   const [userIds, setUserIds] = useState('');
+  const [studentIds, setStudentIds] = useState('');
+  const [teacherIds, setTeacherIds] = useState('');
   const [academicYears, setAcademicYears] = useState<string[]>([]);
   const [selectedAcademicYear, setSelectedAcademicYear] = useState('');
   const [classOptions, setClassOptions] = useState<{label: string, value: string}[]>([]);
   const [selectedClass, setSelectedClass] = useState<{label: string, value: string} | null>(null);
   const [allClasses, setAllClasses] = useState<ClassData[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // Get current user role from localStorage
+  const getCurrentUserRole = (): string => {
+    const userJson = localStorage.getItem('user');
+    if (userJson) {
+      const user = JSON.parse(userJson);
+      return user.role?.toLowerCase() || 'student';
+    }
+    return 'student'; // Default to student if no role found
+  };
+  
+  const [userRole, setUserRole] = useState<string>(getCurrentUserRole());
 
   const subjectRef = useRef<HTMLInputElement>(null);
   const messageRef = useRef<HTMLTextAreaElement>(null);
+
+  // Add a debouncing mechanism to prevent multiple API calls in short succession
+  const [fetchTimeout, setFetchTimeout] = useState<any>(null);
+  
+  const debouncedFetchNotifications = (page = 1, limit = 10, category = selectedCategory, query = searchTerm) => {
+    // Clear previous timeout if exists
+    if (fetchTimeout) {
+      clearTimeout(fetchTimeout);
+    }
+    
+    // Set a new timeout to delay the API call
+    const timeout = setTimeout(() => {
+      handler.fetchNotifications(page, limit, category, query);
+    }, 300); // 300ms debounce time
+    
+    setFetchTimeout(timeout);
+  };
+  
+  // Cleanup timeout when component unmounts
+  useEffect(() => {
+    return () => {
+      if (fetchTimeout) {
+        clearTimeout(fetchTimeout);
+      }
+    };
+  }, [fetchTimeout]);
 
   // Fetch classes when component mounts
   useEffect(() => {
@@ -169,16 +213,78 @@ function NotifyPage(): React.JSX.Element {
     setSelectedClass(null);
   }, [selectedAcademicYear, allClasses]);
 
+  // Thêm useEffect để tải thông báo khi trang được tải lần đầu
+  useEffect(() => {
+    // Tải thông báo chỉ một lần duy nhất khi component mount
+    debouncedFetchNotifications();
+    
+    // Cleanup khi component unmount
+    return () => {};
+  }, []);
+
+  // Get available send modes based on user role
+  const getRoleBasedSendModes = () => {
+    switch(userRole) {
+      case 'admin':
+        return [
+          { value: 'user', label: 'User', icon: <PersonIcon fontSize="small" sx={{ mr: 0.5 }} /> },
+          { value: 'class', label: 'Class', icon: <SchoolIcon fontSize="small" sx={{ mr: 0.5 }} /> },
+          { value: 'student', label: 'Students', icon: <FaceIcon fontSize="small" sx={{ mr: 0.5 }} /> },
+          { value: 'teacher', label: 'Teachers', icon: <TeacherIcon fontSize="small" sx={{ mr: 0.5 }} /> },
+          { value: 'all', label: 'All Users', icon: <GroupIcon fontSize="small" sx={{ mr: 0.5 }} /> }
+        ];
+      case 'teacher':
+        return [
+          { value: 'class', label: 'Class', icon: <SchoolIcon fontSize="small" sx={{ mr: 0.5 }} /> },
+          { value: 'student', label: 'Students', icon: <FaceIcon fontSize="small" sx={{ mr: 0.5 }} /> },
+          { value: 'admin', label: 'Admin', icon: <AdminIcon fontSize="small" sx={{ mr: 0.5 }} /> }
+        ];
+      case 'student':
+      default:
+        return [
+          { value: 'teacher', label: 'Teachers', icon: <TeacherIcon fontSize="small" sx={{ mr: 0.5 }} /> }
+        ];
+    }
+  };
+
+  // Check if current user role has access to the current send mode
+  useEffect(() => {
+    // Refresh user role on component mount
+    setUserRole(getCurrentUserRole());
+    
+    // Get available send modes for this user role
+    const availableModes = getRoleBasedSendModes().map(mode => mode.value);
+    
+    // If current sendMode is not available for this role, reset to first available option
+    if (!availableModes.includes(sendMode) && availableModes.length > 0) {
+      setSendMode(availableModes[0]);
+    }
+  }, [userRole]);
+
   const handleCategoryClick = (category: string, section = selectedSection) => {
     setSelectedCategory(category);
     setSelectedSection(section);
     
-    if (section === 'received') {
-      // Fetch notifications for received section
-      handler.fetchNotifications();
+    // Clear any selected notification
+    setSelectedNotification(null);
+    setIsComposing(false);
+    
+    if (section === 'sent') {
+      // For Draft category, we use local state, no need for API call
+      if (category === 'draft') {
+        handler.switchViewMode('sent');
+        return;
+      }
+      
+      // Chuyển sang chế độ xem thông báo đã gửi
+      handler.switchViewMode('sent');
+      // Only fetch for sent notifications if needed
+      debouncedFetchNotifications(1, 10, 'sent', searchTerm);
     } else {
-      // For sent section, we use local state
-      // No need to fetch from API
+      // Chuyển sang chế độ xem thông báo đã nhận
+      handler.switchViewMode('received');
+      // Lọc thông báo theo category
+      debouncedFetchNotifications(1, 10, category, searchTerm);
     }
   };
 
@@ -190,18 +296,23 @@ function NotifyPage(): React.JSX.Element {
     }
   };
 
-  const handleViewNotification = (notification: any) => {
+  const handleViewNotification = async (notification: any) => {
     // If we're already composing, save the current draft before viewing
     if (isComposing && editingDraft.id) {
       handleSaveDraftChanges();
     }
     
+    // Gọi API để đánh dấu thông báo đã đọc
+    if (!notification.readStatus) {
+      try {
+        await handler.markAsRead(notification.id);
+      } catch (error) {
+        console.error("Error marking notification as read:", error);
+      }
+    }
+    
     setSelectedNotification(notification);
     setIsComposing(false);
-    
-    if (selectedSection === 'received' && !notification.readStatus) {
-      handler.markAsRead(notification.id);
-    }
   };
 
   const handleCloseNotification = () => {
@@ -242,9 +353,7 @@ function NotifyPage(): React.JSX.Element {
   };
 
   const handleRefresh = () => {
-    if (selectedSection === 'received') {
-      handler.fetchNotifications();
-    }
+    debouncedFetchNotifications(1, 10, selectedCategory, searchTerm);
   };
 
   const handleCreateNewDraft = () => {
@@ -276,9 +385,18 @@ function NotifyPage(): React.JSX.Element {
     setEditingDraft(newDraft);
     setIsComposing(true);
     
-    // Reset send mode to default
-    setSendMode('all');
+    // Get available send modes for this user
+    const availableModes = getRoleBasedSendModes();
+    
+    // Reset send mode to first available option for this user role
+    if (availableModes.length > 0) {
+      setSendMode(availableModes[0].value);
+    }
+    
+    // Reset other form fields
     setUserIds('');
+    setStudentIds('');
+    setTeacherIds('');
     setSelectedClass(null);
     setSelectedAcademicYear(academicYears.length > 0 ? academicYears[0] : '');
   };
@@ -369,69 +487,170 @@ function NotifyPage(): React.JSX.Element {
     }
   };
 
-  const handleSendMessage = () => {
-    // Determine receiver based on send mode
-    let receiver = '';
-    switch (sendMode) {
-      case 'user':
-        receiver = userIds;
-        break;
-      case 'class':
-        receiver = selectedClass ? `class:${selectedClass.value}` : '';
-        break;
-      case 'student':
-        receiver = 'students';
-        break;
-      case 'teacher':
-        receiver = 'teachers';
-        break;
-      case 'all':
-      default:
-        receiver = 'all';
-        break;
+  const handleSendMessage = async () => {
+    // Check if message exists
+    if (!messageRef.current?.value && !editingDraft.message) {
+      alert('Please enter a message');
+      return;
     }
     
+    // Prepare message content
     const message = messageRef.current?.value || editingDraft.message;
+    const subject = 'New Notification'; // Default subject
     
-    // Only send if essential fields are filled
-    if (!receiver || !message) return;
+    setLoading(true);
     
-    // Create a sent message copy for the sent folder
-    const sentMessage = {
-      id: `sent-${Date.now()}`,
-      receiver,
-      message,
-      sendDate: new Date().toISOString(),
-      readStatus: true,
-      senderInfo: { FullName: 'Me' },
-      isSent: true
-    };
-    
-    setSentMessages([sentMessage, ...sentMessages]);
-    
-    // Send the notification through the API
-    handler.createNotification(receiver, message);
-    
-    // Delete the draft if it was saved
-    if (editingDraft.id && !editingDraft.isNew) {
-      handleDeleteDraft(editingDraft.id);
+    try {
+      let response;
+      let sendSuccess = false;
+      
+      // Handle different send modes
+      switch (sendMode) {
+        case 'user':
+          // Send to individual users
+          if (userIds) {
+            const userIdList = userIds.split(',').map(id => id.trim()).filter(id => id);
+            
+            if (userIdList.length === 1) {
+              // Single recipient
+              response = await handler.sendNotificationToUser(
+                userIdList[0],
+                message,
+                subject
+              );
+              sendSuccess = response?.success;
+            } else if (userIdList.length > 1) {
+              // Multiple recipients
+              response = await handler.sendNotificationToUsers(
+                userIdList,
+                message,
+                subject
+              );
+              sendSuccess = response?.success;
+            }
+          } else {
+            // Default to sending to self if no user IDs specified
+            const userJson = localStorage.getItem('user');
+            if (userJson) {
+              const user = JSON.parse(userJson);
+              if (user.userId) {
+                response = await handler.sendNotificationToUser(
+                  user.userId,
+                  message,
+                  subject
+                );
+                sendSuccess = response?.success;
+              }
+            }
+          }
+          break;
+          
+        case 'student':
+          // For teacher role: Send to specific students if IDs provided
+          if (userRole === 'teacher' && studentIds) {
+            const studentIdList = studentIds.split(',').map(id => id.trim()).filter(id => id);
+            
+            if (studentIdList.length >= 1) {
+              response = await handler.sendNotificationToUsers(
+                studentIdList,
+                message,
+                subject
+              );
+              sendSuccess = response?.success;
+            }
+          } else {
+            // Admin role or no specific students: Send to all students
+            response = await handler.sendNotificationToAllStudents(
+              message,
+              subject
+            );
+            sendSuccess = response?.success;
+          }
+          break;
+          
+        case 'teacher':
+          // For student role: Send to specific teachers if IDs provided
+          if (userRole === 'student' && teacherIds) {
+            const teacherIdList = teacherIds.split(',').map(id => id.trim()).filter(id => id);
+            
+            if (teacherIdList.length >= 1) {
+              response = await handler.sendNotificationToUsers(
+                teacherIdList,
+                message,
+                subject
+              );
+              sendSuccess = response?.success;
+            }
+          } else {
+            // Default: Send to all teachers
+            response = await handler.sendNotificationToAllTeachers(
+              message,
+              subject
+            );
+            sendSuccess = response?.success;
+          }
+          break;
+          
+        case 'class':
+          // Send to class
+          if (selectedClass) {
+            response = await handler.sendNotificationToClass(
+              parseInt(selectedClass.value),
+              message,
+              subject
+            );
+            sendSuccess = response?.success;
+          }
+          break;
+          
+        case 'all':
+        default:
+          // Send to all users
+          response = await handler.sendNotificationToAllUsers(
+            message,
+            subject
+          );
+          sendSuccess = response?.success;
+          break;
+      }
+      
+      // Show success message
+      if (sendSuccess) {
+        // Clear form
+        setIsComposing(false);
+        setSelectedNotification(null);
+        
+        // Remove from drafts if it was a draft
+        if (editingDraft.id && editingDraft.id.startsWith('draft-')) {
+          setDraftMessages(draftMessages.filter((draft: any) => draft.id !== editingDraft.id));
+        }
+        
+        // Reset editing draft
+        setEditingDraft({
+          id: '',
+          receiver: '',
+          subject: '',
+          message: '',
+          sendDate: '',
+          isDraft: true,
+          isNew: false
+        });
+        
+        // Show success notification using NotifyBar
+        setNotifyId(prev => prev + 1);
+        setShowSuccessNotify(true);
+        
+        // Refresh notification list
+        debouncedFetchNotifications();
+      } else {
+        alert('Failed to send notification. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error sending notification:', error);
+      alert('An error occurred while sending the notification.');
+    } finally {
+      setLoading(false);
     }
-    
-    // Reset state
-    setSelectedNotification(sentMessage);
-    setIsComposing(false);
-    setEditingDraft({
-      id: '',
-      receiver: '',
-      message: '',
-      sendDate: '',
-      isDraft: true,
-      isNew: false
-    });
-    
-    // Switch to sent section
-    setSelectedSection('sent');
-    setSelectedCategory('sent');
   };
 
   const getReceiverDisplay = (receiver: string) => {
@@ -478,16 +697,63 @@ function NotifyPage(): React.JSX.Element {
   // Determine which list to show based on the selected section and category
   const getCurrentNotificationList = () => {
     if (selectedSection === 'received') {
-      return state.userMainData;
-    } else if (selectedCategory === 'draft') {
-      return draftMessages;
-    } else {
-      return sentMessages;
+      if (selectedCategory === 'unread') {
+        return state.filteredData.filter((item: any) => !item.readStatus);
+      } else if (selectedCategory === 'read') {
+        return state.filteredData.filter((item: any) => item.readStatus);
+      } else {
+        // For "all" category
+        return state.filteredData;
+      }
+    } else if (selectedSection === 'sent') {
+      if (selectedCategory === 'draft') {
+        // For drafts, use the local drafts list
+        return draftMessages;
+      } else {
+        // For sent messages
+        return state.sentNotifications;
+      }
     }
+    
+    // Default case
+    return [];
   };
 
   const currentNotificationList = getCurrentNotificationList();
   
+  // Update delete notification handler to use English
+  const handleDeleteNotification = async () => {
+    // Confirm with user in English
+    if (selectedNotifications.length > 0 && window.confirm('Are you sure you want to delete the selected notifications?')) {
+      try {
+        // Show loading
+        setLoading(true);
+        
+        // Process each selected notification
+        for (const notificationId of selectedNotifications) {
+          // Call API to delete notification
+          const result = await handler.deleteNotification(notificationId);
+          if (!result.success) {
+            console.error(`Could not delete notification ${notificationId}: ${result.error}`);
+          }
+        }
+        
+        // Refresh notification list after deletion
+        debouncedFetchNotifications();
+        
+        // Clear selection
+        setSelectedNotifications([]);
+        
+        // Close notification details if being displayed
+        setSelectedNotification(null);
+      } catch (error) {
+        console.error('Error deleting notifications:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   return (
     <LayoutComponent pageHeader="Notifications">
       <Container maxWidth={false} className="notify-page-container">
@@ -514,20 +780,24 @@ function NotifyPage(): React.JSX.Element {
             
             <Paper elevation={2} className="notify-sidebar">
               <List>
-                {/* Received Notifications Section */}
-                <ListItem>
-                  <Typography variant="h6" className="sidebar-section-title">Received</Typography>
-                </ListItem>
+                {/* Menu toàn cục */}
                 <ListItemButton 
-                  selected={selectedSection === 'received' && selectedCategory === 'all'}
-                  onClick={() => handleCategoryClick('all', 'received')}
+                  selected={selectedCategory === 'all'}
+                  onClick={() => handleCategoryClick('all', 'all')}
                 >
                   <ListItemIcon>
                     <InboxIcon />
                   </ListItemIcon>
                   <ListItemText primary="All" />
-                  <Badge badgeContent={state.totalItems} color="primary" />
+                  <Badge badgeContent={state.unreadCount} color="primary" />
                 </ListItemButton>
+                
+                <Divider sx={{ my: 2 }} />
+                
+                {/* Received Notifications Section */}
+                <ListItem>
+                  <Typography variant="h6" className="sidebar-section-title">Received</Typography>
+                </ListItem>
                 <ListItemButton 
                   selected={selectedSection === 'received' && selectedCategory === 'unread'}
                   onClick={() => handleCategoryClick('unread', 'received')}
@@ -547,15 +817,6 @@ function NotifyPage(): React.JSX.Element {
                   </ListItemIcon>
                   <ListItemText primary="Read" />
                 </ListItemButton>
-                <ListItemButton 
-                  selected={selectedSection === 'received' && selectedCategory === 'archive'}
-                  onClick={() => handleCategoryClick('archive', 'received')}
-                >
-                  <ListItemIcon>
-                    <ArchiveIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Archive" />
-                </ListItemButton>
                 
                 <Divider sx={{ my: 2 }} />
                 
@@ -571,7 +832,6 @@ function NotifyPage(): React.JSX.Element {
                     <SendIcon />
                   </ListItemIcon>
                   <ListItemText primary="Sent" />
-                  <Badge badgeContent={sentMessages.length} color="primary" />
                 </ListItemButton>
                 <ListItemButton 
                   selected={selectedSection === 'sent' && selectedCategory === 'draft'}
@@ -628,6 +888,9 @@ function NotifyPage(): React.JSX.Element {
                         if (selectedSection === 'sent' && selectedCategory === 'draft') {
                           selectedNotifications.forEach((id: string) => handleDeleteDraft(id));
                           setSelectedNotifications([]);
+                        } else {
+                          // Sử dụng hàm xóa thông báo
+                          handleDeleteNotification();
                         }
                       }}
                     >
@@ -714,10 +977,10 @@ function NotifyPage(): React.JSX.Element {
                           {notification.isDraft && (
                             <DraftsIcon color="action" fontSize="small" className="draft-icon" />
                           )}
-                          {notification.isSent && (
+                          {notification.type === 'sent' && !notification.isDraft && (
                             <SendIcon color="primary" fontSize="small" className="sent-icon" />
                           )}
-                          {selectedSection === 'received' && !notification.readStatus && (
+                          {notification.type === 'received' && !notification.readStatus && (
                             <UnreadIcon color="primary" fontSize="small" className="unread-icon" />
                           )}
                         </ListItemIcon>
@@ -728,7 +991,7 @@ function NotifyPage(): React.JSX.Element {
                               className={
                                 notification.isDraft 
                                   ? 'draft-subject' 
-                                  : notification.isSent 
+                                  : notification.type === 'sent'
                                     ? 'sent-subject' 
                                     : notification.readStatus 
                                       ? 'read-subject' 
@@ -745,11 +1008,14 @@ function NotifyPage(): React.JSX.Element {
                             {notification.isDraft && (
                               <Chip size="small" label="Draft" color="default" className="draft-chip" />
                             )}
-                            {notification.isSent && (
+                            {notification.type === 'sent' && !notification.isDraft && (
                               <Chip size="small" label="Sent" color="success" className="sent-chip" />
                             )}
-                            {selectedSection === 'received' && !notification.readStatus && (
+                            {notification.type === 'received' && !notification.readStatus && (
                               <Chip size="small" label="New" color="primary" className="new-chip" />
+                            )}
+                            {notification.type === 'received' && notification.readStatus && (
+                              <Chip size="small" label="Read" color="default" className="received-chip" />
                             )}
                           </Box>
                           <Typography 
@@ -758,7 +1024,9 @@ function NotifyPage(): React.JSX.Element {
                           >
                             {notification.isDraft 
                               ? `To: ${getReceiverDisplay(notification.receiver)} - ${getNotificationPreview(notification.message || '(No content)')}` 
-                              : getNotificationPreview(notification.message)
+                              : notification.type === 'sent'
+                                ? `To: ${notification.receiverInfo?.userId || notification.receiver} - ${getNotificationPreview(notification.message)}`
+                                : getNotificationPreview(notification.message)
                             }
                           </Typography>
                         </Box>
@@ -771,7 +1039,7 @@ function NotifyPage(): React.JSX.Element {
           </Box>
           
           {/* Right Column - Notification Detail or Compose */}
-          {selectedNotification && (
+          {(selectedNotification || isComposing) && (
             <Box sx={{ width: { xs: '100%', md: '50%', lg: '55%' } }} className="notify-detail-container">
               <Paper elevation={2} className="notify-detail">
                 <Box className="detail-header">
@@ -779,16 +1047,16 @@ function NotifyPage(): React.JSX.Element {
                     <Typography variant="h6" className="detail-subject">
                       {isComposing 
                         ? 'New Notification'
-                        : selectedNotification.isDraft 
+                        : selectedNotification?.isDraft 
                           ? `Draft: ${selectedNotification.subject || '(No subject)'}`
-                          : selectedNotification.isSent
+                          : selectedNotification?.isSent
                             ? `Sent: ${selectedNotification.subject || '(No subject)'}`
-                            : `Message from ${selectedNotification.senderInfo?.FullName || `User ${selectedNotification.sender}`}`
+                            : `Message from ${selectedNotification?.senderInfo?.FullName || `User ${selectedNotification?.sender}`}`
                       }
                     </Typography>
                   </Box>
                   <Box className="header-right">
-                    {selectedNotification.isDraft && !isComposing && (
+                    {selectedNotification?.isDraft && !isComposing && (
                       <Tooltip title="Edit Draft">
                         <IconButton onClick={() => handleEditDraft(selectedNotification)}>
                           <EditIcon />
@@ -806,44 +1074,26 @@ function NotifyPage(): React.JSX.Element {
                 <Divider />
                 
                 {isComposing ? (
-                  // Enhanced Compose Interface with Multiple Receiver Options
-                  <Box className="compose-content">
+                  <Box className="compose-content" sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
                     {/* Send Mode Selection */}
-                    <FormControl component="fieldset" sx={{ mb: 2 }}>
-                      <Typography variant="subtitle1" gutterBottom>Send to:</Typography>
+                    <FormControl component="fieldset" sx={{ mb: 3, width: '100%' }}>
+                      <Typography variant="subtitle1" sx={{ mb: 1 }}>Send to:</Typography>
                       <RadioGroup 
                         row 
                         value={sendMode} 
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSendMode(e.target.value)}
+                        onChange={(e) => setSendMode(e.target.value)}
                       >
-                        <FormControlLabel 
-                          value="user" 
-                          control={<Radio />} 
-                          label={<Box sx={{ display: 'flex', alignItems: 'center' }}><PersonIcon fontSize="small" sx={{ mr: 0.5 }} />User</Box>} 
-                        />
-                        <FormControlLabel 
-                          value="class" 
-                          control={<Radio />} 
-                          label={<Box sx={{ display: 'flex', alignItems: 'center' }}><SchoolIcon fontSize="small" sx={{ mr: 0.5 }} />Class</Box>} 
-                        />
-                        <FormControlLabel 
-                          value="student" 
-                          control={<Radio />} 
-                          label={<Box sx={{ display: 'flex', alignItems: 'center' }}><FaceIcon fontSize="small" sx={{ mr: 0.5 }} />All Students</Box>} 
-                        />
-                        <FormControlLabel 
-                          value="teacher" 
-                          control={<Radio />} 
-                          label={<Box sx={{ display: 'flex', alignItems: 'center' }}><TeacherIcon fontSize="small" sx={{ mr: 0.5 }} />All Teachers</Box>} 
-                        />
-                        <FormControlLabel 
-                          value="all" 
-                          control={<Radio />} 
-                          label={<Box sx={{ display: 'flex', alignItems: 'center' }}><GroupIcon fontSize="small" sx={{ mr: 0.5 }} />All Users</Box>} 
-                        />
+                        {getRoleBasedSendModes().map((mode) => (
+                          <FormControlLabel 
+                            key={mode.value}
+                            value={mode.value} 
+                            control={<Radio />} 
+                            label={<Box sx={{ display: 'flex', alignItems: 'center' }}>{mode.icon}{mode.label}</Box>} 
+                          />
+                        ))}
                       </RadioGroup>
                     </FormControl>
-                    
+
                     {/* Dynamic Receiver Input Fields */}
                     {sendMode === 'user' && (
                       <TextField
@@ -852,33 +1102,61 @@ function NotifyPage(): React.JSX.Element {
                         fullWidth
                         variant="outlined"
                         value={userIds}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUserIds(e.target.value)}
+                        onChange={(e) => setUserIds(e.target.value)}
                         placeholder="E.g. user1, user2, user3"
                         helperText="Enter multiple user IDs separated by commas"
+                        sx={{ mb: 2 }}
                       />
                     )}
-                    
+
+                    {sendMode === 'student' && userRole === 'teacher' && (
+                      <TextField
+                        margin="normal"
+                        label="Student IDs (comma-separated)"
+                        fullWidth
+                        variant="outlined"
+                        value={studentIds}
+                        onChange={(e) => setStudentIds(e.target.value)}
+                        placeholder="E.g. student1, student2, student3"
+                        helperText="Enter multiple student IDs separated by commas"
+                        sx={{ mb: 2 }}
+                      />
+                    )}
+
+                    {sendMode === 'teacher' && userRole === 'student' && (
+                      <TextField
+                        margin="normal"
+                        label="Teacher IDs (comma-separated)"
+                        fullWidth
+                        variant="outlined"
+                        value={teacherIds}
+                        onChange={(e) => setTeacherIds(e.target.value)}
+                        placeholder="E.g. teacher1, teacher2, teacher3"
+                        helperText="Enter multiple teacher IDs separated by commas"
+                        sx={{ mb: 2 }}
+                      />
+                    )}
+
                     {sendMode === 'class' && (
-                      <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+                      <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
                         <FormControl sx={{ flex: 1 }}>
                           <InputLabel>Academic Year</InputLabel>
                           <Select
                             value={selectedAcademicYear}
                             label="Academic Year"
-                            onChange={(e: SelectChangeEvent) => setSelectedAcademicYear(e.target.value)}
+                            onChange={(e) => setSelectedAcademicYear(e.target.value)}
                           >
-                            {academicYears.map((year: string) => (
+                            {academicYears.map((year) => (
                               <MenuItem key={year} value={year}>{year}</MenuItem>
                             ))}
                           </Select>
                         </FormControl>
-                        
                         <FormControl sx={{ flex: 1 }}>
                           <InputLabel>Class</InputLabel>
                           <Select
                             label="Class"
                             value={selectedClass?.value || ''}
-                            onChange={(e: SelectChangeEvent) => {
+                            onChange={(e) => {
                               const value = e.target.value;
                               const option = classOptions.find(opt => opt.value === value);
                               setSelectedClass(option || null);
@@ -894,7 +1172,7 @@ function NotifyPage(): React.JSX.Element {
                         </FormControl>
                       </Stack>
                     )}
-                    
+
                     {/* Message Field */}
                     <TextField
                       margin="normal"
@@ -906,33 +1184,55 @@ function NotifyPage(): React.JSX.Element {
                       defaultValue={editingDraft.message}
                       inputRef={messageRef}
                       className="compose-message"
+                      placeholder="Enter your message here..."
+                      sx={{ flex: 1, mb: 3 }}
+                      onChange={(e) => {
+                        // Force re-render on message change to update disabled status of Send button
+                        setEditingDraft({...editingDraft, message: e.target.value});
+                      }}
                     />
-                    
-                    <Box className="compose-actions">
-                      <Button 
-                        onClick={handleSendMessage} 
-                        variant="contained" 
+
+                    {/* Responsive Send button area */}
+                    <Box sx={{ 
+                      display: 'flex', 
+                      justifyContent: 'flex-end',
+                      position: 'sticky',
+                      bottom: '0',
+                      backgroundColor: 'white',
+                      p: 2,
+                      mt: 1,
+                      width: '100%',
+                      boxShadow: '0px -2px 4px rgba(0,0,0,0.1)',
+                      zIndex: 5,
+                      minHeight: '64px', // Ensure minimum height for the button area
+                      maxHeight: '80px'   // Prevent excessive height
+                    }}>
+                      <Button
+                        onClick={handleSendMessage}
+                        variant="contained"
                         color="primary"
                         startIcon={<SendIcon />}
-                        disabled={
-                          (sendMode === 'user' && !userIds) ||
-                          (sendMode === 'class' && !selectedClass) ||
-                          !messageRef.current?.value
-                        }
+                        disabled={!messageRef.current?.value && !editingDraft.message}
+                        size="medium"
+                        sx={{
+                          width: { xs: '100%', sm: 'auto' },
+                          height: { xs: '40px', sm: '36px' },
+                          fontSize: '14px',
+                          px: 2
+                        }}
                       >
                         Send
                       </Button>
                     </Box>
                   </Box>
                 ) : (
-                  // View Message Interface
                   <Box className="detail-content">
                     <Box className="detail-info">
                       <Box className="sender-info">
                         <Avatar className="sender-avatar">
                           {selectedNotification.isDraft 
                             ? 'D'
-                            : selectedNotification.isSent
+                            : selectedNotification.type === 'sent'
                               ? 'S'
                               : selectedNotification.senderInfo?.FullName 
                                 ? selectedNotification.senderInfo.FullName.charAt(0) 
@@ -943,20 +1243,25 @@ function NotifyPage(): React.JSX.Element {
                           <Typography variant="subtitle1" className="sender-name">
                             {selectedNotification.isDraft 
                               ? 'Draft Message'
-                              : selectedNotification.isSent
+                              : selectedNotification.type === 'sent'
                                 ? 'Sent by you'
                                 : selectedNotification.senderInfo?.FullName || `User ${selectedNotification.sender}`
                             }
                           </Typography>
                           <Typography variant="body2" className="send-to">
-                            To: {getReceiverDisplay(selectedNotification.receiver)}
+                            {selectedNotification.type === 'sent' 
+                              ? `To: ${selectedNotification.receiverInfo?.userId || selectedNotification.receiver}` 
+                              : selectedNotification.type === 'received'
+                                ? `From: ${selectedNotification.senderInfo?.userId || selectedNotification.sender}`
+                                : `To: ${getReceiverDisplay(selectedNotification.receiver)}`
+                            }
                           </Typography>
                           <Box className="time-info">
                             <AccessTimeIcon fontSize="small" />
                             <Typography variant="body2">
                               {selectedNotification.isDraft 
                                 ? `Saved on ${formatDate(selectedNotification.sendDate)} at ${formatTime(selectedNotification.sendDate)}`
-                                : selectedNotification.isSent
+                                : selectedNotification.type === 'sent'
                                   ? `Sent on ${formatDate(selectedNotification.sendDate)} at ${formatTime(selectedNotification.sendDate)}`
                                   : `${formatDate(selectedNotification.sendDate)} at ${formatTime(selectedNotification.sendDate)}`
                               }
@@ -978,6 +1283,15 @@ function NotifyPage(): React.JSX.Element {
           )}
         </Box>
       </Container>
+      {showSuccessNotify && (
+        <NotifyBar
+          notifyType="success"
+          notifyContent="Notification has been sent successfully"
+          title="Success"
+          duration={3000}
+          notifyID={notifyId}
+        />
+      )}
     </LayoutComponent>
   );
 }

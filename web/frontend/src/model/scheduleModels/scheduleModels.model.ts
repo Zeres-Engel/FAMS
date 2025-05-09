@@ -12,12 +12,22 @@ interface ScheduleEvent {
     classId?: string;
     scheduleDate?: Date;
     slotId?: string | number;
+    slotNumber?: number;
     academicYear?: string;
     semesterId?: number;
     semesterNumber?: number;
     customStartTime?: string;
     customEndTime?: string;
     className?: string;
+    grade?: number;
+    dayOfWeek?: string;
+    startTime?: string;
+    endTime?: string;
+    // Attendance-related fields
+    attendanceStatus?: string;
+    attendanceId?: number;
+    checkIn?: string | null;
+    note?: string;
 }
 export type{
     ScheduleEvent

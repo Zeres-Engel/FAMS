@@ -53,7 +53,8 @@ function useAttendancePageHook() {
     classId: "",
     teacherName: "",
     status: "",
-    date: "",
+    dateFrom: "",
+    dateTo: "",
     slotNumber: "1",
   });
   const [userMainData, setUserMainData] = useState<AttendanceLog[]>([]);

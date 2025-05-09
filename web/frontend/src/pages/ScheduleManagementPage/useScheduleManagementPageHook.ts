@@ -15,6 +15,7 @@ import axios from "axios";
 import moment from "moment";
 import { useAppSelector } from "../../store/useStoreHook";
 import { fetchClassesByUserId } from "../../store/slices/classByIdSlice";
+import axiosInstance from "../../services/axiosInstance";
 
 // Cấu hình axios để tự động follow redirects
 axios.defaults.maxRedirects = 5;
@@ -110,7 +111,7 @@ function useScheduleManagementPageHook() {
   });
   const handleSearch = () => {
     const params: any = {
-      userId: "",
+      userId: userData?.userId || "",
       fromDate: "",
       toDate: "",
     };
@@ -123,6 +124,11 @@ function useScheduleManagementPageHook() {
     // Thêm subjectId nếu có
     if (filters.subjectId) {
       params.subjectId = filters.subjectId;
+    }
+    
+    // Thêm studentId nếu đang lọc theo sinh viên
+    if (filters.studentId) {
+      params.studentId = filters.studentId;
     }
     
     dispatch(fetchSchedules(params));
@@ -168,6 +174,7 @@ function useScheduleManagementPageHook() {
   const loading = useSelector((state: RootState) => state.schedule.loading);
   const error = useSelector((state: RootState) => state.schedule.error);
   const [events, setEvents] = useState<ScheduleEvent[]>([]);
+  const [userAttendanceData, setUserAttendanceData] = useState<any[]>([]);
   const subjectState = useSelector(
     (state: RootState) => state.subject.subjects
   );
@@ -177,6 +184,42 @@ function useScheduleManagementPageHook() {
       dispatch(fetchSubjects() as any);
     }
   }, [dispatch, subjectState]);
+
+  // Load user attendance data when userData changes
+  useEffect(() => {
+    if (userData?.userId) {
+      const loadUserAttendance = async () => {
+        const attendance = await fetchUserAttendance(userData.userId);
+        setUserAttendanceData(attendance || []);
+      };
+      loadUserAttendance();
+    }
+  }, [userData?.userId]);
+
+  // Map attendance status to schedule events
+  const addAttendanceToEvents = (events: ScheduleEvent[], attendanceData: any[]) => {
+    if (!attendanceData || attendanceData.length === 0) {
+      return events;
+    }
+
+    return events.map(event => {
+      // Find matching attendance record for this schedule
+      const attendanceRecord = attendanceData.find(record => 
+        record.scheduleId === event.id
+      );
+
+      if (attendanceRecord) {
+        return {
+          ...event,
+          attendanceStatus: attendanceRecord.status,
+          attendanceId: attendanceRecord.attendanceId,
+          checkIn: attendanceRecord.checkIn,
+          note: attendanceRecord.note
+        };
+      }
+      return event;
+    });
+  };
 
   // Fetch classes from API
   const fetchClassesFromAPI = async () => {
@@ -281,36 +324,16 @@ function useScheduleManagementPageHook() {
     fetchSubjectsFromAPI();
     fetchTeachersFromAPI();
     
-    // Sử dụng dữ liệu academicYears từ allClasses nếu có
-    if (allClasses.length > 0 && academicYears.length === 0) {
-      // Lấy và cập nhật academicYears từ allClasses hiện có
-      const years = getUniqueAcademicYears(allClasses);
-      if (years.length > 0) {
-        setAcademicYears(years);
-        setSelectedAcademicYear(years[0]);
-      }
-    } 
-    // Chỉ tạo năm học mặc định nếu không có dữ liệu từ API
-    else if (academicYears.length === 0) {
-      const currentYear = new Date().getFullYear();
-      const defaultYears = [
-        `${currentYear-1}-${currentYear}`,
-        `${currentYear}-${currentYear+1}`, 
-        `${currentYear+1}-${currentYear+2}`
-      ];
-      
-      setAcademicYears(defaultYears);
-      setSelectedAcademicYear(defaultYears[1]); // Năm hiện tại làm mặc định
+    // Chỉ gọi fetchSchedules khi userData đã có
+    if (userData?.userId) {
+      const params: any = {
+        userId: userData.userId, // Không cần || "" vì đã kiểm tra
+        fromDate: "",
+        toDate: "",
+      };
+      dispatch(fetchSchedules(params));
     }
-    
-    // Load lịch học khi component được mount
-    const params: any = {
-      userId: "",
-      fromDate: "",
-      toDate: "",
-    };
-    dispatch(fetchSchedules(params));
-  }, []);
+  }, [userData?.userId, dispatch]);
 
   // Filter class options based on selected academic year
   const classOptions = userData?.role !== "student" ? allClasses
@@ -338,37 +361,70 @@ function useScheduleManagementPageHook() {
   ];
 
   function combineDateAndTime(dateString: string, timeString: string): Date {
+    if (!dateString || !timeString) {
+      console.error("Invalid dateString or timeString:", { dateString, timeString });
+      return new Date(); // Trả về ngày hiện tại nếu dữ liệu không hợp lệ
+    }
+  
     const localDate = new Date(dateString);
     const [hours, minutes] = timeString.split(":").map(Number);
-
+  
+    if (isNaN(hours) || isNaN(minutes)) {
+      console.error("Invalid time format:", timeString);
+      return new Date(); // Trả về ngày hiện tại nếu định dạng thời gian không hợp lệ
+    }
+  
     localDate.setHours(hours);
     localDate.setMinutes(minutes);
     localDate.setSeconds(0);
     localDate.setMilliseconds(0);
-
+  
     return new Date(localDate);
   }
 
   useEffect(() => {
     if (schedules.length) {
-      const mappedEvents: ScheduleEvent[] = schedules.map((item: Schedule) => ({
-        id: Number(item.scheduleId),
-        title: item.topic || `${item.subjectName} - slot ${item.SlotID}`,
-        start: combineDateAndTime(item.sessionDate, item.startTime),
-        end: combineDateAndTime(item.sessionDate, item.endTime),
-        subjectName: item.subjectName || "",
-        subject: item.subjectName || "",
-        teacher: item.teacherUserId || "",
-        classroomNumber: item.classroomNumber,
-        classroomId: item.classroomId,
-        subjectId: item.subjectId,
-        academicYear: item.academicYear,
-        classId: item.classId.toString(),
-        className: item.className,
-      }));
-      setEvents(mappedEvents);
+      const mappedEvents: ScheduleEvent[] = schedules.map((item: Schedule) => {
+        const start = combineDateAndTime(item.sessionDate, item.startTime || "00:00");
+        const end = combineDateAndTime(item.sessionDate, item.endTime || "00:00");
+  
+        // In dữ liệu response từ API để debug
+        console.log("API Schedule data:", {
+          id: item.scheduleId,
+          slotNumber: item.slotNumber,
+          slotId: item.SlotID,
+          startTime: item.startTime,
+          endTime: item.endTime,
+        });
+  
+        return {
+          id: Number(item.scheduleId),
+          title: item.topic || `${item.subjectName} - slot ${item.slotNumber || item.SlotID}`,
+          start,
+          end,
+          subjectName: item.subjectName || "",
+          subject: item.subjectName || "",
+          teacher: item.teacherUserId || "",
+          classroomNumber: item.classroomNumber,
+          classroomId: item.classroomId,
+          subjectId: item.subjectId,
+          academicYear: item.academicYear,
+          classId: item.classId.toString(),
+          className: item.className,
+          slotNumber: item.slotNumber, // Sử dụng trực tiếp slotNumber từ API
+          slotId: item.slotNumber ? String(item.slotNumber) : String(item.SlotID), // Sử dụng slotNumber nếu có, nếu không dùng SlotID
+          customStartTime: item.startTime,
+          customEndTime: item.endTime,
+        };
+      });
+      
+      console.log("Mapped events from API:", mappedEvents);
+      
+      // Add attendance data to events
+      const eventsWithAttendance = addAttendanceToEvents(mappedEvents, userAttendanceData);
+      setEvents(eventsWithAttendance);
     }
-  }, [schedules]);
+  }, [schedules, userAttendanceData]);
 
   const handleSelectEvent = (event: ScheduleEvent = defaultEvent) => {
     console.log(event);
@@ -526,20 +582,21 @@ function useScheduleManagementPageHook() {
         subjectId: newEvent.subjectId,
         classroomId: newEvent.classroomNumber,
         teacherUserId: newEvent.teacher,
-        topic: newEvent.title || `Buổi học ${newEvent.slotId || ''}`,
+        topic: newEvent.title || `Buổi học ${newEvent.slotNumber || newEvent.slotId || ''}`,
         sessionDate: moment(selectedDate).format("YYYY-MM-DD"),
         dayOfWeek: dayOfWeek,
-        slotNumber: newEvent.slotId || 1,
+        slotNumber: newEvent.slotNumber || Number(newEvent.slotId) || 1, // Ưu tiên slotNumber, nhưng cũng có thể lấy từ slotId
         startTime: startTime,
         endTime: endTime
       };
       
       // Log the time values for debugging
-      console.log("Time values:", {
-        providedStart: newEvent.customStartTime,
-        providedEnd: newEvent.customEndTime,
-        usedStart: scheduleData.startTime,
-        usedEnd: scheduleData.endTime
+      console.log("Time values for API request:", {
+        slotNumber: scheduleData.slotNumber,
+        providedStartTime: newEvent.customStartTime,
+        providedEndTime: newEvent.customEndTime,
+        usedStartTime: scheduleData.startTime,
+        usedEndTime: scheduleData.endTime
       });
       
       console.log("Sending data to API:", scheduleData);
@@ -941,6 +998,32 @@ function useScheduleManagementPageHook() {
     }
   };
 
+  // Sửa hàm fetchUserAttendance để sử dụng API attendance mới
+  const fetchUserAttendance = async (userId: string) => {
+    try {
+      // Sử dụng API attendance với userId và các filter giống AttendancePage
+      const response = await axiosInstance.get(
+        `/attendance`, {
+          params: {
+            userId,
+            page: 1,
+            limit: 330
+          }
+        }
+      );
+
+      if (response.data.success) {
+        console.log("User attendance data:", response.data.data);
+        return response.data.data;
+      }
+      console.error("Failed to fetch user attendance:", response.data.message);
+      return [];
+    } catch (error) {
+      console.error("Error fetching user attendance:", error);
+      return [];
+    }
+  };
+
   return {
     state: {
       eventShow,
@@ -980,6 +1063,7 @@ function useScheduleManagementPageHook() {
       generateAttendanceLogs,
       fetchClassesByAcademicYear,
       fetchSlotDetails,
+      fetchUserAttendance,
     },
   };
 }
