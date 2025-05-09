@@ -26,6 +26,7 @@ import moment from "moment";
 import LayoutComponent from "../../components/Layout/Layout";
 import useSchedulePageHook from "./useSchedulePageHook";
 import axios from "axios";
+import { Fullscreen, FullscreenExit } from '@mui/icons-material';
 
 const localizer = momentLocalizer(moment);
 const SchedulePage: React.FC = () => {
@@ -51,6 +52,14 @@ const SchedulePage: React.FC = () => {
     const year = currentYear + i;
     academicYears.push(`${year}-${year + 1}`);
   }
+  
+  // State for fullscreen
+  const [isFullScreen, setIsFullScreen] = useState(false);
+
+  const calendarStyle = {
+    height: isFullScreen ? '90vh' : 600,
+    width: "100%"
+  };
   
   // Handle submit for schedule arrangement
   const handleArrangeScheduleSubmit = async () => {
@@ -106,7 +115,14 @@ const SchedulePage: React.FC = () => {
         style={{ padding: "16px" }}
         className="schedulePage-Container"
       >
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={isFullScreen ? <FullscreenExit /> : <Fullscreen />}
+            onClick={() => setIsFullScreen(!isFullScreen)}
+          >
+            {isFullScreen ? 'Exit Fullscreen' : 'Fullscreen'}
+          </Button>
           <Button
             variant="contained"
             color="primary"
@@ -133,7 +149,7 @@ const SchedulePage: React.FC = () => {
                 startAccessor="start"
                 endAccessor="end"
                 views={["month", "week", "day"]}
-                style={{ height: 600, width: "100%" }}
+                style={calendarStyle}
                 onSelectEvent={handler.handleSelectEvent}
                 onView={(newView) => {
                   handler.handleSetNewView(newView)
@@ -141,6 +157,9 @@ const SchedulePage: React.FC = () => {
                 onNavigate={(newDate)=>{
                   handler.handleSetNewViewDate(newDate)
                 }}
+                min={new Date(0, 0, 0, 0, 0, 0)}
+                max={new Date(0, 0, 0, 23, 59, 59)}
+                scrollToTime={new Date(0, 0, 0, 7, 0, 0)}
               />
             </Paper>
           </Box>
