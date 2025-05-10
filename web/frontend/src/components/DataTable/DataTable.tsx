@@ -410,9 +410,11 @@ export default function DataTable({
         />
       </TableCell>
       <TableCell align="left">{row.userId || "none"}</TableCell>
-      {(isRoleTeacher || isRoleStudent) && (
+      <TableCell align="left">{row.subject || "none"}</TableCell>
+      <TableCell align="left">{row.slotNumber || "none"}</TableCell>
+      {/* {(isRoleTeacher || isRoleStudent) && (
         <TableCell align="left">{row?.fullName || "none"}</TableCell>
-      )}
+      )} */}
       <TableCell align="left">{row.checkin || "none"}</TableCell>
       <TableCell align="left">{row?.note || "none"}</TableCell>
       <TableCell align="left">{row.status}</TableCell>

@@ -41,8 +41,10 @@ function useAttendancePageHook() {
       checkin: e.checkIn,
       status: e.status,
       checkinFace: e.checkInFace,
-      fullName: e.studentName,
-      note:e.note
+      fullName: role === 'teacher' ? e.teacherName : e.studentName,
+      note:e.note,
+      subject: e.subjectName,
+      slotNumber:e.slotNumber
     })
   );
   console.log(attendanceMainData);
@@ -108,11 +110,23 @@ function useAttendancePageHook() {
       label: "User Id",
     },
     {
-      id: "fullName",
+      id: "subject",
       numeric: false,
       disablePadding: false,
-      label: "Full Name",
+      label: "Subject",
     },
+    {
+      id: "slotNumber",
+      numeric: false,
+      disablePadding: false,
+      label: "Slot",
+    },
+    // {
+    //   id: "fullName",
+    //   numeric: false,
+    //   disablePadding: false,
+    //   label: "Full Name",
+    // },
     {
       id: "checkin",
       numeric: false,

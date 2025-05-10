@@ -31,8 +31,10 @@ function useAttendanceManagementPageHook() {
       face: e.avatar,
       checkin: e.checkIn,
       status: e.status,
-      note:e.note,
+      note: e.note,
       checkinFace: e.checkInFace,
+      subject: e.subjectName,
+      slotNumber: e.slotNumber,
     })
   );
   const classList = useSelector((state: RootState) => state.class.allClasses);
@@ -98,6 +100,18 @@ function useAttendanceManagementPageHook() {
       numeric: false,
       disablePadding: false,
       label: "User Id",
+    },
+    {
+      id: "subject",
+      numeric: false,
+      disablePadding: false,
+      label: "Subject",
+    },
+    {
+      id: "slotNumber",
+      numeric: false,
+      disablePadding: false,
+      label: "Slot",
     },
     {
       id: "checkin",

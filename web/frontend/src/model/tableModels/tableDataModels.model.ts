@@ -47,6 +47,8 @@ interface AttendanceLog {
   role?: string;
   fullName?: string;
   note?: string;
+  subject?:string;
+  slotNumber?:string;
 }
 interface ClassPageList {
   classId: number;

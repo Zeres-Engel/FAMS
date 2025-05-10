@@ -16,6 +16,8 @@ export interface AttendanceResponse {
   status: string;
   studentName?: string;
   teacherName?: string;
+  subjectName?:string;
+  slotNumber?:string;
 }
 
 // State interface
