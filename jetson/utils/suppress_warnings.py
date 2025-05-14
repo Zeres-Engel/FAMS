@@ -1,24 +1,26 @@
-import warnings
-import logging
+import torch
+import gc
 
-def suppress_warnings():
-    """Suppress common warnings in the application"""
-    # Suppress specific warning categories
-    warnings.filterwarnings("ignore", category=FutureWarning)
-    warnings.filterwarnings("ignore", category=UserWarning)
-    
-    # Suppress timm import warnings
-    warnings.filterwarnings(
-        "ignore",
-        message="Importing from timm.models.layers is deprecated"
-    )
-    
-    # Suppress CUDA provider warnings
-    warnings.filterwarnings(
-        "ignore",
-        message="Specified provider 'CUDAExecutionProvider' is not in available provider names"
-    )
-    
-    # Set logging level for specific modules
-    logging.getLogger("torch.hub").setLevel(logging.ERROR)
-    logging.getLogger("timm").setLevel(logging.ERROR)
+def setup_gpu():
+    """Setup GPU for optimal performance"""
+    if torch.cuda.is_available():
+        # Empty CUDA cache
+        torch.cuda.empty_cache()
+        
+        # Run garbage collector
+        gc.collect()
+        
+        # Set CUDA device
+        torch.cuda.set_device(0)
+        
+        # Enable cuDNN autotuner
+        torch.backends.cudnn.benchmark = True
+        
+        # Use TF32 for better performance on Ampere GPUs
+        torch.backends.cuda.matmul.allow_tf32 = True
+        torch.backends.cudnn.allow_tf32 = True
+        
+        print(f"GPU setup complete. Using: {torch.cuda.get_device_name(0)}")
+        print(f"Available GPU memory: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.2f} GB")
+    else:
+        print("No GPU available") 

@@ -100,4 +100,3 @@ def trans_points(pts, M):
         return trans_points2d(pts, M)
     else:
         return trans_points3d(pts, M)
-

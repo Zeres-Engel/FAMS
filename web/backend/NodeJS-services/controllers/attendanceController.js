@@ -1,8 +1,14 @@
 const Attendance = require('../database/models/Attendance');
 const ClassSession = require('../database/models/ClassSession');
 const Student = require('../database/models/Student');
-const User = require('../database/models/User');
+const UserAccount = require('../database/models/UserAccount');
 const moment = require('moment');
+const ClassSchedule = require('../database/models/ClassSchedule');
+const mongoose = require('mongoose');
+const AttendanceLog = require('../database/models/AttendanceLog');
+const RFID = require('../database/models/RFID');
+const User = require('../database/models/User');
+const Class = require('../database/models/Class');
 
 /**
  * @desc    Lấy điểm danh theo buổi học
@@ -49,7 +55,7 @@ exports.getAttendanceBySession = async (req, res) => {
     const formattedAttendance = [];
     
     for (const student of studentsInClass) {
-      const user = await User.findOne({ userId: student.userId });
+      const user = await UserAccount.findOne({ userId: student.userId });
       const attendance = attendanceList.find(a => a.userId === student.userId) || {
         status: 'Absent',
         checkIn: null
@@ -249,7 +255,7 @@ exports.getClassAttendanceByDate = async (req, res) => {
       
       // Kiểm tra xem giáo viên có dạy lớp này hoặc là GVCN
       const isHomeroomTeacher = classInfo.homeroomTeacherId === teacher.teacherId;
-      const teachesClass = await Schedule.findOne({ 
+      const teachesClass = await ClassSchedule.findOne({
         classId: parseInt(classId),
         teacherId: teacher.teacherId
       });
@@ -411,6 +417,330 @@ exports.recordAttendance = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Record attendance from RFID device (Jetson Nano)
+ * @route   POST /api/attendance/record
+ * @access  Private
+ */
+exports.recordAttendance = async (req, res) => {
+  try {
+    const { 
+      rfidId, 
+      userId, 
+      checkIn,
+      timestamp, 
+      deviceId, 
+      location, 
+      classroomId,
+      status,
+      faceVerified, 
+      verificationScore, 
+      antiSpoofingResult,
+      faceImage
+    } = req.body;
+
+    // Validate required data
+    if (!rfidId) {
+      return res.status(400).json({
+        success: false,
+        message: 'RFID ID is required',
+        code: 'MISSING_RFID'
+      });
+    }
+
+    // Verify RFID exists
+    const rfidRecord = await RFID.findOne({ RFID_ID: rfidId });
+    if (!rfidRecord) {
+      return res.status(404).json({
+        success: false,
+        message: `RFID with ID ${rfidId} not found`,
+        code: 'RFID_NOT_FOUND'
+      });
+    }
+
+    // Verify user exists if userId is provided, otherwise get from RFID record
+    const targetUserId = userId || rfidRecord.UserID;
+    const user = await User.findOne({ userId: targetUserId });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: `User with ID ${targetUserId} not found`,
+        code: 'USER_NOT_FOUND'
+      });
+    }
+
+    // Get current time if checkIn not provided
+    const checkInTime = checkIn ? new Date(checkIn) : new Date();
+    
+    // Use provided status or default to "present"
+    const attendanceStatus = status || "present";
+
+    // Create new attendance record
+    const attendanceLog = new AttendanceLog({
+      userId: user.userId,
+      rfidId: rfidId,
+      timestamp: timestamp ? new Date(timestamp) : checkInTime,
+      checkIn: checkInTime,
+      deviceId: deviceId || 'jetson-nano-001',
+      location: location || 'Main Entrance',
+      classroomId: classroomId || 1, // Default to classroom 1 if not provided
+      verificationMethod: faceVerified ? 'rfid+face' : 'rfid',
+      verificationScore: verificationScore || 0,
+      antiSpoofingResult: antiSpoofingResult || false,
+      status: attendanceStatus
+    });
+
+    // Save face image if provided
+    if (faceImage) {
+      // Convert base64 to buffer if needed
+      if (typeof faceImage === 'string' && faceImage.startsWith('data:image')) {
+        const base64Data = faceImage.split(',')[1];
+        attendanceLog.faceImage = Buffer.from(base64Data, 'base64');
+      } else if (typeof faceImage === 'string') {
+        attendanceLog.faceImage = Buffer.from(faceImage, 'base64');
+      } else if (Buffer.isBuffer(faceImage)) {
+        attendanceLog.faceImage = faceImage;
+      }
+    }
+
+    // Save attendance log
+    await attendanceLog.save();
+
+    // If user is a student, check for current class schedule
+    if (user.role.toLowerCase() === 'student') {
+      // Get current day of week and time
+      const checkInDate = new Date(checkInTime);
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const currentDay = dayNames[checkInDate.getDay()];
+      const currentTime = `${checkInDate.getHours().toString().padStart(2, '0')}:${checkInDate.getMinutes().toString().padStart(2, '0')}`;
+
+      // Get student record to find classId
+      const student = await Student.findOne({ studentId: user.studentId });
+
+      if (student && student.classId) {
+        // Find class to get schedules
+        const classRecord = await Class.findOne({ classId: student.classId });
+        
+        if (classRecord) {
+          // Find active class schedule for this time
+          const activeSchedule = await ClassSchedule.findOne({
+            classId: student.classId,
+            dayOfWeek: currentDay,
+            $and: [
+              { startTime: { $lte: currentTime } },
+              { endTime: { $gte: currentTime } }
+            ],
+            status: 'scheduled'
+          });
+
+          if (activeSchedule) {
+            // Update attendance log with class session info
+            attendanceLog.classId = student.classId;
+            attendanceLog.scheduleId = activeSchedule._id;
+            await attendanceLog.save();
+
+            // Log details for debugging
+            console.log(`Attendance recorded for class session: ${activeSchedule._id}`);
+          }
+        }
+      }
+    }
+
+    // Send response with user details
+    return res.status(201).json({
+      success: true,
+      message: 'Attendance recorded successfully',
+      data: {
+        attendanceId: attendanceLog._id,
+        userId: user.userId,
+        userName: user.username || user.userId,
+        userRole: user.role,
+        checkIn: attendanceLog.checkIn,
+        status: attendanceLog.status,
+        verificationMethod: attendanceLog.verificationMethod
+      },
+      code: 'ATTENDANCE_RECORDED'
+    });
+  } catch (error) {
+    console.error('Error recording attendance:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error recording attendance',
+      error: error.message,
+      code: 'ATTENDANCE_ERROR'
+    });
+  }
+};
+
+/**
+ * @desc    Get attendance logs
+ * @route   GET /api/attendance
+ * @access  Private/Admin
+ */
+exports.getAttendanceLogs = async (req, res) => {
+  try {
+    // Extract query parameters for filtering
+    const { userId, rfidId, fromDate, toDate, status, page = 1, limit = 10 } = req.query;
+    
+    // Build query based on filters
+    const query = {};
+    
+    if (userId) query.userId = userId;
+    if (rfidId) query.rfidId = rfidId;
+    if (status) query.status = status;
+    
+    // Date range filter
+    if (fromDate || toDate) {
+      query.checkIn = {};
+      if (fromDate) query.checkIn.$gte = new Date(fromDate);
+      if (toDate) query.checkIn.$lte = new Date(toDate);
+    }
+    
+    // Calculate pagination values
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    // Get attendance logs with pagination
+    const logs = await AttendanceLog.find(query)
+      .sort({ checkIn: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .populate({
+        path: 'user', 
+        select: 'userId username email role'
+      });
+    
+    // Get total count for pagination
+    const total = await AttendanceLog.countDocuments(query);
+    
+    return res.status(200).json({
+      success: true,
+      count: logs.length,
+      data: logs,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Error getting attendance logs:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error retrieving attendance logs',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Get attendance by user ID
+ * @route   GET /api/attendance/user/:userId
+ * @access  Private
+ */
+exports.getUserAttendance = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { fromDate, toDate, status, page = 1, limit = 10 } = req.query;
+    
+    // Verify user exists
+    const user = await User.findOne({ userId });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: `User with ID ${userId} not found`,
+        code: 'USER_NOT_FOUND'
+      });
+    }
+    
+    // Build query
+    const query = { userId };
+    
+    if (status) query.status = status;
+    
+    // Date range filter
+    if (fromDate || toDate) {
+      query.checkIn = {};
+      if (fromDate) query.checkIn.$gte = new Date(fromDate);
+      if (toDate) query.checkIn.$lte = new Date(toDate);
+    }
+    
+    // Calculate pagination values
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    // Get attendance logs with pagination
+    const logs = await AttendanceLog.find(query)
+      .sort({ checkIn: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+    
+    // Get total count for pagination
+    const total = await AttendanceLog.countDocuments(query);
+    
+    // Calculate attendance statistics
+    const stats = {
+      total: total,
+      present: await AttendanceLog.countDocuments({ ...query, status: 'present' }),
+      late: await AttendanceLog.countDocuments({ ...query, status: 'late' }),
+      absent: await AttendanceLog.countDocuments({ ...query, status: 'absent' })
+    };
+    
+    return res.status(200).json({
+      success: true,
+      count: logs.length,
+      data: logs,
+      stats: stats,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Error getting user attendance:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error retrieving user attendance',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc    Delete attendance log
+ * @route   DELETE /api/attendance/:id
+ * @access  Private/Admin
+ */
+exports.deleteAttendanceLog = async (req, res) => {
+  try {
+    const log = await AttendanceLog.findById(req.params.id);
+    
+    if (!log) {
+      return res.status(404).json({
+        success: false,
+        message: 'Attendance log not found',
+        code: 'LOG_NOT_FOUND'
+      });
+    }
+    
+    await log.deleteOne();
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Attendance log deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting attendance log:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error deleting attendance log',
+      error: error.message
     });
   }
 }; 

@@ -310,246 +310,212 @@ def format_date(date_obj):
     if not date_obj:
         return ""
     if isinstance(date_obj, str):
-        try:
-            date_obj = datetime.fromisoformat(date_obj.replace('Z', '+00:00'))
-        except:
-            return date_obj
-    
-    try:
-        return date_obj.strftime("%d/%m/%Y")
-    except:
-        return str(date_obj)
+        return date_obj
+    return date_obj.strftime("%d/%m/%Y")
 
 
-def export_semester_schedules(db, semester_doc, output_dir="src/data/schedules"):
-    """
-    Export schedules for a specific semester using aggregation for better performance
+def write_class_schedule(csvfile, entries, db):
+    """Write class schedule to CSV file"""
+    writer = csv.writer(csvfile)
+    writer.writerow([
+        'Tuần', 'Ngày', 'Thứ', 'Tiết', 'Giáo viên', 'Môn học', 'Phòng'
+    ])
     
-    Args:
-        db: MongoDB database connection
-        semester_doc: Semester document
-        output_dir: Output directory
-        
-    Returns:
-        tuple: (teacher_count, class_count)
-    """
-    semester_id = semester_doc.get('semesterId')
-    semester_name = semester_doc.get('semesterName', 'Unknown')
+    # Sort entries by week, day, time
+    entries.sort(key=lambda e: (
+        e.get('weekNumber', 0),
+        e.get('dayNumber', 0),
+        e.get('startTime', '')
+    ))
     
-    print(f"[INFO] Exporting schedules for semester {semester_name} (ID: {semester_id})")
-    
-    # Create semester directory
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    
-    # Efficient aggregation to get all schedule data at once
-    schedule_pipeline = [
-        {
-            '$match': {'semesterId': semester_id}
-        },
-        {
-            '$lookup': {
-                'from': 'Teacher',
-                'localField': 'teacherId',
-                'foreignField': 'teacherId',
-                'as': 'teacher'
-            }
-        },
-        {
-            '$lookup': {
-                'from': 'Class',
-                'localField': 'classId',
-                'foreignField': 'ClassID',
-                'as': 'class'
-            }
-        },
-        {
-            '$lookup': {
-                'from': 'Subject',
-                'localField': 'subjectId',
-                'foreignField': 'subjectId',
-                'as': 'subject'
-            }
-        },
-        {
-            '$lookup': {
-                'from': 'Classroom',
-                'localField': 'classroomId',
-                'foreignField': 'classroomId',
-                'as': 'classroom'
-            }
-        },
-        {
-            '$project': {
-                'classScheduleId': 1,
-                'weekNumber': 1,
-                'dayNumber': 1,
-                'sessionDate': 1,
-                'sessionWeek': 1,
-                'dayOfWeek': 1,
-                'startTime': 1,
-                'endTime': 1,
-                'teacherId': 1,
-                'classId': 1,
-                'subjectId': 1,
-                'classroomId': 1,
-                'topic': 1,
-                'teacherName': {
-                    '$concat': [
-                        {'$ifNull': [{'$arrayElemAt': ['$teacher.firstName', 0]}, '']}, 
-                        ' ', 
-                        {'$ifNull': [{'$arrayElemAt': ['$teacher.lastName', 0]}, '']}
-                    ]
-                },
-                'className': {'$ifNull': [{'$arrayElemAt': ['$class.ClassName', 0]}, '']},
-                'subjectName': {'$ifNull': [{'$arrayElemAt': ['$subject.subjectName', 0]}, '']},
-                'roomName': {'$ifNull': [{'$arrayElemAt': ['$classroom.roomName', 0]}, '']},
-            }
+    for entry in entries:
+        # Map day of week to Vietnamese
+        day_map = {
+            "Monday": "Thứ Hai",
+            "Tuesday": "Thứ Ba",
+            "Wednesday": "Thứ Tư", 
+            "Thursday": "Thứ Năm",
+            "Friday": "Thứ Sáu",
+            "Saturday": "Thứ Bảy",
+            "Sunday": "Chủ Nhật"
         }
-    ]
-    
-    schedules = list(db.ClassSchedule.aggregate(schedule_pipeline))
-    print(f"[INFO] Found {len(schedules)} schedule entries")
-    
-    if not schedules:
-        print(f"[WARNING] No schedules found for semester {semester_name}")
-        return 0, 0
-    
-    # Group by teacher
-    teacher_schedules = {}
-    for entry in schedules:
-        teacher_id = entry.get('teacherId')
-        if not teacher_id:
-            continue
-            
-        if teacher_id not in teacher_schedules:
-            teacher_schedules[teacher_id] = {
-                'name': entry.get('teacherName', f'Teacher_{teacher_id}'),
-                'entries': []
-            }
         
-        teacher_schedules[teacher_id]['entries'].append(entry)
+        day_of_week = day_map.get(entry.get('dayOfWeek', ''), entry.get('dayOfWeek', ''))
+        time_slot = f"{entry.get('startTime', '')} - {entry.get('endTime', '')}"
+        
+        # Get teacher name
+        teacher_name = ""
+        teacher_info = db.Teacher.find_one({"teacherId": entry.get('teacherId')})
+        if teacher_info:
+            first_name = teacher_info.get('firstName', '')
+            last_name = teacher_info.get('lastName', '')
+            teacher_name = f"{first_name} {last_name}".strip()
+            
+        # Get subject name
+        subject_name = ""
+        subject_info = db.Subject.find_one({"subjectId": entry.get('subjectId')})
+        if subject_info:
+            subject_name = subject_info.get('subjectName', '')
+        
+        writer.writerow([
+            entry.get('sessionWeek', f"Tuần {entry.get('weekNumber', '')}"),
+            format_date(entry.get('sessionDate')),
+            day_of_week,
+            time_slot,
+            teacher_name,
+            subject_name,
+            entry.get('roomName', '')
+        ])
+
+
+def write_teacher_schedule(csvfile, entries, db):
+    """Write teacher schedule to CSV file"""
+    writer = csv.writer(csvfile)
+    writer.writerow([
+        'Tuần', 'Ngày', 'Thứ', 'Tiết', 'Lớp', 'Môn học', 'Phòng'
+    ])
+    
+    # Sort entries by week, day, time
+    entries.sort(key=lambda e: (
+        e.get('weekNumber', 0),
+        e.get('dayNumber', 0),
+        e.get('startTime', '')
+    ))
+    
+    for entry in entries:
+        # Map day of week to Vietnamese
+        day_map = {
+            "Monday": "Thứ Hai",
+            "Tuesday": "Thứ Ba",
+            "Wednesday": "Thứ Tư", 
+            "Thursday": "Thứ Năm",
+            "Friday": "Thứ Sáu",
+            "Saturday": "Thứ Bảy",
+            "Sunday": "Chủ Nhật"
+        }
+        
+        day_of_week = day_map.get(entry.get('dayOfWeek', ''), entry.get('dayOfWeek', ''))
+        time_slot = f"{entry.get('startTime', '')} - {entry.get('endTime', '')}"
+        
+        # Get class name
+        class_name = ""
+        class_info = db.Class.find_one({"classId": entry.get('classId')})
+        if class_info:
+            class_name = class_info.get('className', '')
+            
+        # Get subject name
+        subject_name = ""
+        subject_info = db.Subject.find_one({"subjectId": entry.get('subjectId')})
+        if subject_info:
+            subject_name = subject_info.get('subjectName', '')
+        
+        writer.writerow([
+            entry.get('sessionWeek', f"Tuần {entry.get('weekNumber', '')}"),
+            format_date(entry.get('sessionDate')),
+            day_of_week,
+            time_slot,
+            class_name,
+            subject_name,
+            entry.get('roomName', '')
+        ])
+
+
+def export_semester_schedules(db, semester, output_dir="src/data/schedules"):
+    """
+    Export all schedules for a semester to CSV files
+    - Export by class
+    - Export by teacher
+    """
+    print(f"[EXPORT] Exporting schedules for semester {semester.get('semesterName', 'Unknown')}...")
+    print(f"[INFO] Exporting schedules for semester {semester.get('semesterName', 'Unknown')} (ID: {semester.get('semesterId', None)})")
+    
+    # Create output directory if it doesn't exist
+    try:
+        os.makedirs(output_dir, exist_ok=True)
+    except PermissionError:
+        print(f"[WARNING] Permission denied when creating directory {output_dir}. Using /tmp/schedules instead.")
+        output_dir = "/tmp/schedules"
+        os.makedirs(output_dir, exist_ok=True)
+    
+    # Get all schedule entries for this semester
+    schedule_entries = list(db.ClassSchedule.find({
+        "semesterId": semester.get("semesterId"),
+        "isActive": True
+    }))
+    print(f"[INFO] Found {len(schedule_entries)} schedule entries")
     
     # Group by class
     class_schedules = {}
-    for entry in schedules:
-        class_id = entry.get('classId')
-        if not class_id:
-            continue
-            
+    for entry in schedule_entries:
+        class_id = entry.get("classId")
         if class_id not in class_schedules:
-            class_schedules[class_id] = {
-                'name': entry.get('className', f'Class_{class_id}'),
-                'entries': []
-            }
-        
-        class_schedules[class_id]['entries'].append(entry)
+            class_schedules[class_id] = []
+        class_schedules[class_id].append(entry)
     
-    # Export teacher schedules
-    teacher_count = 0
-    for teacher_id, data in teacher_schedules.items():
-        teacher_name = data['name']
-        entries = data['entries']
-        
-        # Sort entries by week, day, time
-        entries.sort(key=lambda e: (
-            e.get('weekNumber', 0),
-            e.get('dayNumber', 0),
-            e.get('startTime', '')
-        ))
-        
-        # Create safe filename
-        safe_name = teacher_name.replace(' ', '_').replace('/', '_')
-        filename = os.path.join(output_dir, f"teacher_{teacher_id}_{safe_name}.csv")
-        
-        # Write CSV
-        with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow([
-                'Tuần', 'Ngày', 'Thứ', 'Tiết', 'Lớp', 'Môn học', 'Phòng'
-            ])
-            
-            for entry in entries:
-                # Map day of week to Vietnamese
-                day_map = {
-                    "Monday": "Thứ Hai",
-                    "Tuesday": "Thứ Ba",
-                    "Wednesday": "Thứ Tư", 
-                    "Thursday": "Thứ Năm",
-                    "Friday": "Thứ Sáu",
-                    "Saturday": "Thứ Bảy",
-                    "Sunday": "Chủ Nhật"
-                }
-                
-                day_of_week = day_map.get(entry.get('dayOfWeek', ''), entry.get('dayOfWeek', ''))
-                time_slot = f"{entry.get('startTime', '')} - {entry.get('endTime', '')}"
-                
-                writer.writerow([
-                    entry.get('sessionWeek', f"Tuần {entry.get('weekNumber', '')}"),
-                    format_date(entry.get('sessionDate')),
-                    day_of_week,
-                    time_slot,
-                    entry.get('className', ''),
-                    entry.get('subjectName', ''),
-                    entry.get('roomName', '')
-                ])
-        
-        teacher_count += 1
-        print(f"  - Exported schedule for {teacher_name} ({len(entries)} entries)")
+    # Group by teacher
+    teacher_schedules = {}
+    for entry in schedule_entries:
+        teacher_id = entry.get("teacherId")
+        if teacher_id not in teacher_schedules:
+            teacher_schedules[teacher_id] = []
+        teacher_schedules[teacher_id].append(entry)
     
-    # Export class schedules
-    class_count = 0
-    for class_id, data in class_schedules.items():
-        class_name = data['name']
-        entries = data['entries']
-        
-        # Sort entries by week, day, time
-        entries.sort(key=lambda e: (
-            e.get('weekNumber', 0),
-            e.get('dayNumber', 0),
-            e.get('startTime', '')
-        ))
-        
-        # Create safe filename
-        safe_name = class_name.replace(' ', '_').replace('/', '_')
-        filename = os.path.join(output_dir, f"class_{class_id}_{safe_name}.csv")
-        
-        # Write CSV
-        with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow([
-                'Tuần', 'Ngày', 'Thứ', 'Tiết', 'Giáo viên', 'Môn học', 'Phòng'
-            ])
-            
-            for entry in entries:
-                # Map day of week to Vietnamese
-                day_map = {
-                    "Monday": "Thứ Hai",
-                    "Tuesday": "Thứ Ba",
-                    "Wednesday": "Thứ Tư", 
-                    "Thursday": "Thứ Năm",
-                    "Friday": "Thứ Sáu",
-                    "Saturday": "Thứ Bảy",
-                    "Sunday": "Chủ Nhật"
-                }
-                
-                day_of_week = day_map.get(entry.get('dayOfWeek', ''), entry.get('dayOfWeek', ''))
-                time_slot = f"{entry.get('startTime', '')} - {entry.get('endTime', '')}"
-                
-                writer.writerow([
-                    entry.get('sessionWeek', f"Tuần {entry.get('weekNumber', '')}"),
-                    format_date(entry.get('sessionDate')),
-                    day_of_week,
-                    time_slot,
-                    entry.get('teacherName', ''),
-                    entry.get('subjectName', ''),
-                    entry.get('roomName', '')
-                ])
-        
-        class_count += 1
-        print(f"  - Exported schedule for {class_name} ({len(entries)} entries)")
+    # Count of exported files
+    exported_teacher_count = 0
+    exported_class_count = 0
     
-    return teacher_count, class_count
+    # Export each class schedule
+    for class_id, entries in class_schedules.items():
+        class_info = db.Class.find_one({"classId": class_id})
+        filename = f"{output_dir}/class_{class_id}_{class_info.get('className', '')}.csv"
+        try:
+            with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
+                # Write class schedule
+                write_class_schedule(csvfile, entries, db)
+            print(f"[INFO] Exported class schedule to {filename}")
+            exported_class_count += 1
+        except PermissionError as e:
+            # Try alternative directory if permission denied
+            alt_filename = f"/tmp/class_{class_id}_{class_info.get('className', '')}.csv"
+            try:
+                with open(alt_filename, 'w', newline='', encoding='utf-8') as csvfile:
+                    write_class_schedule(csvfile, entries, db)
+                print(f"[INFO] Exported class schedule to alternative location: {alt_filename}")
+                exported_class_count += 1
+            except Exception as e2:
+                print(f"[ERROR] Failed to export class schedule to alternative location: {str(e2)}")
+        except Exception as e:
+            print(f"[ERROR] Failed to export class schedule to {filename}: {str(e)}")
+    
+    # Export each teacher schedule
+    for teacher_id, entries in teacher_schedules.items():
+        teacher_info = db.Teacher.find_one({"teacherId": teacher_id})
+        if teacher_info:
+            first_name = teacher_info.get('firstName', '')
+            last_name = teacher_info.get('lastName', '')
+            filename = f"{output_dir}/teacher_{teacher_id}_{first_name}_{last_name}.csv"
+            try:
+                with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
+                    # Write teacher schedule
+                    write_teacher_schedule(csvfile, entries, db)
+                print(f"[INFO] Exported teacher schedule to {filename}")
+                exported_teacher_count += 1
+            except PermissionError as e:
+                # Try alternative directory if permission denied
+                alt_filename = f"/tmp/teacher_{teacher_id}_{first_name}_{last_name}.csv"
+                try:
+                    with open(alt_filename, 'w', newline='', encoding='utf-8') as csvfile:
+                        write_teacher_schedule(csvfile, entries, db)
+                    print(f"[INFO] Exported teacher schedule to alternative location: {alt_filename}")
+                    exported_teacher_count += 1
+                except Exception as e2:
+                    print(f"[ERROR] Failed to export teacher schedule to alternative location: {str(e2)}")
+            except Exception as e:
+                print(f"[ERROR] Failed to export teacher schedule to {filename}: {str(e)}")
+        else:
+            print(f"[WARNING] Teacher information not found for ID: {teacher_id}")
+    
+    return exported_teacher_count, exported_class_count
 
 
 def export_all_schedules(db, output_base_dir="exports"):
@@ -566,8 +532,13 @@ def export_all_schedules(db, output_base_dir="exports"):
     print("[INFO] Exporting all schedules...")
     
     # Create output directory
-    if not os.path.exists(output_base_dir):
-        os.makedirs(output_base_dir)
+    try:
+        if not os.path.exists(output_base_dir):
+            os.makedirs(output_base_dir)
+    except PermissionError:
+        print(f"[WARNING] Permission denied when creating directory {output_base_dir}. Using /tmp/schedules instead.")
+        output_base_dir = "/tmp/schedules"
+        os.makedirs(output_base_dir, exist_ok=True)
     
     # Get batch info with aggregation
     batch_pipeline = [
@@ -575,19 +546,18 @@ def export_all_schedules(db, output_base_dir="exports"):
             '$lookup': {
                 'from': 'Batch',
                 'localField': 'batchId',
-                'foreignField': 'BatchID',
+                'foreignField': 'batchId',
                 'as': 'batch'
             }
         },
         {
             '$project': {
-                'semesterId': 1,
                 'semesterName': 1,
                 'batchId': 1,
                 'startDate': 1,
                 'endDate': 1,
                 'curriculumId': 1,
-                'batchName': {'$ifNull': [{'$arrayElemAt': ['$batch.batchName', 0]}, '']}
+                'batch': {'$arrayElemAt': ['$batch', 0]}
             }
         }
     ]
@@ -600,19 +570,24 @@ def export_all_schedules(db, output_base_dir="exports"):
     
     # Process each semester
     for semester in semesters:
-        semester_id = semester.get('semesterId')
         semester_name = semester.get('semesterName', 'Unknown')
         batch_id = semester.get('batchId')
-        batch_name = semester.get('batchName') or f'Batch_{batch_id}'
+        batch_name = semester.get('batch', {}).get('batchName') or f'Batch_{batch_id}'
         
         # Create organized output directory
-        semester_dir = os.path.join(output_base_dir, f"{batch_name}_{semester_name}")
+        try:
+            semester_dir = os.path.join(output_base_dir, f"{batch_name}_{semester_name}")
+            os.makedirs(semester_dir, exist_ok=True)
+        except PermissionError:
+            print(f"[WARNING] Permission denied for directory {semester_dir}. Using alternative.")
+            semester_dir = os.path.join("/tmp/schedules", f"{batch_name}_{semester_name}")
+            os.makedirs(semester_dir, exist_ok=True)
         
         # Export schedules for this semester
-        teachers, classes = export_semester_schedules(db, semester, semester_dir)
+        teacher_count, class_count = export_semester_schedules(db, semester, semester_dir)
         
-        total_teachers += teachers
-        total_classes += classes
+        total_teachers += teacher_count
+        total_classes += class_count
     
     print(f"\n[COMPLETED] Exported schedules for {total_teachers} teachers and {total_classes} classes")
     return total_teachers, total_classes
@@ -623,7 +598,7 @@ if __name__ == "__main__":
     import sys
     sys.path.append('.')  # Add current directory to path
     
-    from src.db import connect_to_mongodb
+    from .db import connect_to_mongodb
     
     print("[INFO] Connecting to MongoDB...")
     client = connect_to_mongodb()

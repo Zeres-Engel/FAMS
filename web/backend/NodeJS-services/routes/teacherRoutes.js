@@ -1,84 +1,105 @@
 const express = require('express');
 const router = express.Router();
-const { models } = require('../database');
 const { protect } = require('../middleware/authMiddleware');
+const { searchTeachers } = require('../controllers/teacherSearchController');
 
-// Get all teachers
-router.get('/', async (req, res) => {
-  try {
-    const teachers = await models.Teacher.find().sort({ teacherId: 1 });
-    res.json({ success: true, count: teachers.length, data: teachers });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
+/**
+ * @route   GET /api/teachers/search
+ * @desc    Search teachers with minimal info (userId and name)
+ * @access  Public - no authentication required
+ */
+router.get('/search', searchTeachers);
 
-// Get teacher by ID
-router.get('/:id', async (req, res) => {
+/**
+ * @route   GET /api/teachers/userid-to-teacherid/:userId
+ * @desc    Convert a teacher's userId to teacherId
+ * @access  Public - no authentication required
+ */
+router.get('/userid-to-teacherid/:userId', async (req, res) => {
   try {
-    const teacher = await models.Teacher.findOne({ teacherId: req.params.id });
-    
-    if (!teacher) {
-      return res.status(404).json({ success: false, error: 'Teacher not found' });
+    const { userId } = req.params;
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'UserId is required',
+        code: 'MISSING_USERID'
+      });
     }
     
-    // Get user data
-    const user = await models.User.findOne({ userId: teacher.userId });
+    // Tìm giáo viên theo userId
+    const Teacher = require('../database/models/Teacher');
+    const teacher = await Teacher.findOne({ userId });
     
-    // Get assigned classes
-    const classes = await models.Class.find({ homeroomTeacherId: teacher.teacherId });
+    if (!teacher) {
+      return res.status(404).json({
+        success: false,
+        message: `Teacher with userId ${userId} not found`,
+        code: 'TEACHER_NOT_FOUND'
+      });
+    }
     
-    res.json({ 
-      success: true, 
+    return res.json({
+      success: true,
       data: {
-        ...teacher.toObject(),
-        user: user ? {
-          name: user.name,
-          email: user.email,
-          role: user.role
-        } : null,
-        classes: classes || []
+        userId: teacher.userId,
+        teacherId: teacher.teacherId,
+        fullName: teacher.fullName
       }
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Error converting userId to teacherId:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      code: 'SERVER_ERROR'
+    });
   }
 });
 
-// Get teacher's schedule
-router.get('/:id/schedule', async (req, res) => {
-  try {
-    const teacher = await models.Teacher.findOne({ teacherId: req.params.id });
-    
-    if (!teacher) {
-      return res.status(404).json({ success: false, error: 'Teacher not found' });
-    }
-    
-    // Get teacher's schedule
-    const schedules = await models.Schedule.find({ teacherId: teacher.teacherId }).sort({ dayOfWeek: 1, startTime: 1 });
-    
-    // Enhance schedule with class, subject and classroom information
-    const enhancedSchedules = await Promise.all(schedules.map(async (schedule) => {
-      const subject = await models.Subject.findOne({ subjectId: schedule.subjectId });
-      const classroom = await models.Classroom.findOne({ classroomId: schedule.classroomId });
-      const cls = await models.Class.findOne({ classId: schedule.classId });
-      
-      return {
-        ...schedule.toObject(),
-        subject: subject ? subject.name : 'Unknown Subject',
-        classroom: classroom ? classroom.roomNumber : 'Unknown Classroom',
-        className: cls ? cls.className : 'Unknown Class'
-      };
-    }));
-    
-    res.json({ 
-      success: true, 
-      count: enhancedSchedules.length,
-      data: enhancedSchedules
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
+/**
+ * Deprecated Routes - Redirects to User API
+ * These routes have been deprecated and will be removed in future versions.
+ * Please use the User API instead.
+ */
+
+// Redirect all GET requests to User API (except our new search endpoint)
+router.get('/:path([^search].*)?', (req, res) => {
+  res.status(301).json({
+    success: false,
+    message: 'This API endpoint is deprecated. Please use /api/users with appropriate filters instead.',
+    code: 'DEPRECATED_API',
+    suggestion: 'Use /api/users with role=teacher filter'
+  });
+});
+
+// Redirect all POST requests to User API
+router.post('/*', (req, res) => {
+  res.status(301).json({
+    success: false,
+    message: 'This API endpoint is deprecated. Please use /api/users/create with role=teacher instead.',
+    code: 'DEPRECATED_API',
+    suggestion: 'Use /api/users/create with role=teacher'
+  });
+});
+
+// Redirect all PUT requests to User API
+router.put('/:id', (req, res) => {
+  res.status(301).json({
+    success: false,
+    message: 'This API endpoint is deprecated. Please use /api/users/update/:userId instead.',
+    code: 'DEPRECATED_API',
+    suggestion: 'Use /api/users/update/:userId with PUT method for unified updates across all roles'
+  });
+});
+
+// Redirect all DELETE requests to User API
+router.delete('/:id', (req, res) => {
+  res.status(301).json({
+    success: false,
+    message: 'This API endpoint is deprecated. Please use /api/users/:id instead.',
+    code: 'DEPRECATED_API',
+    suggestion: 'Use /api/users/:id with DELETE method'
+  });
 });
 
 module.exports = router; 

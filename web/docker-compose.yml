@@ -42,7 +42,6 @@ services:
       - REFRESH_TOKEN_SECRET=your_refresh_token_secret_key_change_this_in_production
     volumes:
       - ./backend/Python-services:/app
-      - /app/data
     command: python -m uvicorn src.api.app:app --host 0.0.0.0 --port 3000 --reload
     networks:
       - app-network
@@ -59,8 +58,8 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=development
-      - REACT_APP_API_URL=http://localhost:3002/api
-      - REACT_APP_PYTHON_API_URL=http://localhost:3001/api
+      - REACT_APP_API_URL=/api
+      - REACT_APP_PYTHON_API_URL=/api-python
       - WATCHPACK_POLLING=true
       - CHOKIDAR_USEPOLLING=true
       - WDS_SOCKET_PORT=0

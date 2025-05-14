@@ -1,42 +1,52 @@
 const mongoose = require('mongoose');
 const { COLLECTIONS } = require('../constants');
 
+/**
+ * Class Schema
+ * Represents a class in the system
+ */
 const ClassSchema = new mongoose.Schema({
   classId: {
     type: Number,
     required: true,
-    unique: true
+    unique: true,
+    auto: true
+  },
+  homeroomTeacherId: {
+    type: String,
+    ref: 'UserAccount'
   },
   className: {
     type: String,
     required: true
   },
-  homeroomTeacherId: {
+  grade: {
     type: Number,
-    ref: 'Teacher'
+    required: true
   },
-  BatchID: {
-    type: Number,
-    ref: 'Batch'
+  academicYear: {
+    type: String,
+    required: true
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, {
+  timestamps: true,
+  versionKey: false,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
+
+// Thêm compound index để đảm bảo className là unique trong cùng một năm học
+ClassSchema.index({ className: 1, academicYear: 1 }, { unique: true });
 
 // Virtual for getting homeroom teacher info
 ClassSchema.virtual('homeroomTeacher', {
   ref: 'Teacher',
   localField: 'homeroomTeacherId',
-  foreignField: 'teacherId',
-  justOne: true
-});
-
-// Virtual for getting batch info
-ClassSchema.virtual('batch', {
-  ref: 'Batch',
-  localField: 'BatchID',
-  foreignField: 'batchId',
+  foreignField: 'userId',
   justOne: true
 });
 
@@ -44,12 +54,13 @@ ClassSchema.virtual('batch', {
 ClassSchema.virtual('students', {
   ref: 'Student',
   localField: 'classId',
-  foreignField: 'classId'
+  foreignField: 'classIds',
+  justOne: false
 });
 
-// Virtual for getting schedules for this class
+// Virtual for getting class schedules
 ClassSchema.virtual('schedules', {
-  ref: 'Schedule',
+  ref: 'ClassSchedule',
   localField: 'classId',
   foreignField: 'classId',
   justOne: false

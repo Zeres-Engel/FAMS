@@ -1,23 +1,15 @@
 // Export database connection functions
-const { connectToFAMS, checkConnectionStatus, getDatabaseInfo } = require('./database');
+const { connectToFAMS } = require('./connection');
+const { checkConnectionStatus, getDatabaseInfo } = require('./utils/dbUtils');
 
 // Export models
 const models = require('./models');
 
 // Export API router
-const apiRouter = require('./api');
+const apiRouter = require('./routes/databaseRoutes');
 
 // Export batch service
-const batchService = require('./batchService');
-
-// Export initialization function
-const initializeDatabase = () => {
-  return new Promise((resolve) => {
-    console.log('Database initialization has been disabled to prevent data loss.');
-    console.log('To manually initialize the database, run: python backend/init_database.py');
-    resolve({ success: false, message: 'Initialization disabled by design' });
-  });
-};
+const batchService = require('./services/batchService');
 
 module.exports = {
   // Database connection functions
@@ -32,8 +24,5 @@ module.exports = {
   apiRouter,
   
   // Batch service
-  batchService,
-  
-  // Initialization function
-  initializeDatabase
+  batchService
 }; 

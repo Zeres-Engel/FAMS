@@ -5,11 +5,17 @@ WORKDIR /app
 # Install Python dependencies (if needed)
 RUN apk add --no-cache python3 py3-pip
 
+# Install dependencies for sharp
+RUN apk add --no-cache build-base gcc autoconf automake libtool nasm vips-dev
+
 # Copy package files
 COPY package*.json ./
 
 # Install dependencies
 RUN npm install
+
+# Install sharp explicitly
+RUN npm install --save sharp
 
 # Install nodemon globally
 RUN npm install -g nodemon
@@ -26,6 +32,7 @@ RUN chmod +x docker-entrypoint.sh
 
 # Tạo thư mục public để đảm bảo nó tồn tại khi mount
 RUN mkdir -p /app/public/api-test
+RUN mkdir -p /app/public/avatars
 
 EXPOSE 3000
 

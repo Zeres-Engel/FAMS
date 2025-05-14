@@ -1,63 +1,111 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/useStoreHook";
-import { fetchUser } from "../../store/slices/userSlice";
-import { Data, HeadCell } from "../../model/tableModels/tableDataModels.model";
+import {
+  ClassPageList,
+  ClassStudent,
+  ClassStudentHeadCell,
+} from "../../model/tableModels/tableDataModels.model";
+import { SearchFilters } from "../../model/userModels/userDataModels.model";
+import { fetchClassesByUserId } from "../../store/slices/classByIdSlice";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/store";
+import { getClassUsers } from "../../store/slices/classUserSlice";
+import { searchUsers } from "../../store/slices/userSlice";
 
 function useClassPageHook() {
   const dispatch = useAppDispatch();
-  const userState = useAppSelector(state => state.users);
-  const [userMainData, setUserMainData] = useState<Data[]>([]); 
-  const headCellsData: HeadCell[] = [
+  const role = useAppSelector(state => state.authUser.role);
+  const userData = useAppSelector(state => state.login.loginData);
+  const classList = useSelector((state: RootState) => state.classById.classes);
+  const parentData = useSelector((state: RootState) => state.parentData.data);
+  const classOptions = classList?.map(c => c.className) || [];
+  const classPageList: ClassPageList[] = classList.map(item => ({
+    classId: item.classId,
+    className: `${item.className} - ${item.academicYear}`,
+  }));
+  const hoomroomTeacherList = classList.map(item => ({
+    homeroomTeacherId: item.homeroomTeacherId,
+    className: `${item.className} - ${item.academicYear}`,
+    classId:item.classId
+  }));
+  const classPageData = useSelector(
+    (state: RootState) => state.classUser.students
+  );
+  const [filters, setFiltersClassPage] = useState<number>(0);
+  useEffect(() => {
+    if (userData && role !== "parent") {
+      dispatch(fetchClassesByUserId(userData?.userId));
+    }
+    if (userData && role === "parent" && parentData) {
+      dispatch(fetchClassesByUserId(parentData[0].details.children[0].userId));
+    }
+  }, [dispatch, userData,role,parentData]);
+  useEffect(() => {
+    if (filters) {
+      dispatch(getClassUsers(filters));
+    }
+  }, [filters, dispatch]);
+  useEffect(() => {
+    if (classList.length > 0 && !filters) {
+      const lastClass = classList[classList.length - 1];
+      if (lastClass?.classId) {
+        setFiltersClassPage(lastClass.classId);
+      }
+    }
+  }, [classList, filters, role]);  
+  const [userMainData, setUserMainData] = useState<ClassStudent[]>([]);
+  const headCellsData: ClassStudentHeadCell[] = [
     {
-      id: 'id',
+      id: "id",
       numeric: false,
       disablePadding: true,
-      label: 'name',
+      label: "ID",
     },
     {
-      id: 'avatar',
+      id: "fullName",
       numeric: false,
-      disablePadding: false,
-      label: 'avatar',
+      disablePadding: true,
+      label: "Full name",
     },
     {
-      id: 'creationAt',
+      id: "avatar",
       numeric: false,
       disablePadding: false,
-      label: 'creationAt',
+      label: "Avatar",
     },
     {
-      id: 'email',
+      id: "email",
       numeric: false,
       disablePadding: false,
-      label: 'email',
+      label: "Email",
     },
     {
-      id: 'role',
+      id: "phone",
       numeric: false,
       disablePadding: false,
-      label: 'role',
+      label: "Phone",
     },
     {
-      id: 'updatedAt',
+      id: "role",
       numeric: false,
       disablePadding: false,
-      label: 'updatedAt',
+      label: "Role",
     },
   ];
-  const tableTitle = 'Student Data'
-  useEffect(() => {
-    if (!userState.user) {
-      dispatch(fetchUser());
-    } else {
-      setUserMainData(userState.user); 
-    }
-  }, [dispatch, userState.user]);
-  console.log(userMainData);
-  
- 
-  const state = { headCellsData, userMainData,tableTitle };
-  const handler = {};
+  const isCheckBox = false;
+  const tableTitle = "Student Data";
+  const state = {
+    headCellsData,
+    userMainData,
+    tableTitle,
+    isCheckBox,
+    role,
+    classOptions,
+    classPageList,
+    classPageData,
+    hoomroomTeacherList,
+  };
+  const handler = { setFiltersClassPage };
 
   return { state, handler };
 }

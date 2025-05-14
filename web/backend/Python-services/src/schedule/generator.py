@@ -3,7 +3,7 @@ Schedule generation main module
 """
 import os
 import datetime
-from .core import generate_schedule
+from .core import generate_schedule, generate_improved_schedule, clean_existing_schedules
 from .export import export_schedule_to_csv, export_semester_schedules
 from ..constants import COLLECTIONS
 
@@ -147,7 +147,7 @@ def generate_schedule_entries(db, schedule_data, total_weeks, start_date, end_da
                         "classroomId": classroom_id,
                         "roomName": room_name,
                         "semesterId": schedule["semesterId"],
-                        "sessionWeek": f"Week {week_num}"
+                        "sessionWeek": f"Tuần {week_num}"
                     }
                     
                     schedule_entries.append(entry)
@@ -173,7 +173,7 @@ def generate_schedule_entries(db, schedule_data, total_weeks, start_date, end_da
     return schedule_entries
 
 
-def generate_strict_schedule(db, semester_doc, total_weeks=20):
+def generate_strict_schedule(db, semester_doc, total_weeks=20, clean_before_generate=True):
     """
     Generate a schedule for a semester using strict assignment
     
@@ -181,6 +181,7 @@ def generate_strict_schedule(db, semester_doc, total_weeks=20):
         db: MongoDB database connection
         semester_doc: Semester document
         total_weeks: Total weeks in semester
+        clean_before_generate: Whether to clean existing schedules before generating new ones
         
     Returns:
         dict - results of generation
@@ -195,10 +196,35 @@ def generate_strict_schedule(db, semester_doc, total_weeks=20):
     
     print(f"Generating schedule for semester {semester_id} (batch {batch_id})")
     
-    # Get classes for this batch
-    classes = list(db.Class.find({"batchId": batch_id}))
+    # Map batch to grade (assuming batch 1=12, 2=11, 3=10)
+    grade_map = {"1": 12, "2": 11, "3": 10}
+    grade = grade_map.get(str(batch_id))
+    
+    if not grade:
+        print(f"Warning: Could not map batch {batch_id} to grade, using default grade 10")
+        grade = 10
+    
+    # Get classes for this grade
+    classes = list(db.Class.find({"grade": grade}))
     class_ids = [c["_id"] for c in classes]
-    print(f"Found {len(classes)} classes with batch ID {batch_id}")
+    print(f"Found {len(classes)} classes for grade {grade}")
+    
+    # Get academic year from classes (for cleanup)
+    academic_year = None
+    if classes:
+        academic_year = classes[0].get("academicYear")
+        print(f"Academic year for these classes: {academic_year}")
+        
+    # Clean existing schedules if requested
+    if clean_before_generate and semester_id:
+        semester_id_numeric = semester_doc.get("semesterId", semester_doc.get("SemesterID"))
+        if not semester_id_numeric and isinstance(semester_id, str):
+            # Convert ObjectId to string if needed
+            semester_id_numeric = str(semester_id)
+            
+        print(f"Cleaning existing schedules for semester {semester_id_numeric} and academic year {academic_year}")
+        clean_stats = clean_existing_schedules(db, semester_id_numeric, academic_year)
+        print(f"Cleaned {clean_stats['schedules_deleted']} schedules and {clean_stats['attendance_logs_deleted']} attendance logs")
     
     # Get teachers
     teachers = list(db.Teacher.find({}))
@@ -312,7 +338,7 @@ def generate_semesters(db):
     
     # For each batch, create 6 semesters (3 years x 2 semesters)
     for batch in batches:
-        batch_id = batch.get('BatchID') or batch.get('batchId')
+        batch_id = batch.get('batchId')
         if not batch_id:
             continue
             
@@ -352,37 +378,50 @@ def generate_semesters(db):
     return semesters
 
 
-def generate_all_schedules(db, semesters):
+def generate_all_schedules(db, semesters, output_dir="src/data/schedules", clean_before_generate=True):
     """
-    Generate schedules for all semesters
+    Generate schedules for all semesters.
     
     Args:
-        db: database connection - MongoDB database connection
-        semesters: list - list of semester documents
+        db: MongoDB database connection
+        semesters: List of semester documents
+        output_dir: Directory to export schedules to
+        clean_before_generate: Whether to clean existing schedules before generating new ones
         
     Returns:
-        int - total number of schedules generated
+        int: Total number of schedule entries generated
     """
-    # Chuẩn bị thư mục đầu ra
-    output_dir = prepare_schedule_directory()
-    total_schedules = 0
+    total_entries = 0
+    
+    # Ensure output directory exists
+    try:
+        os.makedirs(output_dir, exist_ok=True)
+    except PermissionError:
+        print(f"[WARNING] Permission denied when creating {output_dir}. Using /tmp/schedules")
+        output_dir = "/tmp/schedules"
+        os.makedirs(output_dir, exist_ok=True)
     
     for sem in semesters:
-        semester_name = sem.get('semesterName') or sem.get('SemesterName', 'Unknown')
-        batch_id = sem.get('batchId') or sem.get('BatchID', 'Unknown')
+        # Generate schedule for this semester
+        semester_name = sem.get('semesterName', 'Unknown')
+        batch_id = sem.get('batchId', 'Unknown')
         
         print(f"[SCHEDULE] Generating schedule for semester {semester_name} of Batch {batch_id}...")
-        scheds, warnings = generate_schedule(db, sem, total_weeks=18)
-        total_schedules += len(scheds)
+        scheds, warnings = generate_schedule(db, sem, total_weeks=18, clean_existing=clean_before_generate)
+        total_entries += len(scheds)
         
         if warnings:
             print(f"[WARNING] Found {len(warnings)} warnings while generating schedules:")
             for w in warnings:
                 print(f"  - {w}")
         
-        # Xuất thời khóa biểu vào thư mục src/data/schedules
-        print(f"[EXPORT] Exporting schedules for semester {semester_name}...")
-        export_semester_schedules(db, sem, output_dir)
-        print(f"[EXPORT] Schedules exported to {output_dir}")
-    
-    return total_schedules
+        # Export schedule to CSV if possible
+        try:
+            from .export import export_semester_schedules
+            teachers_count, class_count = export_semester_schedules(db, sem, output_dir)
+            print(f"[INFO] Exported {teachers_count} teacher schedules and {class_count} class schedules")
+        except Exception as e:
+            print(f"[WARNING] Failed to export schedules: {str(e)}")
+            print("[WARNING] Schedule export failed, but database initialization continues.")
+            
+    return total_entries

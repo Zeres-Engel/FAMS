@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/authMiddleware');
-const User = require('../database/models/User');
+const UserAccount = require('../database/models/UserAccount');
 const Student = require('../database/models/Student');
 const Teacher = require('../database/models/Teacher');
 const Parent = require('../database/models/Parent');
@@ -63,12 +63,12 @@ router.post('/create', protect, authorize('Admin', 'admin'), async (req, res) =>
         // Check if userId already exists and add number if needed
         let finalUserId = userId;
         let counter = 1;
-        let userExists = await User.findOne({ userId: finalUserId });
+        let userExists = await UserAccount.findOne({ userId: finalUserId });
         
         while (userExists) {
           finalUserId = `${userId}${counter}`;
           counter++;
-          userExists = await User.findOne({ userId: finalUserId });
+          userExists = await UserAccount.findOne({ userId: finalUserId });
         }
         
         // Generate email based on userId
@@ -196,8 +196,8 @@ router.post('/create', protect, authorize('Admin', 'admin'), async (req, res) =>
           parentInfo,
           email: entityData.email,
           gender: typeof entityData.gender === 'string' ? 
-                  (entityData.gender === 'Male' || entityData.gender === 'true' || entityData.gender === 'True') : 
-                  entityData.gender
+                  (entityData.gender === 'Male' ? 'Male' : 'Female') : 
+                  (entityData.gender === true ? 'Male' : 'Female')
         });
         
         // Create parent-student relationships in ParentStudent collection
@@ -239,13 +239,17 @@ router.post('/create', protect, authorize('Admin', 'admin'), async (req, res) =>
           console.log(`Generated new teacherId: ${entityData.teacherId}`);
         }
         
+        // Chuyển đổi gender từ string sang boolean nếu cần
+        if (entityData.gender !== undefined) {
+          entityData.gender = typeof entityData.gender === 'string'
+            ? (entityData.gender.toLowerCase() === 'male' || entityData.gender.toLowerCase() === 'true')
+            : Boolean(entityData.gender);
+        }
+        
         entity = await Teacher.create({
           ...entityData,
           userId: user.userId,
-          fullName: `${entityData.firstName} ${entityData.lastName}`,
-          gender: typeof entityData.gender === 'string' ? 
-                  (entityData.gender === 'Male' || entityData.gender === 'true' || entityData.gender === 'True') : 
-                  entityData.gender
+          fullName: `${entityData.firstName} ${entityData.lastName}`
         });
         break;
         
@@ -254,6 +258,13 @@ router.post('/create', protect, authorize('Admin', 'admin'), async (req, res) =>
         if (!entityData.parentId) {
           const lastParent = await Parent.findOne().sort({ parentId: -1 });
           entityData.parentId = lastParent ? lastParent.parentId + 1 : 3000;
+        }
+        
+        // Chuyển đổi gender từ string sang boolean nếu cần
+        if (entityData.gender !== undefined) {
+          entityData.gender = typeof entityData.gender === 'string'
+            ? (entityData.gender.toLowerCase() === 'male' || entityData.gender.toLowerCase() === 'true')
+            : Boolean(entityData.gender);
         }
         
         entity = await Parent.create({
@@ -674,8 +685,8 @@ router.post('/users', protect, authorize('Admin', 'admin'), async (req, res) => 
           parentInfo,
           email,
           gender: typeof userData.gender === 'string' ? 
-                  (userData.gender === 'Male' || userData.gender === 'true' || userData.gender === 'True') : 
-                  userData.gender
+                  (userData.gender === 'Male' ? 'Male' : 'Female') : 
+                  (userData.gender === true ? 'Male' : 'Female')
         });
         
         // Tạo quan hệ phụ huynh-học sinh
@@ -768,9 +779,9 @@ router.post('/users', protect, authorize('Admin', 'admin'), async (req, res) => 
           userId: teacherUser.userId,
           fullName,
           email,
-          gender: typeof userData.gender === 'string' ? 
-                  (userData.gender === 'Male' || userData.gender === 'true' || userData.gender === 'True') : 
-                  userData.gender
+          gender: typeof userData.gender === 'string'
+                 ? (userData.gender.toLowerCase() === 'male' || userData.gender.toLowerCase() === 'true')
+                 : Boolean(userData.gender)
         });
         break;
         

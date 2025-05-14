@@ -1,34 +1,29 @@
 const mongoose = require('mongoose');
 const { COLLECTIONS } = require('../constants');
 
+/**
+ * Teacher Schema
+ * Represents teachers in the system
+ */
 const TeacherSchema = new mongoose.Schema({
   teacherId: {
-    type: String,
+    type: Number,
     required: true,
-    unique: true
+    unique: true,
+    auto: true
   },
   userId: {
     type: String,
     required: true,
-    unique: true
-  },
-  firstName: {
-    type: String,
-    required: true
-  },
-  lastName: {
-    type: String,
-    required: true
+    unique: true,
+    ref: 'UserAccount'
   },
   fullName: {
     type: String,
-    default: function() {
-      return `${this.firstName} ${this.lastName}`.trim();
-    }
+    required: true
   },
   email: {
-    type: String,
-    required: true
+    type: String
   },
   dateOfBirth: {
     type: Date
@@ -40,63 +35,79 @@ const TeacherSchema = new mongoose.Schema({
     type: String
   },
   gender: {
-    type: Boolean
+    type: Boolean,
+    set: function(v) {
+      if (typeof v === 'string') {
+        return v.toLowerCase() === 'male' || v === 'true';
+      }
+      return v;
+    },
+    get: function(v) {
+      return v ? 'Male' : 'Female';
+    }
+  },
+  classIds: {
+    type: [Number],
+    default: []
   },
   major: {
     type: String
   },
-  WeeklyCapacity: {
+  weeklyCapacity: {
     type: Number,
     default: 10
   },
-  isActive: {
-    type: Boolean,
-    default: true
+  degree: {
+    type: String
+  },
+  academicYear: {
+    type: String
   }
 }, {
   timestamps: true,
   versionKey: false,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  toJSON: { 
+    virtuals: true,
+    transform: function(doc, ret) {
+      // Remove unnecessary fields from the response
+      delete ret.firstName;
+      delete ret.lastName;
+      return ret;
+    }
+  },
+  toObject: { 
+    virtuals: true,
+    transform: function(doc, ret) {
+      // Remove unnecessary fields from the response
+      delete ret.firstName;
+      delete ret.lastName;
+      return ret;
+    }
+  }
 });
 
 // Virtual for getting user info
 TeacherSchema.virtual('user', {
-  ref: 'User',
+  ref: 'UserAccount',
   localField: 'userId',
   foreignField: 'userId',
   justOne: true
 });
 
-// Virtual for getting assigned classes
-TeacherSchema.virtual('classes', {
+// Virtual for getting classes where teacher is homeroom teacher
+TeacherSchema.virtual('homeroomClasses', {
   ref: 'Class',
   localField: 'teacherId',
-  foreignField: 'homeroomTeacherId'
+  foreignField: 'homeroomTeacherId',
+  justOne: false
 });
 
-// Virtual for getting teaching schedules
-TeacherSchema.virtual('schedules', {
-  ref: 'ClassSchedule',
-  localField: 'teacherId',
-  foreignField: 'teacherId'
+// Virtual for getting all teaching classes
+TeacherSchema.virtual('teachingClasses', {
+  ref: 'Class',
+  localField: 'classIds',
+  foreignField: 'classId',
+  justOne: false
 });
-
-// Generate user ID based on name
-TeacherSchema.statics.generateUserId = function(firstName, lastName, teacherId) {
-  if (!firstName || !lastName || !teacherId) {
-    throw new Error('Missing required fields for userId generation');
-  }
-  
-  // In Vietnamese naming, lastName is the family name (Nguyễn Phước), 
-  // firstName is the given name (Thành)
-  
-  // Extract the first letter of each word in the lastName
-  const lastNameParts = lastName.split(' ');
-  const lastNameInitials = lastNameParts.map(part => part.charAt(0).toLowerCase()).join('');
-  
-  // Combine with firstName and ID
-  return `${firstName.toLowerCase()}${lastNameInitials}${teacherId}`;
-};
 
 module.exports = mongoose.model('Teacher', TeacherSchema, COLLECTIONS.TEACHER); 

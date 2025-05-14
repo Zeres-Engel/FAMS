@@ -2,7 +2,7 @@
 FAMS CLI - Command Line Interface for data generation and management
 """
 import click
-from src.db import connect_to_mongodb, drop_all_collections
+from .db import connect_to_mongodb, drop_all_collections
 from src.data_loader import DataLoader
 from src.generators.users import (
     create_admin_user, import_teachers, generate_all_students,

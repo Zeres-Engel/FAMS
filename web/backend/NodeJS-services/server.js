@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const multer = require('multer');
 const path = require('path');
 const { connectToFAMS, checkConnectionStatus, getDatabaseInfo, apiRouter } = require('./database');
 const errorService = require('./services/errorService');
@@ -14,26 +13,21 @@ const teacherRoutes = require('./routes/teacherRoutes');
 const parentRoutes = require('./routes/parentRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const classRoutes = require('./routes/classRoutes');
+const rfidRoutes = require('./routes/rfidRoutes');
+const avatarRoutes = require('./routes/avatarRoutes');
+const classroomRoutes = require('./routes/classroomRoutes');
+const subjectRoutes = require('./routes/subjectRoutes');
+const attendanceRoutes = require('./routes/attendanceRoutes');
+const studentInfoRoutes = require('./routes/studentInfoRoutes');
+const faceVectorRoutes = require('./routes/faceVectorRoutes');
+const curriculumRoutes = require('./routes/curriculumRoutes');
+const scheduleFormatRoutes = require('./routes/scheduleFormatRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const announcementRoutes = require('./routes/announcementRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-
-// Check file type
-const fileFilter = (req, file, cb) => {
-  if (file.mimetype === 'text/csv') {
-    cb(null, true);
-  } else {
-    cb(new Error('Only CSV files are allowed'), false);
-  }
-};
-
-const upload = multer({ 
-  storage: multer.memoryStorage(),
-  fileFilter,
-  limits: { fileSize: 5000000 } // 5MB limit
-});
-
 
 // Middleware
 app.use(cors({
@@ -83,6 +77,13 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' })); // Parse URL-enc
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Đặc biệt cấu hình đường dẫn cho avatars để đảm bảo chúng luôn được phục vụ với đường dẫn tương đối đúng
+app.use('/avatars', express.static(path.join(__dirname, 'public/avatars')));
+// Cấu hình đường dẫn cho faces 
+app.use('/faces', express.static(path.join(__dirname, 'public/faces')));
+app.use('/api-nodejs/faces', express.static(path.join(__dirname, 'public/faces')));
+app.use('/api/faces', express.static(path.join(__dirname, 'public/faces')));
+
 // Test route để kiểm tra kết nối
 app.get('/api/test', (req, res) => {
   res.json({ success: true, message: 'API kết nối thành công!', code: 'CONNECTION_SUCCESS' });
@@ -120,12 +121,19 @@ app.use('/api/teachers', teacherRoutes);
 app.use('/api/parents', parentRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/classes', classRoutes);
+app.use('/api/rfid', rfidRoutes);
 app.use('/api/database', apiRouter);
-
-// Serve the test API pages
-app.get('/api-test', (req, res) => {
-  res.redirect('/api-test/index.html');
-});
+app.use('/api/avatar', avatarRoutes);
+app.use('/api/classrooms', classroomRoutes);
+app.use('/api/subjects', subjectRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/student-info', studentInfoRoutes);
+app.use('/api/facevector', faceVectorRoutes);
+app.use('/api/curriculum', curriculumRoutes);
+app.use('/api/schedule-formats', scheduleFormatRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/announcements', announcementRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -170,9 +178,39 @@ app.get('/', (req, res) => {
       schedules: {
         base: '/api/schedules',
         description: 'API quản lý lịch học'
+      },
+      rfid: {
+        base: '/api/rfid',
+        endpoints: [
+          { method: 'GET', path: '/', description: 'Lấy danh sách thẻ RFID (có phân trang)' },
+          { method: 'GET', path: '/:id', description: 'Lấy thông tin chi tiết thẻ RFID' },
+          { method: 'POST', path: '/', description: 'Tạo thẻ RFID mới (Admin)' },
+          { method: 'PUT', path: '/:id', description: 'Cập nhật thông tin thẻ RFID (Admin)' },
+          { method: 'DELETE', path: '/:id', description: 'Xóa thẻ RFID (Admin)' }
+        ]
+      },
+      notifications: {
+        base: '/api/notifications',
+        endpoints: [
+          { method: 'GET', path: '/my-notifications', description: 'Lấy tất cả thông báo của người dùng hiện tại' },
+          { method: 'GET', path: '/:id', description: 'Lấy chi tiết một thông báo' },
+          { method: 'POST', path: '/', description: 'Tạo thông báo mới' },
+          { method: 'PATCH', path: '/:id/mark-as-read', description: 'Đánh dấu thông báo đã đọc' },
+          { method: 'PATCH', path: '/mark-all-as-read', description: 'Đánh dấu tất cả thông báo đã đọc' },
+          { method: 'DELETE', path: '/:id', description: 'Xóa thông báo' }
+        ]
+      },
+      announcements: {
+        base: '/api/announcements',
+        endpoints: [
+          { method: 'GET', path: '/', description: 'Lấy tất cả thông báo chung' },
+          { method: 'GET', path: '/:id', description: 'Lấy chi tiết một thông báo chung' },
+          { method: 'POST', path: '/', description: 'Tạo thông báo chung mới (Admin/Teacher)' },
+          { method: 'PUT', path: '/:id', description: 'Cập nhật thông báo chung (Admin/Teacher)' },
+          { method: 'DELETE', path: '/:id', description: 'Xóa thông báo chung (Admin)' }
+        ]
       }
     },
-    documentation: `${req.protocol}://${req.get('host')}/api-test`,
     status: {
       database: checkConnectionStatus() ? 'connected' : 'disconnected'
     }
@@ -191,19 +229,36 @@ const startServer = async () => {
     console.log('======================================');
     console.log('Attempting to connect to MongoDB...');
     console.log('MongoDB URI:', process.env.MONGO_URI ? process.env.MONGO_URI.substring(0, 20) + '...' : 'Not defined');
+    console.log('MongoDB Database Name:', process.env.MONGO_DB_NAME || 'fams (default)');
     
     await connectToFAMS();
     console.log(`MongoDB Connection Status: ${checkConnectionStatus()}`);
     
     const dbInfo = await getDatabaseInfo();
     console.log('Database info:', JSON.stringify(dbInfo, null, 2));
+    
+    // Check and initialize database version information
+    try {
+      const ModelVersion = require('./database/models/ModelVersion');
+      const versionInfo = await ModelVersion.findOne({ active: true }).sort({ version: -1 });
+      
+      if (versionInfo) {
+        console.log(`Database schema version: ${versionInfo.version}`);
+        console.log(`Schema last updated: ${versionInfo.updatedAt}`);
+      } else {
+        console.log('Database schema version information not found');
+        // You might want to initialize version info here if needed
+      }
+    } catch (err) {
+      console.warn('Error checking database version information:', err.message);
+    }
+    
     console.log('======================================');
 
     // Start server
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Server is accessible at http://0.0.0.0:${PORT}`);
-      console.log(`Test API page available at: http://0.0.0.0:${PORT}/api-test`);
     });
   } catch (error) {
     console.error('Server initialization error:', error);

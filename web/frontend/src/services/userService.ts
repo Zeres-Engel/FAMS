@@ -1,4 +1,5 @@
 import api from './api';
+import axiosInstance from './axiosInstance';
 
 export interface ProfileData {
   userId: string;
@@ -43,6 +44,18 @@ interface ProfileResponse {
   message?: string;
 }
 
+// Define interface for avatar upload response
+interface AvatarUploadResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    userId: string;
+    avatar: string;
+    avatarUrl: string;
+  };
+  code?: string;
+}
+
 const userService = {
   // Get user profile
   getProfile: async (): Promise<ProfileData> => {
@@ -72,6 +85,71 @@ const userService = {
         throw new Error(error.response.data.message || 'Failed to fetch profile');
       }
       throw error;
+    }
+  },
+
+  // Upload a user avatar
+  uploadAvatar: async (file: File): Promise<AvatarUploadResponse> => {
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      // Create custom headers to ensure proper authorization and user data
+      const headers: any = {
+        'Content-Type': 'multipart/form-data',
+      };
+
+      // Log the request details for debugging
+      console.log('Uploading avatar with formData:', {
+        file: file.name,
+        size: file.size,
+        type: file.type
+      });
+
+      // Fix the API endpoint - match the server.js route registration
+      // Since axiosInstance baseURL is already "http://fams.io.vn/api-nodejs" 
+      // and the server adds '/api/' to all routes
+      // We should use just "/avatar/upload" without the '/api/' prefix to avoid duplication
+      const response = await axiosInstance.post('/avatar/upload', formData, {
+        headers
+      });
+
+      console.log('Avatar upload response:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error uploading avatar detailed error:', error.response?.data || error.message);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to upload avatar'
+      };
+    }
+  },
+
+  // Get user profile data
+  getUserProfile: async (userId: string) => {
+    try {
+      const response = await axiosInstance.get(`/users/profile/${userId}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error fetching profile:', error);
+      return {
+        success: false, 
+        message: error.response?.data?.message || 'Failed to fetch profile'
+      };
+    }
+  },
+
+  // Update user profile data
+  updateUserProfile: async (userId: string, profileData: any) => {
+    try {
+      const response = await axiosInstance.put(`/users/update/${userId}`, profileData);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to update profile'
+      };
     }
   }
 };

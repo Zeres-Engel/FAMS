@@ -1,0 +1,891 @@
+[
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 15:50:11",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 15:50:12",
+    "RFID_ID": "0005563074",
+    "face_name": "thanhnpst1",
+    "is_match": true,
+    "face_score": 0.596660852432251,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 15:50:22",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 15:50:22",
+    "RFID_ID": "0005563074",
+    "face_name": "thanhnpst1",
+    "is_match": true,
+    "face_score": 0.5597277879714966,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 15:50:32",
+    "RFID_ID": "0005532298",
+    "registered_name": "nganttst4",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 15:50:33",
+    "RFID_ID": "0005532298",
+    "face_name": "thanhnpst1",
+    "is_match": false,
+    "face_score": 0.5876227617263794,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 15:50:41",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:03:48",
+    "RFID_ID": "0005532298",
+    "registered_name": "nganttst4",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:03:55",
+    "RFID_ID": "0005532298",
+    "registered_name": "nganttst4",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:04:02",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:04:13",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:04:15",
+    "RFID_ID": "0005532298",
+    "registered_name": "nganttst4",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:06:51",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:06:59",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:08:12",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:12:10",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 16:12:11",
+    "RFID_ID": "0005563074",
+    "face_name": "thanhnpst1",
+    "is_match": true,
+    "face_score": 0.604428231716156,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:12:24",
+    "RFID_ID": "0005532298",
+    "registered_name": "nganttst4",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 16:12:24",
+    "RFID_ID": "0005532298",
+    "face_name": "thanhnpst1",
+    "is_match": false,
+    "face_score": 0.6285167932510376,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:12:30",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:17:42",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 16:17:43",
+    "RFID_ID": "0005563074",
+    "face_name": "thanhnpst1",
+    "is_match": true,
+    "face_score": 0.5415613055229187,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:17:52",
+    "RFID_ID": "0005532298",
+    "registered_name": "nganttst4",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 16:17:52",
+    "RFID_ID": "0005532298",
+    "face_name": "thanhnpst1",
+    "is_match": false,
+    "face_score": 0.5808209776878357,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:17:57",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 16:17:57",
+    "RFID_ID": "0005563074",
+    "face_name": "thanhnpst1",
+    "is_match": true,
+    "face_score": 0.6109455227851868,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:18:08",
+    "RFID_ID": "0005532298",
+    "registered_name": "nganttst4",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 16:18:08",
+    "RFID_ID": "0005532298",
+    "face_name": "thanhnpst1",
+    "is_match": false,
+    "face_score": 0.5949311852455139,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:23:15",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:23:22",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:23:28",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:29:29",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 16:29:30",
+    "RFID_ID": "0005563074",
+    "face_name": "thanhnpst1",
+    "is_match": true,
+    "face_score": 0.5730898380279541,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:29:40",
+    "RFID_ID": "0005532298",
+    "registered_name": "nganttst4",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 16:29:41",
+    "RFID_ID": "0005532298",
+    "face_name": "thanhnpst1",
+    "is_match": false,
+    "face_score": 0.5729395151138306,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:29:45",
+    "RFID_ID": "0005532298",
+    "registered_name": "nganttst4",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:29:50",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 16:29:51",
+    "RFID_ID": "0005563074",
+    "face_name": "thanhnpst1",
+    "is_match": true,
+    "face_score": 0.6033123731613159,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:35:20",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:37:16",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:43:20",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 16:43:21",
+    "RFID_ID": "0005563074",
+    "face_name": "thanhnpst1",
+    "is_match": true,
+    "face_score": 0.6344479918479919,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:43:30",
+    "RFID_ID": "0005532298",
+    "registered_name": "nganttst4",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 16:43:31",
+    "RFID_ID": "0005532298",
+    "face_name": "thanhnpst1",
+    "is_match": false,
+    "face_score": 0.6307163238525391,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:43:39",
+    "RFID_ID": "0005532298",
+    "registered_name": "nganttst4",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 16:43:40",
+    "RFID_ID": "0005532298",
+    "face_name": "thanhnpst1",
+    "is_match": false,
+    "face_score": 0.6034523248672485,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:50:43",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 16:50:43",
+    "RFID_ID": "0005563074",
+    "face_name": "thanhnpst1",
+    "is_match": true,
+    "face_score": 0.5593265295028687,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:50:57",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 16:50:57",
+    "RFID_ID": "0005563074",
+    "face_name": "thanhnpst1",
+    "is_match": true,
+    "face_score": 0.5096192955970764,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 16:51:07",
+    "RFID_ID": "0005532298",
+    "registered_name": "nganttst4",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 16:51:07",
+    "RFID_ID": "0005532298",
+    "face_name": "thanhnpst1",
+    "is_match": false,
+    "face_score": 0.5406094789505005,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 17:03:43",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 17:03:43",
+    "RFID_ID": "0005563074",
+    "face_name": "thanhnpst1",
+    "is_match": true,
+    "face_score": 0.5017513036727905,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 17:03:53",
+    "RFID_ID": "0005460978",
+    "registered_name": "hungdnst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 17:03:53",
+    "RFID_ID": "0005460978",
+    "face_name": "thanhnpst1",
+    "is_match": false,
+    "face_score": 0.5534871816635132,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 17:06:54",
+    "RFID_ID": "0005460978",
+    "registered_name": "hungdnst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 17:06:55",
+    "RFID_ID": "0005460978",
+    "face_name": "thanhnpst1",
+    "is_match": false,
+    "face_score": 0.5799387097358704,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 17:09:04",
+    "RFID_ID": "0005460978",
+    "registered_name": "hungdnst2",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 17:09:04",
+    "RFID_ID": "0005460978",
+    "face_name": "thanhnpst1",
+    "is_match": false,
+    "face_score": 0.4815559685230255,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:02:06",
+    "RFID_ID": "ctrl",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 18:02:08",
+    "RFID_ID": "ctrl",
+    "face_name": "Unknown",
+    "is_match": true,
+    "face_score": 0.0,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:20:11",
+    "RFID_ID": "11A1",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:24:02",
+    "RFID_ID": "shiftDdinhj",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:24:07",
+    "RFID_ID": "shiftBifnhspaceshiftDdinhj",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:24:10",
+    "RFID_ID": "backspace4",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:25:56",
+    "RFID_ID": "ctrlc",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:26:02",
+    "RFID_ID": "ctrlv",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:26:07",
+    "RFID_ID": "shift",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:26:09",
+    "RFID_ID": "Chospaceemspace",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:26:13",
+    "RFID_ID": "nghir",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:26:44",
+    "RFID_ID": "ctrlv",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:26:48",
+    "RFID_ID": "123456",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:28:43",
+    "RFID_ID": "ctrl",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:28:46",
+    "RFID_ID": "ctrl",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:28:58",
+    "RFID_ID": "ctrl",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:29:04",
+    "RFID_ID": "thanhn",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:29:06",
+    "RFID_ID": "pst1",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:29:07",
+    "RFID_ID": "tab",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:29:11",
+    "RFID_ID": "okspaceem",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:29:29",
+    "RFID_ID": "quan",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:32:19",
+    "RFID_ID": "ddungsspacegiowf",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:34:53",
+    "RFID_ID": "63074",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:34:54",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 18:34:54",
+    "RFID_ID": "0005563074",
+    "face_name": "thanhnpst1",
+    "is_match": true,
+    "face_score": 0.5534869432449341,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:35:07",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 18:35:07",
+    "RFID_ID": "0005563074",
+    "face_name": "hungdnst2",
+    "is_match": false,
+    "face_score": 0.5056277513504028,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:42:20",
+    "RFID_ID": "thanh",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 18:42:21",
+    "RFID_ID": "thanh",
+    "face_name": "Unknown",
+    "is_match": true,
+    "face_score": 0.0,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:42:22",
+    "RFID_ID": "npst1",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:42:59",
+    "RFID_ID": "lichjspacenghirspaceleexspace",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 18:42:59",
+    "RFID_ID": "lichjspacenghirspaceleexspace",
+    "face_name": "Unknown",
+    "is_match": true,
+    "face_score": 0.0,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:43:02",
+    "RFID_ID": "3004",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:43:32",
+    "RFID_ID": "hungv",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 18:43:32",
+    "RFID_ID": "hungv",
+    "face_name": "Unknown",
+    "is_match": true,
+    "face_score": 0.0,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:43:33",
+    "RFID_ID": "backspace",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:47:53",
+    "RFID_ID": "down",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 18:47:53",
+    "RFID_ID": "down",
+    "face_name": "Unknown",
+    "is_match": true,
+    "face_score": 0.0,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:48:50",
+    "RFID_ID": "backspacefams",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 18:48:51",
+    "RFID_ID": "backspacefams",
+    "face_name": "Unknown",
+    "is_match": true,
+    "face_score": 0.0,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:48:52",
+    "RFID_ID": "iovn",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 18:49:08",
+    "RFID_ID": "123456",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 18:49:08",
+    "RFID_ID": "123456",
+    "face_name": "Unknown",
+    "is_match": true,
+    "face_score": 0.0,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 19:02:04",
+    "RFID_ID": "esc",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 19:06:37",
+    "RFID_ID": "0005460978",
+    "registered_name": "hungdnst2",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 19:06:38",
+    "RFID_ID": "0005460978",
+    "face_name": "Unknown",
+    "is_match": false,
+    "face_score": 0.0,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 19:08:05",
+    "RFID_ID": "alttab",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 19:08:05",
+    "RFID_ID": "alttab",
+    "face_name": "Unknown",
+    "is_match": true,
+    "face_score": 0.0,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 19:09:55",
+    "RFID_ID": "ctrl",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 19:09:56",
+    "RFID_ID": "ctrl",
+    "face_name": "Unknown",
+    "is_match": true,
+    "face_score": 0.0,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-11 19:16:59",
+    "RFID_ID": "xdowndowndown",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-11 19:16:59",
+    "RFID_ID": "xdowndowndown",
+    "face_name": "Unknown",
+    "is_match": true,
+    "face_score": 0.0,
+    "is_live_face": true,
+    "deviceId": 1
+  }
+]

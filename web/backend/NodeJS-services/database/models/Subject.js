@@ -1,30 +1,43 @@
 const mongoose = require('mongoose');
 const { COLLECTIONS } = require('../constants');
 
+/**
+ * Subject Schema
+ * Represents a subject in the curriculum
+ */
 const SubjectSchema = new mongoose.Schema({
   subjectId: {
     type: Number,
     required: true,
-    unique: true
+    unique: true,
+    auto: true
   },
-  name: {
+  subjectName: {
     type: String,
     required: true
   },
-  type: {
-    type: String
-  },
   description: {
     type: String
+  },
+  subjectType: {
+    type: String,
+    enum: ['Chinh', 'TuChon', 'NgoaiKhoa'],
+    required: true
+  },
+  isActive: {
+    type: Boolean,
+    default: true
   }
 }, {
+  timestamps: true,
+  versionKey: false,
   toJSON: { virtuals: true },
   toObject: { virtuals: true }
 });
 
 // Virtual for getting schedules for this subject
 SubjectSchema.virtual('schedules', {
-  ref: 'Schedule',
+  ref: 'ClassSchedule',
   localField: 'subjectId',
   foreignField: 'subjectId',
   justOne: false

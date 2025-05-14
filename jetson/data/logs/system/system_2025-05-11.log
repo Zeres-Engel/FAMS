@@ -1,0 +1,767 @@
+2025-05-11 15:49:38,949 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 15:49:47,549 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 15:49:47,603 - zensys - INFO - Loaded database with 4 faces from c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 15:49:48,830 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 15:50:11,534 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-05-11 15:50:14,125 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-05-11 15:50:22,430 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-05-11 15:50:24,317 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-05-11 15:50:32,881 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005532298", "rfid_name": "nganttst4"}
+2025-05-11 15:50:33,179 - zensys - ERROR - Error processing frame: local variable 'attendance_result' referenced before assignment
+2025-05-11 16:03:18,765 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 16:03:29,894 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 16:03:29,964 - zensys - INFO - Force rebuilding face database from gallery: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 16:03:29,965 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 16:03:29,965 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 16:03:29,966 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:03:30,682 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 16:03:30,682 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 16:03:30,682 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:03:30,826 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 16:03:30,826 - zensys - INFO - Processing person: nganttst4
+2025-05-11 16:03:30,826 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:03:30,985 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 16:03:30,985 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 16:03:30,986 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 16:03:31,069 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 16:03:31,069 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 16:03:31,157 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 16:03:31,157 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 16:03:31,245 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 16:03:31,245 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 16:03:31,324 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 16:03:31,324 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 16:03:31,406 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 16:03:31,406 - zensys - INFO - Processing image: avatar.png
+2025-05-11 16:03:31,590 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 16:03:31,592 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 16:03:31,592 - zensys - INFO - Face database rebuilt successfully with 4 faces
+2025-05-11 16:03:32,958 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 16:03:48,440 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005532298", "rfid_name": "nganttst4"}
+2025-05-11 16:06:35,684 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 16:06:43,138 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 16:06:43,173 - zensys - INFO - Force rebuilding face database from gallery: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 16:06:43,173 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 16:06:43,174 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 16:06:43,174 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:06:43,637 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 16:06:43,637 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 16:06:43,638 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:06:43,797 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 16:06:43,797 - zensys - INFO - Processing person: nganttst4
+2025-05-11 16:06:43,798 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:06:43,986 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 16:06:43,987 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 16:06:43,987 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 16:06:44,082 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 16:06:44,082 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 16:06:44,209 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 16:06:44,209 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 16:06:44,302 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 16:06:44,303 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 16:06:44,394 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 16:06:44,394 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 16:06:44,480 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 16:06:44,481 - zensys - INFO - Processing image: avatar.png
+2025-05-11 16:06:44,617 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 16:06:44,617 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 16:06:44,617 - zensys - INFO - Face database rebuilt successfully with 4 faces
+2025-05-11 16:06:45,918 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 16:06:51,456 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-05-11 16:07:59,220 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 16:08:06,066 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 16:08:06,091 - zensys - INFO - Force rebuilding face database from gallery: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 16:08:06,091 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 16:08:06,091 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 16:08:06,092 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:08:06,461 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 16:08:06,461 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 16:08:06,461 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:08:06,612 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 16:08:06,612 - zensys - INFO - Processing person: nganttst4
+2025-05-11 16:08:06,613 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:08:06,779 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 16:08:06,788 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 16:08:06,788 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 16:08:06,862 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 16:08:06,862 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 16:08:06,921 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 16:08:06,931 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 16:08:07,007 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 16:08:07,007 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 16:08:07,090 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 16:08:07,090 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 16:08:07,167 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 16:08:07,167 - zensys - INFO - Processing image: avatar.png
+2025-05-11 16:08:07,309 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 16:08:07,310 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 16:08:07,310 - zensys - INFO - Face database rebuilt successfully with 4 faces
+2025-05-11 16:08:08,496 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 16:08:12,863 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-05-11 16:11:46,973 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 16:11:53,995 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 16:11:54,022 - zensys - INFO - Creating new database from gallery
+2025-05-11 16:11:54,022 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 16:11:54,023 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 16:11:54,023 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:11:54,373 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 16:11:54,373 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 16:11:54,373 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:11:54,505 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 16:11:54,505 - zensys - INFO - Processing person: nganttst4
+2025-05-11 16:11:54,505 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:11:54,656 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 16:11:54,656 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 16:11:54,656 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 16:11:54,742 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 16:11:54,742 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 16:11:54,816 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 16:11:54,816 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 16:11:54,885 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 16:11:54,886 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 16:11:54,961 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 16:11:54,962 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 16:11:55,038 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 16:11:55,039 - zensys - INFO - Processing image: avatar.png
+2025-05-11 16:11:55,163 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 16:11:55,175 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 16:11:56,412 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 16:12:10,788 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-05-11 16:12:13,044 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-05-11 16:12:24,554 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005532298", "rfid_name": "nganttst4"}
+2025-05-11 16:12:24,885 - zensys - ERROR - Error processing frame: local variable 'attendance_result' referenced before assignment
+2025-05-11 16:17:18,228 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 16:17:25,105 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 16:17:25,132 - zensys - INFO - Creating new database from gallery
+2025-05-11 16:17:25,133 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 16:17:25,134 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 16:17:25,134 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:17:25,469 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 16:17:25,469 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 16:17:25,469 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:17:25,608 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 16:17:25,609 - zensys - INFO - Processing person: nganttst4
+2025-05-11 16:17:25,609 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:17:25,756 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 16:17:25,757 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 16:17:25,757 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 16:17:25,821 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 16:17:25,821 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 16:17:25,906 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 16:17:25,906 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 16:17:25,981 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 16:17:25,983 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 16:17:26,062 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 16:17:26,062 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 16:17:26,134 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 16:17:26,134 - zensys - INFO - Processing image: avatar.png
+2025-05-11 16:17:26,270 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 16:17:26,272 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 16:17:27,488 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 16:17:42,409 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-05-11 16:17:45,126 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-05-11 16:17:52,343 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005532298", "rfid_name": "nganttst4"}
+2025-05-11 16:17:52,528 - zensys - WARNING - Authentication failed: reason=face mismatch, match=False, live_face=True
+2025-05-11 16:17:57,555 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-05-11 16:17:59,635 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-05-11 16:18:08,125 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005532298", "rfid_name": "nganttst4"}
+2025-05-11 16:18:08,405 - zensys - WARNING - Authentication failed: reason=face mismatch, match=False, live_face=True
+2025-05-11 16:22:51,602 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 16:22:58,652 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 16:22:58,681 - zensys - INFO - Creating new database from gallery
+2025-05-11 16:22:58,681 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 16:22:58,681 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 16:22:58,681 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:22:59,014 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 16:22:59,014 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 16:22:59,014 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:22:59,147 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 16:22:59,147 - zensys - INFO - Processing person: nganttst4
+2025-05-11 16:22:59,147 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:22:59,301 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 16:22:59,301 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 16:22:59,301 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 16:22:59,384 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 16:22:59,384 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 16:22:59,446 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 16:22:59,446 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 16:22:59,535 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 16:22:59,535 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 16:22:59,606 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 16:22:59,606 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 16:22:59,682 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 16:22:59,682 - zensys - INFO - Processing image: avatar.png
+2025-05-11 16:22:59,814 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 16:22:59,824 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 16:23:00,995 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 16:23:15,760 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-05-11 16:23:16,463 - zensys - ERROR - Error processing frame: 'RFIDManager' object has no attribute 'get_name_from_id'
+2025-05-11 16:29:13,629 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 16:29:21,043 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 16:29:21,066 - zensys - INFO - Creating new database from gallery
+2025-05-11 16:29:21,066 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 16:29:21,067 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 16:29:21,067 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:29:21,411 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 16:29:21,411 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 16:29:21,411 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:29:21,543 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 16:29:21,543 - zensys - INFO - Processing person: nganttst4
+2025-05-11 16:29:21,543 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:29:21,699 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 16:29:21,699 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 16:29:21,699 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 16:29:21,848 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 16:29:21,851 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 16:29:21,949 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 16:29:21,949 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 16:29:22,046 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 16:29:22,046 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 16:29:22,136 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 16:29:22,136 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 16:29:22,211 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 16:29:22,211 - zensys - INFO - Processing image: avatar.png
+2025-05-11 16:29:22,351 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 16:29:22,353 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 16:29:23,630 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 16:29:29,582 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-05-11 16:29:31,877 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-05-11 16:29:40,845 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005532298", "rfid_name": "nganttst4"}
+2025-05-11 16:29:41,065 - zensys - WARNING - Authentication failed: reason=face mismatch, match=False, live_face=True
+2025-05-11 16:29:50,899 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-05-11 16:29:52,992 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-05-11 16:34:56,340 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 16:35:03,122 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 16:35:03,157 - zensys - INFO - Creating new database from gallery
+2025-05-11 16:35:03,157 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 16:35:03,158 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 16:35:03,158 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:35:03,498 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 16:35:03,498 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 16:35:03,498 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:35:03,629 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 16:35:03,631 - zensys - INFO - Processing person: nganttst4
+2025-05-11 16:35:03,631 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:35:03,781 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 16:35:03,781 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 16:35:03,781 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 16:35:03,862 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 16:35:03,862 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 16:35:03,938 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 16:35:03,939 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 16:35:04,014 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 16:35:04,015 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 16:35:04,090 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 16:35:04,090 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 16:35:04,161 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 16:35:04,162 - zensys - INFO - Processing image: avatar.png
+2025-05-11 16:35:04,302 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 16:35:04,304 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 16:35:05,504 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 16:35:20,507 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-05-11 16:35:21,004 - zensys - ERROR - Error processing frame: 'RFIDManager' object has no attribute 'get_user_name'
+2025-05-11 16:37:02,930 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 16:37:09,438 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 16:37:09,466 - zensys - INFO - Creating new database from gallery
+2025-05-11 16:37:09,466 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 16:37:09,467 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 16:37:09,468 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:37:09,823 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 16:37:09,823 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 16:37:09,824 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:37:09,977 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 16:37:09,977 - zensys - INFO - Processing person: nganttst4
+2025-05-11 16:37:09,977 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:37:10,118 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 16:37:10,118 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 16:37:10,118 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 16:37:10,202 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 16:37:10,202 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 16:37:10,269 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 16:37:10,269 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 16:37:10,348 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 16:37:10,348 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 16:37:10,425 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 16:37:10,425 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 16:37:10,500 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 16:37:10,500 - zensys - INFO - Processing image: avatar.png
+2025-05-11 16:37:10,634 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 16:37:10,635 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 16:37:11,870 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 16:37:16,784 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-05-11 16:37:17,372 - zensys - ERROR - Verification error: 'FaceRecognitionManager' object has no attribute 'search_face'
+2025-05-11 16:37:17,667 - zensys - ERROR - Verification error: 'FaceRecognitionManager' object has no attribute 'search_face'
+2025-05-11 16:37:17,919 - zensys - ERROR - Verification error: 'FaceRecognitionManager' object has no attribute 'search_face'
+2025-05-11 16:37:18,196 - zensys - ERROR - Verification error: 'FaceRecognitionManager' object has no attribute 'search_face'
+2025-05-11 16:37:18,484 - zensys - ERROR - Verification error: 'FaceRecognitionManager' object has no attribute 'search_face'
+2025-05-11 16:37:18,740 - zensys - ERROR - Verification error: 'FaceRecognitionManager' object has no attribute 'search_face'
+2025-05-11 16:37:19,029 - zensys - ERROR - Verification error: 'FaceRecognitionManager' object has no attribute 'search_face'
+2025-05-11 16:37:19,349 - zensys - ERROR - Verification error: 'FaceRecognitionManager' object has no attribute 'search_face'
+2025-05-11 16:37:19,598 - zensys - ERROR - Verification error: 'FaceRecognitionManager' object has no attribute 'search_face'
+2025-05-11 16:37:19,884 - zensys - ERROR - Verification error: 'FaceRecognitionManager' object has no attribute 'search_face'
+2025-05-11 16:37:20,181 - zensys - ERROR - Verification error: 'FaceRecognitionManager' object has no attribute 'search_face'
+2025-05-11 16:43:05,109 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 16:43:12,436 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 16:43:12,467 - zensys - INFO - Creating new database from gallery
+2025-05-11 16:43:12,468 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 16:43:12,469 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 16:43:12,470 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:43:12,847 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 16:43:12,847 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 16:43:12,849 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:43:12,978 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 16:43:12,978 - zensys - INFO - Processing person: nganttst4
+2025-05-11 16:43:12,978 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:43:13,130 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 16:43:13,130 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 16:43:13,130 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 16:43:13,206 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 16:43:13,206 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 16:43:13,289 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 16:43:13,290 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 16:43:13,366 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 16:43:13,366 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 16:43:13,442 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 16:43:13,442 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 16:43:13,520 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 16:43:13,520 - zensys - INFO - Processing image: avatar.png
+2025-05-11 16:43:13,661 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 16:43:13,663 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 16:43:14,887 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 16:43:20,615 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-05-11 16:43:23,073 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-05-11 16:43:30,751 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005532298", "rfid_name": "nganttst4"}
+2025-05-11 16:43:31,063 - zensys - WARNING - Authentication failed: reason=face mismatch, match=False, live_face=True
+2025-05-11 16:43:39,929 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005532298", "rfid_name": "nganttst4"}
+2025-05-11 16:43:40,257 - zensys - WARNING - Authentication failed: reason=face mismatch, match=False, live_face=True
+2025-05-11 16:50:26,584 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 16:50:34,253 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 16:50:34,286 - zensys - INFO - Creating new database from gallery
+2025-05-11 16:50:34,286 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 16:50:34,287 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 16:50:34,287 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:50:34,643 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 16:50:34,643 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 16:50:34,644 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:50:34,793 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 16:50:34,793 - zensys - INFO - Processing person: nganttst4
+2025-05-11 16:50:34,793 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 16:50:34,953 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 16:50:34,953 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 16:50:34,953 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 16:50:35,035 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 16:50:35,035 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 16:50:35,116 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 16:50:35,118 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 16:50:35,205 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 16:50:35,205 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 16:50:35,287 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 16:50:35,288 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 16:50:35,361 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 16:50:35,361 - zensys - INFO - Processing image: avatar.png
+2025-05-11 16:50:35,505 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 16:50:35,505 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 16:50:36,713 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 16:50:43,370 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-05-11 16:50:45,673 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-05-11 16:50:57,316 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-05-11 16:50:59,190 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-05-11 16:51:07,748 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005532298", "rfid_name": "nganttst4"}
+2025-05-11 16:51:09,609 - zensys - WARNING - Authentication failed: reason=face mismatch, match=False, live_face=True
+2025-05-11 17:03:17,436 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 17:03:24,859 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 17:03:24,882 - zensys - INFO - Creating new database from gallery
+2025-05-11 17:03:24,887 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 17:03:24,887 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 17:03:24,888 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 17:03:25,215 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 17:03:25,215 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 17:03:25,215 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 17:03:25,349 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 17:03:25,350 - zensys - INFO - Processing person: nganttst4
+2025-05-11 17:03:25,350 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 17:03:25,505 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 17:03:25,507 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 17:03:25,507 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 17:03:25,589 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 17:03:25,589 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 17:03:25,675 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 17:03:25,675 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 17:03:25,766 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 17:03:25,767 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 17:03:25,849 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 17:03:25,849 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 17:03:25,937 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 17:03:25,938 - zensys - INFO - Processing image: avatar.png
+2025-05-11 17:03:26,095 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 17:03:26,096 - zensys - INFO - Processing image: thanhnpst1_20250511_165043.jpg
+2025-05-11 17:03:26,178 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_165043.jpg
+2025-05-11 17:03:26,178 - zensys - INFO - Processing image: thanhnpst1_20250511_165057.jpg
+2025-05-11 17:03:26,253 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_165057.jpg
+2025-05-11 17:03:26,255 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 17:03:27,481 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 17:03:43,072 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-05-11 17:03:45,463 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-05-11 17:03:53,108 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005460978", "rfid_name": "hungdnst1"}
+2025-05-11 17:03:54,644 - zensys - WARNING - Authentication failed: reason=face mismatch, match=False, live_face=True
+2025-05-11 17:06:32,822 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 17:06:40,767 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 17:06:40,797 - zensys - INFO - Creating new database from gallery
+2025-05-11 17:06:40,798 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 17:06:40,798 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 17:06:40,799 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 17:06:41,148 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 17:06:41,148 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 17:06:41,148 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 17:06:41,277 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 17:06:41,279 - zensys - INFO - Processing person: nganttst4
+2025-05-11 17:06:41,279 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 17:06:41,416 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 17:06:41,416 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 17:06:41,416 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 17:06:41,497 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 17:06:41,497 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 17:06:41,569 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 17:06:41,569 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 17:06:41,641 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 17:06:41,641 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 17:06:41,712 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 17:06:41,712 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 17:06:41,780 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 17:06:41,780 - zensys - INFO - Processing image: avatar.png
+2025-05-11 17:06:41,907 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 17:06:41,907 - zensys - INFO - Processing image: thanhnpst1_20250511_165043.jpg
+2025-05-11 17:06:41,983 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_165043.jpg
+2025-05-11 17:06:41,984 - zensys - INFO - Processing image: thanhnpst1_20250511_165057.jpg
+2025-05-11 17:06:42,053 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_165057.jpg
+2025-05-11 17:06:42,053 - zensys - INFO - Processing image: thanhnpst1_20250511_170343.jpg
+2025-05-11 17:06:42,123 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_170343.jpg
+2025-05-11 17:06:42,126 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 17:06:43,385 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 17:06:54,536 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005460978", "rfid_name": "hungdnst1"}
+2025-05-11 17:06:56,327 - zensys - WARNING - Authentication failed: reason=face mismatch, match=False, live_face=True
+2025-05-11 17:08:41,430 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 17:08:48,534 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 17:08:48,548 - zensys - INFO - Creating new database from gallery
+2025-05-11 17:08:48,558 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 17:08:48,558 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 17:08:48,559 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 17:08:48,875 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 17:08:48,875 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 17:08:48,875 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 17:08:49,020 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 17:08:49,020 - zensys - INFO - Processing person: nganttst4
+2025-05-11 17:08:49,022 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 17:08:49,165 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 17:08:49,165 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 17:08:49,165 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 17:08:49,240 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 17:08:49,240 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 17:08:49,298 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 17:08:49,298 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 17:08:49,382 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 17:08:49,382 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 17:08:49,452 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 17:08:49,452 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 17:08:49,528 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 17:08:49,528 - zensys - INFO - Processing image: avatar.png
+2025-05-11 17:08:49,669 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 17:08:49,671 - zensys - INFO - Processing image: thanhnpst1_20250511_165043.jpg
+2025-05-11 17:08:49,740 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_165043.jpg
+2025-05-11 17:08:49,740 - zensys - INFO - Processing image: thanhnpst1_20250511_165057.jpg
+2025-05-11 17:08:49,822 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_165057.jpg
+2025-05-11 17:08:49,822 - zensys - INFO - Processing image: thanhnpst1_20250511_170343.jpg
+2025-05-11 17:08:49,899 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_170343.jpg
+2025-05-11 17:08:49,899 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 17:08:51,097 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 17:09:04,375 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005460978", "rfid_name": "hungdnst2"}
+2025-05-11 17:09:06,704 - zensys - WARNING - Authentication failed: reason=face mismatch, match=False, live_face=True
+2025-05-11 17:56:07,756 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 17:56:16,645 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 17:56:16,704 - zensys - INFO - Creating new database from gallery
+2025-05-11 17:56:16,704 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 17:56:16,704 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 17:56:16,704 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 17:56:17,337 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 17:56:17,337 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 17:56:17,337 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 17:56:17,476 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 17:56:17,476 - zensys - INFO - Processing person: nganttst4
+2025-05-11 17:56:17,476 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 17:56:17,638 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 17:56:17,638 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 17:56:17,638 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 17:56:17,716 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 17:56:17,717 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 17:56:17,794 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 17:56:17,794 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 17:56:17,870 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 17:56:17,870 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 17:56:17,947 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 17:56:17,953 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 17:56:18,023 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 17:56:18,023 - zensys - INFO - Processing image: avatar.png
+2025-05-11 17:56:18,162 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 17:56:18,162 - zensys - INFO - Processing image: thanhnpst1_20250511_165043.jpg
+2025-05-11 17:56:18,245 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_165043.jpg
+2025-05-11 17:56:18,245 - zensys - INFO - Processing image: thanhnpst1_20250511_165057.jpg
+2025-05-11 17:56:18,338 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_165057.jpg
+2025-05-11 17:56:18,339 - zensys - INFO - Processing image: thanhnpst1_20250511_170343.jpg
+2025-05-11 17:56:18,427 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_170343.jpg
+2025-05-11 17:56:18,431 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 17:56:19,613 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 17:56:48,845 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 17:56:55,613 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 17:56:55,634 - zensys - INFO - Creating new database from gallery
+2025-05-11 17:56:55,634 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 17:56:55,640 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 17:56:55,640 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 17:56:55,986 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 17:56:55,986 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 17:56:55,986 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 17:56:56,128 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 17:56:56,128 - zensys - INFO - Processing person: nganttst4
+2025-05-11 17:56:56,128 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 17:56:56,280 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 17:56:56,280 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 17:56:56,282 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 17:56:56,356 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 17:56:56,356 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 17:56:56,432 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 17:56:56,432 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 17:56:56,516 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 17:56:56,518 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 17:56:56,613 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 17:56:56,613 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 17:56:56,698 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 17:56:56,698 - zensys - INFO - Processing image: avatar.png
+2025-05-11 17:56:56,837 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 17:56:56,837 - zensys - INFO - Processing image: thanhnpst1_20250511_165043.jpg
+2025-05-11 17:56:56,912 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_165043.jpg
+2025-05-11 17:56:56,912 - zensys - INFO - Processing image: thanhnpst1_20250511_165057.jpg
+2025-05-11 17:56:56,992 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_165057.jpg
+2025-05-11 17:56:56,992 - zensys - INFO - Processing image: thanhnpst1_20250511_170343.jpg
+2025-05-11 17:56:57,064 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_170343.jpg
+2025-05-11 17:56:57,064 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 17:56:58,134 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 17:57:28,411 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 17:57:35,015 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 17:57:35,043 - zensys - INFO - Creating new database from gallery
+2025-05-11 17:57:35,043 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 17:57:35,044 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 17:57:35,044 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 17:57:35,388 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 17:57:35,388 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 17:57:35,388 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 17:57:35,530 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 17:57:35,530 - zensys - INFO - Processing person: nganttst4
+2025-05-11 17:57:35,530 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 17:57:35,699 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 17:57:35,700 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 17:57:35,700 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 17:57:35,780 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 17:57:35,786 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 17:57:35,863 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 17:57:35,863 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 17:57:35,939 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 17:57:35,939 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 17:57:36,015 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 17:57:36,015 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 17:57:36,092 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 17:57:36,092 - zensys - INFO - Processing image: avatar.png
+2025-05-11 17:57:36,245 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 17:57:36,245 - zensys - INFO - Processing image: thanhnpst1_20250511_165043.jpg
+2025-05-11 17:57:36,321 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_165043.jpg
+2025-05-11 17:57:36,321 - zensys - INFO - Processing image: thanhnpst1_20250511_165057.jpg
+2025-05-11 17:57:36,397 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_165057.jpg
+2025-05-11 17:57:36,397 - zensys - INFO - Processing image: thanhnpst1_20250511_170343.jpg
+2025-05-11 17:57:36,482 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_170343.jpg
+2025-05-11 17:57:36,482 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 17:57:37,627 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 18:02:06,457 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrl", "rfid_name": "Unknown"}
+2025-05-11 18:02:09,358 - zensys - INFO - Authentication successful for user: Unknown, RFID: ctrl
+2025-05-11 18:20:11,759 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "11A1", "rfid_name": "Unknown"}
+2025-05-11 18:24:02,217 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "shiftDdinhj", "rfid_name": "Unknown"}
+2025-05-11 18:24:07,742 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "shiftBifnhspaceshiftDdinhj", "rfid_name": "Unknown"}
+2025-05-11 18:24:10,525 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "backspace4", "rfid_name": "Unknown"}
+2025-05-11 18:25:56,055 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrlc", "rfid_name": "Unknown"}
+2025-05-11 18:26:02,692 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrlv", "rfid_name": "Unknown"}
+2025-05-11 18:26:07,510 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "shift", "rfid_name": "Unknown"}
+2025-05-11 18:26:10,008 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "Chospaceemspace", "rfid_name": "Unknown"}
+2025-05-11 18:26:13,600 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "nghir", "rfid_name": "Unknown"}
+2025-05-11 18:26:44,660 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrlv", "rfid_name": "Unknown"}
+2025-05-11 18:26:48,429 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "123456", "rfid_name": "Unknown"}
+2025-05-11 18:28:43,889 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrl", "rfid_name": "Unknown"}
+2025-05-11 18:28:46,822 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrl", "rfid_name": "Unknown"}
+2025-05-11 18:28:58,941 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrl", "rfid_name": "Unknown"}
+2025-05-11 18:29:04,893 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "thanhn", "rfid_name": "Unknown"}
+2025-05-11 18:29:06,605 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "pst1", "rfid_name": "Unknown"}
+2025-05-11 18:29:07,913 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "tab", "rfid_name": "Unknown"}
+2025-05-11 18:29:11,724 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "okspaceem", "rfid_name": "Unknown"}
+2025-05-11 18:29:29,215 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "quan", "rfid_name": "Unknown"}
+2025-05-11 18:32:19,784 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ddungsspacegiowf", "rfid_name": "Unknown"}
+2025-05-11 18:33:41,365 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 18:33:48,456 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 18:33:48,509 - zensys - INFO - Creating new database from gallery
+2025-05-11 18:33:48,509 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 18:33:48,509 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 18:33:48,509 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 18:33:48,891 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 18:33:48,891 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 18:33:48,891 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 18:33:49,043 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 18:33:49,044 - zensys - INFO - Processing person: nganttst4
+2025-05-11 18:33:49,044 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 18:33:49,204 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 18:33:49,204 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 18:33:49,204 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 18:33:49,280 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 18:33:49,280 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 18:33:49,361 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 18:33:49,361 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 18:33:49,440 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 18:33:49,440 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 18:33:49,530 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 18:33:49,530 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 18:33:49,606 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 18:33:49,606 - zensys - INFO - Processing image: avatar.png
+2025-05-11 18:33:49,746 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 18:33:49,746 - zensys - INFO - Processing image: thanhnpst1_20250511_165043.jpg
+2025-05-11 18:33:49,828 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_165043.jpg
+2025-05-11 18:33:49,828 - zensys - INFO - Processing image: thanhnpst1_20250511_165057.jpg
+2025-05-11 18:33:49,912 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_165057.jpg
+2025-05-11 18:33:49,912 - zensys - INFO - Processing image: thanhnpst1_20250511_170343.jpg
+2025-05-11 18:33:49,995 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_170343.jpg
+2025-05-11 18:33:49,995 - zensys - INFO - Processing person: Unknown
+2025-05-11 18:33:49,995 - zensys - INFO - Processing image: Unknown_20250511_180208.jpg
+2025-05-11 18:33:50,078 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\Unknown\Unknown_20250511_180208.jpg
+2025-05-11 18:33:50,085 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 18:33:51,266 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 18:34:53,929 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "63074", "rfid_name": "Unknown"}
+2025-05-11 18:34:54,233 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-05-11 18:34:56,259 - zensys - INFO - Authentication successful for user: thanhnpst1, RFID: 0005563074
+2025-05-11 18:35:07,161 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005563074", "rfid_name": "thanhnpst1"}
+2025-05-11 18:35:09,314 - zensys - WARNING - Authentication failed: reason=face mismatch, match=False, live_face=True
+2025-05-11 18:42:20,882 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "thanh", "rfid_name": "Unknown"}
+2025-05-11 18:42:22,476 - zensys - INFO - Authentication successful for user: Unknown, RFID: thanh
+2025-05-11 18:42:59,591 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "lichjspacenghirspaceleexspace", "rfid_name": "Unknown"}
+2025-05-11 18:43:01,309 - zensys - INFO - Authentication successful for user: Unknown, RFID: lichjspacenghirspaceleexspace
+2025-05-11 18:43:32,452 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "hungv", "rfid_name": "Unknown"}
+2025-05-11 18:43:34,087 - zensys - INFO - Authentication successful for user: Unknown, RFID: hungv
+2025-05-11 18:47:53,423 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "down", "rfid_name": "Unknown"}
+2025-05-11 18:47:55,096 - zensys - INFO - Authentication successful for user: Unknown, RFID: down
+2025-05-11 18:48:50,919 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "backspacefams", "rfid_name": "Unknown"}
+2025-05-11 18:48:52,400 - zensys - INFO - Authentication successful for user: Unknown, RFID: backspacefams
+2025-05-11 18:49:08,517 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "123456", "rfid_name": "Unknown"}
+2025-05-11 18:49:10,344 - zensys - INFO - Authentication successful for user: Unknown, RFID: 123456
+2025-05-11 19:02:04,200 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "esc", "rfid_name": "Unknown"}
+2025-05-11 19:05:17,165 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 19:05:25,846 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 19:05:25,896 - zensys - INFO - Creating new database from gallery
+2025-05-11 19:05:25,896 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 19:05:25,896 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 19:05:25,896 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 19:05:26,451 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 19:05:26,456 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 19:05:26,457 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 19:05:26,613 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 19:05:26,613 - zensys - INFO - Processing person: nganttst4
+2025-05-11 19:05:26,614 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 19:05:26,811 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 19:05:26,812 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 19:05:26,812 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 19:05:26,900 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 19:05:26,901 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 19:05:26,984 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 19:05:26,984 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 19:05:27,070 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 19:05:27,072 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 19:05:27,190 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 19:05:27,191 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 19:05:27,276 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 19:05:27,276 - zensys - INFO - Processing image: avatar.png
+2025-05-11 19:05:27,424 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 19:05:27,424 - zensys - INFO - Processing image: thanhnpst1_20250511_165043.jpg
+2025-05-11 19:05:27,508 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_165043.jpg
+2025-05-11 19:05:27,508 - zensys - INFO - Processing image: thanhnpst1_20250511_165057.jpg
+2025-05-11 19:05:27,588 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_165057.jpg
+2025-05-11 19:05:27,588 - zensys - INFO - Processing image: thanhnpst1_20250511_170343.jpg
+2025-05-11 19:05:27,679 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_170343.jpg
+2025-05-11 19:05:27,679 - zensys - INFO - Processing image: thanhnpst1_20250511_183454.jpg
+2025-05-11 19:05:27,762 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_183454.jpg
+2025-05-11 19:05:27,762 - zensys - INFO - Processing person: Unknown
+2025-05-11 19:05:27,762 - zensys - INFO - Processing image: Unknown_20250511_180208.jpg
+2025-05-11 19:05:27,839 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\Unknown\Unknown_20250511_180208.jpg
+2025-05-11 19:05:27,839 - zensys - INFO - Processing image: Unknown_20250511_184221.jpg
+2025-05-11 19:05:27,936 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\Unknown\Unknown_20250511_184221.jpg
+2025-05-11 19:05:27,939 - zensys - INFO - Processing image: Unknown_20250511_184259.jpg
+2025-05-11 19:05:28,024 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\Unknown\Unknown_20250511_184259.jpg
+2025-05-11 19:05:28,025 - zensys - INFO - Processing image: Unknown_20250511_184332.jpg
+2025-05-11 19:05:28,134 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\Unknown\Unknown_20250511_184332.jpg
+2025-05-11 19:05:28,134 - zensys - INFO - Processing image: Unknown_20250511_184753.jpg
+2025-05-11 19:05:28,220 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\Unknown\Unknown_20250511_184753.jpg
+2025-05-11 19:05:28,220 - zensys - INFO - Processing image: Unknown_20250511_184851.jpg
+2025-05-11 19:05:28,310 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\Unknown\Unknown_20250511_184851.jpg
+2025-05-11 19:05:28,311 - zensys - INFO - Processing image: Unknown_20250511_184908.jpg
+2025-05-11 19:05:28,405 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\Unknown\Unknown_20250511_184908.jpg
+2025-05-11 19:05:28,409 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 19:05:29,540 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 19:05:57,207 - zensys - INFO - System event: startup - {"message": "ZenSys starting up"}
+2025-05-11 19:06:03,566 - zensys - INFO - Using local MiDaS checkpoint: C:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets\weights\checkpoints\midas_v21_small_256.pt
+2025-05-11 19:06:03,588 - zensys - INFO - Creating new database from gallery
+2025-05-11 19:06:03,588 - zensys - INFO - Processing gallery from: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery
+2025-05-11 19:06:03,588 - zensys - INFO - Processing person: anhvnst3
+2025-05-11 19:06:03,588 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 19:06:03,940 - zensys - INFO - Successfully processed face for: anhvnst3
+2025-05-11 19:06:03,940 - zensys - INFO - Processing person: hungdnst2
+2025-05-11 19:06:03,940 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 19:06:04,068 - zensys - INFO - Successfully processed face for: hungdnst2
+2025-05-11 19:06:04,068 - zensys - INFO - Processing person: nganttst4
+2025-05-11 19:06:04,068 - zensys - INFO - Processing image: avatar.jpg
+2025-05-11 19:06:04,192 - zensys - INFO - Successfully processed face for: nganttst4
+2025-05-11 19:06:04,199 - zensys - INFO - Processing person: thanhnpst1
+2025-05-11 19:06:04,199 - zensys - INFO - Processing image: 1.jpg
+2025-05-11 19:06:04,257 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\1.jpg
+2025-05-11 19:06:04,257 - zensys - INFO - Processing image: 2.jpg
+2025-05-11 19:06:04,313 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\2.jpg
+2025-05-11 19:06:04,313 - zensys - INFO - Processing image: 3.jpg
+2025-05-11 19:06:04,376 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\3.jpg
+2025-05-11 19:06:04,378 - zensys - INFO - Processing image: 4.jpg
+2025-05-11 19:06:04,444 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\4.jpg
+2025-05-11 19:06:04,444 - zensys - INFO - Processing image: 5.jpg
+2025-05-11 19:06:04,522 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\5.jpg
+2025-05-11 19:06:04,523 - zensys - INFO - Processing image: avatar.png
+2025-05-11 19:06:04,653 - zensys - INFO - Successfully processed face for: thanhnpst1
+2025-05-11 19:06:04,653 - zensys - INFO - Processing image: thanhnpst1_20250511_165043.jpg
+2025-05-11 19:06:04,736 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_165043.jpg
+2025-05-11 19:06:04,736 - zensys - INFO - Processing image: thanhnpst1_20250511_165057.jpg
+2025-05-11 19:06:04,815 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_165057.jpg
+2025-05-11 19:06:04,815 - zensys - INFO - Processing image: thanhnpst1_20250511_170343.jpg
+2025-05-11 19:06:04,884 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_170343.jpg
+2025-05-11 19:06:04,884 - zensys - INFO - Processing image: thanhnpst1_20250511_183454.jpg
+2025-05-11 19:06:04,958 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\thanhnpst1\thanhnpst1_20250511_183454.jpg
+2025-05-11 19:06:04,958 - zensys - INFO - Processing person: Unknown
+2025-05-11 19:06:04,958 - zensys - INFO - Processing image: Unknown_20250511_180208.jpg
+2025-05-11 19:06:05,032 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\Unknown\Unknown_20250511_180208.jpg
+2025-05-11 19:06:05,032 - zensys - INFO - Processing image: Unknown_20250511_184221.jpg
+2025-05-11 19:06:05,102 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\Unknown\Unknown_20250511_184221.jpg
+2025-05-11 19:06:05,102 - zensys - INFO - Processing image: Unknown_20250511_184259.jpg
+2025-05-11 19:06:05,177 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\Unknown\Unknown_20250511_184259.jpg
+2025-05-11 19:06:05,178 - zensys - INFO - Processing image: Unknown_20250511_184332.jpg
+2025-05-11 19:06:05,241 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\Unknown\Unknown_20250511_184332.jpg
+2025-05-11 19:06:05,243 - zensys - INFO - Processing image: Unknown_20250511_184753.jpg
+2025-05-11 19:06:05,303 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\Unknown\Unknown_20250511_184753.jpg
+2025-05-11 19:06:05,310 - zensys - INFO - Processing image: Unknown_20250511_184851.jpg
+2025-05-11 19:06:05,373 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\Unknown\Unknown_20250511_184851.jpg
+2025-05-11 19:06:05,373 - zensys - INFO - Processing image: Unknown_20250511_184908.jpg
+2025-05-11 19:06:05,451 - zensys - WARNING - No face detected in: c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\data/gallery\Unknown\Unknown_20250511_184908.jpg
+2025-05-11 19:06:05,453 - zensys - INFO - Successfully saved database with 4 faces to c:\Users\nguye\OneDrive\Desktop\FAMS\jetson\assets/database
+2025-05-11 19:06:06,553 - zensys - INFO - ZenSys initialized successfully
+2025-05-11 19:06:37,373 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "0005460978", "rfid_name": "hungdnst2"}
+2025-05-11 19:06:39,824 - zensys - WARNING - Authentication failed: reason=face mismatch, match=False, live_face=True
+2025-05-11 19:08:05,152 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "alttab", "rfid_name": "Unknown"}
+2025-05-11 19:08:06,574 - zensys - INFO - Authentication successful for user: Unknown, RFID: alttab
+2025-05-11 19:09:55,672 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "ctrl", "rfid_name": "Unknown"}
+2025-05-11 19:09:57,273 - zensys - INFO - Authentication successful for user: Unknown, RFID: ctrl
+2025-05-11 19:16:59,852 - zensys - INFO - System event: rfid_scanned - {"rfid_id": "xdowndowndown", "rfid_name": "Unknown"}
+2025-05-11 19:17:01,480 - zensys - INFO - Authentication successful for user: Unknown, RFID: xdowndowndown

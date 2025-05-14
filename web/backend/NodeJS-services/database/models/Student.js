@@ -1,51 +1,48 @@
 const mongoose = require('mongoose');
 const { COLLECTIONS } = require('../constants');
 
+/**
+ * Student Schema
+ * Represents students in the system
+ */
 const StudentSchema = new mongoose.Schema({
   studentId: {
-    type: String,
+    type: Number,
     required: true,
-    unique: true
+    unique: true,
+    auto: true
   },
   userId: {
     type: String,
     required: true,
-    unique: true
-  },
-  firstName: {
-    type: String,
-    required: true
-  },
-  lastName: {
-    type: String,
-    required: true
-  },
-  email: {
-    type: String,
-    required: true
+    unique: true,
+    ref: 'UserAccount'
   },
   fullName: {
     type: String,
-    default: function() {
-      return `${this.firstName} ${this.lastName}`.trim();
-    }
+    required: true
   },
   dateOfBirth: {
     type: Date
   },
-  classId: {
-    type: Number,
-    ref: 'Class'
+  classIds: {
+    type: [Number],
+    default: []
   },
   batchId: {
-    type: Number,
-    ref: 'Batch',
-    get: v => v,
-    set: v => typeof v === 'string' ? parseInt(v) : v
+    type: Number
   },
   gender: {
     type: Boolean,
-    required: true
+    set: function(v) {
+      if (typeof v === 'string') {
+        return v.toLowerCase() === 'male' || v === 'true';
+      }
+      return v;
+    },
+    get: function(v) {
+      return v ? 'Male' : 'Female';
+    }
   },
   address: {
     type: String
@@ -53,56 +50,116 @@ const StudentSchema = new mongoose.Schema({
   phone: {
     type: String
   },
-  isActive: {
-    type: Boolean,
-    default: true
+  parentIds: {
+    type: [String],
+    default: []
   },
-  // Parent information arrays
-  parentIds: [{
-    type: String
-  }],
-  parentNames: [{
-    type: String
-  }],
-  parentCareers: [{
-    type: String
-  }],
-  parentPhones: [{
-    type: String
-  }],
-  parentGenders: [{
-    type: Boolean
-  }]
+  parentNames: {
+    type: [String],
+    default: []
+  },
+  parentCareers: {
+    type: [String],
+    default: []
+  },
+  parentPhones: {
+    type: [String],
+    default: []
+  },
+  parentGenders: {
+    type: [Boolean],
+    default: []
+  },
+  parentEmails: {
+    type: [String],
+    default: []
+  }
 }, {
   timestamps: true,
   versionKey: false,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  toJSON: { 
+    virtuals: true,
+    transform: function(doc, ret) {
+      // Remove unnecessary fields from the response
+      delete ret.parentCareers;
+      delete ret.parentEmails;
+      delete ret.parentGenders;
+      delete ret.parentIds;
+      delete ret.parentNames;
+      delete ret.parentPhones;
+      return ret;
+    }
+  },
+  toObject: { 
+    virtuals: true,
+    transform: function(doc, ret) {
+      // Remove unnecessary fields from the response
+      delete ret.parentCareers;
+      delete ret.parentEmails;
+      delete ret.parentGenders;
+      delete ret.parentIds;
+      delete ret.parentNames;
+      delete ret.parentPhones;
+      return ret;
+    }
+  }
 });
 
 // Virtual for getting user info
 StudentSchema.virtual('user', {
-  ref: 'User',
+  ref: 'UserAccount',
   localField: 'userId',
   foreignField: 'userId',
   justOne: true
 });
 
-// Generate user ID based on name and IDs
-StudentSchema.statics.generateUserId = function(firstName, lastName, batchId, studentId) {
-  if (!firstName || !lastName || !batchId || !studentId) {
-    throw new Error('Missing required fields for userId generation');
+// Virtual for getting class info
+StudentSchema.virtual('classes', {
+  ref: 'Class',
+  localField: 'classIds',
+  foreignField: 'classId',
+  justOne: false
+});
+
+// Virtual for getting parent information through ParentStudent relation
+StudentSchema.virtual('parents', {
+  ref: 'ParentStudent',
+  localField: 'studentId',
+  foreignField: 'studentId',
+  justOne: false
+});
+
+// Static method to generate a userId for a student
+StudentSchema.statics.generateUserId = function(fullName, batchId, studentId) {
+  if (!fullName || !batchId || !studentId) {
+    throw new Error('Full name, batch ID, and student ID are required to generate userId');
   }
   
-  // In Vietnamese naming, lastName is the family name (Nguyễn Phước), 
-  // firstName is the given name (Thành)
+  // Split full name to get first name and last name parts
+  const nameParts = fullName.split(' ');
+  const firstName = nameParts.pop().toLowerCase(); // Last part is first name
   
-  // Extract the first letter of each word in the lastName
-  const lastNameParts = lastName.split(' ');
-  const lastNameInitials = lastNameParts.map(part => part.charAt(0).toLowerCase()).join('');
+  // Get initials of last name (all words)
+  const lastNameInitials = nameParts
+    .map(part => part.charAt(0).toLowerCase())
+    .join('');
   
-  // Combine with firstName, "st" suffix, and IDs
-  return `${firstName.toLowerCase()}${lastNameInitials}st${batchId}${studentId}`;
+  // Combine with 'st' prefix, batchId and studentId
+  return `${firstName}${lastNameInitials}st${batchId}${studentId}`;
 };
+
+// Middleware to remove empty parent arrays before saving
+StudentSchema.pre('save', function(next) {
+  const fieldsToCleanup = ['parentCareers', 'parentEmails', 'parentGenders', 'parentIds', 'parentNames', 'parentPhones'];
+  
+  fieldsToCleanup.forEach(field => {
+    // Xóa trường nếu là mảng rỗng
+    if (Array.isArray(this[field]) && this[field].length === 0) {
+      this[field] = undefined;
+    }
+  });
+  
+  next();
+});
 
 module.exports = mongoose.model('Student', StudentSchema, COLLECTIONS.STUDENT); 

@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
-const User = require('../database/models/User');
+const UserAccount = require('../database/models/UserAccount');
+const mongoose = require('mongoose');
+const errorService = require('../services/errorService');
 
 /**
  * Middleware bảo vệ route yêu cầu xác thực
@@ -55,7 +57,7 @@ exports.protect = async (req, res, next) => {
     }
     
     // 3) Kiểm tra xem user còn tồn tại không
-    const currentUser = await User.findOne({ userId: decoded.id || decoded.userId });
+    const currentUser = await UserAccount.findOne({ userId: decoded.id || decoded.userId });
     
     if (!currentUser) {
       return res.status(401).json({
@@ -99,6 +101,11 @@ exports.authorize = (...roles) => {
       });
     }
     
+    // Luôn cho phép Admin truy cập (bất kể roles được chỉ định là gì)
+    if (req.user.role === 'admin' || req.user.role === 'Admin') {
+      return next();
+    }
+    
     // Kiểm tra người dùng có quyền không
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
@@ -109,5 +116,71 @@ exports.authorize = (...roles) => {
     }
     
     next();
+  };
+};
+
+// Middleware kiểm tra token xác thực
+exports.authenticateToken = async (req, res, next) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Không có token xác thực',
+        code: 'AUTH_TOKEN_MISSING'
+      });
+    }
+    
+    jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret', (err, decoded) => {
+      if (err) {
+        return res.status(403).json({
+          success: false,
+          message: 'Token không hợp lệ hoặc đã hết hạn',
+          code: 'AUTH_TOKEN_INVALID'
+        });
+      }
+      
+      req.user = decoded; // Lưu thông tin user vào req.user
+      next();
+    });
+  } catch (error) {
+    errorService.handleError(error, req, res);
+  }
+};
+
+// Middleware phân quyền theo vai trò
+exports.authorizeRoles = (roles) => {
+  return async (req, res, next) => {
+    try {
+      const userId = req.user.userId;
+      
+      // Lấy thông tin role của user từ database
+      const user = await mongoose.connection.db.collection('UserAccount').findOne(
+        { UserID: userId, IsActive: true },
+        { projection: { Role: 1 } }
+      );
+      
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy người dùng',
+          code: 'USER_NOT_FOUND'
+        });
+      }
+      
+      if (!roles.includes(user.Role)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Bạn không có quyền thực hiện hành động này',
+          code: 'PERMISSION_DENIED'
+        });
+      }
+      
+      next();
+    } catch (error) {
+      errorService.handleError(error, req, res);
+    }
   };
 }; 

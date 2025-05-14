@@ -1,0 +1,23 @@
+.add-user-form {
+  &__avatar-preview {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-top: 8px;
+    border: 1px solid #ddd;
+  }
+
+  &__section-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+
+  &__submit-button {
+    margin-top: 24px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}

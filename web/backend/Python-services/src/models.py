@@ -61,8 +61,8 @@ class Parent(BaseModel):
 
 
 class Class(BaseModel):
-    ClassID: str = Field(..., description="Unique identifier for the class")
-    ClassName: str = Field(..., description="Name of the class")
+    classId: str = Field(..., description="Unique identifier for the class")
+    className: str = Field(..., description="Name of the class")
     grade: str = Field(..., description="Grade level")
     academicYear: str = Field(..., description="Academic year")
     semesterId: str = Field(..., description="Reference to Semester")
@@ -74,7 +74,7 @@ class Class(BaseModel):
 
 
 class Batch(BaseModel):
-    BatchID: str = Field(..., description="Unique identifier for the batch")
+    batchId: str = Field(..., description="Unique identifier for the batch")
     batchName: str = Field(..., description="Name of the batch")
     startDate: datetime = Field(..., description="Start date of the batch")
     endDate: datetime = Field(..., description="End date of the batch")

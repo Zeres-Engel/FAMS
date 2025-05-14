@@ -1,0 +1,1 @@
+from gui.widgets.py_face_recognition.face_recognition_widget import FaceRecognitionWidget 

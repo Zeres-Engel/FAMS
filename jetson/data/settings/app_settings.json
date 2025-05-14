@@ -1,0 +1,6 @@
+{
+    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhZG1pbiIsImlhdCI6MTc0NTY1NDE5MCwiZXhwIjo0OTAxNDE0MTkwfQ.W9KaDowLuah7R4PfoAyBjZYMBqtbvo0nfOvBxzSpLyk",
+    "api_url": "http://fams.io.vn/api-nodejs/attendance/check-in",
+    "device_id": 1,
+    "room": "Room 101 Building A"
+}
