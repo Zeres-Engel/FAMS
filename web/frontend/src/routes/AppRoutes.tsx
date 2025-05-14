@@ -24,7 +24,7 @@ const router = createBrowserRouter([
     element: <AuthWrapper mode="admin" element={<HomePageAdmin />} />,
   },
   {
-    path: "/IdentifyManagement",
+    path: "/SystemManagement",
     element: <AuthWrapper mode="admin" element={<IdentifyManagementPage />} />,
   },
   {

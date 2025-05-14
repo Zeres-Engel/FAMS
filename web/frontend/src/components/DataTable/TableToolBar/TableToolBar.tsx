@@ -376,7 +376,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
     if (isRoleParent) {
       return (
         <>
-          <TextField
+          {/* <TextField
             label="User ID"
             value={filters.userID}
             required
@@ -390,7 +390,31 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             onBlur={handler.handleCallAPIClass}
             fullWidth={isMobile}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
-          />
+          /> */}
+          <FormControl
+            fullWidth={isMobile}
+            sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
+          >
+            <InputLabel id="class-select-label">User ID</InputLabel>
+            <Select
+              labelId="class-select-label"
+              value={filters.userID || ""}
+              label="User ID"
+              required
+              onChange={e => {
+                handleFilterChange("userID", e.target.value);
+              }}
+              onBlur={handler.handleCallAPIClass}
+            >
+              {state.childData?.map((option, index) => {
+                return (
+                  <MenuItem key={index} value={option.childId}>
+                    {option.childId}
+                  </MenuItem>
+                );
+              })}
+            </Select>
+          </FormControl>
           <FormControl
             fullWidth={isMobile}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
@@ -449,7 +473,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             value={filters.dateFrom}
             onChange={e => handleFilterChange("dateFrom", e.target.value)}
             fullWidth={isMobile}
-            slotProps={{htmlInput:{min:filters.dateTo || undefined}}}
+            slotProps={{ htmlInput: { min: filters.dateTo || undefined } }}
             InputLabelProps={{ shrink: true }}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
           />
@@ -460,7 +484,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             value={filters.dateTo}
             onChange={e => handleFilterChange("dateTo", e.target.value)}
             fullWidth={isMobile}
-            slotProps={{htmlInput:{min:filters.dateFrom || undefined}}}
+            slotProps={{ htmlInput: { min: filters.dateFrom || undefined } }}
             InputLabelProps={{ shrink: true }}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
           />
@@ -498,7 +522,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             value={filters.dateFrom}
             onChange={e => handleFilterChange("dateFrom", e.target.value)}
             fullWidth={isMobile}
-            slotProps={{htmlInput:{max:filters.dateTo || undefined}}}
+            slotProps={{ htmlInput: { max: filters.dateTo || undefined } }}
             InputLabelProps={{ shrink: true }}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
           />
@@ -509,7 +533,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             value={filters.dateTo}
             onChange={e => handleFilterChange("dateTo", e.target.value)}
             fullWidth={isMobile}
-            slotProps={{htmlInput:{min:filters.dateFrom || undefined}}}
+            slotProps={{ htmlInput: { min: filters.dateFrom || undefined } }}
             InputLabelProps={{ shrink: true }}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
           />
@@ -577,7 +601,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             onChange={e => handleFilterChange("dateFrom", e.target.value)}
             InputLabelProps={{ shrink: true }}
             fullWidth={isMobile}
-            slotProps={{htmlInput:{max:filters.dateTo || undefined}}}
+            slotProps={{ htmlInput: { max: filters.dateTo || undefined } }}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
           />
           <TextField
@@ -588,7 +612,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             onChange={e => handleFilterChange("dateTo", e.target.value)}
             InputLabelProps={{ shrink: true }}
             fullWidth={isMobile}
-            slotProps={{htmlInput:{min:filters.dateFrom || undefined}}}
+            slotProps={{ htmlInput: { min: filters.dateFrom || undefined } }}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
           />
         </>
@@ -799,7 +823,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             value={filters.dateFrom}
             onChange={e => handleFilterChange("dateFrom", e.target.value)}
             InputLabelProps={{ shrink: true }}
-            slotProps={{htmlInput:{max:filters.dateTo || undefined}}}
+            slotProps={{ htmlInput: { max: filters.dateTo || undefined } }}
             fullWidth={isMobile}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
           />
@@ -810,7 +834,7 @@ const TableToolBar = (props: EnhancedTableToolbarProps): React.JSX.Element => {
             value={filters.dateTo}
             onChange={e => handleFilterChange("dateTo", e.target.value)}
             InputLabelProps={{ shrink: true }}
-            slotProps={{htmlInput:{min:filters.dateFrom || undefined}}}
+            slotProps={{ htmlInput: { min: filters.dateFrom || undefined } }}
             fullWidth={isMobile}
             sx={{ flex: isMobile ? "1 1 100%" : "1 1 200px" }}
           />

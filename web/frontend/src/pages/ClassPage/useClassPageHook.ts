@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/useStoreHook";
 import {
   ClassPageList,
@@ -17,6 +17,7 @@ function useClassPageHook() {
   const role = useAppSelector(state => state.authUser.role);
   const userData = useAppSelector(state => state.login.loginData);
   const classList = useSelector((state: RootState) => state.classById.classes);
+  const parentData = useSelector((state: RootState) => state.parentData.data);
   const classOptions = classList?.map(c => c.className) || [];
   const classPageList: ClassPageList[] = classList.map(item => ({
     classId: item.classId,
@@ -32,22 +33,20 @@ function useClassPageHook() {
   );
   const [filters, setFiltersClassPage] = useState<number>(0);
   useEffect(() => {
-    if (userData && classList.length === 0 && role !== "parent") {
+    if (userData && role !== "parent") {
       dispatch(fetchClassesByUserId(userData?.userId));
     }
-  }, [dispatch, userData, classList,role]);
+    if (userData && role === "parent" && parentData) {
+      dispatch(fetchClassesByUserId(parentData[0].details.children[0].userId));
+    }
+  }, [dispatch, userData,role,parentData]);
   useEffect(() => {
     if (filters) {
       dispatch(getClassUsers(filters));
     }
   }, [filters, dispatch]);
-  useEffect(()=>{
-    if(role === "parent"){
-      dispatch(searchUsers({search:userData?.userId}))
-    }
-  },[dispatch, role, userData?.userId])
   useEffect(() => {
-    if (classList.length > 0 && !filters && role !== "parent") {
+    if (classList.length > 0 && !filters) {
       const lastClass = classList[classList.length - 1];
       if (lastClass?.classId) {
         setFiltersClassPage(lastClass.classId);

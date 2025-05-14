@@ -1,0 +1,60 @@
+[
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-09 21:31:19",
+    "RFID_ID": "0005563074",
+    "registered_name": "thanhnpst1",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-09 21:31:21",
+    "RFID_ID": "0005563074",
+    "face_name": "thanhnpst1",
+    "is_match": true,
+    "face_score": 0.4262596666812897,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-09 21:34:44",
+    "RFID_ID": "uawfspaceshiftspace",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-09 21:34:44",
+    "RFID_ID": "uawfspaceshiftspace",
+    "face_name": "Unknown",
+    "is_match": true,
+    "face_score": 0.0,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-09 21:40:17",
+    "RFID_ID": "ctrlacc",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  },
+  {
+    "event_type": "VERIFICATION",
+    "timestamp": "2025-05-09 21:40:18",
+    "RFID_ID": "ctrlacc",
+    "face_name": "thanhnpst1",
+    "is_match": false,
+    "face_score": 0.43044760823249817,
+    "is_live_face": true,
+    "deviceId": 1
+  },
+  {
+    "event_type": "RFID_SCAN",
+    "timestamp": "2025-05-09 21:40:21",
+    "RFID_ID": "ctrlav",
+    "registered_name": "Unknown",
+    "deviceId": 1
+  }
+]

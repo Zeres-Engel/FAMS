@@ -99,10 +99,8 @@ function useScheduleManagementPageHook() {
     (state: RootState) => state.classroom.classrooms
   );
   useEffect(() => {
-    if (!classrooms || classrooms.length === 0) {
       dispatch(fetchClassrooms() as any);
-    }
-  }, [dispatch, classrooms]);
+  }, [dispatch]);
   const [filters, setFilters] = useState({
     class: "",
     academicYear: "",
@@ -135,7 +133,7 @@ function useScheduleManagementPageHook() {
   };
 
   useEffect(() => {
-    if (userData && classList.length === 0 && userData?.role === "student") {
+    if (userData && userData?.role === "student") {
       dispatch(fetchClassesByUserId(userData?.userId));
     }
   }, [dispatch, userData, classList]);
@@ -180,10 +178,8 @@ function useScheduleManagementPageHook() {
   );
 
   useEffect(() => {
-    if (!subjectState || subjectState.length === 0) {
       dispatch(fetchSubjects() as any);
-    }
-  }, [dispatch, subjectState]);
+  }, [dispatch]);
 
   // Load user attendance data when userData changes
   useEffect(() => {

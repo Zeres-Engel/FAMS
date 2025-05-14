@@ -45,15 +45,11 @@ function useAttendanceManagementPageHook() {
       }))
     : [];
   useEffect(() => {
-    if (!classList) {
       dispatch(fetchClasses());
-    }
-  }, [dispatch, classList]);
+  }, [dispatch]);
   useEffect(() => {
-    if (!subjectList || subjectList.length === 0) {
       dispatch(fetchSubjects());
-    }
-  }, [dispatch, subjectList]);
+  }, [dispatch]);
 
   const [userMainData, setUserMainData] = useState<AttendanceLog[]>([]);
   const [filters, setFiltersAttendancePage] = useState<AttendanceSearchParam>({

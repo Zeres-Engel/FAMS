@@ -39,9 +39,9 @@ function LayoutComponent({
             flexGrow: 1,
             p: 3,
             width: "100%",
+            minHeight: "95vh",
             marginLeft: {
               xs: 0,
-              //   sm: isSidebarLayout ? `${drawerWidth}px` : 0,
             },
           }}
         >
@@ -75,6 +75,26 @@ function LayoutComponent({
         </Box>
       </Box>
       <AnnounceComponent />
+      {role !== "admin" && (
+        <Box
+          component="footer"
+          sx={{
+            width: "100%",
+            py: 2,
+            bgcolor: "#f5f5f5",
+            textAlign: "center",
+            borderTop: "1px solid #e0e0e0",
+            fontSize: 14,
+            color: "#888",
+            position: "sticky",
+            left: 0,
+            bottom: 0,
+            zIndex: 1200,
+          }}
+        >
+          © {new Date().getFullYear()} FAMS. All rights reserved.
+        </Box>
+      )}
     </Container>
   );
 }

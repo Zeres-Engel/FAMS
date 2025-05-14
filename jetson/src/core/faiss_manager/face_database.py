@@ -50,15 +50,24 @@ class FaceDatabase:
         gallery_path = gallery_path or config.gallery_path
         db_path = db_path or config.db_path
         
+        print("="*50)
+        print(f"CREATING NEW FACE DATABASE")
+        print(f"Gallery Path: {gallery_path}")
+        print(f"Database Path: {db_path}")
+        print("="*50)
+        
         self.logger.info(f"Processing gallery from: {gallery_path}")
         
         all_embeddings = []
         current_index = 0
+        processed_persons = set()
         
         # Duyệt qua từng thư mục trong gallery
         for person_dir in glob.glob(os.path.join(gallery_path, "*")):
             person_name = os.path.basename(person_dir)
+            processed_persons.add(person_name)
             self.logger.info(f"Processing person: {person_name}")
+            person_images_count = 0
             
             # Duyệt qua từng ảnh của người đó (hỗ trợ cả .jpg và .png)
             for img_path in glob.glob(os.path.join(person_dir, "*.[jp][pn][g]")):
@@ -78,28 +87,45 @@ class FaceDatabase:
                         all_embeddings.append(embedding)
                         self.name_dict[current_index] = person_name
                         current_index += 1
+                        person_images_count += 1
                         self.logger.info(f"Successfully processed face for: {person_name}")
                     else:
                         self.logger.warning(f"No embedding generated for face in: {img_path}")
                 else:
                     self.logger.warning(f"No face detected in: {img_path}")
+            
+            print(f"Processed {person_images_count} images for person: {person_name}")
         
         if all_embeddings:
             # Gộp tất cả embeddings
             all_embeddings = np.vstack(all_embeddings)
             # Add vào FAISS index
+            self.index = faiss.IndexFlatIP(self.dimension)  # Tạo index mới
             self.index.add(all_embeddings)
             
             # Lưu index và dictionary tên vào assets/database
+            os.makedirs(db_path, exist_ok=True)
             index_path = os.path.join(db_path, "face_index.faiss")
             dict_path = os.path.join(db_path, "name_dict.pkl")
             
             faiss.write_index(self.index, index_path)
             with open(dict_path, "wb") as f:
                 pickle.dump(self.name_dict, f)
+                
+            print("="*50)
+            print(f"DATABASE CREATED SUCCESSFULLY")
+            print(f"Total faces: {len(self.name_dict)}")
+            print(f"Unique persons: {len(processed_persons)}")
+            print(f"Database saved to: {db_path}")
+            print("="*50)
+            
             self.logger.info(f"Successfully saved database with {len(self.name_dict)} faces to {db_path}")
             return True
         else:
+            print("="*50)
+            print("DATABASE CREATION FAILED: No faces were processed")
+            print("="*50)
+            
             self.logger.error("No faces were processed from the gallery")
             return False
     
@@ -171,15 +197,13 @@ class FaceDatabase:
     
     def ensure_database(self, face_analyzer):
         """
-        Đảm bảo database tồn tại, nếu không thì tạo mới
+        Always creates a new database from the gallery
         
         Args:
             face_analyzer: Đối tượng ZenFace để phát hiện và tạo embedding
             
         Returns:
-            bool: True nếu database đã sẵn sàng
+            bool: True nếu database đã tạo thành công
         """
-        if not self.load_database():
-            self.logger.info("Database not found, creating new database from gallery")
-            return self.process_gallery(face_analyzer)
-        return True 
+        self.logger.info("Creating new database from gallery")
+        return self.process_gallery(face_analyzer) 

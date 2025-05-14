@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Box,
   Typography,
@@ -30,7 +30,10 @@ import {
 } from "recharts";
 import { CheckCircle } from "@mui/icons-material";
 import LayoutComponent from "../../components/Layout/Layout";
-import { useAppSelector } from "../../store/useStoreHook";
+import { useAppDispatch, useAppSelector } from "../../store/useStoreHook";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/store";
+import { fetchSchedules } from "../../store/slices/scheduleSlice";
 
 // Sample data
 const COLORS = ["#4caf50", "#ff9800", "#f44336"];
@@ -68,9 +71,6 @@ const attendanceStats = [
 ];
 
 const attendanceRateByYear = [
-  { year: "2020", Present: 160, Late: 20, Absent: 20 },
-  { year: "2021", Present: 170, Late: 15, Absent: 15 },
-  { year: "2022", Present: 175, Late: 10, Absent: 15 },
   { year: "2023", Present: 180, Late: 8, Absent: 12 },
   { year: "2024", Present: 185, Late: 6, Absent: 9 },
 ];
@@ -78,7 +78,7 @@ const attendanceRateByYear = [
 // Sample notifications
 const notifications = [
   { message: "Meeting at 10 AM", sender: "Admin", sendDate: "2025-04-28" },
-  { message: "Submit homework", sender: "Teacher", sendDate: "2025-04-27" },
+  // { message: "Submit homework", sender: "Teacher", sendDate: "2025-04-27" },
 ];
 
 // Attendance rules
@@ -93,6 +93,82 @@ const attendanceRules = [
 function HomePage(): React.JSX.Element {
   const userData = useAppSelector(state => state.login.loginData);
   const role = userData?.role || "student";
+  const dispatch = useAppDispatch();
+  const scheduleData = useSelector(
+    (state: RootState) => state.schedule.schedules
+  );
+  const parentData = useSelector((state: RootState) => state.parentData.data);
+  const childrenList = React.useMemo(() => {
+  if (!Array.isArray(parentData)) return [];
+  interface Child {
+    studentId: string;
+    userId: string;
+    fullName: string;
+    gender: string;
+    dateOfBirth: string;
+    batchId: string;
+    classes: string[];
+    relationship: string;
+  }
+
+  interface ParentDetails {
+    children: Child[];
+  }
+
+  interface ParentData {
+    details?: ParentDetails;
+  }
+
+  return (parentData as ParentData[]).flatMap((parent: ParentData) =>
+    parent.details && Array.isArray(parent.details.children)
+      ? parent.details.children.map((child: Child) => ({
+          studentId: child.studentId,
+          userId: child.userId,
+          fullName: child.fullName,
+          gender: child.gender,
+          dateOfBirth: child.dateOfBirth,
+          batchId: child.batchId,
+          classes: child.classes,
+          relationship: child.relationship,
+        }))
+      : []
+  );
+}, [parentData]);
+  const nearestSchedules = React.useMemo(() => {
+    if (!Array.isArray(scheduleData)) return [];
+    const now = new Date();
+    // Sắp xếp theo khoảng cách tuyệt đối tới hiện tại
+    const filtered = scheduleData
+      .filter(item => item.sessionDate)
+      .sort(
+        (a, b) =>
+          Math.abs(new Date(a.sessionDate).getTime() - now.getTime()) -
+          Math.abs(new Date(b.sessionDate).getTime() - now.getTime())
+      );
+    return filtered.slice(0, 3);
+  }, [scheduleData]);
+  const scheduleFormattedData = nearestSchedules.map(item => ({
+    className: item.className,
+    subject: item.subjectName,
+    time: `${item.startTime} - ${item.endTime}`,
+    teacherName: item.teacherName,
+    classroomNumber: item.classroomNumber,
+    sessionDate: item.sessionDate
+      ? new Date(item.sessionDate).toLocaleDateString("vi-VN")
+      : "",
+  }));
+
+  useEffect(() => {
+    if (role !== "admin") {
+      dispatch(
+        fetchSchedules({
+          userId: userData?.userId,
+          fromDate: "2023-01-01",
+          toDate: "2025-12-31",
+        })
+      );
+    }
+  }, [dispatch, userData, role]);
   return (
     <LayoutComponent pageHeader="Home Page">
       <Box
@@ -124,10 +200,10 @@ function HomePage(): React.JSX.Element {
           <Box sx={{ flex: "1 1 400px", minWidth: "300px" }}>
             <Typography variant="h6" gutterBottom color="primary">
               {role === "teacher"
-                ? "📅 Today's Teaching Schedule"
+                ? "📅 Nearest Teaching Schedule"
                 : role === "parent"
-                ? "📅 Children's Schedule"
-                : "📅 Today's Schedule"}
+                ? "📅 Children's Nearest Schedule"
+                : "📅 Nearest Schedule"}
             </Typography>
             <Paper
               sx={{
@@ -138,7 +214,59 @@ function HomePage(): React.JSX.Element {
                 backgroundColor: "#fff",
               }}
             >
-              {role === "parent" ? (
+              <List dense>
+                {scheduleFormattedData.map((item, index) => (
+                  <ListItem key={index} alignItems="flex-start">
+                    <ListItemText
+                      primary={
+                        <span>
+                          <b>{item.subject}</b> &nbsp;
+                          <span style={{ color: "#888" }}>
+                            ({item.className})
+                          </span>
+                        </span>
+                      }
+                      secondary={
+                        <>
+                          <Typography
+                            component="span"
+                            variant="body2"
+                            color="text.secondary"
+                          >
+                            📅 {item.sessionDate}
+                          </Typography>
+                          <br />
+                          <Typography
+                            component="span"
+                            variant="body2"
+                            color="text.secondary"
+                          >
+                            🕒 {item.time}
+                          </Typography>
+                          <br />
+                          <Typography
+                            component="span"
+                            variant="body2"
+                            color="text.secondary"
+                          >
+                            👨‍🏫 {item.teacherName}
+                          </Typography>
+                          <br />
+                          <Typography
+                            component="span"
+                            variant="body2"
+                            color="text.secondary"
+                          >
+                            🏫 {item.classroomNumber}
+                          </Typography>
+                        </>
+                      }
+                      primaryTypographyProps={{ fontWeight: "bold" }}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+              {/* {role === "parent" ? (
                 <>
                   {childrenSchedules.map((child, idx) => (
                     <Box key={idx} sx={{ mb: 2 }}>
@@ -148,7 +276,7 @@ function HomePage(): React.JSX.Element {
                         color="secondary"
                         gutterBottom
                       >
-                       {child.childName}
+                        {child.childName}
                       </Typography>
                       <List dense>
                         {child.schedule.map((item, index) => (
@@ -166,17 +294,30 @@ function HomePage(): React.JSX.Element {
                 </>
               ) : (
                 <List dense>
-                  {schedule.map((item, index) => (
-                    <ListItem key={index}>
+                  {scheduleFormattedData.map((item, index) => (
+                    <ListItem key={index} alignItems="flex-start">
                       <ListItemText
-                        primary={item.subject}
-                        secondary={item.time}
+                        primary={
+                          <span>
+                            <b>{item.subject}</b> &nbsp;
+                            <span style={{ color: "#888" }}>
+                              ({item.className})
+                            </span>
+                          </span>
+                        }
+                        secondary={
+                          <>
+                            <div>🕒 {item.time}</div>
+                            <div>👨‍🏫 {item.teacherName}</div>
+                            <div>🏫 {item.classroomNumber}</div>
+                          </>
+                        }
                         primaryTypographyProps={{ fontWeight: "bold" }}
                       />
                     </ListItem>
                   ))}
                 </List>
-              )}
+              )} */}
             </Paper>
           </Box>
 
@@ -249,7 +390,7 @@ function HomePage(): React.JSX.Element {
           }}
         >
           {role === "parent" ? (
-            childrenSchedules.map((child, idx) => (
+            childrenList.map((child, idx) => (
               <Box
                 key={idx}
                 sx={{
@@ -262,7 +403,7 @@ function HomePage(): React.JSX.Element {
                 {/* Child's Attendance Pie Chart */}
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="h6" color="primary" gutterBottom>
-                    🧮 {child.childName}'s Attendance This Month
+                    🧮 {child.fullName}'s Attendance This Month
                   </Typography>
                   <ResponsiveContainer width="100%" height={250}>
                     <PieChart>
@@ -291,7 +432,7 @@ function HomePage(): React.JSX.Element {
                 {/* Child's Attendance Rate Over the Years */}
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="h6" color="primary" gutterBottom>
-                    📊 {child.childName}'s Attendance Rate Over the Years
+                    📊 {child.fullName}'s Attendance Rate Over the Years
                   </Typography>
                   <ResponsiveContainer width="100%" height={250}>
                     <BarChart

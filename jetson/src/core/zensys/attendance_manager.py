@@ -27,7 +27,7 @@ class AttendanceManager:
         self.face_system = None
         self.message_manager = get_message_manager()
     
-    def log_attendance(self, user_id, rfid_id, face_image=None, face_image_path=None, status="SUCCESS"):
+    def log_attendance(self, user_id, rfid_id, face_image=None, face_image_path=None, status="SUCCESS", detected_face=None, note=None):
         """
         Ghi log điểm danh ra file và gửi lên server
 
@@ -37,6 +37,8 @@ class AttendanceManager:
             face_image: Ảnh khuôn mặt dạng numpy array (tùy chọn)
             face_image_path: Đường dẫn đến ảnh khuôn mặt (tùy chọn)
             status: Trạng thái điểm danh ("SUCCESS" hoặc "FAILED")
+            detected_face: Tên khuôn mặt được nhận diện (nếu khác với user_id)
+            note: Ghi chú bổ sung về trường hợp xác thực
 
         Returns:
             dict: Kết quả điểm danh
@@ -52,6 +54,15 @@ class AttendanceManager:
             "CheckIn": current_time,
             "CheckInFace": face_image_path or ""
         }
+        
+        # Thêm thông tin khuôn mặt được nhận diện nếu khác
+        if detected_face and detected_face != user_id:
+            log_data["DetectedFace"] = detected_face
+            log_data["IsSpoofing"] = True
+            
+        # Thêm note nếu có
+        if note:
+            log_data["Note"] = note
         
         print("\n==== PROCESSING ATTENDANCE DATA ====")
         print(f"Original attendance data: {json.dumps(log_data, indent=2)}")
@@ -132,6 +143,18 @@ class AttendanceManager:
             "checkInFace": "",
             "faceVectorList": []
         }
+        
+        # Thêm thông tin về khuôn mặt được nhận diện (nếu có)
+        if detected_face and detected_face != user_id:
+            api_data["detectedFace"] = detected_face
+            api_data["isSpoofAttempt"] = True
+        
+        # Thêm trạng thái xác thực
+        api_data["status"] = status
+        
+        # Thêm note vào API data
+        if note:
+            api_data["note"] = note
         
         # Thêm ảnh nếu có
         if base64_img:

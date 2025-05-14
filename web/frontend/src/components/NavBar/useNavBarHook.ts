@@ -6,6 +6,7 @@ import { handleLogout } from "../../store/slices/loginSlice";
 import { useEffect, useState } from "react";
 import { logout } from "../../store/slices/authSlice";
 import axiosInstance from "../../services/axiosInstance";
+import { fetchParentProfile } from "../../store/slices/parentSlice";
 
 interface UserData {
   userId: string;
@@ -118,7 +119,9 @@ function useNavBarHook() {
         const userData = response.data.data[0];
         const fullName = userData.details.fullName;
         const avatarUrl = userData.avatar;
-        
+        if(userData?.role === 'parent'){
+          dispatch(fetchParentProfile(userId) as any);
+        }
         // Set user data
         setUserFullName(fullName);
         
@@ -298,7 +301,7 @@ function useNavBarHook() {
       case "User Management":
         return navigate("/UserManagement");
       case "System Management":
-        return navigate("/IdentifyManagement");
+        return navigate("/SystemManagement");
       case "Schedule":
         return navigate("/Schedule");
       case "Schedule Management":

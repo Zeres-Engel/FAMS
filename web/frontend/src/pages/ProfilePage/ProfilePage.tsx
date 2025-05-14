@@ -401,7 +401,10 @@ function ProfilePage(): React.JSX.Element {
                 { label: "User ID", key: "userId" },
                 { label: "Full name", key: "fullName" },
                 { label: "Email", key: "email" },
-                ...(profileData.role !== "admin" ? [
+                ...(profileData.role === 'parent' ? [
+                  { label: "Gender", key: "gender" },
+                  { label: "Phone", key: "phone" },
+                ] : profileData.role !== "admin" ? [
                   { label: "Date Of Birth", key: "dateOfBirth" },
                   { label: "Gender", key: "gender" },
                   { label: "Address", key: "address" },
@@ -758,7 +761,7 @@ function ProfilePage(): React.JSX.Element {
               )}
 
               {/* Show parent specific information */}
-              {fakeProfileData.role === "parent" && (
+              {profileData.role === "parent" && (
                 <>
                   {/* Thông tin cá nhân của parent
                   <Typography variant="h6" gutterBottom>Parent Information</Typography>
@@ -801,12 +804,12 @@ function ProfilePage(): React.JSX.Element {
                   ))} */}
 
                   {/* Thông tin về student (con của parent) */}
-                  {fakeProfileData.students && fakeProfileData.students.length > 0 && (
+                  {fakeProfileData && fakeProfileData.length > 0 && (
                     <>
                       <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>Student Information</Typography>
                       <Divider sx={{ mb: 2 }} />
 
-                      {fakeProfileData.students.map((student: { studentId?: string;dateOfBirth?:string; fullName: string; classHistory?: { className: string; grade: string | number; academicYear?: string }[]; email?: string; phone?: string }, index: number) => (
+                      {fakeProfileData.map((student: { studentId?: string;dateOfBirth?:string; fullName: string; classes?: { className: string; grade: string | number; academicYear?: string }[]; email?: string; phone?: string }, index: number) => (
                         <Box key={student.studentId || index} mb={2}>
                           <Typography variant="subtitle2" fontWeight={600} color="primary">
                             Student {index + 1}: {student.fullName}
@@ -818,17 +821,17 @@ function ProfilePage(): React.JSX.Element {
                               <Typography fontWeight={600} minWidth={70}>
                                 Date of Birth:
                               </Typography>
-                              <Typography>{student.dateOfBirth || "N/A"}</Typography>
+                              <Typography>{student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString("vi-VN") : "N/A"}</Typography>
                             </Box>
 
                             {/* Class History */}
-                            {student.classHistory && student.classHistory.length > 0 && (
+                            {student.classes && student.classes.length > 0 && (
                               <Box mb={2}>
                                 <Typography variant="subtitle1" fontWeight={600} gutterBottom>
                                   Class History
                                 </Typography>
                                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                                  {student.classHistory
+                                  {student.classes
                                     .sort((a, b) => b.academicYear?.localeCompare(a.academicYear || "") || 0)
                                     .map((cls, idx) => (
                                       <Box
@@ -856,20 +859,20 @@ function ProfilePage(): React.JSX.Element {
                             )}
 
                             {/* Email */}
-                            <Box display="flex" flexDirection="row" gap={1} mb={1}>
+                            {/* <Box display="flex" flexDirection="row" gap={1} mb={1}>
                               <Typography fontWeight={600} minWidth={70}>
                                 Email:
                               </Typography>
                               <Typography>{student.email || "N/A"}</Typography>
-                            </Box>
+                            </Box> */}
 
                             {/* Phone */}
-                            <Box display="flex" flexDirection="row" gap={1}>
+                            {/* <Box display="flex" flexDirection="row" gap={1}>
                               <Typography fontWeight={600} minWidth={70}>
                                 Phone:
                               </Typography>
                               <Typography>{student.phone || "N/A"}</Typography>
-                            </Box>
+                            </Box> */}
                           </Box>
                         </Box>
                       ))}

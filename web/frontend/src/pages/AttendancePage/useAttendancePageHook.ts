@@ -18,16 +18,17 @@ function useAttendancePageHook() {
   const dispatch = useAppDispatch();
   const role = useAppSelector(state => state.authUser.role);
   const userData = useAppSelector(state => state.login.loginData);
+  const parentData = useSelector((state: RootState) => state.parentData.data);
   const classList = useSelector((state: RootState) => state.classById.classes);
   const classAttendanceList: ClassPageList[] = classList.map(item => ({
     classId: item.classId,
     className: `${item.className} - ${item.academicYear}`,
   }));
   useEffect(() => {
-    if (userData && classList.length === 0 && role !=='parent') {
+    if (userData && role !== "parent") {
       dispatch(fetchClassesByUserId(userData?.userId));
     }
-  }, [dispatch, userData, classList,role]);
+  }, [dispatch, userData, role]);
   const attendanceMainData = useSelector(
     (state: RootState) => state.attendanceData.attendances
   );
@@ -41,14 +42,12 @@ function useAttendancePageHook() {
       checkin: e.checkIn,
       status: e.status,
       checkinFace: e.checkInFace,
-      fullName: role === 'teacher' ? e.teacherName : e.studentName,
-      note:e.note,
+      fullName: role === "teacher" ? e.teacherName : e.studentName,
+      note: e.note,
       subject: e.subjectName,
-      slotNumber:e.slotNumber
+      slotNumber: e.slotNumber,
     })
   );
-  console.log(attendanceMainData);
-  
   const [filters, setFiltersAttendancePage] = useState<AttendanceSearchParam>({
     userId: "",
     subjectId: "",
@@ -62,22 +61,18 @@ function useAttendancePageHook() {
   const [userMainData, setUserMainData] = useState<AttendanceLog[]>([]);
   useEffect(() => {
     if (filters) {
-      if (userData?.role === "parent"){
-        dispatch(
-          fetchAttendanceByUser({ ...filters})
-        );
+      if (userData?.role === "parent") {
+        dispatch(fetchAttendanceByUser({ ...filters,userId: parentData[0].details.children[0].userId }));
         return;
       }
       dispatch(
         fetchAttendanceByUser({ ...filters, userId: userData?.userId || "" })
       );
     }
-  }, [filters, dispatch,userData]);
-  const onShowMyAttendance = ()=>{
-    dispatch(
-      fetchAttendanceByUser({ userId: userData?.userId || "" })
-    );
-  }
+  }, [filters, dispatch, userData, parentData]);
+  const onShowMyAttendance = () => {
+    dispatch(fetchAttendanceByUser({ userId: userData?.userId || "" }));
+  };
   const headCellsData: AttendanceHeadCell[] = [
     {
       id: "id",
@@ -165,7 +160,7 @@ function useAttendancePageHook() {
     classAttendanceList,
     attendanceFormattedData,
   };
-  const handler = { setFiltersAttendancePage,onShowMyAttendance };
+  const handler = { setFiltersAttendancePage, onShowMyAttendance };
   return { state, handler };
 }
 export default useAttendancePageHook;

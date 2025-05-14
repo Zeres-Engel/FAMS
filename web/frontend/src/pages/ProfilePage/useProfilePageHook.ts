@@ -19,6 +19,7 @@ interface ApiUserDetailsResponse {
     username: string;
     id: string;
     details: {
+      children?:any;
       studentId?: number;
       teacherId?: number;
       parentId?: number;
@@ -183,45 +184,45 @@ function useProfilePageHook() {
   const fetchProfile = async (forceUserId?: string) => {
     try {
       setLoading(true);
-      const fakeParentData = {
-        id: "quanttpr1",
-        userId: "quanttpr1",
-        fullName: "Trần Thị Quân",
-        email: "tranthiquan343@gmail.com",
-        dateOfBirth: "1980-01-01",
-        gender: "Female",
-        address: "123 Đường ABC, Quận 1, TP.HCM",
-        phone: "0123456789",
-        role: "parent",
-        avatarUrl:
-          "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg",
-        students: [
-          {
-            studentId: "hungdnst2",
-            fullName: "Đặng Ngọc Hưng",
-            classHistory: [
-              { className: "12A1", grade: 12, academicYear: "2024-2025" },
-              { className: "11A1", grade: 11, academicYear: "2023-2024" },
-              { className: "10A1", grade: 10, academicYear: "2022-2023" },
-            ],
-            email: "hungdnstudent2@fams.edu.vn",
-            phone: "0935694245",
-            dateOfBirth: "1/28/2007",
-          },
-          {
-            studentId: "thanhnpst1",
-            fullName: "Nguyễn Phước Thành",
-            classHistory: [
-              { className: "12A1", grade: 12, academicYear: "2024-2025" },
-              { className: "11A1", grade: 11, academicYear: "2023-2024" },
-              { className: "10A1", grade: 10, academicYear: "2022-2023" },
-            ],
-            email: "thanhnpstudent1@fams.edu.vn",
-            phone: "0908812966",
-            dateOfBirth: "11/1/2007",
-          },
-        ],
-      };
+      // const fakeParentData = {
+      //   id: "quanttpr1",
+      //   userId: "quanttpr1",
+      //   fullName: "Trần Thị Quân",
+      //   email: "tranthiquan343@gmail.com",
+      //   dateOfBirth: "1980-01-01",
+      //   gender: "Female",
+      //   address: "123 Đường ABC, Quận 1, TP.HCM",
+      //   phone: "0123456789",
+      //   role: "parent",
+      //   avatarUrl:
+      //     "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg",
+      //   students: [
+      //     {
+      //       studentId: "hungdnst2",
+      //       fullName: "Đặng Ngọc Hưng",
+      //       classHistory: [
+      //         { className: "12A1", grade: 12, academicYear: "2024-2025" },
+      //         { className: "11A1", grade: 11, academicYear: "2023-2024" },
+      //         { className: "10A1", grade: 10, academicYear: "2022-2023" },
+      //       ],
+      //       email: "hungdnstudent2@fams.edu.vn",
+      //       phone: "0935694245",
+      //       dateOfBirth: "1/28/2007",
+      //     },
+      //     {
+      //       studentId: "thanhnpst1",
+      //       fullName: "Nguyễn Phước Thành",
+      //       classHistory: [
+      //         { className: "12A1", grade: 12, academicYear: "2024-2025" },
+      //         { className: "11A1", grade: 11, academicYear: "2023-2024" },
+      //         { className: "10A1", grade: 10, academicYear: "2022-2023" },
+      //       ],
+      //       email: "thanhnpstudent1@fams.edu.vn",
+      //       phone: "0908812966",
+      //       dateOfBirth: "11/1/2007",
+      //     },
+      //   ],
+      // };
       // Get userId from parameter, URL, or localStorage
       let userId = forceUserId;
 
@@ -464,8 +465,25 @@ function useProfilePageHook() {
           });
         }
         if (userData.role === "parent") {
-          setProfileData({...fakeParentData,avatarUrl:userData?.avatar||''});
-          setFakeProfileData(fakeParentData);
+          setProfileData({
+            id: userData.id,
+            userId: userData.userId,
+            fullName: userDetails.fullName || userData.userId,
+            email: userData.email,
+            dateOfBirth: userDetails.dateOfBirth
+              ? new Date(userDetails.dateOfBirth).toLocaleDateString()
+              : "",
+            gender: userDetails.gender || "",
+            address: userDetails.address || "",
+            phone: userDetails.phone || "",
+            role: userData.role,
+            avatarUrl:
+              userData.avatar ||
+              "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg",
+          });
+          console.log(response.data.data[0].details.children);
+          
+          setFakeProfileData(response.data.data[0].details.children);
           setLoading(false);
           return;
         }

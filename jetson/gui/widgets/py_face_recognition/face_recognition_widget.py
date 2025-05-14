@@ -81,7 +81,7 @@ class FaceRecognitionWidget(QWidget):
         # Register callback for system events
         self.face_system.set_ui_callback(self.on_system_callback)
         
-        # Connect verification signal to slot
+        # Connect verification signal to slot - nhận kết quả xác thực
         self.verification_signal.connect(self.show_verification_popup)
         self.api_error_signal.connect(self.show_api_error)
         
@@ -197,42 +197,59 @@ class FaceRecognitionWidget(QWidget):
     @Slot(object)
     def show_verification_popup(self, verification_result):
         """Display verification result popup"""
-        # Mark notification as active
-        self.active_notification = True
-        print(f"Showing verification popup with result: {verification_result.get('match', False)}")
-        
-        # Extract verification data
-        match = verification_result.get("match", False)
-        rfid_name = verification_result.get("rfid_name", "Unknown")
-        face_name = verification_result.get("face_name", "Unknown")
-        match_score = verification_result.get("match_score", 0)
-        rfid_id = verification_result.get("rfid_id", "")
-        timestamp = verification_result.get("timestamp", "")
-        is_live_face = verification_result.get("is_live_face", True)  # Get anti-spoofing result
-        
-        # Use current time if no timestamp provided
-        if not timestamp:
-            from datetime import datetime
-            current_time = datetime.now().strftime("%H:%M:%S - %d/%m/%Y")
-        else:
-            current_time = timestamp
-        
-        # If another notification is visible, queue this one
-        if self.notification_popup.isVisible():
-            print("Queueing notification as another is active")
-            self.pending_notification = {
-                "match": match,
-                "rfid_id": rfid_id,
-                "face_name": face_name,
-                "match_score": match_score,
-                "current_time": current_time,
-                "rfid_name": rfid_name,
-                "is_live_face": is_live_face
-            }
-            return
-        
-        # Show the notification
-        self._show_verification_notification(match, rfid_id, face_name, match_score, current_time, rfid_name, is_live_face)
+        try:
+            # Mark notification as active
+            self.active_notification = True
+            print(f"Showing verification popup with result: {verification_result.get('match', False)}")
+            
+            # Extract verification data
+            match = verification_result.get("match", False)
+            rfid_name = verification_result.get("rfid_name", "Unknown")
+            face_name = verification_result.get("face_name", "Unknown")
+            match_score = verification_result.get("face_score", 0)
+            rfid_id = verification_result.get("rfid_id", "")
+            timestamp = verification_result.get("timestamp", "")
+            is_live_face = verification_result.get("is_live_face", True)
+            
+            # Use current time if no timestamp provided
+            if not timestamp:
+                from datetime import datetime
+                current_time = datetime.now().strftime("%H:%M:%S - %d/%m/%Y")
+            else:
+                current_time = timestamp
+            
+            # Check if notification is already visible
+            if hasattr(self, 'notification_popup') and self.notification_popup.isVisible():
+                # Force-close current notification if it's taking too long
+                if hasattr(self.notification_popup, '_is_visible') and self.notification_popup._is_visible:
+                    print("Closing previous notification to show new one")
+                    self.notification_popup.hide_popup()
+                    # Small delay to ensure UI updates
+                    QTimer.singleShot(100, lambda: self._show_verification_notification(
+                        match, rfid_id, face_name, match_score, current_time, rfid_name, is_live_face
+                    ))
+                    return
+                
+            # Show the notification directly if none is active
+            self._show_verification_notification(match, rfid_id, face_name, match_score, current_time, rfid_name, is_live_face)
+            
+        except Exception as e:
+            print(f"Error in show_verification_popup: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # Force reset on error
+            self.active_notification = False
+            
+            # Try to show a simple notification
+            try:
+                if match:
+                    self.notification_popup.show_popup("✅ XÁC THỰC THÀNH CÔNG", f"ID: {rfid_id}", True, True, 5000)
+                else:
+                    self.notification_popup.show_popup("❌ XÁC THỰC THẤT BẠI", f"ID: {rfid_id}", False, True, 5000)
+            except:
+                # Last resort - force reset everything
+                QTimer.singleShot(500, self.reset_verification)
     
     def _show_verification_notification(self, match, rfid_id, face_name, match_score, current_time, rfid_name, is_live_face):
         """Display verification result notification with comprehensive error handling"""
@@ -253,23 +270,40 @@ class FaceRecognitionWidget(QWidget):
                 print(f"Showing fake face detection alert for {face_name}")
                 return
                 
-            # Handle different verification cases
+            # TRƯỜNG HỢP 1: RFID và khuôn mặt khớp (xác thực thành công)
             if match:
                 title = "✅ XÁC THỰC THÀNH CÔNG"
                 info_text = f"ID: {rfid_id}\nTên: {face_name}\nĐiểm số: {match_score:.2f}\nThời gian: {current_time}"
                 self.notification_popup.show_popup(title, info_text, True, True, 8000)
                 print(f"Showing success notification for {face_name}")
             else:
-                # RFID and face don't match - invalid RFID use case
-                title = "❌ THẺ RFID KHÔNG HỢP LỆ"
-                info_text = f"ID: {rfid_id}\nRFID: {rfid_name}\nMặt: {face_name}\nĐiểm số: {match_score:.2f}\nThời gian: {current_time}\n\nThẻ RFID và khuôn mặt không khớp."
-                self.notification_popup.show_popup(title, info_text, False, True, 8000)
-                print(f"Showing invalid RFID notification for {face_name} vs {rfid_name}")
+                # Không khớp - kiểm tra thêm trường hợp
+                if face_name == "Unknown":
+                    # TRƯỜNG HỢP 2: Khuôn mặt không nhận dạng được (Unknown)
+                    title = "❌ LỖI XÁC THỰC KHUÔN MẶT"
+                    info_text = f"ID: {rfid_id}\nRFID: {rfid_name}\nKhuôn mặt: Không nhận dạng được\nThời gian: {current_time}\n\nHệ thống không thể nhận dạng khuôn mặt của bạn.\nVui lòng thử lại hoặc liên hệ quản trị viên."
+                    self.notification_popup.show_popup(title, info_text, False, True, 8000)
+                    print(f"Showing unknown face notification for RFID: {rfid_name}")
+                else:
+                    # TRƯỜNG HỢP 3: Khuôn mặt là người khác (giả mạo)
+                    title = "⚠️ CẢNH BÁO GIẢ MẠO KHUÔN MẶT"
+                    info_text = f"ID: {rfid_id}\nThẻ RFID: {rfid_name}\nKhuôn mặt: {face_name}\nĐiểm số: {match_score:.2f}\nThời gian: {current_time}\n\nPhát hiện nghi vấn giả mạo! Khuôn mặt không khớp với chủ thẻ RFID."
+                    self.notification_popup.show_popup(title, info_text, False, True, 8000)
+                    print(f"Showing face spoofing warning: {face_name} using RFID of {rfid_name}")
         except Exception as e:
             print(f"Error showing notification: {e}")
             import traceback
             traceback.print_exc()
+            # Auto-recover by resetting
             self.active_notification = False  # Reset flag on error
+            # Force-show a simplified notification
+            try:
+                if match:
+                    self.notification_popup.show_popup("✅ XÁC THỰC THÀNH CÔNG", f"ID: {rfid_id}", True, True, 5000)
+                else:
+                    self.notification_popup.show_popup("❌ XÁC THỰC THẤT BẠI", f"ID: {rfid_id}", False, True, 5000)
+            except:
+                pass
     
     @Slot(str, str)
     def show_api_error(self, title, message):
@@ -326,8 +360,8 @@ class FaceRecognitionWidget(QWidget):
                 notif.get("match", False),
                 notif.get("rfid_id", ""),
                 notif.get("face_name", "Unknown"),
-                notif.get("match_score", 0),
-                notif.get("current_time", ""),
+                notif.get("face_score", 0),
+                notif.get("timestamp", ""),
                 notif.get("rfid_name", "Unknown"),
                 notif.get("is_live_face", True)
             )
@@ -339,69 +373,105 @@ class FaceRecognitionWidget(QWidget):
         """Reset verification state"""
         print("Resetting face recognition verification state")
         
-        # Close any active notification
-        if self.notification_popup.isVisible():
-            print("Closing notification during reset")
-            # Use direct call instead of invoke method to avoid race conditions
-            self.notification_popup.hide_popup()
-        
-        # Reset flags immediately
-        self.active_notification = False
-        self.pending_notification = None
-        
-        # Reset ZenSys state
-        if hasattr(self.face_system, "current_rfid"):
-            self.face_system.current_rfid = None
-        
-        if hasattr(self.face_system, "verification_result"):
-            self.face_system.verification_result = None
-        
-        # Signal reset to parent components
-        self.verification_reset.emit()
-        print("Verification reset complete")
+        try:
+            # Close any active notification
+            if self.notification_popup.isVisible():
+                print("Closing notification during reset")
+                # Use direct call instead of invoke method to avoid race conditions
+                self.notification_popup.hide_popup()
+            
+            # Reset flags immediately
+            self.active_notification = False
+            self.pending_notification = None
+            
+            # Reset face system state - be thorough to ensure nothing is left behind
+            if hasattr(self.face_system, "current_rfid"):
+                self.face_system.current_rfid = None
+                
+            if hasattr(self.face_system, "rfid"):
+                if hasattr(self.face_system.rfid, "current_rfid"):
+                    self.face_system.rfid.current_rfid = None
+                    
+            if hasattr(self.face_system, "_last_rfid_id"):
+                self.face_system._last_rfid_id = None
+                
+            if hasattr(self.face_system, "verification_result"):
+                self.face_system.verification_result = None
+                
+            if hasattr(self.face_system, "verification_in_progress"):
+                self.face_system.verification_in_progress = False
+                
+            if hasattr(self.face_system, "processing_paused"):
+                self.face_system.processing_paused = False
+                
+            if hasattr(self.face_system, "api_request_sent"):
+                self.face_system.api_request_sent = False
+            
+            # Signal reset to parent components
+            self.verification_reset.emit()
+            
+            print("Verification reset complete - system ready for new verification")
+        except Exception as e:
+            print(f"Error during verification reset: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # Force basic reset even if exception occurred
+            self.active_notification = False
+            if hasattr(self.face_system, "verification_in_progress"):
+                self.face_system.verification_in_progress = False
+            if hasattr(self.face_system, "processing_paused"):
+                self.face_system.processing_paused = False
     
     def on_system_callback(self, action, data):
         """Handle callbacks from the ZenSys system"""
         print(f"Received system callback: {action}")
         
-        # Ensure callbacks are processed in UI thread
-        if action == "reset_verification":
-            # Queue reset in UI thread
-            QMetaObject.invokeMethod(self, "reset_verification",
-                                  Qt.QueuedConnection)
-        
-        elif action == "rfid_updated":
-            print(f"RFID detected: {data.get('rfid_id', 'unknown')}")
-            
-            # Close any active notification
-            if hasattr(self, 'notification_popup') and self.notification_popup.isVisible():
-                print("Closing notification due to new RFID scan")
-                # Use direct call for simplicity and guaranteed thread safety
-                QMetaObject.invokeMethod(self.notification_popup, "hide_popup",
+        try:
+            # Ensure callbacks are processed in UI thread
+            if action == "reset_verification":
+                # Queue reset in UI thread
+                QMetaObject.invokeMethod(self, "reset_verification",
                                       Qt.QueuedConnection)
             
-            # Reset notification state
-            self.active_notification = False
-            
-        elif action == "verification_result":
-            # Extract verification data
-            result = data.get("result", {})
-            if result:
-                print(f"Processing verification result: match={result.get('match', False)}")
-                verification_data = {
-                    "match": result.get("match", False) or data.get("match", False),
-                    "rfid_id": data.get("rfid_id", ""),
-                    "face_name": data.get("face_name", "Unknown"),
-                    "rfid_name": data.get("rfid_name", "Unknown"),
-                    "match_score": data.get("face_score", 0),
-                    "timestamp": data.get("timestamp", "")
-                }
+            elif action == "rfid_updated":
+                print(f"RFID detected: {data.get('rfid_id', 'unknown')}")
+                
+                # Close any active notification
+                if hasattr(self, 'notification_popup') and self.notification_popup.isVisible():
+                    print("Closing notification due to new RFID scan")
+                    # Use direct call for simplicity and guaranteed thread safety
+                    QMetaObject.invokeMethod(self.notification_popup, "hide_popup",
+                                          Qt.QueuedConnection)
+                
+                # Reset notification state
+                self.active_notification = False
+                
+            elif action == "verification_result":
+                # Dữ liệu verification đã được đơn giản hóa từ ZenSys
+                is_match = data.get("match", False)
+                print(f"Processing verification result: match={is_match}")
                 
                 # Emit signal with result (safe for cross-thread)
-                self.verification_signal.emit(verification_data)
+                # Không cần truy cập data.get("result") nữa vì data đã là kết quả đơn giản
+                self.verification_signal.emit(data)
                 
-                # Also emit completion signal
-                self.verification_complete.emit(verification_data)
+                # Also emit completion signal for other components
+                self.verification_complete.emit(data)
+            
+            elif action == "api_error":
+                # Handle API errors
+                error_type = data.get("error_type", "UNKNOWN_ERROR")
+                error_message = data.get("error_message", "Lỗi không xác định")
+                title = f"⚠️ LỖI HỆ THỐNG: {error_type}"
+                
+                # Emit API error signal (safe for cross-thread)
+                self.api_error_signal.emit(title, error_message)
+                
+        except Exception as e:
+            print(f"Error in system callback handler: {e}")
+            import traceback
+            traceback.print_exc()
     
     def keyPressEvent(self, event):
         """Handle key press events"""

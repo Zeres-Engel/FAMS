@@ -80,6 +80,26 @@ function useTableToolBarHook({
   });
   const [showTeacherAttendance, setShowTeacherAttendance] = useState(false);
   const classList = useSelector((state: RootState) => state.classById.classes);
+  const parentData = useSelector((state: RootState) => state.parentData.data);
+  interface Child {
+    userId: string;
+  }
+
+  interface ParentDetail {
+    children: Child[];
+  }
+
+  interface ParentData {
+    details: ParentDetail;
+  }
+  interface ChildData {
+    childId: string;
+  }
+
+  const childData: ChildData[] = isRoleParent ? (parentData[0] as ParentData).details.children.map(
+    (child: Child): ChildData => ({ childId: child.userId })
+  ) : [];
+  
   const classAttendanceList: ClassPageList[] = classList.map(item => ({
     classId: item.classId,
     className: `${item.className} - ${item.academicYear}`,
@@ -304,7 +324,7 @@ function useTableToolBarHook({
   // };
 
   return {
-    state: { filters, classAttendanceList, showTeacherAttendance,academicYearsForClass,classNamesFiltered },
+    state: { filters, classAttendanceList, showTeacherAttendance,academicYearsForClass,classNamesFiltered,childData },
     handler: {
       handleFilterChange,
       onSubmit: handleFilterSubmit,

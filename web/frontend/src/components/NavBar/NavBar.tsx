@@ -85,19 +85,24 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
   const logoutItem = "Logout";
 
   const drawerContent = (
-    <Box sx={{ 
-      textAlign: "center", 
-      height: "100%", 
-      display: "flex",
-      flexDirection: "column"
-    }}>
+    <Box
+      sx={{
+        textAlign: "center",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <Box sx={{ p: 2 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600, color: "#1b78ec", mb: 2 }}>
+        <Typography
+          variant="h6"
+          sx={{ fontWeight: 600, color: "#1b78ec", mb: 2 }}
+        >
           FAMS
         </Typography>
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
           {state.isLoading ? (
-            <Skeleton 
+            <Skeleton
               variant="circular"
               width={70}
               height={70}
@@ -105,15 +110,18 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
             />
           ) : (
             <img
-              src={state.userAvatar || "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"}
+              src={
+                state.userAvatar ||
+                "https://i.pinimg.com/236x/5e/e0/82/5ee082781b8c41406a2a50a0f32d6aa6.jpg"
+              }
               alt="User Avatar"
-              style={{ 
-                width: '70px', 
-                height: '70px', 
-                borderRadius: '50%',
-                cursor: 'pointer',
-                border: '2px solid #1b78ec',
-                padding: '2px'
+              style={{
+                width: "70px",
+                height: "70px",
+                borderRadius: "50%",
+                cursor: "pointer",
+                border: "2px solid #1b78ec",
+                padding: "2px",
               }}
               onClick={() => {
                 handler.handleOnNavigate("Profile");
@@ -130,7 +138,7 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
         </Typography>
       </Box>
       <Divider />
-      
+
       {/* Menu Items */}
       <List sx={{ flexGrow: 1, py: 0 }}>
         {nonLogoutItems.map(item => (
@@ -142,29 +150,28 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
             }}
             disablePadding
             sx={{
-              '&:hover': {
-                backgroundColor: 'rgba(27, 120, 236, 0.08)',
-              }
+              "&:hover": {
+                backgroundColor: "rgba(27, 120, 236, 0.08)",
+              },
             }}
           >
             <ListItemButton sx={{ px: 3 }}>
-              <ListItemIcon sx={{ color: '#1b78ec', minWidth: '36px' }}>
+              <ListItemIcon sx={{ color: "#1b78ec", minWidth: "36px" }}>
                 {getIcon(item)}
               </ListItemIcon>
-              <ListItemText 
-                primary={item} 
-                className="nav-Item" 
-                primaryTypographyProps={{ 
-                  fontSize: '0.85rem',
+              <ListItemText
+                primary={item}
+                className="nav-Item"
+                primaryTypographyProps={{
+                  fontSize: "0.85rem",
                   fontWeight: 500,
-                  whiteSpace: 'nowrap'
+                  whiteSpace: "nowrap",
                 }}
               />
             </ListItemButton>
           </ListItem>
         ))}
       </List>
-      
       {/* Logout Button (chỉ cho vertical layout) */}
       {isVertical && (
         <>
@@ -177,22 +184,22 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
               }}
               disablePadding
               sx={{
-                '&:hover': {
-                  backgroundColor: 'rgba(27, 120, 236, 0.08)',
-                }
+                "&:hover": {
+                  backgroundColor: "rgba(27, 120, 236, 0.08)",
+                },
               }}
             >
               <ListItemButton sx={{ px: 3 }}>
-                <ListItemIcon sx={{ color: '#1b78ec', minWidth: '36px' }}>
+                <ListItemIcon sx={{ color: "#1b78ec", minWidth: "36px" }}>
                   <LogoutIcon />
                 </ListItemIcon>
-                <ListItemText 
-                  primary={logoutItem} 
+                <ListItemText
+                  primary={logoutItem}
                   className="nav-Item"
-                  primaryTypographyProps={{ 
-                    fontSize: '0.85rem',
+                  primaryTypographyProps={{
+                    fontSize: "0.85rem",
                     fontWeight: 500,
-                    whiteSpace: 'nowrap'
+                    whiteSpace: "nowrap",
                   }}
                 />
               </ListItemButton>
@@ -200,6 +207,20 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
           </List>
         </>
       )}
+      <Box
+        sx={{
+          width: "100%",
+          py: 2,
+          bgcolor: "#f5f5f5",
+          textAlign: "center",
+          borderTop: "1px solid #e0e0e0",
+          fontSize: 13,
+          color: "#888",
+          mt: "auto",
+        }}
+      >
+        © {new Date().getFullYear()} FAMS
+      </Box>
     </Box>
   );
 
@@ -354,6 +375,20 @@ export default function NavBar({ window, variant = "horizontal" }: Props) {
             open
           >
             {drawerContent}
+            {/* <Box
+              sx={{
+                width: "100%",
+                py: 2,
+                bgcolor: "#f5f5f5",
+                textAlign: "center",
+                borderTop: "1px solid #e0e0e0",
+                fontSize: 13,
+                color: "#888",
+                mt: "auto"
+              }}
+            >
+              © {new Date().getFullYear()} FAMS
+            </Box> */}
           </Drawer>
 
           {/* Mobile navbar dành cho vertical layout */}

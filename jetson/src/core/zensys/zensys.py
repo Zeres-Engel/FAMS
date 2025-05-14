@@ -171,6 +171,10 @@ class ZenSys:
         """
         Khởi tạo hệ thống
         """
+        print("\n" + "="*70)
+        print("INITIALIZING ZENSYS - Always creating new face recognition database")
+        print("="*70 + "\n")
+        
         # Khởi tạo database khuôn mặt
         self.face_recognition.initialize_database()
         
@@ -180,7 +184,13 @@ class ZenSys:
         # Thêm: Khởi tạo camera
         self.start_camera()
         
-        print("ZenSys initialized successfully")
+        print("\n" + "="*70)
+        print("ZENSYS INITIALIZATION COMPLETE")
+        print("    - Face recognition database created successfully")
+        print("    - RFID reader started successfully")
+        print("    - Camera initialized successfully")
+        print("="*70 + "\n")
+        
         self.system_logger.info("ZenSys initialized successfully")
     
     # Methods for backward compatibility
@@ -367,6 +377,9 @@ class ZenSys:
         print(f"Processing verification for RFID: {self.rfid.current_rfid}")    
         # Đảm bảo chỉ xử lý một lần
         self.processing_paused = True
+        
+        # Khởi tạo attendance_result trước
+        attendance_result = None
             
         # Lấy embedding
         embedding = face.normed_embedding
@@ -377,6 +390,10 @@ class ZenSys:
         # Xác thực với RFID
         self.verification_result = self.rfid.verify_identity(
             self.rfid.current_rfid, face_name)
+        
+        # Lấy thông tin người dùng từ RFID
+        rfid_id = self.rfid.current_rfid
+        rfid_name = self.verification_result.get("rfid_name", "Unknown")
         
         # Chạy MiDAS 1 lần để lấy depth map cho anti-spoofing
         if hasattr(self, '_last_frame') and self._last_frame is not None:
@@ -391,120 +408,93 @@ class ZenSys:
         
         # Log kết quả xác thực
         self.rfid.log_verification_result(
-            self.rfid.current_rfid,
+            rfid_id,
             face_name,
             self.verification_result["match"],
             float(score),
             is_live_face
         )
         
-        # Log attendance - chỉ thực hiện 1 lần
+        # Chuẩn bị ảnh khuôn mặt từ bbox
+        self._prepare_face_crop(face)
+        
+        # Chuẩn bị note cho từng trường hợp
+        note = None
+        status = "SUCCESS"  # Default status
+
+        # XỬ LÝ 3 TRƯỜNG HỢP THEO YÊU CẦU:
+        if is_live_face:  # Chỉ xử lý khi khuôn mặt thật (không phải ảnh/video)
+            if self.verification_result["match"]:
+                # TRƯỜNG HỢP 1: Thẻ RFID và khuôn mặt là cùng 1 người
+                note = f"Success: RFID and face match for {rfid_name} (confidence: {score:.2f})"
+                print(f"MATCH: Face {face_name} matches RFID {rfid_name} - Adding face to gallery")
+                self._save_face_to_gallery(face_name)
+            else:
+                # Khuôn mặt và RFID không khớp
+                if face_name == "Unknown":
+                    # TRƯỜNG HỢP 2: Face là unknown - Thêm khuôn mặt mới vào gallery với tên của người dùng RFID
+                    note = f"Warning: Unrecognized face with RFID of {rfid_name}"
+                    status = "WARNING"
+                    print(f"UNKNOWN FACE: Adding as new face for {rfid_name} in gallery")
+                    self._save_face_to_gallery(rfid_name)  # Lưu với tên người dùng RFID
+                else:
+                    # TRƯỜNG HỢP 3: Face đã biết nhưng không khớp RFID - Cảnh báo giả mạo
+                    note = f"Alert: Face spoofing detected! RFID {rfid_name} used with face of {face_name}"
+                    status = "SPOOF_ATTEMPT"
+                    print(f"SPOOF ALERT: Face {face_name} using RFID of {rfid_name}")
+                    # Không lưu vào gallery nhưng vẫn lưu vào attendance
+            
+            # Luôn lưu ảnh vào thư mục attendance theo userId của RFID
+            self._save_face_to_attendance(rfid_name)
+        else:
+            # Trường hợp khuôn mặt giả (anti-spoofing detection)
+            note = "Alert: Fake face detected! Anti-spoofing protection activated."
+            status = "FAKE_FACE"
+            print(f"FAKE FACE DETECTED: Anti-spoofing triggered for RFID {rfid_name}")
+            # Lưu ảnh giả vào thư mục attendance theo userId của RFID
+            self._save_face_to_attendance(rfid_name)
+            
+        # Gửi attendance API cho tất cả các trường hợp (đã đi qua anti-spoofing)
         if not self.api_request_sent:
-            user_id = face_name
-            rfid_id = self.rfid.current_rfid
-            
-            # Chuẩn bị ảnh khuôn mặt từ bbox nếu không có sẵn
-            if self.current_face_crop is None and face.bbox is not None and hasattr(face, 'img') and face.img is not None:
-                try:
-                    x1, y1, x2, y2 = [int(b) for b in face.bbox]
-                    img = face.img  # Lấy ảnh từ face object
-                    
-                    # Đảm bảo tọa độ nằm trong kích thước ảnh
-                    h, w = img.shape[:2]
-                    x1, y1 = max(0, x1), max(0, y1)
-                    x2, y2 = min(w, x2), min(h, y2)
-                    
-                    if x2 > x1 and y2 > y1:
-                        # Cắt khuôn mặt
-                        crop_img = img[y1:y2, x1:x2]
-                        if crop_img.size > 0:
-                            self.current_face_crop = cv2.resize(crop_img, (112, 112))
-                            # Lưu biến ảnh trực tiếp vào đối tượng để GUI có thể truy cập 
-                            self.current_face_image = self.current_face_crop.copy()
-                except Exception as e:
-                    self.system_logger.error(f"Error creating face crop from source: {e}")
-            
-            # Lưu ảnh vào thư mục attendance/userId nếu có khuôn mặt
-            if self.current_face_crop is not None:
-                # Chuẩn bị thư mục và đường dẫn
-                user_dir = os.path.join(self.attendance_faces_dir, user_id)
-                os.makedirs(user_dir, exist_ok=True)
-                
-                # Sử dụng tên file cố định thay vì timestamp
-                filename = "latest.jpg"
-                filepath = os.path.join(user_dir, filename)
-                
-                # Xóa file cũ nếu tồn tại
-                if os.path.exists(filepath):
-                    try:
-                        os.remove(filepath)
-                    except Exception as e:
-                        self.system_logger.error(f"Failed to remove old image: {e}")
-                        
-                # Lưu ảnh trực tiếp ở đây thay vì trong thread riêng
-                try:
-                    # Lưu ảnh vào thư mục attendance
-                    success = cv2.imwrite(filepath, self.current_face_crop)
-                    if success:
-                        self.current_face_crop_path = filepath
-                        print(f"Successfully saved face image to: {filepath}")
-                    else:
-                        self.system_logger.error(f"Failed to save face image: cv2.imwrite returned False")
-                except Exception as e:
-                    self.system_logger.error(f"Failed to save face image: {e}")
-            
-            # Chỉ gửi attendance nếu mặt thật và xác thực thành công
-            if is_live_face and self.verification_result["match"]:
-                # Sử dụng đường dẫn ảnh thay vì ảnh trong bộ nhớ - chỉ gửi 1 lần
+            try:
+                # Gửi thông tin điểm danh lên server
                 attendance_result = self.attendance.log_attendance(
-                    user_id=user_id,
+                    user_id=rfid_name,  # Luôn dùng tên từ RFID cho attendance
                     rfid_id=rfid_id,
-                    face_image=self.current_face_crop,  # Sử dụng cả ảnh trực tiếp
-                    face_image_path=self.current_face_crop_path,  # và đường dẫn
-                    status="SUCCESS" if self.verification_result["match"] and is_live_face else "FAILED"
+                    face_image=self.current_face_crop,
+                    face_image_path=self.current_face_crop_path,
+                    status=status,
+                    detected_face=face_name,  # Thêm trường này để server biết khuôn mặt được nhận diện
+                    note=note  # Thêm note cho API
                 )
-                
-                # Kiểm tra lỗi API sau khi gửi attendance
-                if attendance_result and "error" in attendance_result:
-                    error_code = attendance_result.get("error_code", "UNKNOWN_ERROR")
-                    error_message = attendance_result.get("error_message", "Lỗi không xác định")
-                    
-                    # Phân loại lỗi
-                    if "không tìm thấy lịch học" in error_message.lower() or error_code == "NO_SCHEDULE":
-                        error_type = "NO_SCHEDULE"
-                    elif error_code in ["SERVER_ERROR", "NETWORK_ERROR"]:
-                        error_type = error_code
-                    else:
-                        error_type = "API_ERROR"
-                    
-                    # Thông báo lỗi API lên UI
-                    if self.ui_callback:
-                        try:
-                            self.ui_callback("api_error", {
-                                "error_type": error_type,
-                                "error_message": error_message,
-                                "user_id": user_id,
-                                "rfid_id": rfid_id
-                            })
-                            print(f"Sent API error to UI: {error_type}")
-                        except Exception as e:
-                            self.system_logger.error(f"Error sending API error to UI: {e}")
+            except Exception as e:
+                self.system_logger.error(f"Error logging attendance: {e}")
+                attendance_result = {"error": True, "error_message": str(e)}
+            
+            # Kiểm tra lỗi API sau khi gửi attendance
+            if attendance_result and "error" in attendance_result:
+                self._handle_api_error(attendance_result, rfid_name, rfid_id)
             
             # Đánh dấu đã gửi API
             self.api_request_sent = True
+            
+        # Ensure attendance_result is defined in all cases
+        if attendance_result is None:
+            attendance_result = {}
         
         # Cập nhật thêm thông tin cho verification result
         self.verification_result.update({
             "face_score": float(score),
             "is_live_face": is_live_face,
             "face_crop_path": self.current_face_crop_path,
-            "face_crop": self.current_face_crop,  # Thêm dữ liệu ảnh trực tiếp vào kết quả
-            "attendance_path": attendance_result.get("image_path", "") if attendance_result else ""
+            "face_crop": self.current_face_crop,
+            "attendance_path": attendance_result.get("image_path", "") if attendance_result else "",
+            "note": note  # Thêm note vào verification result
         })
         
         # Log thành công hoặc thất bại
         if self.verification_result["match"] and is_live_face:
-            self.system_logger.info(f"Authentication successful for user: {user_id}, RFID: {rfid_id}")
+            self.system_logger.info(f"Authentication successful for user: {rfid_name}, RFID: {rfid_id}")
         else:
             reason = "face mismatch" if not self.verification_result["match"] else "fake face"
             self.system_logger.warning(f"Authentication failed: reason={reason}, match={self.verification_result['match']}, live_face={is_live_face}")
@@ -517,53 +507,60 @@ class ZenSys:
         # Khi xác thực thành công, tạm dừng hiển thị depth
         self.depth_display_paused = True
         
-        # Cập nhật UI về kết quả xác thực - Truyền trực tiếp dữ liệu ảnh thay vì đường dẫn
-        if self.ui_callback and self.verification_result:
-            try:
-                self.ui_callback("verification_result", {
-                    "result": self.verification_result,
-                    "face_crop_path": self.current_face_crop_path,  # Vẫn gửi đường dẫn
-                    "face_image": self.current_face_crop,  # Thêm truyền trực tiếp ảnh
-                    "face_name": face_name,
-                    "face_score": score,
-                    "rfid_name": self.verification_result.get("rfid_name", ""),
-                    "rfid_id": self.rfid.current_rfid,
-                    "match": self.verification_result.get("match", False),
-                    "is_live_face": is_live_face,  # Thêm kết quả anti-spoofing
-                    "timestamp": time.time()
-                })
-            except Exception as e:
-                self.system_logger.error(f"Error updating UI with verification: {e}")
+        # Cập nhật UI về kết quả xác thực
+        self._update_ui_verification_result(face_name, rfid_name, rfid_id, score, is_live_face, note)
         
         return self.verification_result
     
     def reset_after_verification(self):
-        """Reset sau khi xác thực thành công"""
+        """Reset sau khi xác thực thành công hoặc thất bại"""
         print("Resetting verification state after display period")
         
-        # Kích hoạt UI callback trước tiên để đảm bảo UI được cập nhật
-        if self.ui_callback:
-            try:
-                self.ui_callback("reset_verification", {})
-            except Exception as e:
-                self.system_logger.error(f"Failed to send reset signal to UI: {e}")
-        
-        # Reset RFID
-        self.rfid.clear_current_rfid()
-        
-        # Reset depth map display và các biến trạng thái
-        self.depth_display_paused = False
-        self.last_depth_result = None  # Đảm bảo depth map được tính toán lại trong lần tiếp theo
-        
-        # Reset các giá trị khác
-        self.verification_result = None
-        self.anti_spoofing_result = None
-        self.current_face_crop = None
-        self.processing_paused = False
-        self.verification_in_progress = False
-        self.api_request_sent = False
-        
-        print("Verification reset complete, ready for next session")
+        try:
+            # Kích hoạt UI callback trước tiên để đảm bảo UI được cập nhật
+            if self.ui_callback:
+                try:
+                    self.ui_callback("reset_verification", {})
+                    print("Sent reset verification signal to UI")
+                except Exception as e:
+                    self.system_logger.error(f"Failed to send reset signal to UI: {e}")
+            
+            # Reset RFID - QUAN TRỌNG: Đảm bảo reset RFID trước để tránh treo hệ thống
+            if hasattr(self.rfid, 'clear_current_rfid'):
+                self.rfid.clear_current_rfid()
+                print("Current RFID cleared")
+            
+            # Reset depth map display và các biến trạng thái
+            self.depth_display_paused = False
+            self.last_depth_result = None  # Đảm bảo depth map được tính toán lại trong lần tiếp theo
+            
+            # Reset các giá trị khác
+            self.verification_result = None
+            self.anti_spoofing_result = None
+            self.current_face_crop = None
+            self.current_face_crop_path = None
+            
+            # QUAN TRỌNG: Đặt các biến trạng thái về False ngay lập tức
+            self.processing_paused = False
+            self.verification_in_progress = False
+            self.api_request_sent = False
+            
+            # Reset biến tracking RFID
+            self._last_rfid_id = None
+            self._last_rfid_update_time = 0
+            self.current_rfid = None
+            
+            print("Verification reset complete, ready for next session")
+        except Exception as e:
+            self.system_logger.error(f"Error during verification reset: {e}")
+            # Bắt buộc reset các biến trạng thái quan trọng ngay cả khi có lỗi
+            self.verification_in_progress = False
+            self.processing_paused = False
+            self.api_request_sent = False
+            self.current_rfid = None
+            if hasattr(self.rfid, 'current_rfid'):
+                self.rfid.current_rfid = None
+            print("Forced reset of critical state variables after error")
     
     def run_webcam(self):
         """
@@ -694,3 +691,176 @@ class ZenSys:
             if self.camera:
                 self.camera.release()
                 self.camera = None 
+    
+    def _prepare_face_crop(self, face):
+        """
+        Chuẩn bị ảnh khuôn mặt từ đối tượng face
+        
+        Args:
+            face: Đối tượng Face từ ZenFace
+        """
+        if self.current_face_crop is None and face.bbox is not None and hasattr(face, 'img') and face.img is not None:
+            try:
+                x1, y1, x2, y2 = [int(b) for b in face.bbox]
+                img = face.img  # Lấy ảnh từ face object
+                
+                # Đảm bảo tọa độ nằm trong kích thước ảnh
+                h, w = img.shape[:2]
+                x1, y1 = max(0, x1), max(0, y1)
+                x2, y2 = min(w, x2), min(h, y2)
+                
+                if x2 > x1 and y2 > y1:
+                    # Cắt khuôn mặt
+                    crop_img = img[y1:y2, x1:x2]
+                    if crop_img.size > 0:
+                        self.current_face_crop = cv2.resize(crop_img, (112, 112))
+                        # Lưu biến ảnh trực tiếp vào đối tượng để GUI có thể truy cập 
+                        self.current_face_image = self.current_face_crop.copy()
+            except Exception as e:
+                self.system_logger.error(f"Error creating face crop from source: {e}")
+    
+    def _save_face_to_gallery(self, user_id):
+        """
+        Lưu ảnh khuôn mặt hiện tại vào thư mục gallery
+        
+        Args:
+            user_id: ID của người dùng (tên để lưu vào gallery)
+        
+        Returns:
+            bool: True nếu lưu thành công, False nếu không
+        """
+        if self.current_face_crop is None:
+            self.system_logger.warning("No face crop to save to gallery")
+            return False
+        
+        try:
+            # Đường dẫn đến thư mục gallery
+            gallery_dir = os.path.join(os.getcwd(), "data", "gallery", user_id)
+            os.makedirs(gallery_dir, exist_ok=True)
+            
+            # Tạo tên file với timestamp để tránh trùng lặp
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            filename = f"{user_id}_{timestamp}.jpg"
+            filepath = os.path.join(gallery_dir, filename)
+            
+            # Lưu ảnh
+            success = cv2.imwrite(filepath, self.current_face_crop)
+            if success:
+                print(f"Successfully saved face to gallery: {filepath}")
+                return True
+            else:
+                self.system_logger.error("Failed to save face to gallery: cv2.imwrite returned False")
+                return False
+        except Exception as e:
+            self.system_logger.error(f"Error saving face to gallery: {e}")
+            return False
+    
+    def _save_face_to_attendance(self, user_id):
+        """
+        Lưu ảnh khuôn mặt hiện tại vào thư mục attendance
+        
+        Args:
+            user_id: ID của người dùng (tên để lưu vào attendance)
+        
+        Returns:
+            bool: True nếu lưu thành công, False nếu không
+        """
+        if self.current_face_crop is None:
+            self.system_logger.warning("No face crop to save to attendance")
+            return False
+        
+        try:
+            # Đường dẫn đến thư mục attendance
+            user_dir = os.path.join(self.attendance_faces_dir, user_id)
+            os.makedirs(user_dir, exist_ok=True)
+            
+            # Sử dụng tên file cố định
+            filename = "latest.jpg"
+            filepath = os.path.join(user_dir, filename)
+            
+            # Xóa file cũ nếu tồn tại
+            if os.path.exists(filepath):
+                try:
+                    os.remove(filepath)
+                except Exception as e:
+                    self.system_logger.error(f"Failed to remove old image: {e}")
+            
+            # Lưu ảnh
+            success = cv2.imwrite(filepath, self.current_face_crop)
+            if success:
+                self.current_face_crop_path = filepath
+                print(f"Successfully saved face image to attendance: {filepath}")
+                return True
+            else:
+                self.system_logger.error("Failed to save face to attendance: cv2.imwrite returned False")
+                return False
+        except Exception as e:
+            self.system_logger.error(f"Error saving face to attendance: {e}")
+            return False
+    
+    def _handle_api_error(self, attendance_result, user_id, rfid_id):
+        """
+        Xử lý lỗi API khi gửi attendance
+        
+        Args:
+            attendance_result: Kết quả từ API
+            user_id: ID người dùng
+            rfid_id: ID thẻ RFID
+        """
+        error_code = attendance_result.get("error_code", "UNKNOWN_ERROR")
+        error_message = attendance_result.get("error_message", "Lỗi không xác định")
+        
+        # Phân loại lỗi
+        if "không tìm thấy lịch học" in error_message.lower() or error_code == "NO_SCHEDULE":
+            error_type = "NO_SCHEDULE"
+        elif error_code in ["SERVER_ERROR", "NETWORK_ERROR"]:
+            error_type = error_code
+        else:
+            error_type = "API_ERROR"
+        
+        # Thông báo lỗi API lên UI
+        if self.ui_callback:
+            try:
+                self.ui_callback("api_error", {
+                    "error_type": error_type,
+                    "error_message": error_message,
+                    "user_id": user_id,
+                    "rfid_id": rfid_id
+                })
+                print(f"Sent API error to UI: {error_type}")
+            except Exception as e:
+                self.system_logger.error(f"Error sending API error to UI: {e}")
+    
+    def _update_ui_verification_result(self, face_name, rfid_name, rfid_id, score, is_live_face, note):
+        """
+        Cập nhật UI với kết quả xác thực
+        
+        Args:
+            face_name: Tên khuôn mặt được nhận diện
+            rfid_name: Tên người dùng từ RFID
+            rfid_id: ID thẻ RFID
+            score: Điểm nhận diện khuôn mặt
+            is_live_face: Kết quả anti-spoofing
+            note: Note cho kết quả xác thực
+        """
+        if not self.ui_callback or not self.verification_result:
+            return
+            
+        try:
+            # Tạo một bản sao kết quả verification đơn giản hơn để tránh lỗi Qt khi truyền qua thread
+            simplified_result = {
+                "match": self.verification_result["match"],
+                "rfid_id": rfid_id,
+                "rfid_name": rfid_name,
+                "face_name": face_name,
+                "face_score": float(score),
+                "is_live_face": is_live_face,
+                "timestamp": time.strftime("%H:%M:%S - %d/%m/%Y"),
+                "note": note
+            }
+            
+            # Gửi thông báo để cập nhật UI với bản sao đơn giản
+            self.ui_callback("verification_result", simplified_result)
+            print(f"Sent verification result to UI: match={simplified_result['match']}")
+        except Exception as e:
+            self.system_logger.error(f"Error updating UI with verification result: {e}") 
