@@ -17,7 +17,7 @@ function AttendanceManagementPage(): React.JSX.Element {
             <DataTable
               headCellsData={state.headCellsData}
               tableMainData={state.attendanceFormattedData}
-              tableTitle={state.tableTitle}
+              tableTitle={''}
               isCheckBox={state.isCheckBox}
               isAttendance={true}
               isRoleTeacher={state.role === "teacher"}

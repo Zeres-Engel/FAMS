@@ -611,7 +611,7 @@ function ClassManagementPage(): React.JSX.Element {
                 <div>
                   <TextField
                     fullWidth
-                    label="Class Name *"
+                    label="Class Name"
                     name="className"
                     value={classInfo.className}
                     onChange={handleInputChange}
@@ -628,7 +628,7 @@ function ClassManagementPage(): React.JSX.Element {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Homeroom Teacher *"
+                        label="Homeroom Teacher"
                         required
                         helperText={`${availableTeachers.length} available teachers who are not assigned as homeroom teachers`}
                         placeholder="Type to search teachers..."

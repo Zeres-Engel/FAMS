@@ -17,6 +17,7 @@ export interface Schedule {
   sessionDate: string; // ISO string
   sessionWeek: string;
   SlotID: string;
+  slotNumber: number;
   dayOfWeek: string;
   startTime: string; // Format: "HH:mm"
   endTime: string;

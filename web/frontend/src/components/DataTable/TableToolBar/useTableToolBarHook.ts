@@ -213,7 +213,8 @@ function useTableToolBarHook({
         classId: `${filters.classId}`,
         teacherName: "",
         status: filters.status,
-        date: filters.date,
+        dateFrom:filters.dateFrom,
+        dateTo:filters.dateTo,
         slotNumber: `${filters.slotID}`,
       };
       if (setFiltersAttendancePage) {
@@ -227,7 +228,8 @@ function useTableToolBarHook({
         classId: `${filters.classId}`,
         teacherName: "",
         status: filters.status,
-        date: filters.date,
+        dateFrom:filters.dateFrom,
+        dateTo:filters.dateTo,
         slotNumber: `${filters.slotNumber}`,
       };
       if (setFiltersAttendancePage) {

@@ -22,6 +22,10 @@ const notificationSchema = new Schema({
     type: String,
     required: true
   },
+  Title: {
+    type: String,
+    default: 'Thông báo mới'
+  },
   SentDate: {
     type: Date,
     default: Date.now
@@ -29,6 +33,19 @@ const notificationSchema = new Schema({
   ReadStatus: {
     type: Boolean,
     default: false
+  },
+  Archived: {
+    type: Boolean,
+    default: false
+  },
+  ClassID: {
+    type: Number,
+    ref: 'Class',
+    default: null
+  },
+  ClassName: {
+    type: String,
+    default: null
   },
   CreatedAt: {
     type: Date,
@@ -38,7 +55,11 @@ const notificationSchema = new Schema({
     type: Date,
     default: Date.now
   },
-  IsActive: {
+  IsActiveSender: {
+    type: Boolean,
+    default: true
+  },
+  IsActiveReceiver: {
     type: Boolean,
     default: true
   }

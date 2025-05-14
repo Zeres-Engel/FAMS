@@ -20,6 +20,8 @@ import {
   Select,
   MenuItem,
   FormHelperText,
+  Chip,
+  Tooltip,
 } from "@mui/material";
 import moment from "moment";
 import LayoutComponent from "../../components/Layout/Layout";
@@ -46,6 +48,33 @@ interface SlotInfo {
   startTime: string;
   endTime: string;
   isExtraSlot: boolean;
+}
+
+// Interface cho UserAttendance
+interface UserAttendance {
+  attendanceId: number;
+  scheduleId: number;
+  userId: string;
+  status: string;
+  checkIn: string | null;
+  note: string;
+  createdAt: string;
+  updatedAt: string;
+  userRole: string;
+  teacherId?: number;
+  teacherName?: string;
+  subjectId?: number;
+  subjectName?: string;
+  classId?: number;
+  className?: string;
+  classroomId?: number;
+  classroomName?: string;
+  slotNumber?: number;
+  dayOfWeek?: string;
+  startTime?: string;
+  endTime?: string;
+  sessionDate?: string;
+  topic?: string;
 }
 
 const ScheduleManagementPage: React.FC = () => {
@@ -81,6 +110,10 @@ const ScheduleManagementPage: React.FC = () => {
     academicYear: "",
   });
   
+  // State cho edit và delete event
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
+  
   // State cho semester
   const [semester, setSemester] = useState("Semester 1");
   const [semesterDateFrom, setSemesterDateFrom] = useState("");
@@ -101,6 +134,21 @@ const ScheduleManagementPage: React.FC = () => {
   // Destructure từ attendance hook
   const { state: attendanceState, actions: attendanceActions } = attendanceHook;
   
+  // Thêm state cho dữ liệu điểm danh của user
+  const [userAttendance, setUserAttendance] = useState<UserAttendance[]>([]);
+  const userData = useSelector((state: RootState) => state.login.loginData);
+
+  // Thêm useEffect để lấy dữ liệu điểm danh khi component mount
+  useEffect(() => {
+    if ((role === "student" || role === "teacher") && userData?.userId) {
+      const fetchAttendance = async () => {
+        const attendanceData = await handler.fetchUserAttendance(userData.userId);
+        setUserAttendance(attendanceData);
+      };
+      fetchAttendance();
+    }
+  }, [userData?.userId, role]);
+
   // Load Material Icons và fetch teachers
   useEffect(() => {
     const link = document.createElement("link");
@@ -210,10 +258,20 @@ const ScheduleManagementPage: React.FC = () => {
     }
   }, [openCreateDialog, newEvent.scheduleDate, newEvent.slotId]);
 
-  const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
-  
   const handleSelectEvent = (event: ScheduleEvent) => {
+    // Học sinh không được phép mở dialog edit và không hiện thông báo
+    if (role === "student") {
+      // Không làm gì cả, chỉ return
+      return;
+    }
+    
+    // Giáo viên chỉ được phép xem điểm danh, không được edit lịch
+    if (role === "teacher") {
+      handleViewAttendance(event.id);
+      return;
+    }
+    
+    // Admin được phép mở dialog edit
     setSelectedEvent(event);
     setOpenEditDialog(true);
   };
@@ -244,11 +302,110 @@ const ScheduleManagementPage: React.FC = () => {
   };
 
   const handleViewAttendance = (scheduleId: number) => {
-    // Gọi API để lấy dữ liệu điểm danh
-    attendanceHook.actions.fetchAttendanceData(scheduleId);
-    // Chuyển chế độ sang màn hình điểm danh
-    attendanceHook.actions.setSelectedScheduleId(scheduleId);
-    attendanceHook.actions.setViewMode('attendance');
+    // Log thông tin về lịch học trước khi gọi API điểm danh
+    console.log('Selected schedule ID for attendance:', scheduleId);
+    console.log('Current event data:', selectedEvent);
+    
+    // Lấy dữ liệu từ API schedule để có thêm thông tin
+    fetch(`http://fams.io.vn/api-nodejs/schedules/${scheduleId}`)
+      .then(response => response.json())
+      .then(scheduleData => {
+        if (scheduleData.success && scheduleData.data) {
+          console.log('Schedule details from API:', scheduleData.data);
+          
+          // Cập nhật eventShow với dữ liệu từ API
+          if (selectedEvent) {
+            const updatedEvent = {
+              ...selectedEvent,
+              className: scheduleData.data.className || selectedEvent.className,
+              classId: scheduleData.data.classId || selectedEvent.classId
+            };
+            
+            console.log('Updated event with className:', updatedEvent);
+            handler.setEventShow(updatedEvent);
+          }
+        }
+        
+        // Gọi API điểm danh sau khi đã cập nhật thông tin
+        attendanceHook.actions.fetchAttendanceData(scheduleId);
+      })
+      .catch(error => {
+        console.error('Error fetching schedule details:', error);
+        // Vẫn gọi API điểm danh ngay cả khi có lỗi
+        attendanceHook.actions.fetchAttendanceData(scheduleId);
+      });
+  };
+
+  // Handler cho việc xóa event
+  const handleDeleteEvent = (scheduleId: number) => {
+    console.log(`Deleting schedule with ID: ${scheduleId}`);
+    
+    // Gọi API xóa event từ useScheduleManagementPageHook trực tiếp
+    import('axios').then(axios => {
+      axios.default.delete(
+        `http://fams.io.vn/api-nodejs/schedules/${scheduleId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json"
+          }
+        }
+      )
+      .then((response) => {
+        console.log("Schedule deleted successfully", response.data);
+        // Đóng dialog nếu đang mở
+        setOpenEditDialog(false);
+        // Refresh danh sách events
+        handler.handleSearch();
+      })
+      .catch((error: Error) => {
+        console.error("Error deleting schedule:", error);
+      });
+    });
+  };
+
+  // Thêm hàm này để lấy trạng thái điểm danh mới nhất của ngày hôm nay
+  const getUserTodayAttendanceStatus = () => {
+    if (!userAttendance || userAttendance.length === 0) return "Not Now";
+    
+    // Sắp xếp theo thời gian tạo mới nhất
+    const sortedAttendance = [...userAttendance].sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+    
+    // Lấy trạng thái mới nhất
+    return sortedAttendance[0]?.status || "Not Now";
+  };
+
+  // Thêm hàm này để lấy màu tương ứng với trạng thái
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "present":
+        return "success";
+      case "late":
+        return "warning";
+      case "absent":
+        return "error";
+      default:
+        return "default";
+    }
+  };
+
+  // Thêm hàm để lấy thông tin chi tiết về điểm danh
+  const getLatestAttendanceDetail = () => {
+    if (!userAttendance || userAttendance.length === 0) return null;
+    
+    // Sắp xếp theo thời gian tạo mới nhất
+    const sortedAttendance = [...userAttendance].sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+    
+    return sortedAttendance[0];
+  };
+
+  // Thêm hàm để kiểm tra xem các events có attendance data không
+  const hasEventsWithAttendanceData = () => {
+    return state.events.some(event => 'attendanceStatus' in event);
   };
 
   return (
@@ -451,8 +608,8 @@ const ScheduleManagementPage: React.FC = () => {
                 </Box>
               )}
 
-              {/* Student view filters */}
-              {role === "student" && (
+              {/* Student view filters - only show if no events have attendance data */}
+              {role === "student" && !hasEventsWithAttendanceData() && (
                 <Box
                   sx={{
                     display: "flex",
@@ -462,12 +619,40 @@ const ScheduleManagementPage: React.FC = () => {
                     alignItems: "center",
                   }}
                 >
-                  {/* Student filter controls */}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Typography variant="body2">Trạng thái điểm danh:</Typography>
+                    <Tooltip
+                      title={
+                        (() => {
+                          const latest = getLatestAttendanceDetail();
+                          if (!latest) return "Chưa có dữ liệu điểm danh";
+                          
+                          return (
+                            <>
+                              <div><strong>Môn học:</strong> {latest.subjectName || "N/A"}</div>
+                              <div><strong>Lớp:</strong> {latest.className || "N/A"}</div>
+                              <div><strong>Phòng:</strong> {latest.classroomName || "N/A"}</div>
+                              <div><strong>Thời gian:</strong> {latest.startTime || "N/A"} - {latest.endTime || "N/A"}</div>
+                              <div><strong>Ngày:</strong> {latest.sessionDate ? new Date(latest.sessionDate).toLocaleDateString() : "N/A"}</div>
+                              <div><strong>Giáo viên:</strong> {latest.teacherName || "N/A"}</div>
+                            </>
+                          );
+                        })()
+                      }
+                      arrow
+                    >
+                      <Chip 
+                        label={getUserTodayAttendanceStatus()} 
+                        color={getStatusColor(getUserTodayAttendanceStatus()) as any} 
+                        size="small" 
+                      />
+                    </Tooltip>
+                  </Box>
                 </Box>
               )}
 
-              {/* Teacher view filters */}
-              {role === "teacher" && (
+              {/* Teacher view filters - only show if no events have attendance data */}
+              {role === "teacher" && !hasEventsWithAttendanceData() && (
                 <Box
                   sx={{
                     display: "flex",
@@ -477,7 +662,34 @@ const ScheduleManagementPage: React.FC = () => {
                     alignItems: "center",
                   }}
                 >
-                  {/* Teacher filter controls */}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Typography variant="body2">Trạng thái điểm danh:</Typography>
+                    <Tooltip
+                      title={
+                        (() => {
+                          const latest = getLatestAttendanceDetail();
+                          if (!latest) return "Chưa có dữ liệu điểm danh";
+                          
+                          return (
+                            <>
+                              <div><strong>Môn học:</strong> {latest.subjectName || "N/A"}</div>
+                              <div><strong>Lớp:</strong> {latest.className || "N/A"}</div>
+                              <div><strong>Phòng:</strong> {latest.classroomName || "N/A"}</div>
+                              <div><strong>Thời gian:</strong> {latest.startTime || "N/A"} - {latest.endTime || "N/A"}</div>
+                              <div><strong>Ngày:</strong> {latest.sessionDate ? new Date(latest.sessionDate).toLocaleDateString() : "N/A"}</div>
+                            </>
+                          );
+                        })()
+                      }
+                      arrow
+                    >
+                      <Chip 
+                        label={getUserTodayAttendanceStatus()} 
+                        color={getStatusColor(getUserTodayAttendanceStatus()) as any} 
+                        size="small" 
+                      />
+                    </Tooltip>
+                  </Box>
                 </Box>
               )}
 
@@ -521,7 +733,7 @@ const ScheduleManagementPage: React.FC = () => {
                   startAccessor="start"
                   endAccessor="end"
                   min={new Date(0, 0, 0, 7, 0)} // 7:00 AM
-                  max={new Date(0, 0, 0, 19, 0)} // 7:00 PM
+                  max={new Date(0, 0, 0, 22, 0)} // 7:00 PM
                   views={["month", "week", "day"]}
                   style={{ height: "100%", width: "100%", overflow: "visible" }}
                   onSelectEvent={handleSelectEvent}
@@ -543,116 +755,6 @@ const ScheduleManagementPage: React.FC = () => {
             </Paper>
 
             {/* Event detail dialog */}
-            <Dialog
-              open={state?.eventShow?.id !== 0}
-              onClose={() => {
-                handler.setIsEditing(false);
-                handler.handleSelectEvent();
-              }}
-              fullWidth
-              maxWidth="sm"
-            >
-              <DialogTitle>Event Detail</DialogTitle>
-              <DialogContent dividers>
-                {state.isEditing ? (
-                  <>
-                    {/* Edit form fields */}
-                  </>
-                ) : (
-                  <>
-                    <Typography>
-                      <strong>Subject:</strong> {state.eventShow?.subject}
-                    </Typography>
-                    <Typography>
-                      <strong>Topic:</strong> {state.eventShow?.title || "N/A"}
-                    </Typography>
-                    <Typography>
-                      <strong>Start:</strong>{" "}
-                      {moment(state.eventShow?.start).format("YYYY-MM-DD HH:mm")}
-                    </Typography>
-                    <Typography>
-                      <strong>End:</strong>{" "}
-                      {moment(state.eventShow?.end).format("YYYY-MM-DD HH:mm")}
-                    </Typography>
-                    <Typography>
-                      <strong>Classroom:</strong>{" "}
-                      {state.eventShow?.classroomNumber || "N/A"}
-                    </Typography>
-                    <Typography>
-                      <strong>Teacher:</strong> {state.eventShow?.teacher}
-                    </Typography>
-                  </>
-                )}
-              </DialogContent>
-
-              <DialogActions>
-                {/* Admin actions */}
-                {role === "admin" &&
-                  (state.isEditing ? (
-                    <>
-                      <Button
-                        variant="contained"
-                        onClick={handler.handleSaveEdit}
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        onClick={() => handler.setIsEditing(false)}
-                      >
-                        Cancel
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        variant="contained"
-                        onClick={() => handler.setIsEditing(true)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="error"
-                        onClick={() => {
-                          handler.deleteEvent(state.eventShow?.id);
-                          handler.handleSelectEvent();
-                        }}
-                      >
-                        Delete
-                      </Button>
-                    </>
-                  ))}
-
-                {/* Nút chuyển sang trang điểm danh */}
-                {(role === "teacher" || role === "admin") && (
-                  <Button 
-                    variant="contained" 
-                    color="secondary"
-                    onClick={() => {
-                      // Đóng dialog trước khi mở trang attendance
-                      handler.handleSelectEvent();
-                      // Gọi API và chuyển sang trang attendance
-                      if (state.eventShow?.id) {
-                        handleViewAttendance(state.eventShow.id);
-                      }
-                    }}
-                  >
-                    View Attendance
-                  </Button>
-                )}
-
-                <Button
-                  variant="outlined"
-                  onClick={() => {
-                    handler.setIsEditing(false);
-                    handler.handleSelectEvent();
-                  }}
-                >
-                  Close
-                </Button>
-              </DialogActions>
-            </Dialog>
 
             {/* Add Schedule Dialog */}
             <AddScheduleDialog
@@ -703,13 +805,22 @@ const ScheduleManagementPage: React.FC = () => {
             <AttendanceView 
               scheduleId={attendanceState.selectedScheduleId}
               subjectName={state.eventShow?.subject || ""}
-              className={state.eventShow?.classId || ""}
+              className={state.eventShow?.className || state.eventShow?.classId || ""}
               teacher={state.eventShow?.teacher || ""}
               date={state.eventShow?.start || new Date()}
               onBack={attendanceActions.handleBackToCalendar}
               attendanceData={attendanceState.attendanceData}
               loading={attendanceState.loading}
               error={attendanceState.error}
+              setAttendanceData={(data) => {
+                // Handle setting attendance data through the hook actions if needed
+                console.log("AttendanceView is updating attendance data", data.length);
+              }}
+              onAttendanceUpdate={(data) => {
+                console.log("AttendanceView triggered attendance update", data.length);
+              }}
+              fetchAttendanceData={attendanceActions.fetchAttendanceData}
+              userRole={role || ""}
             />
           </Paper>
         )}
@@ -720,11 +831,13 @@ const ScheduleManagementPage: React.FC = () => {
           event={selectedEvent}
           onSave={handleSaveEvent}
           onViewAttendance={handleViewAttendance}
-          teachers={directTeachers}
-          academicYears={state.academicYears}
-          allClasses={state.allClasses}
-          subjectState={state.subjectState}
-          classrooms={state.classrooms}
+          onDelete={handleDeleteEvent}
+          teachers={state.teachers || []}
+          academicYears={state.academicYears || []}
+          allClasses={state.allClasses || []}
+          subjectState={state.subjectState || []}
+          classrooms={state.classrooms || []}
+          userRole={role || ""}
         />
       </Container>
     </LayoutComponent>

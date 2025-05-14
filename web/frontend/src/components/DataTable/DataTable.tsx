@@ -410,9 +410,11 @@ export default function DataTable({
         />
       </TableCell>
       <TableCell align="left">{row.userId || "none"}</TableCell>
-      {(isRoleTeacher || isRoleStudent) && (
+      <TableCell align="left">{row.subject || "none"}</TableCell>
+      <TableCell align="left">{row.slotNumber || "none"}</TableCell>
+      {/* {(isRoleTeacher || isRoleStudent) && (
         <TableCell align="left">{row?.fullName || "none"}</TableCell>
-      )}
+      )} */}
       <TableCell align="left">{row.checkin || "none"}</TableCell>
       <TableCell align="left">{row?.note || "none"}</TableCell>
       <TableCell align="left">{row.status}</TableCell>
@@ -523,7 +525,7 @@ export default function DataTable({
                     {isClassManagement && renderClassManagementCells(row)}
                     {isClassManagement && renderActionCell(row)}
                     {isAttendance && renderAttendanceManagementCells(row)}
-                    {isAttendance && isRoleTeacher && renderActionCell(row)}
+                    {/* {isAttendance && isRoleTeacher && renderActionCell(row)} */}
                     {isClassArrangement && renderClassArrangementNewCells(row)}
                     {isNewSemester && renderNewSemesterArrangementNewCells(row)}
                     {isNotifyPage && renderNotifyNewCells(row)}
