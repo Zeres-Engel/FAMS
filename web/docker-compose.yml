@@ -81,7 +81,7 @@ services:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/logs:/var/log/nginx
     ports:
-      - "80:80"
+      - "8088:80"
     depends_on:
       - frontend
       - api-nodejs
@@ -96,7 +96,7 @@ services:
     volumes:
       - mongo_data:/data/db
     ports:
-      - "27017:27017"
+      - "27018:27017"
     networks:
       - app-network
 
