@@ -28,3 +28,4 @@ yarn-error.log*
 *.webp
 *.svg
 *.ico
+*.env
