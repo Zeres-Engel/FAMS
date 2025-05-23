@@ -38,29 +38,6 @@ async def initialize_fams(background_tasks: BackgroundTasks):
         "FAMS initialization process with database structure based on SQL schema has been queued. Check logs for progress."
     )
 
-@router.post("/cleanSchedules")
-async def clean_schedules(semester_id: int, academic_year: Optional[str] = None):
-    """
-    Clean existing schedules and attendance logs for a specific semester and academic year
-    
-    Args:
-        semester_id: ID of the semester
-        academic_year: Optional academic year (e.g. "2022-2023")
-    
-    Returns:
-        Information about deleted records
-    """
-    from ..db import connect_to_mongodb
-    client = connect_to_mongodb()
-    db = client["fams"]
-    
-    stats = clean_existing_schedules(db, semester_id, academic_year)
-    
-    return ResponseModel(
-        f"Cleaned {stats['schedules_deleted']} schedules and {stats['attendance_logs_deleted']} attendance logs",
-        stats
-    )
-
 def promote_students_to_next_grade(db, current_academic_year, next_academic_year):
     """Promotes students to the next grade level.
     - Students in grade 10 move to grade 11
